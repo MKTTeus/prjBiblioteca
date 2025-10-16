@@ -36,3 +36,20 @@
     transform: rotate(360deg);
   }
 }
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden; /* impede rolagem lateral */
+  background-color: #f9fafb;
+  font-family: "Inter", sans-serif;
+}
+
+main {
+  width: 100%;
+  box-sizing: border-box;
+}
