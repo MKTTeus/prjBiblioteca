@@ -1,37 +1,41 @@
+/* sidebar já com width 200px (coerente com App.css) */
 .sidebar {
-  width: 230px;
+  width: 200px;
   height: 100vh;
   background-color: #f9fafb;
   border-right: 1px solid #e5e7eb;
-  padding: 1.5rem;
+  padding: 1.1rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   font-family: "Inter", sans-serif;
+  box-sizing: border-box;
 }
 
 .sidebar-title {
-  font-size: 0.8rem;
+  font-size: 0.78rem; /* menor */
   text-transform: uppercase;
   color: #6b7280;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 600;
 }
 
 .sidebar-section ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .sidebar-section li {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 8px; /* menor gap */
+  padding: 7px 8px; /* menor */
   border-radius: 8px;
   color: #374151;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
+  font-size: 0.95rem; /* texto levemente menor */
 }
 
 .sidebar-section li:hover {
