@@ -5,19 +5,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 1.2rem; /* reduzido */
+  padding: 0.6rem 1.2rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   z-index: 20;
   box-sizing: border-box;
+  position: sticky;
+  top: 0;
 }
 
-.header-left, .header-right {
+.header-left,
+.header-right {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
 
-/* logo e texto reduzidos */
+/* Logo e texto */
 .header-logo {
   display: flex;
   align-items: center;
@@ -25,7 +28,7 @@
 }
 
 .header-icon {
-  font-size: 1.5rem; /* menor */
+  font-size: 1.5rem;
   background-color: #2563eb;
   color: white;
   padding: 0.45rem;
@@ -37,22 +40,22 @@
 
 .header-title {
   margin: 0;
-  font-size: 1rem; /* menor */
+  font-size: 1rem;
   font-weight: 600;
   color: #111827;
 }
 
 .header-subtitle {
-  font-size: 0.78rem; /* menor */
+  font-size: 0.78rem;
   color: #6b7280;
   margin: 0;
 }
 
-/* direita do header mais compacta */
+/* Área da direita */
 .header-right {
   display: flex;
   align-items: center;
-  gap: 1rem; /* reduzido */
+  gap: 1rem;
 }
 
 .notification {
@@ -75,7 +78,7 @@
   padding: 2px 6px;
 }
 
-/* user info mais compacto */
+/* User info */
 .user-info {
   display: flex;
   align-items: center;
@@ -96,12 +99,12 @@
   color: #6b7280;
 }
 
-/* botão sair menor e com padding reduzido */
+/* Botão sair */
 .logout-btn {
   background: none;
   border: 1px solid #ef4444;
   color: #ef4444;
-  padding: 0.35rem 0.7rem; /* reduzido */
+  padding: 0.35rem 0.7rem;
   border-radius: 6px;
   cursor: pointer;
   display: inline-flex;

@@ -1,32 +1,31 @@
 import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Header from "./components/Header/Header";
+import Dashboard from "./pages/Dashboard";
+import CadastroLivros from "./pages/CadastroLivros";
+import Alunos from "./pages/Alunos";
+import Configuracoes from "./pages/Configuracoes";
+import "./styles/global.css";
 
 function App() {
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        width: "100%",
-        overflowX: "hidden", // impede rolagem lateral
-        overflowY: "auto", // permite rolagem vertical
-      }}
-    >
-      <Sidebar />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <Header />
-        <main
-          style={{
-            padding: "2rem",
-            flex: 1,
-            backgroundColor: "#f9fafb",
-          }}
-        >
-          <h1 style={{ fontWeight: "bold" }}>Conteúdo principal aqui</h1>
-        </main>
+    <Router>
+      <div className="app-container">
+        <Sidebar />
+        <div className="main-content">
+          <Header />
+          <div className="page-content">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/biblioteca" element={<CadastroLivros />} />
+              <Route path="/alunos" element={<Alunos />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+            </Routes>
+          </div>
+        </div>
       </div>
-    </div>
+    </Router>
   );
 }
 

@@ -1,59 +1,88 @@
-import React, { useState } from "react";
-import { 
-  LayoutDashboard, 
-  Library, 
-  BookPlus, 
-  Users, 
-  RefreshCcw, 
-  Settings, 
-  LogOut 
-} from "lucide-react";
+import React from "react";
+import { NavLink } from "react-router-dom";
+import {
+  FiHome,
+  FiBookOpen,
+  FiBook,
+  FiUsers,
+  FiRepeat,
+  FiSettings,
+  FiLogOut,
+} from "react-icons/fi";
 import "./Sidebar.css";
 
-const Sidebar = () => {
-  const [active, setActive] = useState("Cadastro de livros");
-
-  const menuItems = [
-    { label: "Dashboard", icon: <LayoutDashboard size={18} /> },
-    { label: "Biblioteca", icon: <Library size={18} /> },
-    { label: "Cadastro de livros", icon: <BookPlus size={18} /> },
-    { label: "Cadastro de alunos", icon: <Users size={18} /> },
-    { label: "Empréstimos e devoluções", icon: <RefreshCcw size={18} /> },
-  ];
-
+function Sidebar() {
   return (
     <aside className="sidebar">
-      <div className="sidebar-section">
-        <p className="sidebar-title">Menu Principal</p>
-        <ul>
-          {menuItems.map((item) => (
-            <li
-              key={item.label}
-              className={active === item.label ? "active" : ""}
-              onClick={() => setActive(item.label)}
-            >
-              {item.icon}
-              <span>{item.label}</span>
+      <div>
+        <h2 className="sidebar-logo">📚 Biblioteca</h2>
+
+        {/* ======= MENU PRINCIPAL ======= */}
+        <div className="sidebar-section">
+          <p className="sidebar-title">Principal</p>
+          <ul>
+            <li>
+              <NavLink
+                to="/"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+              >
+                <FiHome /> Dashboard
+              </NavLink>
             </li>
-          ))}
-        </ul>
+            <li>
+              <NavLink
+                to="/biblioteca"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+              >
+                <FiBookOpen /> Biblioteca
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/livros"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+              >
+                <FiBook /> Livros
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/alunos"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+              >
+                <FiUsers /> Alunos
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/emprestimos"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+              >
+                <FiRepeat /> Empréstimos e Devoluções
+              </NavLink>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <div className="sidebar-section bottom">
-        <p className="sidebar-title">Sistema</p>
+      {/* ======= RODAPÉ ======= */}
+      <div className="sidebar-bottom">
         <ul>
           <li>
-            <Settings size={18} />
-            <span>Configurações</span>
+            <NavLink
+              to="/configuracoes"
+              className={({ isActive }) => (isActive ? "active" : undefined)}
+            >
+              <FiSettings /> Sistema e Configurações
+            </NavLink>
           </li>
           <li className="logout">
-            <LogOut size={18} />
-            <span>Sair</span>
+            <FiLogOut /> Sair
           </li>
         </ul>
       </div>
     </aside>
   );
-};
+}
 
 export default Sidebar;
