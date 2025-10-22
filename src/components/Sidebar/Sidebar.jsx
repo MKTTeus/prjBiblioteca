@@ -15,6 +15,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div>
+        {/* LOGO / TÍTULO */}
         <h2 className="sidebar-logo">📚 Biblioteca</h2>
 
         {/* ======= MENU PRINCIPAL ======= */}
@@ -65,17 +66,23 @@ function Sidebar() {
         </div>
       </div>
 
-      {/* ======= RODAPÉ ======= */}
+      {/* ======= RODAPÉ (SISTEMA E SAIR) ======= */}
       <div className="sidebar-bottom">
-        <ul>
-          <li>
-            <NavLink
-              to="/configuracoes"
-              className={({ isActive }) => (isActive ? "active" : undefined)}
-            >
-              <FiSettings /> Sistema e Configurações
-            </NavLink>
-          </li>
+        <div className="sidebar-section">
+          <p className="sidebar-title">Sistema</p>
+          <ul>
+            <li>
+              <NavLink
+                to="/configuracoes"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+              >
+                <FiSettings /> Configurações
+              </NavLink>
+            </li>
+          </ul>
+        </div>
+
+        <ul className="logout-section">
           <li className="logout">
             <FiLogOut /> Sair
           </li>
