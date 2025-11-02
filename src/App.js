@@ -13,7 +13,7 @@ import "./App.css";
 
 function App() {
   return (
-    <Router>
+    <Router basename="/prjBiblioteca">
       <div className="app">
         <Sidebar />
         <div className="main-content">
