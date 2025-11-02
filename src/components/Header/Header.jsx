@@ -1,9 +1,20 @@
 import React from "react";
 import "./Header.css";
 import { Bell, LogOut, User } from "lucide-react";
+<<<<<<< HEAD
 
 function Header() {
   return (
+=======
+import {} from "react-router-dom";
+import {useAuth} from '../../contexts/AuthContext';
+
+function Header() {
+   const {user, logout} = useAuth();
+  return (
+   
+
+>>>>>>> 2ca1edd (adição do backend)
     <header className="header">
       <div className="header-left">
         <div className="header-logo">
@@ -27,7 +38,14 @@ function Header() {
             <p className="user-name">Sistema</p>
           </div>
         </div>
+<<<<<<< HEAD
         <button className="logout-btn">
+=======
+        <button className="logout-btn"  onClick={() => {
+            if (window.confirm("Deseja realmente sair?")) logout();
+          }}
+        >
+>>>>>>> 2ca1edd (adição do backend)
           <LogOut size={18} />
           Sair
         </button>
