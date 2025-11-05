@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { setToken } from "../utils/auth";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -11,6 +12,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Esconde Header e Sidebar enquanto estiver na tela de login
   useEffect(() => {
     const header = document.querySelector("header");
     const sidebar = document.querySelector(".sidebar");
@@ -23,11 +25,11 @@ export default function Login() {
   }, []);
 
   const validate = () => {
-    if (!email.trim()) return "Email is required.";
+    if (!email.trim()) return "O email é obrigatório.";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return "Enter a valid email address.";
-    if (!password) return "Password is required.";
-    if (password.length < 6) return "Password must be at least 6 characters.";
+    if (!emailRegex.test(email)) return "Digite um email válido.";
+    if (!password) return "A senha é obrigatória.";
+    if (password.length < 6) return "A senha deve ter pelo menos 6 caracteres.";
     return "";
   };
 
@@ -43,28 +45,15 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const res = await fetch("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: email, password }),
-      });
+      const result = await login({ email, senha: password });
 
-      let data = {};
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Invalid server response");
+      if (!result.ok) {
+        setError(result.message || "Erro ao fazer login.");
+        return;
       }
 
-      if (!res.ok) throw new Error(data.message || "Login failed");
-
-      if (data.token && data.user) {
-        setToken(data.token, data.user, remember);
-      }
-
-      navigate("/biblioteca");
-    } catch (err) {
-      setError(err.message || "Unexpected error");
+      // Lembre-me
+      if (remember) localStorage.setItem("remember", "true");
     } finally {
       setLoading(false);
     }
@@ -81,12 +70,13 @@ export default function Login() {
         fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
       }}
     >
-      <h2 style={{ margin: 0, marginBottom: 6 }}>Sign in</h2>
+      <h2 style={{ margin: 0, marginBottom: 6 }}>Entrar</h2>
       <p style={{ marginTop: 0, marginBottom: 18, color: "#6b7280" }}>
-        Enter your credentials to access your account.
+        Acesse sua conta para continuar.
       </p>
 
       <form onSubmit={handleSubmit} noValidate>
+        {/* Email */}
         <div style={{ marginBottom: 12 }}>
           <label htmlFor="email" style={{ fontSize: 13, color: "#111827" }}>
             Email
@@ -105,15 +95,16 @@ export default function Login() {
               fontSize: 14,
               boxSizing: "border-box",
             }}
-            placeholder="you@example.com"
+            placeholder="seuemail@exemplo.com"
             required
             autoComplete="email"
           />
         </div>
 
+        {/* Senha */}
         <div style={{ marginBottom: 12 }}>
           <label htmlFor="password" style={{ fontSize: 13, color: "#111827" }}>
-            Password
+            Senha
           </label>
           <div style={{ position: "relative" }}>
             <input
@@ -131,7 +122,7 @@ export default function Login() {
                 fontSize: 14,
                 boxSizing: "border-box",
               }}
-              placeholder="Your password"
+              placeholder="Sua senha"
               required
               autoComplete="current-password"
             />
@@ -150,11 +141,12 @@ export default function Login() {
                 fontSize: 12,
               }}
             >
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? "Ocultar" : "Mostrar"}
             </button>
           </div>
         </div>
 
+        {/* Opções */}
         <div
           style={{
             display: "flex",
@@ -169,25 +161,20 @@ export default function Login() {
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
             />
-            <span style={{ fontSize: 13, color: "#374151" }}>Remember me</span>
+            <span style={{ fontSize: 13, color: "#374151" }}>
+              Lembrar de mim
+            </span>
           </label>
-          <a
-            href="/forgot-password"
-            style={{ fontSize: 13, color: "#2563eb", textDecoration: "none" }}
-          >
-            Forgot password?
-          </a>
         </div>
 
+        {/* Erro */}
         {error && (
-          <div
-            role="alert"
-            style={{ marginTop: 12, color: "#b91c1c", fontSize: 13 }}
-          >
+          <div style={{ marginTop: 12, color: "#b91c1c", fontSize: 13 }}>
             {error}
           </div>
         )}
 
+        {/* Botão Login */}
         <button
           type="submit"
           style={{
@@ -203,10 +190,11 @@ export default function Login() {
           }}
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
 
+      {/* Botão Criar conta */}
       <button
         type="button"
         onClick={() => navigate("/signup")}
@@ -222,7 +210,7 @@ export default function Login() {
           marginTop: 12,
         }}
       >
-        Create Account
+        Criar Conta
       </button>
     </main>
   );
