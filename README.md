@@ -1,8 +1,6 @@
-
-````
 # Full Stack Project
 
-This project is a full stack application with a React frontend and a Python/FastAPI backend applied in a school library system, Follow the instructions below to set up and run both parts of the project.
+This project is a full stack application with a React frontend and a Python/FastAPI backend applied in a school library system. Follow the instructions below to set up and run both parts of the project.
 
 ---
 
@@ -26,72 +24,68 @@ cd .\src\
 
 # Navigate to the backend folder
 cd .\backend\
-````
 
-### 2. Install Dependencies
+2. Install Dependencies
 
-```bash
 pip install -r requirements.txt
-```
 
 This will install all required Python packages.
+3. Create and Activate a Virtual Environment
 
-### 3. Run the Backend Server
+Inside the backend folder, create a virtual environment and activate it:
+
+# Create a virtual environment named 'venv'
+python -m venv venv
+
+# Activate the virtual environment (Windows)
+.\venv\Scripts\activate
+
+    This ensures your backend dependencies are isolated from your global Python environment.
+
+4. Run the Backend Server
 
 Before starting the frontend, you need to start the backend server:
 
-```bash
 uvicorn Register:app --reload --port 5000
-```
 
-* This runs the backend on port `5000` using **Uvicorn** in reload mode.
-* The reload mode automatically applies changes when you modify the code.
-* Make sure this server is running **before running the frontend**.
+    This runs the backend on port 5000 using Uvicorn in reload mode.
 
----
+    The reload mode automatically applies changes when you modify the code.
 
-## Frontend Setup (React)
+    Make sure this server is running before running the frontend.
 
-### 1. Navigate to the Frontend Folder
+Frontend Setup (React)
+1. Navigate to the Frontend Folder
 
-```bash
 cd ..\frontend\   # Adjust this path if your frontend folder is elsewhere
-```
 
-### 2. Install Dependencies
+2. Install Dependencies
 
-```bash
 npm install
-```
 
-### 3. Run the Frontend
+3. Run the Frontend
 
-```bash
 npm start
-```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the app. The page will reload automatically when you make changes.
+Open http://localhost:3000
 
----
+in your browser to view the app. The page will reload automatically when you make changes.
+Learn More
 
-## Learn More
+    Python dependency management: https://pip.pypa.io/en/stable/
 
-* Python dependency management: [https://pip.pypa.io/en/stable/](https://pip.pypa.io/en/stable/)
-* Backend development with FastAPI: [https://fastapi.tiangolo.com/](https://fastapi.tiangolo.com/)
-* Frontend development with React: [https://reactjs.org/](https://reactjs.org/)
-* Running Uvicorn server: [https://www.uvicorn.org/](https://www.uvicorn.org/)
+Backend development with FastAPI: https://fastapi.tiangolo.com/
 
----
+Frontend development with React: https://reactjs.org/
 
-## Notes
+Running Uvicorn server: https://www.uvicorn.org/
+Notes
 
-* Always start the backend first with Uvicorn before running `npm start` for the frontend.
-* Use reload mode (`--reload`) during development for automatic updates.
-* Make sure ports `5000` (backend) and `3000` (frontend) are free.
+    Always start the backend first with Uvicorn before running npm start for the frontend.
 
----
+    Use reload mode (--reload) during development for automatic updates.
 
+    Make sure ports 5000 (backend) and 3000 (frontend) are free.
 
-## project over view
-<img width="1789" height="914" alt="image" src="https://github.com/user-attachments/assets/4f1ffaa6-08b4-4a0c-9284-1cba13da3b5a" />
----
+Project Overview
+<img width="1789" height="914" alt="image" src="https://github.com/user-attachments/assets/4f1ffaa6-08b4-4a0c-9284-1cba13da3b5a" /> ```
