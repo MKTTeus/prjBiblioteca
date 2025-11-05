@@ -1,240 +1,93 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { setToken } from "../utils/auth";
+import "../styles/Signup.css";
 
 export default function Signup() {
+  const { signup } = useAuth();
   const navigate = useNavigate();
+
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Oculta header e sidebar
-  useEffect(() => {
-    const header = document.querySelector("header");
-    const sidebar = document.querySelector(".sidebar");
-    if (header) header.style.display = "none";
-    if (sidebar) sidebar.style.display = "none";
-    return () => {
-      if (header) header.style.display = "";
-      if (sidebar) sidebar.style.display = "";
-    };
-  }, []);
-
-  const validate = () => {
-    if (!email.trim()) return "Email is required.";
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return "Enter a valid email address.";
-    if (!password) return "Password is required.";
-    if (password.length < 6) return "Password must be at least 6 characters.";
-    if (password !== confirmPassword) return "Passwords do not match.";
-    return "";
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+    const result = await signup({ nome, email, senha });
+
+    if (!result.ok) {
+      setError(result.message);
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch("/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: email, password }),
-      });
-
-      let data = {};
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("Invalid server response");
-      }
-
-      if (!res.ok) throw new Error(data.message || "Signup failed");
-
-      // Salva token e usuário
-      if (data.token && data.user) {
-        setToken(data.token, data.user, true);
-      }
-
-      navigate("/biblioteca"); // Redireciona para a biblioteca após criar conta
-    } catch (err) {
-      setError(err.message || "Unexpected error");
-    } finally {
-      setLoading(false);
-    }
+    alert(result.message);
+    navigate("/login");
+    setLoading(false);
   };
 
   return (
-    <main
-      style={{
-        maxWidth: 420,
-        margin: "48px auto",
-        padding: 24,
-        borderRadius: 8,
-        boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-        fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
-      }}
-    >
-      <h2 style={{ margin: 0, marginBottom: 6 }}>Create Account</h2>
-      <p style={{ marginTop: 0, marginBottom: 18, color: "#6b7280" }}>
-        Enter your details to create a new account.
-      </p>
+    <div className="signup-container">
+      <h2>Criar Conta</h2>
+      <form className="signup-form" onSubmit={handleSignup}>
+        <label>Nome</label>
+        <input
+          type="text"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Digite seu nome"
+          required
+        />
 
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Email */}
-        <div style={{ marginBottom: 12 }}>
-          <label htmlFor="email" style={{ fontSize: 13, color: "#111827" }}>
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 6,
-              border: "1px solid #d0d7de",
-              marginTop: 6,
-              fontSize: 14,
-              boxSizing: "border-box",
-            }}
-            placeholder="you@example.com"
-            required
-            autoComplete="email"
-          />
-        </div>
+        <label>Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Digite seu email"
+          required
+        />
 
-        {/* Password */}
-        <div style={{ marginBottom: 12 }}>
-          <label htmlFor="password" style={{ fontSize: 13, color: "#111827" }}>
-            Password
-          </label>
-          <div style={{ position: "relative" }}>
-            <input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                paddingRight: 90,
-                borderRadius: 6,
-                border: "1px solid #d0d7de",
-                marginTop: 6,
-                fontSize: 14,
-                boxSizing: "border-box",
-              }}
-              placeholder="Enter password"
-              required
-              autoComplete="new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              style={{
-                position: "absolute",
-                right: 8,
-                top: 8,
-                padding: "6px 8px",
-                borderRadius: 6,
-                border: "1px solid #e5e7eb",
-                background: "white",
-                cursor: "pointer",
-                fontSize: 12,
-              }}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
-        </div>
+        <label>Senha</label>
+        <input
+          type="password"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          placeholder="Digite sua senha"
+          required
+        />
 
-        {/* Confirm Password */}
-        <div style={{ marginBottom: 12 }}>
-          <label
-            htmlFor="confirmPassword"
-            style={{ fontSize: 13, color: "#111827" }}
-          >
-            Confirm Password
-          </label>
-          <input
-            id="confirmPassword"
-            type={showPassword ? "text" : "password"}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 6,
-              border: "1px solid #d0d7de",
-              marginTop: 6,
-              fontSize: 14,
-              boxSizing: "border-box",
-            }}
-            placeholder="Confirm password"
-            required
-            autoComplete="new-password"
-          />
-        </div>
+        {error && <div className="error">{error}</div>}
 
-        {error && (
-          <div
-            role="alert"
-            style={{ marginTop: 12, color: "#b91c1c", fontSize: 13 }}
-          >
-            {error}
-          </div>
-        )}
-
-        {/* Submit */}
-        <button
-          type="submit"
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 6,
-            border: "none",
-            background: "#2563eb",
-            color: "white",
-            fontWeight: 600,
-            cursor: "pointer",
-            marginTop: 12,
-          }}
-          disabled={loading}
-        >
-          {loading ? "Creating account..." : "Sign Up"}
-        </button>
-
-        {/* Redirect to Login */}
-        <button
-          type="button"
-          onClick={() => navigate("/login")}
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 6,
-            border: "1px solid #2563eb",
-            background: "white",
-            color: "#2563eb",
-            fontWeight: 600,
-            cursor: "pointer",
-            marginTop: 12,
-          }}
-        >
-          Already have an account? Login
+        <button type="submit" disabled={loading}>
+          {loading ? "Criando..." : "Registrar"}
         </button>
       </form>
-    </main>
+
+      {/* Botão para ir ao login */}
+      <button
+        className="login-redirect-btn"
+        onClick={() => navigate("/login")}
+        style={{
+          marginTop: "1rem",
+          width: "100%",
+          padding: "10px",
+          borderRadius: "8px",
+          border: "1px solid #007bff",
+          background: "white",
+          color: "#007bff",
+          fontWeight: 600,
+          cursor: "pointer",
+          transition: "background 0.2s",
+        }}
+      >
+        Já possui conta? Faça login
+      </button>
+    </div>
   );
 }

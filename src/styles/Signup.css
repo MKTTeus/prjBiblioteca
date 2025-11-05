@@ -1,0 +1,94 @@
+.signup-container {
+  width: 380px;
+  margin: 120px auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.signup-container h2 {
+  margin-bottom: 1.5rem;
+  color: #222;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.signup-form label {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.signup-form input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.signup-form input:focus {
+  border-color: #007bff;
+}
+
+.signup-form button {
+  margin-top: 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.signup-form button:hover {
+  background: #0056b3;
+}
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.signup-footer {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.signup-footer a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signup-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Novo estilo para o botão de redirecionamento ao login */
+.login-redirect-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #007bff;
+  background: white;
+  color: #007bff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-redirect-btn:hover {
+  background: #007bff;
+  color: white;
+}
