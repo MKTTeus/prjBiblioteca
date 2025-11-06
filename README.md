@@ -88,4 +88,5 @@ Notes
     Make sure ports 5000 (backend) and 3000 (frontend) are free.
 
 Project Overview
-<img width="1789" height="914" alt="image" src="https://github.com/user-attachments/assets/4f1ffaa6-08b4-4a0c-9284-1cba13da3b5a" /> ```
+```
+<img width="1789" height="914" alt="image" src="https://github.com/user-attachments/assets/4f1ffaa6-08b4-4a0c-9284-1cba13da3b5a" /> 
