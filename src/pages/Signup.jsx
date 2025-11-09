@@ -10,15 +10,39 @@ export default function Signup() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [telefone, setPhone] = useState("");
+  const [telefoneR, setPhoneR] = useState("");
+  const [endereco, setEndereco] = useState("");
+  const [ra, setRA] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+
+   const validate = () => {
+    if (!email.trim()) return "O email é obrigatório.";
+    if (!nome.trim()) return "O nome é obrigatório.";
+    if (!endereco.trim()) return "O endereco é obrigatório.";
+    if (!ra.trim()) return "O RA é obrigatório.";
+    if (!telefone.trim()) return "O telefone é obrigatório.";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Digite um email válido.";
+    if (!senha) return "A senha é obrigatória.";
+    if (senha.length < 6) return "A senha deve ter pelo menos 6 caracteres.";
+    return "";
+  };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const result = await signup({ nome, email, senha });
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    const result = await signup({ nome, email, senha,telefone,endereco,ra });
 
     if (!result.ok) {
       setError(result.message);
@@ -61,6 +85,44 @@ export default function Signup() {
           placeholder="Digite sua senha"
           required
         />
+           <label>Telefone</label>
+        <input
+          type="number"
+          min="1"
+          max="99999999999"
+          value={telefone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Digite seu Telefone"
+          required
+        />
+
+         <label>Telefone Responsavel</label> /*  (opcional) */
+        <input
+          type="tel"
+          value={telefoneR}
+           min="1"
+           max="11"
+          onChange={(e) => setPhoneR(e.target.value)}
+          placeholder="Digite o telefone de seu responsavel"
+        />
+         <label>endereco</label>
+        <input
+          type="text"
+          value={endereco}
+          onChange={(e) => setEndereco(e.target.value)}
+          placeholder="Digite seu endereço"
+          required
+        />
+         <label>ra</label>
+        <input
+          type="text"
+          value={ra}
+          onChange={(e) => setRA(e.target.value)}
+          placeholder="Digite seu RA"
+          required
+        />
+
+
 
         {error && <div className="error">{error}</div>}
 
