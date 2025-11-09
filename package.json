@@ -4,14 +4,18 @@
   "private": true,
   "homepage": "https://MKTTeus.github.io/prjBiblioteca",
   "dependencies": {
+    "@react-input/mask": "^2.0.4",
+    "@supabase/supabase-js": "^2.80.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
+    "https-proxy-agent": "^7.0.6",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-icons": "^5.5.0",
+    "react-imask": "^7.6.1",
     "react-router-dom": "^7.9.4",
     "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"

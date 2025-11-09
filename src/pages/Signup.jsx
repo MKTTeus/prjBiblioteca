@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { IMaskInput } from "react-imask";
 import "../styles/Signup.css";
 
 export default function Signup() {
@@ -17,13 +18,13 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-
-   const validate = () => {
+  const validate = () => {
     if (!email.trim()) return "O email é obrigatório.";
     if (!nome.trim()) return "O nome é obrigatório.";
-    if (!endereco.trim()) return "O endereco é obrigatório.";
+    if (!endereco.trim()) return "O endereço é obrigatório.";
     if (!ra.trim()) return "O RA é obrigatório.";
     if (!telefone.trim()) return "O telefone é obrigatório.";
+    if (telefone.length < 11) return "O telefone deve conter 11 números.";
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return "Digite um email válido.";
     if (!senha) return "A senha é obrigatória.";
@@ -39,10 +40,19 @@ export default function Signup() {
     const validationError = validate();
     if (validationError) {
       setError(validationError);
+      setLoading(false);
       return;
     }
 
-    const result = await signup({ nome, email, senha,telefone,endereco,ra });
+    const result = await signup({
+      nome,
+      email,
+      senha,
+      telefone,
+      telefoneResponsavel: telefoneR || null,
+      endereco,
+      ra,
+    });
 
     if (!result.ok) {
       setError(result.message);
@@ -58,6 +68,7 @@ export default function Signup() {
   return (
     <div className="signup-container">
       <h2>Criar Conta</h2>
+
       <form className="signup-form" onSubmit={handleSignup}>
         <label>Nome</label>
         <input
@@ -85,27 +96,27 @@ export default function Signup() {
           placeholder="Digite sua senha"
           required
         />
-           <label>Telefone</label>
-        <input
-          type="number"
-          min="1"
-          max="99999999999"
+
+        <label>Telefone</label>
+        <IMaskInput
+          mask="(00) 00000-0000"
           value={telefone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Digite seu Telefone"
+          onAccept={(value) => setPhone(value.replace(/\D/g, ""))}
+          placeholder="(11) 98765-4321"
           required
+          type="tel"
         />
 
-         <label>Telefone Responsavel</label> /*  (opcional) */
-        <input
-          type="tel"
+        <label>Telefone Responsável (opcional)</label>
+        <IMaskInput
+          mask="(00) 00000-0000"
           value={telefoneR}
-           min="1"
-           max="11"
-          onChange={(e) => setPhoneR(e.target.value)}
-          placeholder="Digite o telefone de seu responsavel"
+          onAccept={(value) => setPhoneR(value.replace(/\D/g, ""))}
+          placeholder="(11) 91234-5678"
+          type="tel"
         />
-         <label>endereco</label>
+
+        <label>Endereço</label>
         <input
           type="text"
           value={endereco}
@@ -113,7 +124,8 @@ export default function Signup() {
           placeholder="Digite seu endereço"
           required
         />
-         <label>ra</label>
+
+        <label>RA</label>
         <input
           type="text"
           value={ra}
@@ -122,8 +134,6 @@ export default function Signup() {
           required
         />
 
-
-
         {error && <div className="error">{error}</div>}
 
         <button type="submit" disabled={loading}>
@@ -131,7 +141,6 @@ export default function Signup() {
         </button>
       </form>
 
-      {/* Botão para ir ao login */}
       <button
         className="login-redirect-btn"
         onClick={() => navigate("/login")}
