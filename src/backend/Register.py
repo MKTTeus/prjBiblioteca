@@ -9,7 +9,7 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from supabase import create_client, Client
 
-# 🔹 CONFIGURAÇÕES INICIAIS
+# CONFIGURAÇÕES INICIAIS
 dotenv_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=dotenv_path)
 
@@ -29,7 +29,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
 
-# 🔹 CORS — permite conexão com React
+#  CORS — permite conexão com React
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -38,11 +38,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🔹 MODELOS
+#  MODELOS
 class SignupData(BaseModel):
     nome: str
     email: str
     senha: str
+    telefone: str
+    telefoneResponsavel: str | None = None
+    endereco: str
+    ra: str
 
 class LoginData(BaseModel):
     email: str
@@ -51,56 +55,84 @@ class LoginData(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    nome: str
+    tipo: str
 
-# 🔹 FUNÇÕES AUXILIARES
+
+#  FUNÇÕES AUXILIARES
+#CRIPTOGRAFA A SENHA
 def hash_password(password: str) -> str:
-    # Trunca para 72 bytes e faz hash
     return pwd_context.hash(password.encode('utf-8')[:72])
+#VERIFICA SENHA HASHED
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password.encode('utf-8')[:72], hashed_password)
-
+#CRIA E VALIDA TOKEN JWT
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# signup endpoint
+#  ENDPOINT DE CADASTRO
 @app.post("/signup")
 async def signup(form_data: SignupData):
-    # Verifica se email já existe
-    existing = supabase.table("Administrador").select("*").eq("admEmail", form_data.email).execute()
+    existing = supabase.table("Aluno").select("*").eq("aluEmail", form_data.email).execute()
     if existing.data:
         raise HTTPException(status_code=400, detail="Este email já está cadastrado")
 
     hashed_password = hash_password(form_data.senha)
-
-    # Insere novo admin
-    response = supabase.table("Administrador").insert({
-        "admNome": form_data.nome,      # agora envia o nome
-        "admEmail": form_data.email,
-        "admSenha": hashed_password
+# INSERE OS VALORES NA  TABELA
+    response = supabase.table("Aluno").insert({
+        "aluNome": form_data.nome,
+        "aluEmail": form_data.email,
+        "aluSenha": hashed_password,
+        "aluTelefone": form_data.telefone,
+        "aluTelefoneResponsavel": form_data.telefoneResponsavel,
+        "aluEndereco": form_data.endereco,
+        "aluRA": form_data.ra,
+        "idAdmin": 1
     }).execute()
 
     if not response.data:
         raise HTTPException(status_code=500, detail="Erro ao criar usuário")
 
-    return {"message": "Administrador criado com sucesso!"}
+    return {"message": "Aluno criado com sucesso!"}
 
 
-# 🔹 ENDPOINT DE LOGIN
+#  ENDPOINT DE LOGIN
 @app.post("/login", response_model=Token)
 async def login(form_data: LoginData):
-    response = supabase.table("Administrador").select("*").eq("admEmail", form_data.email).execute()
-    if not response.data:
-        raise HTTPException(status_code=400, detail="Email ou senha incorretos")
+    # tenta achar como aluno
+    aluno_resp = supabase.table("Aluno").select("*").eq("aluEmail", form_data.email).execute()
 
-    admin = response.data[0]
-    senha_cadastrada = admin["admSenha"]
+    if aluno_resp.data:
+        aluno = aluno_resp.data[0]
+        if not verify_password(form_data.senha, aluno["aluSenha"]):
+            raise HTTPException(status_code=400, detail="Email ou senha incorretos")
 
-    if not verify_password(form_data.senha, senha_cadastrada):
-        raise HTTPException(status_code=400, detail="Email ou senha incorretos")
+        access_token = create_access_token(data={"sub": aluno["aluEmail"], "tipo": "aluno"})
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "nome": aluno["aluNome"],
+            "tipo": "aluno"
+        }
 
-    access_token = create_access_token(data={"sub": admin["admEmail"]})
-    return {"access_token": access_token, "token_type": "bearer"}
+    # tenta achar como admin
+    admin_resp = supabase.table("Administrador").select("*").eq("admEmail", form_data.email).execute()
+    if admin_resp.data:
+        admin = admin_resp.data[0]
+        if not verify_password(form_data.senha, admin["admSenha"]):
+            raise HTTPException(status_code=400, detail="Email ou senha incorretos")
+
+        access_token = create_access_token(data={"sub": admin["admEmail"], "tipo": "admin"})
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "tipo": "admin",
+            "nome": admin["admNome"]
+        }
+
+    # se não encontrou nem aluno nem admin
+    raise HTTPException(status_code=400, detail="Email ou senha incorretos")

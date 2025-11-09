@@ -1,4 +1,4 @@
-
+// AuthContext.jsx
 import React, { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -7,15 +7,14 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
-  //  Carrega usuário do localStorage (mantém login após F5)
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem("user");
     return raw ? JSON.parse(raw) : null;
   });
 
-  const API_URL = "http://localhost:5000"; // ajuste conforme sua API
+  const API_URL = "http://localhost:5000";
 
-  //  LOGIN
+  // LOGIN (Aluno ou Admin)
   const login = async ({ email, senha }) => {
     try {
       const response = await fetch(`${API_URL}/login`, {
@@ -30,19 +29,34 @@ export function AuthProvider({ children }) {
         throw new Error(data.detail || "Erro ao fazer login");
       }
 
+      //  Salva token, nome e tipo (admin/aluno)
+      const newUser = {
+         email,
+         nome: data.nome,
+        tipo: data.tipo, // "aluno" ou "admin"
+        };
       localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify({ email }));
-      setUser({ email });
+      localStorage.setItem("user", JSON.stringify(newUser));
+      setUser(newUser);
 
-      navigate("/", { replace: true });
-      return { ok: true };
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(newUser));
+      setUser(newUser);
+
+      //  Redireciona conforme o tipo
+      if (data.tipo === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
+
+      return { ok: true, message: "Login realizado com sucesso!" };
     } catch (error) {
       console.error("Erro no login:", error);
       return { ok: false, message: error.message };
     }
   };
 
-  //  LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -50,33 +64,23 @@ export function AuthProvider({ children }) {
     navigate("/login", { replace: true });
   };
 
-  //  SIGNUP
-const signup = async ({ nome, email, senha }) => {
-  try {
-    const response = await fetch(`${API_URL}/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nome, email, senha }),
-    });
+  const signup = async (form) => {
+    try {
+      const response = await fetch(`${API_URL}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Erro ao criar conta.");
 
-    if (!response.ok) {
-      const message = data.detail
-        ? data.detail
-        : typeof data === "object"
-        ? JSON.stringify(data)
-        : data;
-      throw new Error(message || "Erro ao criar conta");
+      return { ok: true, message: data.message || "Conta criada com sucesso!" };
+    } catch (error) {
+      console.error("Erro no signup:", error);
+      return { ok: false, message: error.message };
     }
-
-    return { ok: true, message: "Conta criada com sucesso!" };
-  } catch (error) {
-    console.error("Erro no cadastro:", error);
-    return { ok: false, message: error.message };
-  }
-};
-
+  };
 
   return (
     <AuthContext.Provider
@@ -86,6 +90,7 @@ const signup = async ({ nome, email, senha }) => {
         logout,
         signup,
         isAuthenticated: !!user,
+        isAdmin: user?.tipo === "admin",
       }}
     >
       {children}
@@ -93,5 +98,4 @@ const signup = async ({ nome, email, senha }) => {
   );
 }
 
-//  Hook para acessar o contexto
 export const useAuth = () => useContext(AuthContext);
