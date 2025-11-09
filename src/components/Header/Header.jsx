@@ -1,33 +1,48 @@
 import React from "react";
 import "./Header.css";
-import { Bell, LogOut, User } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 function Header() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout(); // limpa o usuário do contexto
-    navigate("/login"); // redireciona para a tela de login
+    logout();
+    navigate("/login");
   };
 
   return (
     <header className="header">
       <div className="header-left">
-        <h1>Biblioteca</h1>
+        <div className="header-logo">
+          <div className="header-icon">📚</div>
+          <h1 className="header-title">Biblioteca</h1>
+        </div>
+      </div>
+
+      {/* 🔹 Mensagem central com nome e tipo */}
+      <div className="header-center">
+        {user && (
+          <p className="welcome-text">
+            👋 Bem-vindo,{" "}
+            <span className="highlight">
+              {user.nome ? user.nome : "Usuário"}{" "}
+              ({user.tipo === "admin" ? "Administrador" : "Aluno"})
+            </span>
+          </p>
+        )}
       </div>
 
       <div className="header-right">
-        <button className="icon-btn">
+        <div className="notification">
           <Bell size={20} />
-        </button>
-        <button className="icon-btn">
-          <User size={20} />
-        </button>
-        <button className="icon-btn" onClick={handleLogout}>
-          <LogOut size={20} />
+          <span className="badge">3</span>
+        </div>
+        <button className="logout-btn" onClick={handleLogout}>
+          <LogOut size={16} />
+          Sair
         </button>
       </div>
     </header>

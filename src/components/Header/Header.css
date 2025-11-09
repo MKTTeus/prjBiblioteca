@@ -118,3 +118,20 @@
   background-color: #ef4444;
   color: white;
 }
+/* Área central com mensagem */
+.header-center {
+  flex: 1;
+  text-align: center;
+}
+
+.welcome-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #111827;
+  font-weight: 500;
+}
+
+.highlight {
+  color: #2563eb;
+  font-weight: 600;
+}
