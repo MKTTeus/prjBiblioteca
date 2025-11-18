@@ -12,27 +12,27 @@ import Signup from "./pages/Signup";
 function App() {
   const location = useLocation();
 
-  // Define em quais páginas NÃO deve aparecer Header e Sidebar
   const hideLayout =
     location.pathname === "/login" || location.pathname === "/signup";
 
-  return (
-    <div className="app">
-      {!hideLayout && <Header />}
-      {!hideLayout && <Sidebar />}
+return (
+  <div className="app-container">
 
-      <div className="content">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/biblioteca" element={<Biblioteca />} />
-          <Route path="/livros" element={<Livros />} />
-          <Route path="/alunos" element={<Alunos />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-        </Routes>
-      </div>
+    {!hideLayout && <Sidebar />}
+    {!hideLayout && <Header />}
+
+    <div className={`main-content ${hideLayout ? "full" : ""}`}>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/biblioteca" element={<Biblioteca />} />
+        <Route path="/livros" element={<Livros />} />
+        <Route path="/alunos" element={<Alunos />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
     </div>
-  );
+  </div>
+);
 }
 
 export default App;

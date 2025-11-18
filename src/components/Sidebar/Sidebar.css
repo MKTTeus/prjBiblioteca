@@ -1,6 +1,9 @@
 .sidebar {
   width: 200px;
-  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 60px;
+  height: calc(100vh - 60px);
   background-color: #f9fafb;
   border-right: 1px solid #e5e7eb;
   padding: 1.1rem;
@@ -9,10 +12,9 @@
   justify-content: space-between;
   font-family: "Inter", sans-serif;
   box-sizing: border-box;
-  position: fixed;
-  top: 0;
-  left: 0;
+  z-index: 10;
 }
+
 
 .sidebar-logo {
   font-size: 1.1rem;

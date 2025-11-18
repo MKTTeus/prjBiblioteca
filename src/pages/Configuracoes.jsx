@@ -1,5 +1,5 @@
 import React from "react";
-
+import "../styles/Configuracoes.css";
 function Configuracoes() {
   return (
     <div>

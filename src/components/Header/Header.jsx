@@ -22,7 +22,6 @@ function Header() {
         </div>
       </div>
 
-      {/* 🔹 Mensagem central com nome e tipo */}
       <div className="header-center">
         {user && (
           <p className="welcome-text">

@@ -1,5 +1,5 @@
 import React from "react";
-
+import "../styles/Biblioteca.css";
 function Biblioteca() {
   return (
     <div>
