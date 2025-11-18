@@ -10,8 +10,18 @@ import {
   FiLogOut,
 } from "react-icons/fi";
 import "./Sidebar.css";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function Sidebar() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();          // apaga sessão
+    navigate("/login"); // redireciona
+  };
+
   return (
     <aside className="sidebar">
       <div>
@@ -83,7 +93,7 @@ function Sidebar() {
         </div>
 
         <ul className="logout-section">
-          <li className="logout">
+          <li className="logout" onClick={handleLogout}>
             <FiLogOut /> Sair
           </li>
         </ul>

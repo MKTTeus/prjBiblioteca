@@ -1,6 +1,6 @@
 // src/pages/Emprestimos.jsx
 import React from "react";
-
+import "../styles/Emprestimos.css";
 function Emprestimos() {
   return (
     <div>
