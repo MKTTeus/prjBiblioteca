@@ -46,7 +46,7 @@ python -m venv venv
 
 Before starting the frontend, you need to start the backend server:
 
-uvicorn Register:app --reload --port 5000
+uvicorn main:app --reload --port 5000
 
     This runs the backend on port 5000 using Uvicorn in reload mode.
 
