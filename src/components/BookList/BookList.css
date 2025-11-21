@@ -1,0 +1,64 @@
+.booklist-container {
+  padding: 20px;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  background:#fff;
+  border-radius:10px;
+  padding:15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  display:flex; flex-direction:column; align-items:center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.book-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.book-card img {
+  width:120px;
+  height:160px;
+  object-fit:cover;
+  border-radius:6px;
+  margin-bottom:10px;
+}
+
+.book-card h3 {
+  font-size:1rem;
+  margin:5px 0;
+  text-align:center;
+}
+
+.book-card p {
+  font-size:0.85rem;
+  margin:2px 0;
+  text-align:center;
+}
+
+.card-actions {
+  margin-top:10px;
+  display:flex;
+  gap:8px;
+}
+
+.btn-edit, .btn-delete {
+  flex:1;
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-size:0.85rem;
+  transition:0.2s;
+}
+
+.btn-edit { background:#4a87ff; color:#fff; }
+.btn-edit:hover { background:#3a6fe0; }
+
+.btn-delete { background:#ff4a4a; color:#fff; }
+.btn-delete:hover { background:#e03a3a; }

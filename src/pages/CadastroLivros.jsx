@@ -1,127 +1,93 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { getBooks, deleteBook } from "../services/api";
 import BookList from "../components/BookList/BookList";
 import BookFormModal from "../components/BookForm/BookFormModal";
-import "../styles/cadastroLivros.css";
-import { FiBook, FiPlus } from "react-icons/fi";
+import { useAuth } from "../contexts/AuthContext";
 
-function CadastroLivros() {
-  const [books, setBooks] = useState([
-    {
-      titulo: "Dom Casmurro",
-      autor: "Machado de Assis",
-      tombo: "TOM001",
-      categoria: "Literatura Brasileira",
-      genero: "Romance",
-      localizacao: "Estante A, Prateleira 2",
-      exemplares: "3/5",
-      status: "Disponível",
-    },
-    {
-      titulo: "O Cortiço",
-      autor: "Aluísio Azevedo",
-      tombo: "TOM002",
-      categoria: "Literatura Brasileira",
-      genero: "Realismo",
-      localizacao: "Estante A, Prateleira 3",
-      exemplares: "1/3",
-      status: "Disponível",
-    },
-  ]);
+export default function CadastroLivros() {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = user?.tipo === "admin";
 
-  // Estado do modal e livro sendo editado
-  const [showModal, setShowModal] = useState(false);
-  const [editingBook, setEditingBook] = useState(null); // índice do livro sendo editado
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentBook, setCurrentBook] = useState(null);
 
-  const totalLivros = books.length;
-
-  // 🔹 Abrir modal para cadastrar novo livro
-  const handleOpenNewBookModal = () => {
-    setEditingBook(null);
-    setShowModal(true);
-  };
-
-  // 🔹 Adicionar ou atualizar livro
-  const handleAddBook = (newBook) => {
-    if (editingBook !== null) {
-      // Modo edição → atualiza o livro existente
-      const updatedBooks = [...books];
-      updatedBooks[editingBook] = newBook;
-      setBooks(updatedBooks);
-      setEditingBook(null);
-    } else {
-      // Modo novo → adiciona o livro
-      setBooks([...books, newBook]);
-    }
-    setShowModal(false);
-  };
-
-  // 🔹 Excluir livro
-  const handleDeleteBook = (index) => {
-    if (window.confirm("Tem certeza que deseja excluir este livro?")) {
-      const updated = books.filter((_, i) => i !== index);
-      setBooks(updated);
+  // Carrega livros do backend
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      const data = await getBooks();
+      setBooks(data);
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível carregar os livros.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔹 Editar livro existente
-  const handleEditBook = (book, index) => {
-    setEditingBook(index);
-    setShowModal(true);
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  // Abrir modal para adicionar ou editar
+  const handleAdd = () => {
+    setCurrentBook(null);
+    setModalOpen(true);
+  };
+
+  const handleEdit = (book) => {
+    setCurrentBook(book);
+    setModalOpen(true);
+  };
+
+  // Excluir livro
+  const handleDelete = async (book) => {
+    if (!window.confirm(`Deseja excluir o livro "${book.livTitulo}"?`)) return;
+    try {
+      await deleteBook(book.idLivro);
+      fetchBooks();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao excluir livro.");
+    }
   };
 
   return (
-    <div className="cadastro-container">
-      <header className="cadastro-header">
-        <div className="header-left">
-          <h2>Cadastro de Livros</h2>
-          <p>Gerencie o acervo da biblioteca</p>
-        </div>
-        <button className="btn-novo-livro" onClick={handleOpenNewBookModal}>
-          <FiPlus size={18} />
-          Novo Livro
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-2xl font-bold mb-4">Lista de Livros</h1>
+
+      {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
+
+      {isAdmin && (
+        <button
+          onClick={handleAdd}
+          className="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Adicionar Livro
         </button>
-      </header>
+      )}
 
-      <div className="search-and-total">
-        <input
-          type="text"
-          className="input-search"
-          placeholder="Buscar por título, autor, ISBN, categoria, gênero ou tombo..."
-        />
-        <div className="total-card">
-          <FiBook size={28} />
-          <div>
-            <h3>{totalLivros}</h3>
-            <p>Total de Livros</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="list-container">
+      {loading ? (
+        <div>Carregando...</div>
+      ) : (
         <BookList
           books={books}
-          onDeleteBook={handleDeleteBook}
-          onEditBook={handleEditBook}
-        />
-      </div>
-
-      {showModal && (
-        <BookFormModal
-          onClose={() => {
-            setShowModal(false);
-            setEditingBook(null);
-          }}
-          onAddBook={handleAddBook}
-          existingBook={editingBook !== null ? books[editingBook] : null}
+          onEditBook={handleEdit}
+          onDeleteBook={handleDelete}
+          isAdmin={isAdmin}
         />
       )}
 
-      <footer className="footer">
-        Sistema de Biblioteca - Escola 9 de Julho de Taquaritinga<br />
-        © 2024 - Todos os direitos reservados
-      </footer>
+      {modalOpen && (
+        <BookFormModal
+          bookToEdit={currentBook}
+          onClose={() => setModalOpen(false)}
+          onSaved={fetchBooks}
+        />
+      )}
     </div>
   );
 }
-
-export default CadastroLivros;

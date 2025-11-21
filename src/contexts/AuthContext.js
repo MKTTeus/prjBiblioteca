@@ -1,5 +1,4 @@
-// AuthContext.jsx
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const AuthContext = createContext();
@@ -7,16 +6,25 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem("user");
-    return raw ? JSON.parse(raw) : null;
-  });
+  const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   const API_URL = "http://localhost:5000";
 
-  // LOGIN (Aluno ou Admin)
-  const login = async ({ email, senha }) => {
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("token");
+
+    if (storedUser && storedToken) {
+      setUser(JSON.parse(storedUser));
+    }
+    setLoadingUser(false);
+  }, []);
+
+  const login = async ({ email, senha }, rememberMe = false) => {
     try {
+      if (!email || !senha) return { ok: false, message: "Preencha email e senha." };
+
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -25,32 +33,27 @@ export function AuthProvider({ children }) {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.detail || "Erro ao fazer login");
-      }
+      if (!response.ok) return { ok: false, message: data.detail || "Erro ao fazer login." };
+      if (!data.access_token) return { ok: false, message: "Token não recebido do servidor." };
 
-      //  Salva token, nome e tipo (admin/aluno)
       const newUser = {
-         email,
-         nome: data.nome,
-        tipo: data.tipo, // "aluno" ou "admin"
-        };
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("user", JSON.stringify(newUser));
+        nome: data.nome,
+        email: email,
+        tipo: data.tipo,
+        token: data.access_token,
+      };
+
       setUser(newUser);
-
-      localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(newUser));
-      setUser(newUser);
+      localStorage.setItem("token", data.access_token);
 
-      //  Redireciona conforme o tipo
-      if (data.tipo === "admin") {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+      if (rememberMe) localStorage.setItem("remember", "true");
+      else localStorage.removeItem("remember");
 
-      return { ok: true, message: "Login realizado com sucesso!" };
+      if (data.tipo === "admin") navigate("/admin", { replace: true });
+      else navigate("/", { replace: true });
+
+      return { ok: true };
     } catch (error) {
       console.error("Erro no login:", error);
       return { ok: false, message: error.message };
@@ -58,9 +61,10 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
     setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("remember");
     navigate("/login", { replace: true });
   };
 
@@ -71,30 +75,29 @@ export function AuthProvider({ children }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Erro ao criar conta.");
-
       return { ok: true, message: data.message || "Conta criada com sucesso!" };
     } catch (error) {
-      console.error("Erro no signup:", error);
       return { ok: false, message: error.message };
     }
   };
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-        signup,
-        isAuthenticated: !!user,
-        isAdmin: user?.tipo === "admin",
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  value={{
+    user,
+    login,
+    logout,
+    signup,
+    isAuthenticated: !!user,
+    isAdmin: user?.tipo === "admin", // <-- adicione esta linha
+    loadingUser,
+    getToken: () => user?.token || localStorage.getItem("token"),
+  }}
+>
+  {children}
+</AuthContext.Provider>
   );
 }
 

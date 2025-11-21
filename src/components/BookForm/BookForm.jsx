@@ -1,101 +1,85 @@
-import React, { useState } from "react";
-import "./BookForm.css";
+import React, { useEffect, useState } from "react";
+import { getBooks, deleteBook } from "../../services/api";
+import BookFormModal from "../BookForm/BookFormModal";
+import "./BookList.css";
 
-const BookForm = ({ onAddBook }) => {
-  const [form, setForm] = useState({
-    titulo: "",
-    autor: "",
-    tombo: "",
-    categoria: "",
-    genero: "",
-    localizacao: "",
-    exemplares: "",
-  });
+const BookList = () => {
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editBook, setEditBook] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+  const fetchBooks = async () => {
+    setLoading(true);
+    try {
+      const data = await getBooks();
+      setBooks(data || []);
+    } catch (err) {
+      alert("Erro ao carregar livros: " + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchBooks();
+  }, []);
 
-    if (Object.values(form).some((v) => v.trim() === "")) {
-      alert("Preencha todos os campos!");
-      return;
+  const handleDelete = async (id) => {
+    if (!window.confirm("Deseja realmente deletar este livro?")) return;
+    try {
+      await deleteBook(id);
+      setBooks(books.filter((b) => b.idLivro !== id));
+    } catch (err) {
+      alert("Erro ao deletar: " + err.message);
     }
+  };
 
-    onAddBook(form);
-    setForm({
-      titulo: "",
-      autor: "",
-      tombo: "",
-      categoria: "",
-      genero: "",
-      localizacao: "",
-      exemplares: "",
-    });
+  const handleEdit = (book) => {
+    setEditBook(book);
+    setModalOpen(true);
+  };
+
+  const handleBookSaved = (savedBook) => {
+    // Atualiza lista após adicionar/editar
+    const exists = books.find((b) => b.idLivro === savedBook.idLivro);
+    if (exists) {
+      setBooks(books.map((b) => (b.idLivro === savedBook.idLivro ? savedBook : b)));
+    } else {
+      setBooks([savedBook, ...books]);
+    }
   };
 
   return (
-    <form className="book-form" onSubmit={handleSubmit}>
-      <div className="form-grid">
-        <input
-          type="text"
-          name="titulo"
-          placeholder="Título"
-          value={form.titulo}
-          onChange={handleChange}
+    <div className="booklist-container">
+      {modalOpen && (
+        <BookFormModal
+          onClose={() => { setModalOpen(false); setEditBook(null); }}
+          onBookSaved={handleBookSaved}
+          editData={editBook}
         />
-        <input
-          type="text"
-          name="autor"
-          placeholder="Autor"
-          value={form.autor}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="tombo"
-          placeholder="Tombo"
-          value={form.tombo}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="categoria"
-          placeholder="Categoria"
-          value={form.categoria}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="genero"
-          placeholder="Gênero"
-          value={form.genero}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="localizacao"
-          placeholder="Localização"
-          value={form.localizacao}
-          onChange={handleChange}
-        />
-        <input
-          type="text"
-          name="exemplares"
-          placeholder="Exemplares (ex: 3/5)"
-          value={form.exemplares}
-          onChange={handleChange}
-        />
-      </div>
-
-      <button type="submit" className="btn-add">
-        Salvar Livro
-      </button>
-    </form>
+      )}
+      {loading ? (
+        <p>Carregando livros...</p>
+      ) : (
+        <div className="book-grid">
+          {books.map((book) => (
+            <div className="book-card" key={book.idLivro}>
+              <img src={book.livCapaURL || "/placeholder.png"} alt={book.livTitulo} />
+              <h3>{book.livTitulo}</h3>
+              <p>{book.livAutor}</p>
+              <p><strong>Categoria:</strong> {book.idCategoria}</p>
+              <p><strong>Gênero:</strong> {book.idGenero}</p>
+              <div className="card-actions">
+                <button className="btn-edit" onClick={() => handleEdit(book)}>Editar</button>
+                <button className="btn-delete" onClick={() => handleDelete(book.idLivro)}>Deletar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default BookForm;
+export default BookList;
