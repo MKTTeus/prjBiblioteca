@@ -1,17 +1,14 @@
 import React from "react";
-import "./Header.css";
 import { Bell, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import "./Header.css";
 
 function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const handleLogout = () => logout();
 
   return (
     <header className="header">
@@ -27,8 +24,7 @@ function Header() {
           <p className="welcome-text">
             👋 Bem-vindo,{" "}
             <span className="highlight">
-              {user.nome ? user.nome : "Usuário"}{" "}
-              ({user.tipo === "admin" ? "Administrador" : "Aluno"})
+              {user.nome} ({user.tipo === "admin" ? "Administrador" : "Aluno"})
             </span>
           </p>
         )}
@@ -40,8 +36,7 @@ function Header() {
           <span className="badge">3</span>
         </div>
         <button className="logout-btn" onClick={handleLogout}>
-          <LogOut size={16} />
-          Sair
+          <LogOut size={16} /> Sair
         </button>
       </div>
     </header>

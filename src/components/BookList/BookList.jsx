@@ -1,71 +1,98 @@
-import React from "react";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import React, { useEffect, useState } from "react";
+import { getBooks, getCategorias, getGeneros, deleteBook } from "../../services/api";
+import BookFormModal from "../BookForm/BookFormModal";
+import "./BookList.css";
 
-function BookList({ books, onDeleteBook, onEditBook }) {
+const BookList = () => {
+  const [books, setBooks] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [generos, setGeneros] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editBook, setEditBook] = useState(null);
+
+  const fetchBooksData = async () => {
+    setLoading(true);
+    try {
+      const [booksData, cats, gens] = await Promise.all([getBooks(), getCategorias(), getGeneros()]);
+      setBooks(booksData || []);
+      setCategorias(cats || []);
+      setGeneros(gens || []);
+    } catch (err) {
+      alert("Erro ao carregar dados: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBooksData();
+  }, []);
+
+  const getCategoriaNome = (id) => {
+    const cat = categorias.find((c) => c.idCategoria === id);
+    return cat ? cat.catNome : "-";
+  };
+
+  const getGeneroNome = (id) => {
+    const gen = generos.find((g) => g.idGenero === id);
+    return gen ? gen.genNome : "-";
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Deseja realmente deletar este livro?")) return;
+    try {
+      await deleteBook(id);
+      setBooks(books.filter((b) => b.idLivro !== id));
+    } catch (err) {
+      alert("Erro ao deletar: " + err.message);
+    }
+  };
+
+  const handleEdit = (book) => {
+    setEditBook(book);
+    setModalOpen(true);
+  };
+
+  const handleBookSaved = (savedBook) => {
+    const exists = books.find((b) => b.idLivro === savedBook.idLivro);
+    if (exists) {
+      setBooks(books.map((b) => (b.idLivro === savedBook.idLivro ? savedBook : b)));
+    } else {
+      setBooks([savedBook, ...books]);
+    }
+  };
+
   return (
-    <div className="table-container">
-      <h3>Lista de Livros</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Autor</th>
-            <th>Tombo</th>
-            <th>Categoria</th>
-            <th>Gênero</th>
-            <th>Localização</th>
-            <th>Exemplares</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {books.length > 0 ? (
-            books.map((book, i) => (
-              <tr key={i}>
-                <td><strong>{book.titulo}</strong></td>
-                <td>{book.autor}</td>
-                <td>{book.tombo}</td>
-                <td>{book.categoria}</td>
-                <td>{book.genero}</td>
-                <td>{book.localizacao}</td>
-                <td>{book.exemplares}</td>
-                <td>
-                  <span
-                    className={`status ${
-                      book.status === "Disponível" ? "disponivel" : "emprestado"
-                    }`}
-                  >
-                    {book.status}
-                  </span>
-                </td>
-                <td>
-                  <div className="acoes">
-                    <FiEdit2
-                      className="btn-editar"
-                      title="Editar livro"
-                      onClick={() => onEditBook(book, i)}
-                    />
-                    <FiTrash2
-                      className="btn-excluir"
-                      title="Excluir livro"
-                      onClick={() => onDeleteBook(i)}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="9" style={{ textAlign: "center", padding: "20px" }}>
-                Nenhum livro cadastrado ainda.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+    <div className="booklist-container">
+      {modalOpen && (
+        <BookFormModal
+          onClose={() => { setModalOpen(false); setEditBook(null); }}
+          onBookSaved={handleBookSaved}
+          editData={editBook}
+        />
+      )}
+      {loading ? (
+        <p>Carregando livros...</p>
+      ) : (
+        <div className="book-grid">
+          {books.map((book) => (
+            <div className="book-card" key={book.idLivro}>
+              <img src={book.livCapaURL || "/placeholder.png"} alt={book.livTitulo} />
+              <h3>{book.livTitulo}</h3>
+              <p>{book.livAutor}</p>
+              <p><strong>Categoria:</strong> {getCategoriaNome(book.idCategoria)}</p>
+              <p><strong>Gênero:</strong> {getGeneroNome(book.idGenero)}</p>
+              <div className="card-actions">
+                <button className="btn-edit" onClick={() => handleEdit(book)}>Editar</button>
+                <button className="btn-delete" onClick={() => handleDelete(book.idLivro)}>Deletar</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};
 
 export default BookList;
