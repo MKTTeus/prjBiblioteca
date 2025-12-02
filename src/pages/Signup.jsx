@@ -8,30 +8,44 @@ export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
+  // Dados do formulário
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [telefone, setPhone] = useState("");
   const [telefoneR, setPhoneR] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [cpf, setCPF] = useState("");
   const [ra, setRA] = useState("");
+
+  // Controle de estado geral
+  const [isCommunity, setIsCommunity] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Validação dinâmica
   const validate = () => {
     if (!email.trim()) return "O email é obrigatório.";
     if (!nome.trim()) return "O nome é obrigatório.";
     if (!endereco.trim()) return "O endereço é obrigatório.";
-    if (!ra.trim()) return "O RA é obrigatório.";
+
+    // Validação dinâmica RA/CPF
+    if (!isCommunity && !ra.trim()) return "O RA é obrigatório.";
+    if (isCommunity && !cpf.trim()) return "O CPF é obrigatório.";
+
     if (!telefone.trim()) return "O telefone é obrigatório.";
     if (telefone.length < 11) return "O telefone deve conter 11 números.";
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) return "Digite um email válido.";
+
     if (!senha) return "A senha é obrigatória.";
     if (senha.length < 6) return "A senha deve ter pelo menos 6 caracteres.";
+
     return "";
   };
 
+  // Envio do formulário
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
@@ -44,15 +58,18 @@ export default function Signup() {
       return;
     }
 
-    const result = await signup({
+    const payload = {
       nome,
       email,
       senha,
       telefone,
       telefoneResponsavel: telefoneR || null,
       endereco,
-      ra,
-    });
+      ra: isCommunity ? null : ra,
+      cpf: isCommunity ? cpf : null,
+      tipo: isCommunity ? "Comunidade" : "Aluno",
+    };
+    const result = await signup(payload);
 
     if (!result.ok) {
       setError(result.message);
@@ -65,9 +82,35 @@ export default function Signup() {
     setLoading(false);
   };
 
+  // Alternar modo aluno/comunidade
+  const toggleType = () => {
+    setIsCommunity(!isCommunity);
+    setCPF("");
+    setRA("");
+    setError("");
+  };
+
   return (
     <div className="signup-container">
       <h2>Criar Conta</h2>
+
+      {/* BOTÃO DE ALTERAÇÃO */}
+      <button
+        type="button"
+        className="toggle-type-btn"
+        onClick={toggleType}
+        style={{
+          marginBottom: "1rem",
+          padding: "10px",
+          borderRadius: "8px",
+          background: isCommunity ? "#007bff" : "#28a745",
+          color: "white",
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        {isCommunity ? "Registrar como ALUNO" : "Registrar como COMUNIDADE"}
+      </button>
 
       <form className="signup-form" onSubmit={handleSignup}>
         <label>Nome</label>
@@ -125,14 +168,31 @@ export default function Signup() {
           required
         />
 
-        <label>RA</label>
-        <input
-          type="text"
-          value={ra}
-          onChange={(e) => setRA(e.target.value)}
-          placeholder="Digite seu RA"
-          required
-        />
+        {/* ⬇ DINÂMICO: RA ou CPF */}
+        {!isCommunity ? (
+          <>
+            <label>RA</label>
+            <input
+              type="text"
+              value={ra}
+              onChange={(e) => setRA(e.target.value)}
+              placeholder="Digite seu RA"
+              required
+            />
+          </>
+        ) : (
+          <>
+            <label>CPF</label>
+            <IMaskInput
+              mask="000.000.000-00"
+              value={cpf}
+              onAccept={(value) => setCPF(value.replace(/\D/g, ""))}
+              placeholder="123.456.789-10"
+              required
+              type="text"
+            />
+          </>
+        )}
 
         {error && <div className="error">{error}</div>}
 
@@ -154,7 +214,6 @@ export default function Signup() {
           color: "#007bff",
           fontWeight: 600,
           cursor: "pointer",
-          transition: "background 0.2s",
         }}
       >
         Já possui conta? Faça login
