@@ -1,3 +1,5 @@
+#LOGIN MODIFICADO PRECISA SER TESTADO
+
 import os
 import uuid
 from datetime import datetime, timedelta
@@ -53,7 +55,7 @@ class LivroData(BaseModel):
     livCapaURL: Optional[str] = None
     livCapaCaminho: Optional[str] = None
     idCategoria: Optional[int] = 1
-    idGenero: Optional[int] = 1  # <-- adicione aqui
+    idGenero: Optional[int] = 1
 
 class SignupData(BaseModel):
     nome: str
@@ -62,8 +64,9 @@ class SignupData(BaseModel):
     telefone: str
     telefoneResponsavel: Optional[str] = None
     endereco: str
-    ra: str
-
+    ra: Optional[str] = None
+    cpf: Optional[str] = None
+    tipo: str
     class Config:
         extra = "forbid"
 
@@ -154,40 +157,42 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 # ================= USERS ================= #
 @app.post("/signup")
 async def signup(form_data: SignupData):
-    existing_resp = supabase.table("Aluno").select("*").eq("aluEmail", form_data.email).limit(1).execute()
+    existing_resp = supabase.table("Usuario").select("*").eq("usuEmail", form_data.email).limit(1).execute()
     if existing_resp.data:
         raise HTTPException(status_code=400, detail="Este email já está cadastrado")
 
     hashed_password = hash_password(form_data.senha)
 
-    response = supabase.table("Aluno").insert({
-        "aluNome": form_data.nome,
-        "aluEmail": form_data.email,
-        "aluSenha": hashed_password,
-        "aluTelefone": form_data.telefone,
-        "aluTelefoneResponsavel": form_data.telefoneResponsavel,
-        "aluEndereco": form_data.endereco,
-        "aluRA": form_data.ra,
-        "idAdmin": 1
+    response = supabase.table("Usuario").insert({
+        "usuNome": form_data.nome,
+        "usuEmail": form_data.email,
+        "usuSenha": hashed_password,
+        "usuTelefone": form_data.telefone,
+        "usuTelefoneResponsavel": form_data.telefoneResponsavel,
+        "usuEndereco": form_data.endereco,
+        "usuCPF": form_data.cpf,
+        "usuRA": form_data.ra,
+        "usuTipo": form_data.tipo,
     }).execute()
 
     if not response.data:
         raise HTTPException(status_code=500, detail="Erro ao criar usuário")
 
-    return {"message": "Aluno criado com sucesso!"}
+    return {"message": "Usuario criado com sucesso!"}
 
 
 @app.post("/login")
 async def login(form_data: LoginData):
     # Login aluno
-    aluno_resp = supabase.table("Aluno").select("*").eq("aluEmail", form_data.email).limit(1).execute()
-    if aluno_resp.data:
-        aluno = aluno_resp.data[0]
-        if not verify_password(form_data.senha, aluno["aluSenha"]):
+    usuario_resp = supabase.table("Usuario").select("*").eq("usuEmail", form_data.email).limit(1).execute()
+
+    if usuario_resp.data :
+        usuario = usuario_resp.data[0]
+        if not verify_password(form_data.senha, usuario["usuSenha"]):
             raise HTTPException(status_code=400, detail="Email ou senha incorretos")
         access_token = create_access_token(
-            data={"sub": aluno["aluEmail"], "tipo": "aluno", "idAluno": aluno.get("idAluno")})
-        return {"access_token": access_token, "token_type": "bearer", "nome": aluno["aluNome"], "tipo": "aluno"}
+            data={"sub": usuario["usuEmail"], "tipo": "usuario", "idUsuario": usuario.get("idUsuario")})
+        return {"access_token": access_token, "token_type": "bearer", "nome": usuario["usuNome"], "tipo": "usuario"}
 
     # Login admin
     admin_resp = supabase.table("Administrador").select("*").eq("admEmail", form_data.email).limit(1).execute()
