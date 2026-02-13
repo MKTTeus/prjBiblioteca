@@ -7,15 +7,16 @@ from pathlib import Path
 from typing import List, Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
+import logging
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from supabase import create_client, Client
 
-# ================= CONFIGURAÇÃO ================= #
+#  CONFIGURAÇÃO  #
 dotenv_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=dotenv_path)
 
@@ -121,7 +122,7 @@ class ExemplarUpdate(BaseModel):
         extra = "allow"
 
 
-# ================= HELPERS AUTH ================= #
+#  HELPERS AUTH  #
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
@@ -151,34 +152,69 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
-    except JWTError:
+    except JWTError as e:
+        # Log token and error to help debugging (avoid in production)
+        logger = logging.getLogger("uvicorn.error")
+        try:
+            logger.debug("Falha ao decodificar token: %s; erro: %s", token, e)
+        except Exception:
+            logger.debug("Falha ao decodificar token (token omitted for safety); erro: %s", e)
         raise HTTPException(status_code=401, detail="Token inválido")
 
-# ================= USERS ================= #
+
+def get_optional_user(request: Request):
+    """Development helper: returns decoded token payload or None when no/invalid token.
+    Use only for development/testing to allow anonymous access to endpoints.
+    """
+    auth = request.headers.get("Authorization")
+    if not auth:
+        return None
+    parts = auth.split()
+    if len(parts) != 2:
+        return None
+    scheme, token = parts
+    if scheme.lower() != "bearer":
+        return None
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        # invalid token -> treat as anonymous for dev
+        return None
+
+#  USERS  #
 @app.post("/signup")
 async def signup(form_data: SignupData):
-    existing_resp = supabase.table("Usuario").select("*").eq("usuEmail", form_data.email).limit(1).execute()
-    if existing_resp.data:
-        raise HTTPException(status_code=400, detail="Este email já está cadastrado")
+    logger = logging.getLogger("uvicorn.error")
+    try:
+        existing_resp = supabase.table("Usuario").select("*").eq("usuEmail", form_data.email).limit(1).execute()
+        if existing_resp.data:
+            raise HTTPException(status_code=400, detail="Este email já está cadastrado")
 
-    hashed_password = hash_password(form_data.senha)
+        hashed_password = hash_password(form_data.senha)
 
-    response = supabase.table("Usuario").insert({
-        "usuNome": form_data.nome,
-        "usuEmail": form_data.email,
-        "usuSenha": hashed_password,
-        "usuTelefone": form_data.telefone,
-        "usuTelefoneResponsavel": form_data.telefoneResponsavel,
-        "usuEndereco": form_data.endereco,
-        "usuCPF": form_data.cpf,
-        "usuRA": form_data.ra,
-        "usuTipo": form_data.tipo,
-    }).execute()
+        response = supabase.table("Usuario").insert({
+            "usuNome": form_data.nome,
+            "usuEmail": form_data.email,
+            "usuSenha": hashed_password,
+            "usuTelefone": form_data.telefone,
+            "usuTelefoneResponsavel": form_data.telefoneResponsavel,
+            "usuEndereco": form_data.endereco,
+            "usuCPF": form_data.cpf,
+            "usuRA": form_data.ra,
+            "usuTipo": form_data.tipo,
+        }).execute()
 
-    if not response.data:
-        raise HTTPException(status_code=500, detail="Erro ao criar usuário")
+        if not response.data:
+            logger.error("Supabase returned no data on insert for user %s: %s", form_data.email, response)
+            raise HTTPException(status_code=500, detail="Erro ao criar usuário")
 
-    return {"message": "Usuario criado com sucesso!"}
+        return {"message": "Usuario criado com sucesso!"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Erro ao criar usuário: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/login")
@@ -208,7 +244,7 @@ async def login(form_data: LoginData):
     raise HTTPException(status_code=400, detail="Email ou senha incorretos")
 
 
-# ================= LIVROS ================= #
+#  LIVROS  
 @app.post("/livros")
 async def criar_livro(livro: LivroCreate, admin=Depends(get_current_admin)):
     try:
@@ -262,7 +298,7 @@ async def criar_livro(livro: LivroCreate, admin=Depends(get_current_admin)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/livros")
-async def listar_livros(user=Depends(get_current_user)):
+async def listar_livros(user=Depends(get_optional_user)):
     """Qualquer usuário logado pode ver os livros"""
     try:
         resp = supabase.table("Livro").select("*").execute()
@@ -289,7 +325,7 @@ async def deletar_livro(idLivro: int, admin=Depends(get_current_admin)):
     return {"message": "Livro e exemplares deletados com sucesso!"}
 
 
-# ================= EXEMPLARES ================= #
+#  EXEMPLARES  #
 @app.get("/exemplares/{idLivro}")
 async def listar_exemplares(idLivro: int, user=Depends(get_current_user)):
     resp = supabase.table("ExemplarLivro").select("*").eq("idLivro", idLivro).order("exeLivTombo", {"ascending": True}).execute()
@@ -322,7 +358,7 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_current_ad
     return {"url": public_url, "path": filename}
 #categoria#
 @app.get("/categorias")
-async def listar_categorias(user=Depends(get_current_user)):
+async def listar_categorias(user=Depends(get_optional_user)):
     """
     Retorna todas as categorias cadastradas.
     Qualquer usuário logado pode acessar.
@@ -336,7 +372,7 @@ async def listar_categorias(user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Erro ao listar categorias: {str(e)}")
 #generos#
 @app.get("/generos")
-async def listar_generos(user=Depends(get_current_user)):
+async def listar_generos(user=Depends(get_optional_user)):
     """
     Retorna todos os gêneros cadastrados.
     Qualquer usuário logado pode acessar.
