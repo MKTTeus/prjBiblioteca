@@ -38,10 +38,19 @@ Inside the backend folder, create a virtual environment and activate it:
 python -m venv venv
 
 # Activate the virtual environment (Windows)
-.\venv\Scripts\activate
+.\venv\Scripts\activate || .\venv\Scripts\Activate.ps1 || . .\venv\Scripts\Activate.ps1 (dot-sourced)
 
     This ensures your backend dependencies are isolated from your global Python environment.
-
+    # 1.1 if you receive errors on ExecutionPolicy try
+Set-ExecutionPolicy -Scope
+ Process -ExecutionPolicy Bypass -Force
+    # 1.2  if Venv dosent exist try
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+    # 1.3 if any errors heppens try instlling dependencies again
+python -m pip install --upgrade pip
+python -m pip install -r .\requirements.txt
+    
 4. Run the Backend Server
 
 Before starting the frontend, you need to start the backend server:
