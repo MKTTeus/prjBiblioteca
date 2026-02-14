@@ -1,0 +1,149 @@
+.cadastro-container {
+  padding: 40px;
+  max-width: 1200px;
+  margin: auto;
+  font-family: "Inter", sans-serif;
+}
+
+.cadastro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.header-left h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.header-left p {
+  color: #666;
+}
+
+.btn-novo-livro {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-novo-livro:hover {
+  background-color: #dc2626;
+}
+
+.search-and-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.input-search {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.total-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #f9fafb;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 10px 18px;
+  min-width: 180px;
+  margin-left: 20px;
+}
+
+.total-card h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #111;
+}
+
+.total-card p {
+  margin: 0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.table-container h3 {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-container th,
+.table-container td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.table-container th {
+  background-color: #f8f8f8;
+  font-weight: 600;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status.disponivel {
+  background-color: #111;
+  color: white;
+}
+
+.status.emprestado {
+  background-color: #e5e7eb;
+  color: #111;
+}
+
+.acoes {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-editar, .btn-excluir {
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+
+.btn-editar:hover {
+  color: #22c55e;
+}
+
+.btn-excluir:hover {
+  color: #ef4444;
+}
+
+.footer {
+  margin-top: 40px;
+  text-align: center;
+  color: #777;
+  font-size: 0.85rem;
+}

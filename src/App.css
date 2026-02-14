@@ -1,0 +1,69 @@
+/* ========= RESET GERAL ========= */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: "Inter", sans-serif;
+  background-color: #f9fafb;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* ========= ESTRUTURA GERAL ========= */
+.app {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ========= SIDEBAR ========= */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  height: 100vh;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+/* ========= CONTEÚDO PRINCIPAL ========= */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 220px);
+  margin-left: 220px; /* 🔹 ESSENCIAL: evita que o conteúdo vá por baixo da sidebar */
+  background-color: #f3f4f6;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ========= CONTEÚDO DAS PÁGINAS ========= */
+.page-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* ========= AJUSTES DO HEADER ========= */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
