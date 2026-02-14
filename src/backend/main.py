@@ -423,6 +423,7 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_current_ad
 
     public_url = supabase.storage.from_(CAPAS_BUCKET).get_public_url(filename)
     return {"url": public_url, "path": filename}
+##aa
 
 #categoria#
 @app.get("/categorias")
