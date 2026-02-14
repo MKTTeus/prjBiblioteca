@@ -4,7 +4,7 @@ import "../styles/Alunos.css";
 function Alunos() {
   return (
     <div>
-      <h2>Gestão de Alunos</h2>
+      <h1>Gestão de Alunos</h1>
       <p>Cadastre e acompanhe os alunos da biblioteca.</p>
     </div>
   );
