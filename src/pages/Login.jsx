@@ -1,20 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { FiShield, FiUser, FiUsers } from "react-icons/fi";
+import { LuBook } from "react-icons/lu";
 import "../styles/Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login, loadingUser } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [userType, setUserType] = useState("aluno");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   if (loadingUser) {
-    return <div>Carregando...</div>; // evita flash de logout enquanto o contexto carrega
+    return <div>Carregando...</div>;
   }
 
   const handleSubmit = async (e) => {
@@ -22,76 +24,111 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    const result = await login({ email, senha: password }, remember);
+    const result = await login({ email, senha: password }, false);
     setLoading(false);
 
     if (!result.ok) {
       setError(result.message || "Erro ao fazer login.");
       return;
     }
-
-    // redirecionamento já é feito dentro do login
   };
 
   return (
-    <main className="login-container">
-      <h2>Entrar</h2>
-      <p className="login-subtitle">Acesse sua conta</p>
-
-      <form onSubmit={handleSubmit}>
-        <div className="input-group">
-          <label>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="seuemail@exemplo.com"
-            required
-          />
+    <div className="login-page">
+      <div className="login-wrapper">
+        
+        <div className="login-header">
+          <div className="logo-circle"><LuBook className="user-icon" /></div>
+          <h1>Sistema de Biblioteca</h1>
+          <p>Escola 9 de Julho de Taquaritinga</p>
         </div>
 
-        <div className="input-group">
-          <label>Senha</label>
-          <div className="password-wrapper">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="Sua senha"
-              required
-            />
-            <button
-              type="button"
-              className="show-password-btn"
-              onClick={() => setShowPassword(s => !s)}
+        <main className="login-card">
+          <h2>Fazer Login</h2>
+          <p className="login-subtitle">
+            Selecione seu tipo de usuário
+          </p>
+
+          <div className="user-types">
+            <div
+              className={`user-option admin ${userType === "admin" ? "selected" : ""}`}
+              onClick={() => setUserType("admin")}
             >
-              {showPassword ? "Ocultar" : "Mostrar"}
-            </button>
+              <FiShield className="user-icon" />
+              <div>
+                <strong>Administrador</strong>
+                <span>Acesso completo ao sistema</span>
+              </div>
+            </div>
+
+            <div
+              className={`user-option aluno ${userType === "aluno" ? "selected" : ""}`}
+              onClick={() => setUserType("aluno")}
+            >
+              <FiUser className="user-icon" />
+              <div>
+                <strong>Aluno</strong>
+                <span>Consultar e alugar livros</span>
+              </div>
+            </div>
+
+            <div
+              className={`user-option comunidade ${userType === "comunidade" ? "selected" : ""}`}
+              onClick={() => setUserType("comunidade")}
+            >
+              <FiUsers className="user-icon" />
+              <div>
+                <strong>Comunidade</strong>
+                <span>Acesso para visitantes</span>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <label className="remember">
-          <input
-            type="checkbox"
-            checked={remember}
-            onChange={e => setRemember(e.target.checked)}
-          />{" "}
-          Lembrar de mim
-        </label>
+          <form onSubmit={handleSubmit}>
+            <div className="input-group">
+              <label>RA ou E-mail</label>
+              <input
+                type="text"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="2024001 ou email@email.com"
+                required
+              />
+            </div>
 
-        {error && <div className="error">{error}</div>}
+            <div className="input-group">
+              <label>Senha</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Digite sua senha"
+                required
+              />
+            </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-        <button
-          type="button"
-          className="create-account"
-          onClick={() => navigate("/signup")}
-        >
-          Criar Conta
-        </button>
-      </form>
-    </main>
+            {error && <div className="error">{error}</div>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`login-btn ${userType}`}
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+
+            {userType !== "admin" && (
+              <p className="signup-link">
+                Não tem cadastro?{" "}
+                <span onClick={() => navigate("/signup")}>
+                  Clique aqui
+                </span>
+              </p>
+            )}
+          </form>
+        </main>
+
+      </div>
+    </div>
   );
 }
