@@ -1,8 +1,8 @@
 .main-content {
   flex: 1;
   margin-left: 200px;   /* largura da sidebar */
-  margin-top: 60px;     /* altura do header */
-  padding: 20px;
+  margin-top: 20px;     /* altura do header */
+  padding: 50px;
   overflow-y: auto;
   box-sizing: border-box;
     z-index: 1;
