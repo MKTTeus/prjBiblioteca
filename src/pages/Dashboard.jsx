@@ -1,5 +1,5 @@
 import "../styles/Dashboard.css";
-import { FaBook, FaUsers, FaExchangeAlt, FaClock } from "react-icons/fa";
+import { FaBook, FaUsers, FaExchangeAlt, FaClock, FaCheckCircle, FaExclamationTriangle, FaPlus, FaUndo } from "react-icons/fa";
 
 export default function Dashboard() {
   return (
@@ -56,6 +56,84 @@ export default function Dashboard() {
           <small className="danger">3 em atraso</small>
         </div>
       </div>
+
+        <div className="notifications">
+          <div className="notifications-header">
+            <div>
+              <h3>Notificações e Avisos</h3>
+              <p>Atualizações recentes do sistema</p>
+            </div>
+            <span className="badge">3 novas</span>
+          </div>
+
+          <div className="notification warning">
+            <div className="notification-content">
+              <div className="notification-icon warning-icon">
+                <FaExclamationTriangle />
+              </div>
+              <div>
+                <strong>3 livros em atraso</strong>
+                <p>Alunos com devoluções pendentes há mais de 7 dias</p>
+                <small>2 horas atrás</small>
+              </div>
+            </div>
+            <button>Ver</button>
+          </div>
+
+          <div className="notification info">
+            <div className="notification-content">
+              <div className="notification-icon info-icon">
+                <FaClock />
+              </div>
+              <div>
+                <strong>5 reservas aguardando</strong>
+                <p>Livros disponíveis para retirada</p>
+                <small>4 horas atrás</small>
+              </div>
+            </div>
+            <button>Ver</button>
+          </div>
+
+          <div className="notification success">
+            <div className="notification-content">
+              <div className="notification-icon success-icon">
+                <FaCheckCircle />
+              </div>
+              <div>
+                <strong>15 devoluções hoje</strong>
+                <p>Meta diária alcançada</p>
+                <small>6 horas atrás</small>
+              </div>
+            </div>
+            <button>Ver</button>
+          </div>
+
+          <button className="view-all">Ver todas as notificações</button>
+        </div>
+
+
+        <div className="quick-actions">
+          <p>Ações Rápidas</p>
+
+          <div className="actions-container">
+            <button className="action-btn red">
+              <FaPlus />
+              Novo Empréstimo
+            </button>
+
+            <button className="action-btn blue">
+              <FaBook />
+              Cadastrar Livro
+            </button>
+
+            <button className="action-btn green">
+              <FaUndo />
+              Processar Devolução
+            </button>
+          </div>
+        </div>
+
+
     </div>
   );
 }

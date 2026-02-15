@@ -1,10 +1,10 @@
-// src/pages/Emprestimos.jsx
 import React from "react";
 import "../styles/Emprestimos.css";
+
 function Emprestimos() {
   return (
     <div>
-      <h2>Empréstimos e Devoluções</h2>
+      <h1>Empréstimos e Devoluções</h1>
       <p>Em breve: gerenciamento de empréstimos e devoluções.</p>
     </div>
   );
