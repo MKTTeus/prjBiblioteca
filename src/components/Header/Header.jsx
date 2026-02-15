@@ -2,6 +2,7 @@ import React from "react";
 import { Bell, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { LuBookOpen } from "react-icons/lu";
 import "./Header.css";
 
 function Header() {
@@ -14,7 +15,7 @@ function Header() {
     <header className="header">
       <div className="header-left">
         <div className="header-logo">
-          <div className="header-icon">📚</div>
+          <div className="header-icon"><LuBookOpen className="user-icon" /></div>
           <h1 className="header-title">Biblioteca</h1>
         </div>
       </div>
