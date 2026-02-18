@@ -8,7 +8,7 @@
 }
 
 /*Main content*/
-.main-content {
+.main-content:not(.full-page) {
   flex: 1;
   margin-left: 200px;   /* largura da sidebar */
   margin-top: 60px;     /* altura do header */
@@ -196,4 +196,16 @@
 
 .logout-section li:hover {
   background-color: #fee2e2;
+}
+
+/* Remove layout lateral nas páginas de autenticação */
+.auth-page {
+  display: block;
+}
+
+.main-content.full-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100vh;
 }

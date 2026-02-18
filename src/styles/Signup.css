@@ -1,94 +1,213 @@
-.signup-container {
-  width: 380px;
-  margin: 120px auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.signup-container h2 {
-  margin-bottom: 1.5rem;
-  color: #222;
-}
-
-.signup-form {
+.signup-wrapper {
+  min-height: 100vh;
+  background: #eef1f5;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  align-items: center;
+  padding: 40px 0;
 }
 
-.signup-form label {
-  text-align: left;
+.signup-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.icon-circle {
+  width: 55px;
+  height: 55px;
+  background: #2563eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  margin: 0 auto 10px;
+}
+
+.signup-header h1 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.signup-header p {
+  font-size: 13px;
+  color: #555;
+}
+
+.signup-card {
+  width: 540px;
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  transition: 0.3s ease;
+}
+
+.signup-card:hover {
+  transform: translateY(-2px);
+}
+
+.subtlitle h3 {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* BOTÃO VOLTAR */
+
+.back-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-size: 14px;
   font-weight: 600;
-  font-size: 0.9rem;
+  color: #2563eb;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: 0.2s;
 }
 
-.signup-form input {
-  padding: 10px;
+.back-link:hover {
+  opacity: 0.7;
+}
+
+/* TOGGLE */
+
+.toggle {
+  position: relative;
+  display: flex;
+  background: #e5e7eb;
+  border-radius: 30px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.toggle button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  z-index: 2;
+  transition: 0.3s;
+}
+
+.slider {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 48%;
+  height: calc(100% - 8px);
+  border-radius: 30px;
+  background: white;
+  transition: 0.3s ease;
+  z-index: 1;
+}
+
+.toggle.community .slider {
+  transform: translateX(100%);
+}
+
+.toggle.student .active {
+  color: #1d4ed8;
+}
+
+.toggle.community .active {
+  color: #15803d;
+}
+
+/* INFO BOX */
+
+.info-box {
+  padding: 15px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.info-box.student {
+  background: #e0ecff;
+  color: #1d4ed8;
+}
+
+.info-box.community {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* INPUTS */
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.input-group label {
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #444;
+}
+
+.required {
+  font-weight: 700;
+}
+
+.input-group input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: #f3f4f6;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.input-group input:focus {
   outline: none;
-  transition: border-color 0.2s;
+  border-color: #2563eb;
+  background: #fff;
 }
 
-.signup-form input:focus {
-  border-color: #007bff;
+.row {
+  display: flex;
+  gap: 12px;
 }
 
-.signup-form button {
-  margin-top: 1rem;
-  background: #007bff;
+.row .input-group {
+  flex: 1;
+}
+
+/* BOTÃO */
+
+.submit-btn {
+  width: 100%;
+  background: #ef4444;
   color: white;
   border: none;
-  border-radius: 8px;
   padding: 10px;
-  cursor: pointer;
+  border-radius: 6px;
   font-weight: 600;
-  transition: background 0.2s;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.2s;
 }
 
-.signup-form button:hover {
-  background: #0056b3;
+.submit-btn:hover {
+  opacity: 0.9;
 }
 
 .error {
   color: red;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-}
-
-.signup-footer {
-  margin-top: 1rem;
-  font-size: 0.9rem;
-}
-
-.signup-footer a {
-  color: #007bff;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.signup-footer a:hover {
-  text-decoration: underline;
-}
-
-/* Novo estilo para o botão de redirecionamento ao login */
-.login-redirect-btn {
-  margin-top: 1rem;
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #007bff;
-  background: white;
-  color: #007bff;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.login-redirect-btn:hover {
-  background: #007bff;
-  color: white;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
