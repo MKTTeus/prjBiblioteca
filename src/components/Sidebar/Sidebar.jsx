@@ -35,11 +35,11 @@ function Sidebar() {
               </NavLink>
             </li>
 
-            <li>
+            {/* <li>
               <NavLink to="/biblioteca" className={({ isActive }) => (isActive ? "active" : undefined)}>
                 <FiBookOpen /> Biblioteca
               </NavLink>
-            </li>
+            </li> */}
 
             <li>
               <NavLink to="/livros" className={({ isActive }) => (isActive ? "active" : undefined)}>

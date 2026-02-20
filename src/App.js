@@ -4,7 +4,9 @@ import Sidebar from "./components/Sidebar/Sidebar";
 import Header from "./components/Header/Header";
 
 import Dashboard from "./pages/Dashboard";
-import Biblioteca from "./pages/Biblioteca";
+
+/*import Biblioteca from "./pages/Biblioteca";*/
+
 import Livros from "./pages/CadastroLivros";
 import Alunos from "./pages/Alunos";
 import Comunidade from "./pages/Comunidade";
@@ -39,7 +41,9 @@ function App() {
         <div className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/biblioteca" element={<Biblioteca />} />
+
+            {/* <Route path="/biblioteca" element={<Biblioteca />} /> */}
+
             <Route path="/livros" element={<Livros />} />
             <Route path="/alunos" element={<Alunos />} />
             <Route path="/comunidade" element={<Comunidade />} />
