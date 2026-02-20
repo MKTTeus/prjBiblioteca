@@ -4,10 +4,11 @@
   width: 100%;
   height: 100vh;
   font-family: 'Inter', sans-serif;
+  min-height: 100vh;
 }
 
 /*Main content*/
-.main-content {
+.main-content:not(.full-page) {
   flex: 1;
   margin-left: 200px;   /* largura da sidebar */
   margin-top: 60px;     /* altura do header */
@@ -21,7 +22,11 @@
 .main-content.full {
   margin-left: 0 !important;
   margin-top: 0 !important;
-  padding: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 100vh;
 }
 
 /*Page content*/
@@ -191,4 +196,16 @@
 
 .logout-section li:hover {
   background-color: #fee2e2;
+}
+
+/* Remove layout lateral nas páginas de autenticação */
+.auth-page {
+  display: block;
+}
+
+.main-content.full-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100vh;
 }

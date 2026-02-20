@@ -13,7 +13,7 @@ body,
 }
 
 /* ========= ESTRUTURA GERAL ========= */
-.app {
+.app-container   {
   display: flex;
   width: 100%;
   height: 100vh;
@@ -43,11 +43,17 @@ body,
   flex: 1;
   display: flex;
   flex-direction: column;
-  width: calc(100vw - 220px);
-  margin-left: 220px; /* 🔹 ESSENCIAL: evita que o conteúdo vá por baixo da sidebar */
-  background-color: #f3f4f6;
+  margin-left: 220px; /* largura da sidebar */
+  width: calc(100% - 220px);
   min-height: 100vh;
-  box-sizing: border-box;
+  background-color: #f3f4f6;
+}
+
+.main-content.full {
+  margin-left: 0;
+  width: 100%;
+  display: block;     
+  min-height: 100vh;  
 }
 
 /* ========= CONTEÚDO DAS PÁGINAS ========= */

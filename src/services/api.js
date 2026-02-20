@@ -76,10 +76,14 @@ export const uploadCover = async (file) => {
 };
 
 // ===================== CATEGORIAS E GÊNEROS ===================== //
-export const getCategorias = async () => {
+export async function getCategorias() {
   return fetchWithToken("/categorias");
-};
+}
 
-export const getGeneros = async () => {
+export function getGeneros() {
   return fetchWithToken("/generos");
-};
+}
+
+export function getDashboardStats() {
+  return fetchWithToken("/dashboard-stats");
+}

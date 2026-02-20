@@ -453,3 +453,50 @@ async def listar_generos(user=Depends(get_optional_user)):
         return generos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar gêneros: {str(e)}")
+
+@app.get("/dashboard-stats")
+async def dashboard_stats(user=Depends(get_optional_user)):
+    """
+    Retorna contadores básicos para o dashboard.
+    Permite acesso mesmo sem autenticação (get_optional_user).
+    """
+    try:
+        # Livros
+        livros_resp = supabase.table("Livro").select("idLivro").execute()
+        total_livros = len(livros_resp.data or [])
+
+        # Usuários
+        usuarios_resp = supabase.table("Usuario").select("idUsuario").execute()
+        total_usuarios = len(usuarios_resp.data or [])
+       # Empréstimos ativos (ajuste nome da tabela/campos conforme seu schema)
+        try:
+            emprestimos_resp = (
+                supabase.table("Emprestimo")
+                .select("idEmprestimo")
+                .eq("empStatus", "Ativo")
+                .execute()
+            )
+            emprestimos_ativos = len(emprestimos_resp.data or [])
+        except Exception:
+            emprestimos_ativos = 0
+
+        # Devoluções pendentes (ajuste conforme sua modelagem)
+        try:
+            pendentes_resp = (
+                supabase.table("Emprestimo")
+                .select("idEmprestimo")
+                .eq("empStatus", "Pendente")
+                .execute()
+            )
+            devolucoes_pendentes = len(pendentes_resp.data or [])
+        except Exception:
+            devolucoes_pendentes = 0
+
+        return {
+            "totalLivros": total_livros,
+            "totalUsuarios": total_usuarios,
+            "emprestimosAtivos": emprestimos_ativos,
+            "devolucoesPendentes": devolucoes_pendentes,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao carregar estatísticas: {str(e)}")

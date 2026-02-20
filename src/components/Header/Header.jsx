@@ -1,7 +1,9 @@
-import React from "react";
+import React from "react";  
+import { NavLink } from "react-router-dom";
 import { Bell, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { LuBookOpen } from "react-icons/lu";
 import "./Header.css";
 
 function Header() {
@@ -14,7 +16,7 @@ function Header() {
     <header className="header">
       <div className="header-left">
         <div className="header-logo">
-          <div className="header-icon">📚</div>
+          <div className="header-icon"><LuBookOpen className="user-icon" /></div>
           <h1 className="header-title">Biblioteca</h1>
         </div>
       </div>
@@ -32,8 +34,10 @@ function Header() {
 
       <div className="header-right">
         <div className="notification">
+          <NavLink to="/" className={({ isActive }) => (isActive ? "active" : undefined)}  >
           <Bell size={20} />
           <span className="badge">3</span>
+          </NavLink>
         </div>
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair
