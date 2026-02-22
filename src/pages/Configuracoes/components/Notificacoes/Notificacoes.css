@@ -1,0 +1,45 @@
+.noti-header {
+  margin-bottom: 20px;
+}
+
+.noti-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.noti-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.noti-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.noti-title {
+  font-weight: 500;
+  display: block;
+}
+
+.noti-item p {
+  margin: 3px 0 0 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* HEADER */
+.noti-title-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bell-icon {
+  font-size: 20px;
+  color: #111827;
+}

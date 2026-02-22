@@ -81,19 +81,19 @@ button:hover {
 /* ===== TABS MODERNAS ===== */
 .tabs {
   display: flex;
-  gap: 6px;
+  justify-content: space-between; /* distribui até o final */
   background: #e5e7eb;
   padding: 6px;
   border-radius: 14px;
   margin-bottom: 25px;
-  flex-wrap: wrap;
 }
 
 .tab-btn {
+  flex: 1;                 /* todas ocupam espaço igual */
+  text-align: center;      /* centraliza o texto */
   text-decoration: none;
   color: #4b5563;
-  background: transparent;
-  padding: 8px 18px;
+  padding: 8px 0;
   border-radius: 10px;
   font-weight: 500;
   transition: all 0.25s ease;
