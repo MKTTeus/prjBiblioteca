@@ -17,6 +17,10 @@
   margin-bottom: 20px;
 }
 
+.sidebar-system {
+  margin-top: 20px;
+}
+
 .sidebar-title {
   font-size: 12px;
   color: #888;
@@ -122,23 +126,3 @@
   color: white;
 }
 
-/* BOTTOM */
-
-.sidebar-bottom {
-  padding-bottom: 20px;
-}
-
-.logout-section li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 20px;
-  color: #FF4D4F;
-  cursor: pointer;
-  border-radius: 6px;
-  transition: 0.2s ease;
-}
-
-.logout-section li:hover {
-  background-color: #FFEAEA;
-}
