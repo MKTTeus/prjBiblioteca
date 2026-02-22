@@ -78,81 +78,45 @@ button:hover {
   background: #d1d5db;
 }
 
-/* TABS */
+/* ===== TABS MODERNAS ===== */
 .tabs {
   display: flex;
-  gap: 10px;
+  gap: 6px;
   background: #e5e7eb;
   padding: 6px;
-  border-radius: 25px;
-  margin-bottom: 20px;
+  border-radius: 14px;
+  margin-bottom: 25px;
   flex-wrap: wrap;
 }
 
 .tab-btn {
+  text-decoration: none;
+  color: #4b5563;
   background: transparent;
   padding: 8px 18px;
-  border-radius: 20px;
+  border-radius: 10px;
   font-weight: 500;
   transition: all 0.25s ease;
 }
 
-.tab-btn:not(.active):hover {
-  background: white;
-  transform: translateY(-2px);
+.tab-btn:hover {
+  background: #d1d5db;
 }
 
 .tab-btn.active {
   background: white;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+  color: #111827;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
   cursor: default;
-  transform: none;
 }
 
 /* CARD */
 .card {
   background: white;
   padding: 25px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  overflow: hidden;
-  position: relative;
-}
-
-/* ANIMAÇÃO SLIDE */
-.slide-content {
-  animation-duration: 0.35s;
-  animation-timing-function: ease;
-}
-
-.slide-content.direita {
-  animation-name: slideFromRight;
-}
-
-.slide-content.esquerda {
-  animation-name: slideFromLeft;
-}
-
-@keyframes slideFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 /* FORM */
@@ -179,9 +143,16 @@ button:hover {
 }
 
 .form-group input {
-  padding: 8px;
+  padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
+  transition: 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
 }
 
 /* AÇÕES */
