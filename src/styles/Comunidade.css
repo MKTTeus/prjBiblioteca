@@ -1,10 +1,200 @@
-.main-content {
-  flex: 1;
-  margin-left: 200px;   /* largura da sidebar */
-  margin-top: 20px;     /* altura do header */
-  padding: 50px;
-  overflow-y: auto;
-  box-sizing: border-box;
-    z-index: 1;
-    position: relative;
+.comunidade-page {
+  padding: 30px;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f6fa;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* HEADER */
+.comunidade-page .titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.comunidade-page .btn-novo {
+  background-color: #ff3b3b;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* CARDS */
+.comunidade-page .cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.comunidade-page .card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.comunidade-page .card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comunidade-page .icon-green { color: #16a34a; }
+.comunidade-page .icon-red { color: #dc2626; }
+.comunidade-page .icon-orange { color: #f97316; }
+
+/* SEARCH */
+.comunidade-page .topo-lista {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.comunidade-page .search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.comunidade-page .input-pesquisa {
+  padding: 8px 12px;
+  width: 250px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* TABLE */
+.comunidade-page .table-container {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.comunidade-page table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.comunidade-page th,
+.comunidade-page td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.comunidade-page .col-livros {
+  text-align: center;
+}
+
+/* BADGES */
+.comunidade-page .badge-ativo {
+  background: #0f172a;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.comunidade-page .badge-inativo {
+  background: #e11d48;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+/* AÇÕES */
+.comunidade-page .acoes {
+  display: flex;
+  gap: 10px;
+}
+
+.comunidade-page .btn-edit {
+  background: #e0f2fe;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.comunidade-page .btn-delete {
+  background: #fee2e2;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.comunidade-page .btn-status {
+  background: #f3f4f6;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* MODAL */
+.comunidade-page .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.comunidade-page .modal {
+  background: white;
+  width: 650px;
+  border-radius: 12px;
+  padding: 25px;
+}
+
+.comunidade-page .modal-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.comunidade-page .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.comunidade-page .form-group input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.comunidade-page .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.comunidade-page .btn-cancelar {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+}
+
+.comunidade-page .btn-criar {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #ff3b3b;
+  color: white;
+  font-weight: bold;
 }

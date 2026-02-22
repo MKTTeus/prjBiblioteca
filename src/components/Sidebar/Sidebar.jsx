@@ -78,27 +78,19 @@ function Sidebar() {
                 <FiRepeat /> Empréstimos e Devoluções
               </NavLink>
             </li>
+            
+           
+              <p className="sidebar-title sidebar-system">Sistema</p>
+                 <ul>
+                  <li>
+                    <NavLink to="/configuracoes" className={({ isActive }) => (isActive ? "active" : undefined)}>
+                      <FiSettings /> Configurações
+                    </NavLink>
+                   </li>
+                 </ul>
+          
           </ul>
         </div>
-      </div>
-
-      <div className="sidebar-bottom">
-        <div className="sidebar-section">
-          <p className="sidebar-title">Sistema</p>
-          <ul>
-            <li>
-              <NavLink to="/configuracoes" className={({ isActive }) => (isActive ? "active" : undefined)}>
-                <FiSettings /> Configurações
-              </NavLink>
-            </li>
-          </ul>
-        </div>
-
-        <ul className="logout-section">
-          <li className="logout" onClick={handleLogout}>
-            <FiLogOut /> Sair
-          </li>
-        </ul>
       </div>
     </aside>
   );
