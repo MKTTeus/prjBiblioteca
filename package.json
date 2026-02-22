@@ -11,6 +11,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.13.2",
+    "framer-motion": "^12.34.3",
     "https-proxy-agent": "^7.0.6",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
