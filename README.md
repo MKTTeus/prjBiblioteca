@@ -66,9 +66,9 @@ uvicorn main:app --reload --port 5000
     Make sure this server is running before running the frontend.
 
 Frontend Setup (React)
-1. Navigate to the Frontend Folder
+1. Navigate to the root folder ( new terminal)
 
-cd ..\frontend\   # Adjust this path if your frontend folder is elsewhere
+cd ..\prjBiblioteca-main\   # Adjust this path if your frontend folder is elsewhere
 
 2. Install Dependencies
 
