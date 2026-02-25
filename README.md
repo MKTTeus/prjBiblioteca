@@ -32,13 +32,15 @@ pip install -r requirements.txt
 This will install all required Python packages.
 3. Create and Activate a Virtual Environment
 
-Inside the backend folder, create a virtual environment and activate it:
+Inside the root folder, create a virtual environment and activate it:
 
 # Create a virtual environment named 'venv'
 python -m venv venv
 
 # Activate the virtual environment (Windows)
 .\venv\Scripts\activate || .\venv\Scripts\Activate.ps1 || . .\venv\Scripts\Activate.ps1 (dot-sourced)
+
+4. then go back to .\backend\ and proceed activating the backend server
 
     This ensures your backend dependencies are isolated from your global Python environment.
     # 1.1 if you receive errors on ExecutionPolicy try
@@ -51,7 +53,7 @@ python -m venv venv
 python -m pip install --upgrade pip
 python -m pip install -r .\requirements.txt
     
-4. Run the Backend Server
+5. Run the Backend Server
 
 Before starting the frontend, you need to start the backend server:
 

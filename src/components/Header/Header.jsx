@@ -1,5 +1,4 @@
-import React from "react";  
-import { NavLink } from "react-router-dom";
+import React from "react";
 import { Bell, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -34,10 +33,8 @@ function Header() {
 
       <div className="header-right">
         <div className="notification">
-          <NavLink to="/" className={({ isActive }) => (isActive ? "active" : undefined)}  >
           <Bell size={20} />
           <span className="badge">3</span>
-          </NavLink>
         </div>
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair

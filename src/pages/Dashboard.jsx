@@ -46,30 +46,29 @@ export default function Dashboard() {
         </p>
       </div>
 
-       <div className="cards">
-        {/* Card Total de Livros - clicável para ir para /livros */}
-        <NavLink to="/livros" className="card card-link">
+   <div className="cards">
+    {/* Card Total de Livros - clicável para ir para /livros */}
+    <NavLink to="/livros" className="card card-link">
+      <div className="card-header">
+        <span>Total de Livros</span>
+        <div className="icon blue">
+          <FaBook />
+        </div>
+      </div>
+      <h2>{stats.totalLivros}</h2>
+      <small className="positive">Clique para ver os livros</small>
+    </NavLink>
+        {/* Card Total de Usuários - clicável para ir para /usuarios */}
+        <NavLink to="/alunos" className="card card-link">
           <div className="card-header">
-            <span>Total de Livros</span>
-            <div className="icon blue">
-              <FaBook />
-            </div>
-          </div>
-          <h2>{stats.totalLivros}</h2>
-          <small className="positive">Clique para ver os livros</small>
-        </NavLink>
-
-        {/* Alunos Cadastrados */}
-        <div className="card">
-          <div className="card-header">
-            <span>Alunos Cadastrados</span>
+            <span>Total de Usuários</span>
             <div className="icon green">
               <FaUsers />
             </div>
           </div>
           <h2>{stats.totalUsuarios}</h2>
-          <small className="positive">Dados em tempo real</small>
-        </div>
+          <small className="positive">Clique para ver os Alunos</small>
+        </NavLink>
 
         {/* Empréstimos Ativos */}
         <div className="card">

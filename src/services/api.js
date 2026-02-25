@@ -87,3 +87,145 @@ export function getGeneros() {
 export function getDashboardStats() {
   return fetchWithToken("/dashboard-stats");
 }
+
+// ===== ADMINS =====
+export function getAdmins() {
+  return fetchWithToken("/admins");
+}
+
+export function createAdmin(payload) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/admins`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao criar admin");
+    return res.json();
+  });
+}
+
+export function updateAdmin(idAdmin, payload) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/admins/${idAdmin}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao atualizar admin");
+    return res.json();
+  });
+}
+
+export function deleteAdmin(idAdmin) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/admins/${idAdmin}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao deletar admin");
+    return res.json();
+  });
+}
+
+// ===== ALUNOS =====
+export function getAlunos() {
+  return fetchWithToken("/alunos");
+}
+
+export function createAluno(payload) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/alunos`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao criar aluno");
+    return res.json();
+  });
+}
+
+export function updateAluno(idUsuario, payload) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/alunos/${idUsuario}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao atualizar aluno");
+    return res.json();
+  });
+}
+
+export function deleteAluno(idUsuario) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/alunos/${idUsuario}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao deletar aluno");
+    return res.json();
+  });
+}
+
+// ===== COMUNIDADE =====
+export function getComunidade() {
+  return fetchWithToken("/comunidade");
+}
+
+export function createComunidade(payload) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/comunidade`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao criar membro");
+    return res.json();
+  });
+}
+
+export function updateComunidade(idUsuario, payload) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/comunidade/${idUsuario}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao atualizar membro");
+    return res.json();
+  });
+}
+
+export function deleteComunidade(idUsuario) {
+  const token = getToken();
+  return fetch(`${BASE_URL}/comunidade/${idUsuario}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(async (res) => {
+    if (!res.ok) throw new Error((await res.text()) || "Erro ao deletar membro");
+    return res.json();
+  });
+}

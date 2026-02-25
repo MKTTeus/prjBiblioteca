@@ -4,7 +4,7 @@ import os
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request
@@ -115,6 +115,35 @@ class ExemplarUpdate(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
+class AdminIn(BaseModel):
+    nome: str
+    email: str
+    senha: str
+    status: Optional[Union[str, bool]] = "Ativo"
+
+
+class AdminUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[str] = None
+    status: Optional[Union[str, bool]] = None
+    senha: Optional[str] = None  
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class UsuarioUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[str] = None
+    telefone: Optional[str] = None
+    telefoneResponsavel: Optional[str] = None
+    endereco: Optional[str] = None
+    ra: Optional[str] = None
+    cpf: Optional[str] = None
+    tipo: Optional[str] = None
+    status: Optional[str] = None
+    senha: str = None
+
+    model_config = ConfigDict(extra="forbid")
 
 #  HELPERS AUTH  #
 BCRYPT_PREFIX = ("$2a$", "$2b$", "$2y$")
@@ -146,6 +175,20 @@ def verify_password(plain_password: str, stored_value: str) -> tuple[bool, bool]
     if plain_password == stored_value:
         return (True, True)
     return (False, False)
+
+
+def parse_status(value) -> bool:
+    if value is None:
+        return True  # default to active
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        v = value.strip().lower()
+        if v in {"ativo", "active", "true", "1", "on", "yes"}:
+            return True
+        if v in {"inativo", "inactive", "false", "0", "off", "no"}:
+            return False
+    raise HTTPException(status_code=400, detail="Status inválido. Use 'Ativo'/'Inativo' ou booleano.")
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
@@ -453,6 +496,215 @@ async def listar_generos(user=Depends(get_optional_user)):
         return generos
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar gêneros: {str(e)}")
+
+
+# ==== ADMINS ==== #
+@app.get("/admins")
+async def listar_admins(admin=Depends(get_current_admin)):
+    """
+    Lista administradores.
+    """
+    try:
+        resp = supabase.table("Administrador").select("*").order("admNome").execute()
+        return resp.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar admins: {e}")
+
+
+@app.post("/admins")
+async def criar_admin(data: AdminIn, admin=Depends(get_current_admin)):
+    """
+    Cria um novo administrador com senha (hash bcrypt em admSenha).
+    """
+    try:
+        if not data.senha or len(data.senha) < 6:
+            raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
+
+        hashed_password = hash_password(data.senha)
+
+        record = {
+            "admNome": data.nome,
+            "admEmail": data.email,
+            "admStatus": parse_status(data.status),
+            "admSenha": hashed_password,
+        }
+        resp = supabase.table("Administrador").insert(record).execute()
+        if not resp.data:
+            raise HTTPException(status_code=500, detail="Erro ao criar admin")
+        return resp.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar admin: {e}")
+
+
+@app.put("/admins/{idAdmin}")
+async def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_current_admin)):
+    payload = {}
+    if data.nome is not None:
+        payload["admNome"] = data.nome
+    if data.email is not None:
+        payload["admEmail"] = data.email
+    if data.status is not None:
+        payload["admStatus"] = parse_status(data.status)
+    if data.senha:
+        payload["admSenha"] = hash_password(data.senha)
+
+
+    if not payload:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    try:
+        resp = supabase.table("Administrador").update(payload).eq("idAdmin", idAdmin).execute()
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Admin não encontrado")
+        return resp.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar admin: {e}")
+
+
+@app.delete("/admins/{idAdmin}")
+async def deletar_admin(idAdmin: int, admin=Depends(get_current_admin)):
+    try:
+        supabase.table("Administrador").delete().eq("idAdmin", idAdmin).execute()
+        return {"message": "Admin removido com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar admin: {e}")
+    
+
+@app.get("/alunos")
+async def listar_alunos(admin=Depends(get_current_admin)):
+    try:
+        resp = (
+            supabase.table("Usuario")
+            .select("*")
+            .eq("usuTipo", "Aluno")
+            .order("usuNome")
+            .execute()
+        )
+        return resp.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar alunos: {e}")
+
+
+@app.post("/alunos")
+async def criar_aluno(data: SignupData, admin=Depends(get_current_admin)):
+    """
+    Cria um usuário do tipo Aluno. Reaproveita estrutura do signup mas exige tipo=Aluno.
+    """
+    if data.tipo != "Aluno":
+        raise HTTPException(status_code=400, detail="Tipo deve ser 'Aluno'")
+    try:
+        hashed_password = hash_password(data.senha)
+        resp = supabase.table("Usuario").insert({
+            "usuNome": data.nome,
+            "usuEmail": data.email,
+            "usuSenha": hashed_password,
+            "usuTelefone": data.telefone,
+            "usuTelefoneResponsavel": data.telefoneResponsavel,
+            "usuEndereco": data.endereco,
+            "usuCPF": data.cpf,
+            "usuRA": data.ra,
+            "usuTipo": "Aluno",
+        }).execute()
+        return resp.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar aluno: {e}")
+
+
+@app.put("/alunos/{idUsuario}")
+async def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_current_admin)):
+    payload = {}
+    if data.nome is not None:
+        payload["usuNome"] = data.nome
+    if data.email is not None:
+        payload["usuEmail"] = data.email
+    if data.telefone is not None:
+        payload["usuTelefone"] = data.telefone
+    if data.telefoneResponsavel is not None:
+        payload["usuTelefoneResponsavel"] = data.telefoneResponsavel
+    if data.endereco is not None:
+        payload["usuEndereco"] = data.endereco
+    if data.ra is not None:
+        payload["usuRA"] = data.ra
+    if data.cpf is not None:
+        payload["usuCPF"] = data.cpf
+    if data.tipo is not None:
+        payload["usuTipo"] = data.tipo
+
+    if not payload:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    try:
+        resp = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="Aluno não encontrado")
+        return resp.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar aluno: {e}")
+
+
+@app.delete("/alunos/{idUsuario}")
+async def deletar_aluno(idUsuario: int, admin=Depends(get_current_admin)):
+    try:
+        supabase.table("Usuario").delete().eq("idUsuario", idUsuario).execute()
+        return {"message": "Aluno removido com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar aluno: {e}")
+
+
+# ==== COMUNIDADE ==== #
+@app.get("/comunidade")
+async def listar_comunidade(admin=Depends(get_current_admin)):
+    try:
+        resp = (
+            supabase.table("Usuario")
+            .select("*")
+            .eq("usuTipo", "Comunidade")
+            .order("usuNome")
+            .execute()
+        )
+        return resp.data or []
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar comunidade: {e}")
+
+
+@app.post("/comunidade")
+async def criar_comunidade(data: SignupData, admin=Depends(get_current_admin)):
+    if data.tipo != "Comunidade":
+        raise HTTPException(status_code=400, detail="Tipo deve ser 'Comunidade'")
+    try:
+        hashed_password = hash_password(data.senha)
+        resp = supabase.table("Usuario").insert({
+            "usuNome": data.nome,
+            "usuEmail": data.email,
+            "usuSenha": hashed_password,
+            "usuTelefone": data.telefone,
+            "usuTelefoneResponsavel": data.telefoneResponsavel,
+            "usuEndereco": data.endereco,
+            "usuCPF": data.cpf,
+            "usuRA": data.ra,
+            "usuTipo": "Comunidade",
+        }).execute()
+        return resp.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar membro da comunidade: {e}")
+
+
+@app.put("/comunidade/{idUsuario}")
+async def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_current_admin)):
+    # mesmo payload do aluno
+    return await atualizar_aluno(idUsuario, data, admin)
+
+
+@app.delete("/comunidade/{idUsuario}")
+async def deletar_comunidade(idUsuario: int, admin=Depends(get_current_admin)):
+    return await deletar_aluno(idUsuario, admin)
+
 
 @app.get("/dashboard-stats")
 async def dashboard_stats(user=Depends(get_optional_user)):
