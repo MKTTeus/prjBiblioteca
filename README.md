@@ -44,8 +44,7 @@ python -m venv venv
 
     This ensures your backend dependencies are isolated from your global Python environment.
     # 1.1 if you receive errors on ExecutionPolicy try
-Set-ExecutionPolicy -Scope
- Process -ExecutionPolicy Bypass -Force
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
     # 1.2  if Venv dosent exist try
 python -m venv venv
 .\venv\Scripts\Activate.ps1
