@@ -15,6 +15,8 @@ export default function Admin() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [indexEditando, setIndexEditando] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
 
   const [novoAdmin, setNovoAdmin] = useState({
@@ -59,10 +61,15 @@ export default function Admin() {
 
   const handleChange = (e) => {
     setNovoAdmin({ ...novoAdmin, [e.target.name]: e.target.value });
+    setIsDirty(true);
   };
 
   const handleSalvar = async () => {
     if (!novoAdmin.nome || !novoAdmin.email) return;
+
+    if (isProcessing) return;
+    if (modoEdicao && !isDirty) return;
+    setIsProcessing(true);
 
     try {
       if (modoEdicao && indexEditando != null) {
@@ -70,7 +77,7 @@ export default function Admin() {
         const payload = {
           nome: novoAdmin.nome,
           email: novoAdmin.email,
-          status: novoAdmin.status,
+          status: novoAdmin.status === "Ativo"
         };
         const updated = await updateAdmin(alvo.idAdmin, payload);
         const atualizados = admins.map((admin, i) =>
@@ -94,7 +101,7 @@ export default function Admin() {
           nome: novoAdmin.nome,
           senha: novoAdmin.senha,
           email: novoAdmin.email,
-          status: novoAdmin.status,
+          status: novoAdmin.status === "Ativo"
         });
         setAdmins([
           ...admins,
@@ -116,6 +123,9 @@ export default function Admin() {
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar admin:", err);
+    } finally {
+      setTimeout(() => setIsProcessing(false), 600);
+      setIsDirty(false);
     }
   };
 
@@ -148,7 +158,7 @@ export default function Admin() {
       const payload = {
         nome: admin.nome,
         email: admin.email,
-        status: novoStatus,
+        status: novoStatus === "Ativo",
       };
       await updateAdmin(admin.idAdmin, payload);
       const atualizados = admins.map((a, i) =>
@@ -349,8 +359,12 @@ export default function Admin() {
                 Cancelar
               </button>
 
-              <button className="btn-criar" onClick={handleSalvar}>
-                {modoEdicao ? "Salvar Alterações" : "Criar Admin"}
+              <button className="btn-criar" onClick={handleSalvar} disabled={isProcessing || (modoEdicao && !isDirty)}>
+                {isProcessing
+                  ? "Processando..."
+                  : modoEdicao
+                  ? "Salvar Alterações"
+                  : "Criar Admin"}
               </button>
             </div>
           </div>

@@ -1,0 +1,91 @@
+/* Radix Select styling and native fallback */
+
+/* Trigger styling (the visible control) */
+.SelectTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* Content rendered in a portal - use fixed positioning and high z-index so it won't be clipped */
+.SelectContent {
+  position: fixed !important;
+  z-index: 9999 !important;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 240px;
+  max-width: 600px;
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Viewport inside content */
+.SelectViewport {
+  padding: 4px;
+}
+
+/* Each item */
+.SelectItem {
+  padding: 8px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.SelectItem[aria-disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.SelectItem:hover {
+  background: #f3f4f6;
+}
+
+/* Item text */
+.SelectItemText {
+  flex: 1;
+  font-size: 14px;
+  color: #111827;
+}
+
+/* Item indicator (check) */
+.SelectItemIndicator {
+  margin-left: 8px;
+  color: #2563eb;
+}
+
+/* Native select fallback styling */
+.native-select,
+.select-native {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+  box-sizing: border-box;
+}
+
+/* scrollbar styling for dropdown */
+.SelectContent::-webkit-scrollbar {
+  width: 10px;
+}
+.SelectContent::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 6px;
+}

@@ -6,6 +6,7 @@ export default function BookInfoModal({ book, onClose }) {
   if (!book) return null;
 
   const tombos = book.exemplares || [];
+  const tombosDisponiveis = tombos.filter((t) => (t.exeLivStatus || "").toLowerCase() === "disponível");
 
   return (
     <div className="modal-overlay">
@@ -52,19 +53,49 @@ export default function BookInfoModal({ book, onClose }) {
         </div>
 
         <div className="tombos-section">
-
           <h3>Exemplares (Tombos)</h3>
 
           {tombos.length === 0 ? (
             <p>Nenhum exemplar cadastrado</p>
           ) : (
-            <div className="tombos-grid">
-              {tombos.map((t) => (
-                <div key={t.idExemplar} className="tombo-card">
-                  {t.tomboCodigo}
+            <>
+              <div className="tombos-summary">
+                <div className="tombos-summary-item">
+                  <strong>{tombos.length}</strong>
+                  <span>Total</span>
                 </div>
-              ))}
-            </div>
+                <div className="tombos-summary-item">
+                  <strong>{tombosDisponiveis.length}</strong>
+                  <span>Disponíveis</span>
+                </div>
+                <div className="tombos-summary-item">
+                  <strong>{tombos.length - tombosDisponiveis.length}</strong>
+                  <span>Emprestados</span>
+                </div>
+              </div>
+
+              <div className="tombos-grid">
+                {tombos.map((t) => {
+                  const status = t.exeLivStatus || (t.disponivel ? "Disponível" : "Indisponível");
+                  const codigo = t.exeLivTombo || t.tomboCodigo || "-";
+                  const isDisponivel = status.toLowerCase() === "disponível";
+
+                  return (
+                    <div
+                      key={t.idExemplar || codigo}
+                      className={`tombo-card ${isDisponivel ? "disponivel" : "indisponivel"}`}
+                    >
+                      <div className="tombo-code">{codigo}</div>
+                      <div className="tombo-meta">
+                        <span className="tombo-status">{status}</span>
+                        <span className="tombo-isbn">ISBN: {t.exeLivISBN || "-"}</span>
+                        <span className="tombo-desc">{t.exeLivDescricao || "Sem descrição"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
 
         </div>

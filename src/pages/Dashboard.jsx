@@ -18,13 +18,7 @@ import { getDashboardStats } from "../services/api";
 
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    totalLivros: 0,
-    totalUsuarios: 0,
-    emprestimosAtivos: 0,
-    devolucoesPendentes: 0,
-  });
-
+  const [stats, setStats] = useState(null);
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -37,6 +31,10 @@ export default function Dashboard() {
     fetchStats();
   }, []);
 
+   if (!stats) {
+    return <p>Carregando...</p>;
+  }
+
   return (
     <div className="dashboard">
       <div className="header-dashboard">
@@ -47,7 +45,7 @@ export default function Dashboard() {
       </div>
 
    <div className="cards">
-    {/* Card Total de Livros - clicável para ir para /livros */}
+    {/* Card Total de Livros */}
     <NavLink to="/livros" className="card card-link">
       <div className="card-header">
         <span>Total de Livros</span>
@@ -58,7 +56,7 @@ export default function Dashboard() {
       <h2>{stats.totalLivros}</h2>
       <small className="positive">Clique para ver os livros</small>
     </NavLink>
-        {/* Card Total de Usuários - clicável para ir para /usuarios */}
+        {/* Card Total de Usuários  */}
         <NavLink to="/alunos" className="card card-link">
           <div className="card-header">
             <span>Total de Usuários</span>
@@ -90,64 +88,80 @@ export default function Dashboard() {
               <FaClock />
             </div>
           </div>
-          <h2>{stats.devolucoesPendentes}</h2>
+          <h2>{stats.atrasados}</h2>
           <small className="danger">Acompanhe os atrasos</small>
         </div>
       </div>
 
-        <div className="notifications">
-          <div className="notifications-header">
-            <div>
-              <h3>Notificações e Avisos</h3>
-              <p>Atualizações recentes do sistema</p>
-            </div>
-            <span className="badge">3 novas</span>
+              {/* NOTIFICAÇÕES */}
+      <div className="notifications">
+        <div className="notifications-header">
+          <div>
+            <h3>Notificações e Avisos</h3>
+            <p>Atualizações recentes do sistema</p>
           </div>
+          <span className="badge">
+            {stats.atrasados + stats.reservados + stats.devolucoesHoje} novas
+          </span>
+        </div>
 
+        {/* ATRASADOS */}
+        {stats.atrasados > 0 && (
           <div className="notification warning">
             <div className="notification-content">
               <div className="notification-icon warning-icon">
                 <FaExclamationTriangle />
               </div>
               <div>
-                <strong>3 livros em atraso</strong>
-                <p>Alunos com devoluções pendentes há mais de 7 dias</p>
-                <small>2 horas atrás</small>
+                <strong>{stats.atrasados} livros em atraso</strong>
+                <p>Alunos com devoluções atrasadas</p>
+                <small>Atualizado agora</small>
               </div>
             </div>
-            <button>Ver</button>
           </div>
+        )}
 
+        {/* RESERVAS */}
+        {stats.reservados > 0 && (
           <div className="notification info">
             <div className="notification-content">
               <div className="notification-icon info-icon">
                 <FaClock />
               </div>
               <div>
-                <strong>5 reservas aguardando</strong>
+                <strong>{stats.reservados} reservas aguardando</strong>
                 <p>Livros disponíveis para retirada</p>
-                <small>4 horas atrás</small>
+                <small>Atualizado agora</small>
               </div>
             </div>
-            <button>Ver</button>
           </div>
+        )}
 
+        {/* DEVOLUÇÕES */}
+        {stats.devolucoesHoje > 0 && (
           <div className="notification success">
             <div className="notification-content">
               <div className="notification-icon success-icon">
                 <FaCheckCircle />
               </div>
               <div>
-                <strong>15 devoluções hoje</strong>
-                <p>Meta diária alcançada</p>
-                <small>6 horas atrás</small>
+                <strong>{stats.devolucoesHoje} devoluções hoje</strong>
+                <p>Movimentação do dia</p>
+                <small>Atualizado agora</small>
               </div>
             </div>
-            <button>Ver</button>
           </div>
+        )}
 
-          <button className="view-all">Ver todas as notificações</button>
-        </div>
+        {/* SEM NOTIFICAÇÕES */}
+        {stats.atrasados === 0 &&
+          stats.reservados === 0 &&
+          stats.devolucoesHoje === 0 && (
+            <p style={{ padding: "10px" }}>
+              Sem notificações no momento 👍
+            </p>
+          )}
+      </div>
 
 
          <div className="quick-actions">

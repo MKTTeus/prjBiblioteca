@@ -37,8 +37,17 @@ async function apiFetch(endpoint, options = {}) {
 // LIVROS
 // ========================
 
-export const getBooks = () =>
-  apiFetch("/livros");
+export const getBooks = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.q) query.append("q", params.q);
+  if (params.categoria) query.append("categoria", params.categoria);
+  if (params.status) query.append("status", params.status);
+  if (params.page) query.append("page", params.page);
+  if (params.per_page) query.append("per_page", params.per_page);
+  const qs = query.toString();
+  const endpoint = qs ? `/livros?${qs}` : "/livros";
+  return apiFetch(endpoint);
+};
 
 export const getBook = (idLivro) =>
   apiFetch(`/livros/${idLivro}`);
@@ -63,6 +72,12 @@ export const deleteBook = (idLivro) =>
 export const addExemplares = (idLivro, quantidade, prefixo) =>
   apiFetch(`/livros/${idLivro}/adicionar-exemplares?quantidade=${quantidade}&prefixo=${prefixo}`, {
     method: "POST"
+  });
+
+export const updateExemplar = (idExemplar, payload) =>
+  apiFetch(`/exemplares/${idExemplar}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
   });
 
 // ========================

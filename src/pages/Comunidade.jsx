@@ -68,7 +68,7 @@ export default function Membros() {
             telefone2: u.usuTelefoneResponsavel || "",
             endereco: u.usuEndereco || "",
             livros: 0,
-            status: "Ativo",
+            status: u.usuStatus === false ? "Inativo" : "Ativo",
           }))
         );
       } catch (err) {
@@ -92,6 +92,7 @@ export default function Membros() {
           telefoneResponsavel: novoMembro.telefone2,
           endereco: novoMembro.endereco,
           cpf: novoMembro.cpf,
+          status: novoMembro.status === "Ativo",
         };
         const updated = await updateComunidade(alvo.idUsuario, payload);
         const atualizados = membros.map((membro, i) =>
@@ -104,6 +105,7 @@ export default function Membros() {
                 telefone: updated.usuTelefone || "",
                 telefone2: updated.usuTelefoneResponsavel || "",
                 endereco: updated.usuEndereco || "",
+                status: updated.usuStatus === false ? "Inativo" : "Ativo",
               }
             : membro
         );
@@ -119,6 +121,7 @@ export default function Membros() {
           endereco: novoMembro.endereco,
           cpf: novoMembro.cpf,
           tipo: "Comunidade",
+          status: novoMembro.status === "Ativo",
         });
         setMembros([
           ...membros,
@@ -168,16 +171,28 @@ export default function Membros() {
     }
   };
 
-  const handleToggleStatus = (index) => {
-    const novos = membros.map((membro, i) =>
-      i === index
-        ? {
-            ...membro,
-            status: membro.status === "Ativo" ? "Inativo" : "Ativo",
-          }
-        : membro
-    );
-    setMembros(novos);
+  const handleToggleStatus = async (index) => {
+    const alvo = membros[index];
+    const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
+
+    try {
+      const updated = await updateComunidade(alvo.idUsuario, {
+        ...alvo,
+        status: novoStatus === "Ativo",
+      });
+
+      const novos = membros.map((membro, i) =>
+        i === index
+          ? {
+              ...membro,
+              status: updated.usuStatus === false ? "Inativo" : "Ativo",
+            }
+          : membro
+      );
+      setMembros(novos);
+    } catch (err) {
+      console.error("Erro ao alterar status do membro:", err);
+    }
   };
 
   const membrosFiltrados = membros.filter((membro) =>

@@ -40,17 +40,21 @@ function Sidebar() {
                 <FiHome /> Dashboard
               </NavLink>
             </li>
-                        <li>
-              <NavLink to="/Biblioteca" className={({ isActive }) => (isActive ? "active" : undefined)}>
-                <FiBookmark /> Biblioteca
-              </NavLink>
-            </li>
+            {!isAdmin && (
+              <li>
+                <NavLink to="/Biblioteca" className={({ isActive }) => (isActive ? "active" : undefined)}>
+                  <FiBookmark /> Biblioteca
+                </NavLink>
+              </li>
+            )}
 
-            <li>
-              <NavLink to="/livros" className={({ isActive }) => (isActive ? "active" : undefined)}>
-                <FiBook /> Livros
-              </NavLink>
-            </li>
+            {isAdmin && (
+              <li>
+                <NavLink to="/livros" className={({ isActive }) => (isActive ? "active" : undefined)}>
+                  <FiBook /> Livros
+                </NavLink>
+              </li>
+            )}
 
             {/* SUBMENU PESSOAS - SOMENTE ADMIN */}
             {isAdmin && (

@@ -16,6 +16,8 @@ export default function Alunos() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [indexEditando, setIndexEditando] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   const [novoAluno, setNovoAluno] = useState({
     nome: "",
@@ -35,6 +37,7 @@ export default function Alunos() {
       ...novoAluno,
       [e.target.name]: e.target.value,
     });
+    setIsDirty(true);
   };
 
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function Alunos() {
             telefone2: u.usuTelefoneResponsavel || "",
             endereco: u.usuEndereco || "",
             livros: 0,
-            status: "Ativo",
+            status: u.usuStatus === false ? "Inativo" : "Ativo",
           }))
         );
       } catch (err) {
@@ -62,8 +65,13 @@ export default function Alunos() {
   }, []);
 
   const handleSalvar = async () => {
+    if (isProcessing) return;
+    if (modoEdicao && !isDirty) return;
+
     // Required fields for backend create: nome, email, senha, telefone, endereco, tipo
-    if (!novoAluno.nome || !novoAluno.email || !novoAluno.telefone || !novoAluno.endereco) return;
+    if (!novoAluno.nome || !novoAluno.email || !novoAluno.telefone || !novoAluno.endereco || !novoAluno.status) return;
+
+    setIsProcessing(true);
 
     try {
       if (modoEdicao && indexEditando != null) {
@@ -75,6 +83,7 @@ export default function Alunos() {
           telefoneResponsavel: novoAluno.telefone2,
           endereco: novoAluno.endereco,
           ra: novoAluno.ra,
+          status: novoAluno.status === "Ativo",
         };
         const updated = await updateAluno(alvo.idUsuario, payload);
         const atualizados = alunos.map((aluno, i) =>
@@ -87,6 +96,7 @@ export default function Alunos() {
                 telefone: updated.usuTelefone || "",
                 telefone2: updated.usuTelefoneResponsavel || "",
                 endereco: updated.usuEndereco || "",
+                status: updated.usuStatus || "Ativo",
               }
             : aluno
         );
@@ -102,6 +112,7 @@ export default function Alunos() {
           endereco: novoAluno.endereco,
           ra: novoAluno.ra,
           tipo: "Aluno",
+          status: novoAluno.status === "Ativo",
         });
         setAlunos([
           ...alunos,
@@ -115,12 +126,16 @@ export default function Alunos() {
             endereco: created.usuEndereco || "",
             livros: 0,
             status: novoAluno.status || "Ativo",
+
           },
         ]);
       }
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar aluno:", err);
+    } finally {
+      setTimeout(() => setIsProcessing(false), 600);
+      setIsDirty(false);
     }
   };
 
@@ -139,6 +154,7 @@ export default function Alunos() {
     setIndexEditando(index);
     setModoEdicao(true);
     setModalAberto(true);
+    setIsDirty(false);
   };
 
   const handleExcluir = async (index) => {
@@ -151,18 +167,28 @@ export default function Alunos() {
     }
   };
 
-  const handleToggleStatus = (index) => {
-    const novosAlunos = alunos.map((aluno, i) => {
-      if (i === index) {
-        return {
-          ...aluno,
-          status: aluno.status === "Ativo" ? "Inativo" : "Ativo",
-        };
-      }
-      return aluno;
-    });
+  const handleToggleStatus = async (index) => {
+    const alvo = alunos[index];
+    const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
 
-    setAlunos(novosAlunos);
+    try {
+      const updated = await updateAluno(alvo.idUsuario, {
+        ...alvo,
+        status: novoStatus === "Ativo",
+      });
+
+      const novosAlunos = alunos.map((aluno, i) =>
+        i === index
+          ? {
+              ...aluno,
+              status: updated.usuStatus === false ? "Inativo" : "Ativo",
+            }
+          : aluno
+      );
+      setAlunos(novosAlunos);
+    } catch (err) {
+      console.error("Erro ao alterar status do aluno:", err);
+    }
   };
 
   const fecharModal = () => {
@@ -177,7 +203,7 @@ export default function Alunos() {
       telefone2: "",
       endereco: "",
       senha: "",
-      status: "Ativo",
+      status : "Ativo",
     });
   };
 
@@ -424,8 +450,13 @@ export default function Alunos() {
               <button
                 className="btn-criar"
                 onClick={handleSalvar}
+                disabled={isProcessing || (modoEdicao && !isDirty)}
               >
-                {modoEdicao ? "Salvar Alterações" : "Criar Usuário"}
+                {isProcessing
+                  ? "Processando..."
+                  : modoEdicao
+                  ? "Salvar Alterações"
+                  : "Criar Usuário"}
               </button>
             </div>
           </div>

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { getCategorias, getGeneros } from "../../services/api";
 import "./BookList.css";
 
-const BookList = ({ books = [], onEditBook, onDeleteBook, isAdmin = false }) => {
+const BookList = (props) => {
+  const { books = [], onEditBook, onDeleteBook, isAdmin = false } = props;
 
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
@@ -130,6 +131,15 @@ const BookList = ({ books = [], onEditBook, onDeleteBook, isAdmin = false }) => 
                       Editar
                     </button>
 
+                  )}
+
+                  {isAdmin && props.onEditTombos && (
+                    <button
+                      className="btn-edit"
+                      onClick={() => props.onEditTombos(book)}
+                    >
+                      Editar Tombos
+                    </button>
                   )}
 
                   {isAdmin && (

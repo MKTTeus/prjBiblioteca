@@ -1,0 +1,118 @@
+ .filtro-container{
+  background: #f3f4f6; 
+  border-radius: 14px;
+  padding: 25px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 30px;
+}
+
+.filtro-titulo{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.filtros{
+  display: grid;
+  grid-template-columns: minmax(200px, 2fr) minmax(160px, 1fr) minmax(160px, 1fr) auto;
+  gap: 20px;
+  align-items: end;
+}
+
+.campo{
+  display: flex;
+  flex-direction: column;
+}
+
+.campo label{
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.campo select{
+  width: 100%;
+  padding: 10px 35px 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.campo select:hover{
+  border-color: #9ca3af;
+}
+
+.campo select:focus{
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.input-icon input{
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 10px 12px 10px 44px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+}
+
+.input-icon,
+.input-icon input,
+select{
+  width: 100%;
+  box-sizing: border-box;
+
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Ensure filter container doesn't create stacking context that clips fixed-position dropdowns */
+.filtro-container {
+  position: static;
+  overflow: visible;
+}
+
+/* Make select interactions not shift layout */
+.campo select, .input-icon input, .native-select {
+  transform: none !important;
+}
+
+.botao button{
+  background-color: #dc2626;
+  color: white;
+
+  width: 100%;
+  padding: 10px 35px 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+};
+
+select{
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+}
+
+@media (max-width: 900px){
+  .filtros{
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .limpar-btn{
+    width: 100%;
+  }
+}

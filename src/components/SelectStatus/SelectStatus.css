@@ -1,0 +1,77 @@
+/* Radix Select styling and native fallback for Status select */
+.SelectTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.SelectContent {
+  position: fixed !important;
+  z-index: 9999 !important;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 200px;
+  max-width: 420px;
+  max-height: 260px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.SelectViewport {
+  padding: 4px;
+}
+
+.SelectItem {
+  padding: 8px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.SelectItem:hover {
+  background: #f3f4f6;
+}
+
+.SelectItemText {
+  flex: 1;
+  font-size: 14px;
+  color: #111827;
+}
+
+.SelectItemIndicator {
+  margin-left: 8px;
+  color: #2563eb;
+}
+
+.native-select,
+.select-native {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  background: white;
+  box-sizing: border-box;
+}
+
+.SelectContent::-webkit-scrollbar {
+  width: 10px;
+}
+.SelectContent::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+  border-radius: 6px;
+}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styles/Biblioteca.css";
-import { getBooks } from "../services/api";
+import { getBooks, getBook } from "../services/api";
 import BookInfoModal from "../components/BookInfo/BookInfoModal";
 
 function Biblioteca() {
@@ -34,9 +34,19 @@ function Biblioteca() {
 
   }, [search, books]);
 
-  function abrirInfo(book) {
-    setSelectedBook(book);
-    setInfoModal(true);
+  async function abrirInfo(book) {
+    try {
+      const detalhes = await getBook(book.idLivro);
+      setSelectedBook({
+        ...book,
+        exemplares: detalhes.exemplares || []
+      });
+      setInfoModal(true);
+    } catch (error) {
+      console.error("Falha ao carregar detalhes do livro", error);
+      setSelectedBook(book);
+      setInfoModal(true);
+    }
   }
 
   return (
@@ -82,7 +92,6 @@ function Biblioteca() {
               />
 
               <div className="book-overlay">
-
                 <h3>{book.livTitulo}</h3>
 
                 <p>{book.livAutor}</p>

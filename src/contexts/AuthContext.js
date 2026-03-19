@@ -22,13 +22,14 @@ export function AuthProvider({ children }) {
 
   const login = async ({ email, senha }) => {
     try {
+      const normalizedEmail = email?.trim().toLowerCase();
 
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ email, senha })
+        body: JSON.stringify({ email: normalizedEmail, senha })
       });
 
       const data = await response.json();
@@ -43,7 +44,7 @@ export function AuthProvider({ children }) {
 
       const newUser = {
         nome: data.nome,
-        email: email,
+        email: normalizedEmail,
         tipo: data.tipo,
         token: data.access_token
       };
@@ -83,13 +84,17 @@ export function AuthProvider({ children }) {
 
   const signup = async (form) => {
     try {
+      const normalizedForm = {
+        ...form,
+        email: form.email?.trim().toLowerCase()
+      };
 
       const response = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(normalizedForm)
       });
 
       const data = await response.json();

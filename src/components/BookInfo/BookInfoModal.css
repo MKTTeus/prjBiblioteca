@@ -24,17 +24,86 @@
   margin-top:25px;
 }
 
+.tombos-summary{
+  display:flex;
+  gap:12px;
+  margin-top:12px;
+  margin-bottom:10px;
+}
+
+.tombos-summary-item{
+  flex:1;
+  background:#f6f7fb;
+  border:1px solid #dde2f0;
+  border-radius:8px;
+  padding:10px 12px;
+  text-align:center;
+}
+
+.tombos-summary-item strong{
+  display:block;
+  font-size:1.25rem;
+  color:#1f2d5c;
+}
+
+.tombos-summary-item span{
+  color:#5a637f;
+  font-size:0.85rem;
+}
+
 .tombos-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
   gap:10px;
   margin-top:10px;
 }
 
 .tombo-card{
-  background:#f3f3f3;
-  padding:8px;
-  border-radius:6px;
+  background:#ffffff;
+  border:1px solid #e3e6f0;
+  padding:10px;
+  border-radius:8px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
   text-align:center;
-  font-weight:500;
 }
+
+.tombo-card.disponivel{
+  border-color:#4fac80;
+}
+
+.tombo-card.indisponivel{
+  border-color:#e05f5f;
+}
+
+.tombo-code{
+  font-weight:700;
+  color:#2d3b66;
+  margin-bottom:5px;
+}
+
+.tombo-status{
+  font-size:0.85rem;
+  color:#5b647b;
+}
+
+.tombo-meta{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin-top:8px;
+}
+
+.tombo-isbn{
+  font-size:0.75rem;
+  color:#2e3f6e;
+}
+
+.tombo-desc{
+  font-size:0.7rem;
+  color:#616e8f;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+

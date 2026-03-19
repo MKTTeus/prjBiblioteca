@@ -21,3 +21,12 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Ignore pycache anywhere under src/backend
+src/backend/**/__pycache__/
+src/backend/**/*.pyc

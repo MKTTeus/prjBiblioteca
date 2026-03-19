@@ -91,3 +91,18 @@
   font-size:11px;
   opacity:0.9;
 }
+
+.btn-editar-tombos-card{
+  background:#ffd60a;
+  border:1px solid #d8b100;
+  border-radius:6px;
+  padding:7px 9px;
+  font-size:11px;
+  color:#1a1a1a;
+  cursor:pointer;
+  margin-bottom:6px;
+}
+
+.btn-editar-tombos-card:hover{
+  background:#f5c800;
+}
