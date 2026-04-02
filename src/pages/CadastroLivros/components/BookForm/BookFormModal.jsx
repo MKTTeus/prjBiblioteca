@@ -128,7 +128,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     carregarLivroEmEdicao();
-  }, [bookToEdit]);
+  }, [carregarLivroEmEdicao]);
 
   function handleFieldChange(name, value) {
     setForm((prev) => ({
