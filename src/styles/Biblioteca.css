@@ -1,0 +1,108 @@
+.biblioteca-page{
+  padding:30px;
+  min-height:100vh;
+  background:#f5f6fa;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+/* HEADER */
+
+.biblioteca-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+.header-actions{
+  display:flex;
+  gap:15px;
+}
+
+.book-disponivel{
+  font-size:11px;
+  color:#7CFF9B;
+}
+
+.input-pesquisa{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  width:250px;
+}
+
+/* BOTÃO */
+
+.btn-novo{
+  background:#ff3b3b;
+  color:white;
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.btn-novo:hover{
+  background:#e02d2d;
+}
+
+/* GRID NETFLIX */
+
+.book-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
+  gap:20px;
+}
+
+
+.book-card{
+  position:relative;
+  cursor:pointer;
+  transition:transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.book-card:hover{
+  transform:translateY(-6px) scale(1.03);
+  box-shadow:0 10px 25px rgba(0,0,0,0.25);
+}
+
+.book-overlay{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  padding:10px;
+  background:linear-gradient(transparent, rgba(0,0,0,0.85));
+  color:white;
+}
+
+.book-overlay h3{
+  font-size:14px;
+  margin-bottom:4px;
+}
+
+.book-overlay p{
+  font-size:12px;
+  opacity:0.85;
+}
+
+.book-count{
+  font-size:11px;
+  opacity:0.9;
+}
+
+.btn-editar-tombos-card{
+  background:#ffd60a;
+  border:1px solid #d8b100;
+  border-radius:6px;
+  padding:7px 9px;
+  font-size:11px;
+  color:#1a1a1a;
+  cursor:pointer;
+  margin-bottom:6px;
+}
+
+.btn-editar-tombos-card:hover{
+  background:#f5c800;
+}

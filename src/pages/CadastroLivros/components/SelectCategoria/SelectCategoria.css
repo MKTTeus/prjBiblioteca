@@ -1,0 +1,100 @@
+.SelectTrigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #dbe1ea;
+  background: #f8fafc;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.SelectTrigger:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.SelectTrigger:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.SelectContent {
+  position: fixed !important;
+  z-index: 9999 !important;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  min-width: 260px;
+  max-width: 600px;
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.SelectViewport {
+  padding: 0;
+}
+
+.SelectItem {
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.18s ease;
+}
+
+.SelectItem[aria-disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.SelectItem:hover {
+  background: #f3f4f6;
+}
+
+.SelectItemText {
+  flex: 1;
+  font-size: 14px;
+  color: #111827;
+}
+
+.SelectItemIndicator {
+  margin-left: 8px;
+  color: #2563eb;
+}
+
+.native-select,
+.select-native {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #dbe1ea;
+  font-size: 14px;
+  background: #f8fafc;
+  box-sizing: border-box;
+}
+
+.SelectContent::-webkit-scrollbar {
+  width: 10px;
+}
+
+.SelectContent::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.14);
+  border-radius: 999px;
+}

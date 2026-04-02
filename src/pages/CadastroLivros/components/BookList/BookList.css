@@ -1,0 +1,293 @@
+.booklist-container {
+  padding: 8px 0 28px;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.booklist-container .book-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+  width: 100%;
+}
+
+.booklist-container .book-card {
+  background: #ffffff;
+  border: 1px solid #d7deea;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 550px;
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.booklist-container .book-card:hover {
+  transform: translateY(-4px);
+  border-color: #b7c6dd;
+  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12);
+}
+
+.booklist-container .book-card-media {
+  position: relative;
+  height: 302px;
+  background: linear-gradient(180deg, #eff4fb 0%, #dce6f3 100%);
+  overflow: hidden;
+}
+
+.booklist-container .book-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.booklist-container .book-card-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  z-index: 2;
+}
+
+.booklist-container .book-card-code,
+.booklist-container .book-card-status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.booklist-container .book-card-code {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.booklist-container .book-card-status.disponivel {
+  color: #047857;
+  background: rgba(236, 253, 245, 0.96);
+}
+
+.booklist-container .book-card-status.emprestado {
+  color: #b45309;
+  background: rgba(255, 247, 237, 0.96);
+}
+
+.booklist-container .book-card-status.reservado {
+  color: #1d4ed8;
+  background: rgba(239, 246, 255, 0.96);
+}
+
+.booklist-container .book-card-status.indisponivel {
+  color: #991b1b;
+  background: rgba(254, 242, 242, 0.96);
+}
+
+.booklist-container .book-card-content {
+  padding: 16px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.booklist-container .book-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.booklist-container .book-card-header h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.8em;
+}
+
+.booklist-container .book-card-author {
+  margin: 6px 0 0;
+  color: #334155;
+  font-size: 0.86rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.3em;
+}
+
+.booklist-container .book-card-meta {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.booklist-container .book-card-description {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 3.5em;
+}
+
+.booklist-container .book-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.booklist-container .book-card-tags span {
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  padding: 5px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.booklist-container .book-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 116px;
+}
+
+.booklist-container .detail-line {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #475569;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.booklist-container .detail-line svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.booklist-container .status-line.disponivel {
+  color: #16a34a;
+}
+
+.booklist-container .status-line.emprestado {
+  color: #ea580c;
+}
+
+.booklist-container .status-line.reservado {
+  color: #2563eb;
+}
+
+.booklist-container .status-line.indisponivel {
+  color: #dc2626;
+}
+
+.booklist-container .availability-line {
+  color: #64748b;
+}
+
+.booklist-container .loan-line {
+  color: #ef6c00;
+  background: #fff5eb;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 7px 9px;
+}
+
+.booklist-container .card-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.booklist-container .btn-edit,
+.booklist-container .btn-delete {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  min-height: 40px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.booklist-container .btn-edit {
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+
+.booklist-container .btn-edit.secondary {
+  background: #f8fafc;
+}
+
+.booklist-container .btn-edit:hover,
+.booklist-container .btn-delete:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.1);
+}
+
+.booklist-container .btn-delete {
+  background: #dc1c43;
+  color: #ffffff;
+}
+
+@media (max-width: 1180px) {
+  .booklist-container .book-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .booklist-container .book-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .booklist-container .book-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booklist-container .book-card-media {
+    height: 280px;
+  }
+}

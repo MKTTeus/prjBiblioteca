@@ -1,0 +1,54 @@
+/* HEADER */
+.avancado-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.avancado-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.settings-icon {
+  font-size: 20px;
+  color: #111827;
+}
+
+/* ALERT NEUTRO */
+.alert-neutral {
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 20px;
+}
+
+/* DIVISOR */
+.section-divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 20px 0;
+}
+
+/* AÇÕES DO SISTEMA */
+.acoes-sistema h4 {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.acoes-botoes {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Apenas texto vermelho */
+.text-danger {
+  color: #dc2626;
+}
