@@ -125,9 +125,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     carregarMetadados();
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     carregarLivroEmEdicao();
-  }, [carregarLivroEmEdicao]);
+  }, [bookToEdit]);
 
   function handleFieldChange(name, value) {
     setForm((prev) => ({
