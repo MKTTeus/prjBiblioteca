@@ -15,6 +15,7 @@ export default function Signup() {
   const [senha, setSenha] = useState("");
   const [telefone, setPhone] = useState("");
   const [telefoneR, setPhoneR] = useState("");
+  const [endereco, setEndereco] = useState("");
   const [cpf, setCPF] = useState("");
   const [ra, setRA] = useState("");
   const [isCommunity, setIsCommunity] = useState(false);
@@ -171,6 +172,11 @@ export default function Signup() {
                 onAccept={(v) => setPhoneR(v.replace(/\D/g, ""))}
               />
             </div>
+          </div>
+
+          <div className="input-group">
+            <label className="required">Endereço</label>
+            <input value={endereco} onChange={(e) => setEndereco(e.target.value)} required />
           </div>
 
           <div className="input-group">

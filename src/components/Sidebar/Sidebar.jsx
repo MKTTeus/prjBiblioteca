@@ -14,6 +14,7 @@ import "./Sidebar.css";
 
 function Sidebar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [openPessoas, setOpenPessoas] = useState(false);
 
