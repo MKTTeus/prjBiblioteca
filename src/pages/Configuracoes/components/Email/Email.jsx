@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiMail, FiRefreshCw, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import "./Email.css";
 
 export default function Email() {

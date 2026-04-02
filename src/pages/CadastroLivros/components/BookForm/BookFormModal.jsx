@@ -62,8 +62,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   }, []);
 
   useEffect(() => {
-    carregarLivroEmEdicao();
-  }, [bookToEdit]);
+  carregarLivroEmEdicao();
+}, [carregarLivroEmEdicao]);
 
   async function carregarMetadados() {
     try {

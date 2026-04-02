@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Switch from "react-switch";
-import { FiShield, FiRefreshCw } from "react-icons/fi";
+import { FiShield } from "react-icons/fi";
 import "./Seguranca.css";
 
 export default function Seguranca() {

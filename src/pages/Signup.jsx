@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { IMaskInput } from "react-imask";
-import { FiUser, FiUsers, FiArrowLeft, FiBookOpen } from "react-icons/fi";
+import { FiUser, FiUsers, FiArrowLeft } from "react-icons/fi";
 import { LuBook } from "react-icons/lu";
 import "../styles/Signup.css";
 
@@ -15,7 +15,6 @@ export default function Signup() {
   const [senha, setSenha] = useState("");
   const [telefone, setPhone] = useState("");
   const [telefoneR, setPhoneR] = useState("");
-  const [endereco, setEndereco] = useState("");
   const [cpf, setCPF] = useState("");
   const [ra, setRA] = useState("");
   const [isCommunity, setIsCommunity] = useState(false);

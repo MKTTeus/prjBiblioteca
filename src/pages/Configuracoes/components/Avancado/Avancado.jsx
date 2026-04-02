@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Switch from "react-switch";
 import { TbAdjustmentsAlt } from "react-icons/tb";
-import { FiRefreshCw } from "react-icons/fi";
 import "./Avancado.css";
 
 export default function Avancado() {

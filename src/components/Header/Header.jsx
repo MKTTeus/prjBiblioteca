@@ -1,13 +1,12 @@
 import React from "react";
 import { Bell, LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { LuBookOpen } from "react-icons/lu";
 import "./Header.css";
 
 function Header() {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = () => logout();
 

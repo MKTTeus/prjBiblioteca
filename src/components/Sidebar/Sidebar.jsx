@@ -2,12 +2,10 @@ import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   FiHome,
-  FiBookOpen,
   FiBook,
   FiUsers,
   FiRepeat,
   FiSettings,
-  FiLogOut,
   FiChevronDown,
   FiBookmark
 } from "react-icons/fi";
@@ -15,17 +13,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import "./Sidebar.css";
 
 function Sidebar() {
-  const { logout, user } = useAuth();
   const navigate = useNavigate();
 
   const [openPessoas, setOpenPessoas] = useState(false);
 
   const isAdmin = user?.tipo === "admin";
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   return (
     <aside className="sidebar">
