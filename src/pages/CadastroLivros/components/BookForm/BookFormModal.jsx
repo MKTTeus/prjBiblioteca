@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   addExemplares,
   createBook,
@@ -57,6 +57,59 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [addConfig, setAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
   const [initialAddConfig, setInitialAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
 
+  const carregarLivroEmEdicao = useCallback(async () => {
+    setActiveTab("basic");
+
+    if (!bookToEdit) {
+      setForm(DEFAULT_FORM);
+      setInitialForm(DEFAULT_FORM);
+      setExemplares([]);
+      setInitialExemplares([]);
+      setAddConfig(DEFAULT_CREATE_ADD_CONFIG);
+      setInitialAddConfig(DEFAULT_CREATE_ADD_CONFIG);
+      return;
+    }
+
+    try {
+      setLoadingDetails(true);
+      const detalhes = await getBook(bookToEdit.idLivro);
+      const livro = detalhes?.livro || bookToEdit;
+      const exemplaresCarregados = Array.isArray(detalhes?.exemplares)
+        ? detalhes.exemplares.map((ex) => ({
+            ...ex,
+            exeLivTombo: ex.exeLivTombo || "",
+            exeLivStatus: ex.exeLivStatus || "Disponível",
+            exeLivDescricao: ex.exeLivDescricao || "",
+          }))
+        : [];
+
+      const nextForm = {
+        livTitulo: livro.livTitulo || "",
+        livAutor: livro.livAutor || "",
+        livDescricao: livro.livDescricao || "",
+        livEditora: livro.livEditora || "",
+        livAnoPublicacao: livro.livAnoPublicacao || "",
+        livPaginas: livro.livPaginas || "",
+        livCapaURL: livro.livCapaURL || "",
+        idCategoria: livro.idCategoria || 1,
+        idGenero: livro.idGenero || 1,
+        exemplarISBN: livro.exemplarISBN || livro.exeLivISBN || "",
+      };
+
+      setForm(nextForm);
+      setInitialForm(nextForm);
+      setExemplares(exemplaresCarregados);
+      setInitialExemplares(exemplaresCarregados);
+      setAddConfig(DEFAULT_EDIT_ADD_CONFIG);
+      setInitialAddConfig(DEFAULT_EDIT_ADD_CONFIG);
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao carregar detalhes do livro.");
+    } finally {
+      setLoadingDetails(false);
+    }
+  }, [bookToEdit]);
+
   async function carregarMetadados() {
     try {
       const [cats, gens] = await Promise.all([getCategorias(), getGeneros()]);
@@ -73,61 +126,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   }, []);
 
   useEffect(() => {
-    const carregarLivroEmEdicao = async () => {
-      setActiveTab("basic");
-
-      if (!bookToEdit) {
-        setForm(DEFAULT_FORM);
-        setInitialForm(DEFAULT_FORM);
-        setExemplares([]);
-        setInitialExemplares([]);
-        setAddConfig(DEFAULT_CREATE_ADD_CONFIG);
-        setInitialAddConfig(DEFAULT_CREATE_ADD_CONFIG);
-        return;
-      }
-
-      try {
-        setLoadingDetails(true);
-        const detalhes = await getBook(bookToEdit.idLivro);
-        const livro = detalhes?.livro || bookToEdit;
-        const exemplaresCarregados = Array.isArray(detalhes?.exemplares)
-          ? detalhes.exemplares.map((ex) => ({
-              ...ex,
-              exeLivTombo: ex.exeLivTombo || "",
-              exeLivStatus: ex.exeLivStatus || "Disponível",
-              exeLivDescricao: ex.exeLivDescricao || "",
-            }))
-          : [];
-
-        const nextForm = {
-          livTitulo: livro.livTitulo || "",
-          livAutor: livro.livAutor || "",
-          livDescricao: livro.livDescricao || "",
-          livEditora: livro.livEditora || "",
-          livAnoPublicacao: livro.livAnoPublicacao || "",
-          livPaginas: livro.livPaginas || "",
-          livCapaURL: livro.livCapaURL || "",
-          idCategoria: livro.idCategoria || 1,
-          idGenero: livro.idGenero || 1,
-          exemplarISBN: livro.exemplarISBN || livro.exeLivISBN || "",
-        };
-
-        setForm(nextForm);
-        setInitialForm(nextForm);
-        setExemplares(exemplaresCarregados);
-        setInitialExemplares(exemplaresCarregados);
-        setAddConfig(DEFAULT_EDIT_ADD_CONFIG);
-        setInitialAddConfig(DEFAULT_EDIT_ADD_CONFIG);
-      } catch (err) {
-        console.error(err);
-        alert("Erro ao carregar detalhes do livro.");
-      } finally {
-        setLoadingDetails(false);
-      }
-    };
-
     carregarLivroEmEdicao();
-  }, [bookToEdit]);
+  }, [carregarLivroEmEdicao]);
 
   function handleFieldChange(name, value) {
     setForm((prev) => ({
