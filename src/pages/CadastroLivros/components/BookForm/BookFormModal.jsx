@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   addExemplares,
   createBook,
@@ -68,7 +68,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
-  async function carregarLivroEmEdicao() {
+  const carregarLivroEmEdicao = useCallback(async () => {
     setActiveTab("basic");
 
     if (!bookToEdit) {
@@ -119,7 +119,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     } finally {
       setLoadingDetails(false);
     }
-  }
+  }, [bookToEdit]);
 
   useEffect(() => {
     carregarMetadados();
@@ -127,7 +127,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   useEffect(() => {
     carregarLivroEmEdicao();
-  }, [bookToEdit]);
+  }, [carregarLivroEmEdicao]);
 
   function handleFieldChange(name, value) {
     setForm((prev) => ({
