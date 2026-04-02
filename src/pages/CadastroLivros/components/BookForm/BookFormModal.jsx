@@ -57,14 +57,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [addConfig, setAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
   const [initialAddConfig, setInitialAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
 
-  useEffect(() => {
-    carregarMetadados();
-  }, []);
-
-  useEffect(() => {
-  carregarLivroEmEdicao();
-}, [carregarLivroEmEdicao]);
-
   async function carregarMetadados() {
     try {
       const [cats, gens] = await Promise.all([getCategorias(), getGeneros()]);
@@ -128,6 +120,14 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setLoadingDetails(false);
     }
   }
+
+  useEffect(() => {
+    carregarMetadados();
+  }, []);
+
+  useEffect(() => {
+    carregarLivroEmEdicao();
+  }, [bookToEdit]);
 
   function handleFieldChange(name, value) {
     setForm((prev) => ({

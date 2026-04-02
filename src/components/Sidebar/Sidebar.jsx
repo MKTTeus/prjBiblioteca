@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   FiHome,
   FiBook,
@@ -13,7 +13,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import "./Sidebar.css";
 
 function Sidebar() {
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [openPessoas, setOpenPessoas] = useState(false);
