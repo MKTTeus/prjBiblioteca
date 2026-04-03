@@ -3,7 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
@@ -27,9 +26,9 @@ export function AuthProvider({ children }) {
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: normalizedEmail, senha })
+        body: JSON.stringify({ email: normalizedEmail, senha }),
       });
 
       const data = await response.json();
@@ -46,7 +45,7 @@ export function AuthProvider({ children }) {
         nome: data.nome,
         email: normalizedEmail,
         tipo: data.tipo,
-        token: data.access_token
+        token: data.access_token,
       };
 
       setUser(newUser);
@@ -59,42 +58,39 @@ export function AuthProvider({ children }) {
         ok: true,
         access_token: data.access_token,
         tipo: data.tipo,
-        nome: data.nome
+        nome: data.nome,
       };
-
     } catch (error) {
       console.error("Erro no login:", error);
 
       return {
         ok: false,
-        message: "Erro de conexão com servidor"
+        message: "Erro de conexão com o servidor",
       };
     }
   };
 
   const logout = () => {
-
     setUser(null);
 
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("tipo");
-
   };
 
   const signup = async (form) => {
     try {
       const normalizedForm = {
         ...form,
-        email: form.email?.trim().toLowerCase()
+        email: form.email?.trim().toLowerCase(),
       };
 
       const response = await fetch(`${API_URL}/signup`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(normalizedForm)
+        body: JSON.stringify(normalizedForm),
       });
 
       const data = await response.json();
@@ -105,16 +101,13 @@ export function AuthProvider({ children }) {
 
       return {
         ok: true,
-        message: data.message || "Conta criada com sucesso"
+        message: data.message || "Conta criada com sucesso",
       };
-
     } catch (error) {
-
       return {
         ok: false,
-        message: "Erro de conexão com servidor"
+        message: "Erro de conexão com o servidor",
       };
-
     }
   };
 
@@ -132,7 +125,7 @@ export function AuthProvider({ children }) {
         getToken,
         loadingUser,
         isAuthenticated: !!user,
-        isAdmin: user?.tipo === "admin"
+        isAdmin: user?.tipo === "admin",
       }}
     >
       {children}

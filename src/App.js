@@ -1,8 +1,7 @@
 import React from "react";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
-import Sidebar from "./components/Sidebar/Sidebar";
-import Header from "./components/Header/Header";
-
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "./contexts/AuthContext";
+import AppShell from "./components/AppShell/AppShell";
 import Dashboard from "./pages/Admin/Dashboard/Dashboard";
 import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
 import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
@@ -20,56 +19,100 @@ import Seguranca from "./pages/Admin/Configuracoes/components/Seguranca/Seguranc
 import Sistema from "./pages/Admin/Configuracoes/components/Sistema/Sistema";
 import Email from "./pages/Admin/Configuracoes/components/Email/Email";
 import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
+import UserDashboard from "./pages/user/UserDashboard";
 
-function App() {
-  const location = useLocation();
+function RoleHomeRedirect() {
+  const { user, loadingUser } = useAuth();
 
-
-  
-  const isAuthPage =
-    location.pathname === "/login" ||
-    location.pathname === "/signup";
-
-  if (isAuthPage) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-      </Routes>
-    );
+  if (loadingUser) {
+    return <div>Carregando...</div>;
   }
 
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Navigate to={user.tipo === "admin" ? "/admin" : "/user"} replace />;
+}
+
+function LegacyAdminRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/admin${location.pathname}`} replace />;
+}
+
+function LegacyBibliotecaRedirect() {
+  const { user, loadingUser } = useAuth();
+
+  if (loadingUser) {
+    return <div>Carregando...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <Navigate to={user.tipo === "admin" ? "/admin/biblioteca" : "/user"} replace />;
+}
+
+function AdminLayout() {
   return (
-    <div className="app-container">
-      <Sidebar />
-      <div className="content-area">
-        <Header />
-        <div className="main-content">
-          <Routes>
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/livros" element={<ProtectedRoute><Livros /></ProtectedRoute>} />
-            <Route path="/alunos" element={<ProtectedRoute adminOnly={true}><Aluno /></ProtectedRoute>} />
-            <Route path="/comunidade" element={<ProtectedRoute adminOnly={true} ><Comunidade /></ProtectedRoute>} />
-            <Route path="/emprestimos" element={<ProtectedRoute adminOnly={true}><Emprestimos /></ProtectedRoute>} />
-            <Route path="/admins" element={<ProtectedRoute adminOnly={true}><Admin /></ProtectedRoute>} />
-            <Route path="/Biblioteca" element={<ProtectedRoute><Biblioteca /></ProtectedRoute>} />
+    <AppShell sidebarType="admin">
+      <Outlet />
+    </AppShell>
+  );
+}
 
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
-            {/* CONFIGURAÇÕES COMO ROTA PAI */}
-            <Route path="/configuracoes" element={<Configuracoes />}>
-              <Route index element={<Navigate to="geral" replace />} />
-              <Route path="geral" element={<Geral />} />
-              <Route path="notificacoes" element={<Notificacoes />} />
-              <Route path="seguranca" element={<Seguranca />} />
-              <Route path="sistema" element={<Sistema />} />
-              <Route path="email" element={<Email />} />
-              <Route path="avancado" element={<Avancado />} />
-            </Route>
+      <Route path="/" element={<RoleHomeRedirect />} />
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute nonAdminOnly>
+            <UserDashboard />
+          </ProtectedRoute>
+        }
+      />
 
-          </Routes>
-        </div>
-      </div>
-    </div>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+        <Route path="livros" element={<Livros />} />
+        <Route path="alunos" element={<Aluno />} />
+        <Route path="comunidade" element={<Comunidade />} />
+        <Route path="emprestimos" element={<Emprestimos />} />
+        <Route path="admins" element={<Admin />} />
+        <Route path="biblioteca" element={<Biblioteca />} />
+        <Route path="configuracoes" element={<Configuracoes />}>
+          <Route index element={<Navigate to="geral" replace />} />
+          <Route path="geral" element={<Geral />} />
+          <Route path="notificacoes" element={<Notificacoes />} />
+          <Route path="seguranca" element={<Seguranca />} />
+          <Route path="sistema" element={<Sistema />} />
+          <Route path="email" element={<Email />} />
+          <Route path="avancado" element={<Avancado />} />
+        </Route>
+      </Route>
+
+      <Route path="/livros" element={<LegacyAdminRedirect />} />
+      <Route path="/alunos" element={<LegacyAdminRedirect />} />
+      <Route path="/comunidade" element={<LegacyAdminRedirect />} />
+      <Route path="/emprestimos" element={<LegacyAdminRedirect />} />
+      <Route path="/admins" element={<LegacyAdminRedirect />} />
+      <Route path="/configuracoes/*" element={<LegacyAdminRedirect />} />
+      <Route path="/Biblioteca" element={<LegacyBibliotecaRedirect />} />
+      <Route path="*" element={<RoleHomeRedirect />} />
+    </Routes>
   );
 }
 

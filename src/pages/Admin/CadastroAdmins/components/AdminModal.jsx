@@ -39,8 +39,8 @@ export default function AdminModal({
                   {isProcessing
                     ? "Processando..."
                     : modoEdicao
-                    ? "Salvar Alterações"
-                    : "Criar Administrador"}
+                      ? "Salvar Alterações"
+                      : "Criar Administrador"}
                 </span>
               </button>
 
@@ -112,11 +112,7 @@ export default function AdminModal({
 
                   <label className="editor-field">
                     <span>Status</span>
-                    <select
-                      name="status"
-                      value={admin.status}
-                      onChange={onChange}
-                    >
+                    <select name="status" value={admin.status} onChange={onChange}>
                       <option value="Ativo">Ativo</option>
                       <option value="Inativo">Inativo</option>
                     </select>

@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import {
-  Users,
-  UserCheck,
-  UserX,
-  BookOpen,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno } from "../../../services/api";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
@@ -318,20 +311,13 @@ export default function Aluno() {
                 <td>{aluno.email}</td>
                 <td>{aluno.livros}</td>
                 <td>
-                  <span
-                    className={
-                      aluno.status === "Ativo" ? "badge-ativo" : "badge-inativo"
-                    }
-                  >
+                  <span className={aluno.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {aluno.status}
                   </span>
                 </td>
 
                 <td className="acoes">
-                  <button
-                    className="btn-status"
-                    onClick={() => handleToggleStatus(aluno.idUsuario)}
-                  >
+                  <button className="btn-status" onClick={() => handleToggleStatus(aluno.idUsuario)}>
                     {aluno.status === "Ativo" ? (
                       <UserX size={16} className="icon-red" />
                     ) : (
@@ -339,17 +325,11 @@ export default function Aluno() {
                     )}
                   </button>
 
-                  <button
-                    className="btn-edit"
-                    onClick={() => abrirEdicao(aluno.idUsuario)}
-                  >
+                  <button className="btn-edit" onClick={() => abrirEdicao(aluno.idUsuario)}>
                     <Pencil size={16} />
                   </button>
 
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleExcluir(aluno.idUsuario)}
-                  >
+                  <button className="btn-delete" onClick={() => handleExcluir(aluno.idUsuario)}>
                     <Trash2 size={16} />
                   </button>
                 </td>

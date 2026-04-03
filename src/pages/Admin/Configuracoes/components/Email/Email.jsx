@@ -16,37 +16,23 @@ export default function Email() {
         <h3>Configurações de E-mail</h3>
       </div>
 
-      {/* GRID SUPERIOR */}
       <div className="grid-2">
         <div className="form-group">
           <label>Servidor SMTP</label>
-          <input
-            type="text"
-            value={smtp}
-            onChange={(e) => setSmtp(e.target.value)}
-          />
+          <input type="text" value={smtp} onChange={(e) => setSmtp(e.target.value)} />
         </div>
 
         <div className="form-group">
           <label>Porta SMTP</label>
-          <input
-            type="number"
-            value={porta}
-            onChange={(e) => setPorta(e.target.value)}
-          />
+          <input type="number" value={porta} onChange={(e) => setPorta(e.target.value)} />
         </div>
       </div>
 
       <div className="form-group">
         <label>Usuário SMTP</label>
-        <input
-          type="text"
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-        />
+        <input type="text" value={usuario} onChange={(e) => setUsuario(e.target.value)} />
       </div>
 
-      {/* SENHA COM BOTÃO */}
       <div className="form-group password-group">
         <label>Senha SMTP</label>
 
@@ -73,13 +59,8 @@ export default function Email() {
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary">
-          Restaurar Padrão
-        </button>
-
-        <button className="btn-dark">
-          Salvar Configurações
-        </button>
+        <button className="btn-secondary">Restaurar Padrão</button>
+        <button className="btn-dark">Salvar Configurações</button>
       </div>
     </div>
   );

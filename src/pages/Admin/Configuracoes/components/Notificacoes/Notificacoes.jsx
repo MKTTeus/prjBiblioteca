@@ -39,11 +39,7 @@ export default function Notificacoes() {
             <span className="noti-title">Notificações por E-mail</span>
             <p>Enviar notificações automáticas por e-mail</p>
           </div>
-          <Switch
-            checked={email}
-            onChange={() => setEmail(!email)}
-            {...switchStyle}
-          />
+          <Switch checked={email} onChange={() => setEmail(!email)} {...switchStyle} />
         </div>
 
         <div className="noti-item">
@@ -51,11 +47,7 @@ export default function Notificacoes() {
             <span className="noti-title">Notificações por SMS</span>
             <p>Enviar notificações por mensagem de texto</p>
           </div>
-          <Switch
-            checked={sms}
-            onChange={() => setSms(!sms)}
-            {...switchStyle}
-          />
+          <Switch checked={sms} onChange={() => setSms(!sms)} {...switchStyle} />
         </div>
 
         <div className="noti-item">
@@ -63,11 +55,7 @@ export default function Notificacoes() {
             <span className="noti-title">Lembretes de Atraso</span>
             <p>Notificar sobre livros em atraso</p>
           </div>
-          <Switch
-            checked={atraso}
-            onChange={() => setAtraso(!atraso)}
-            {...switchStyle}
-          />
+          <Switch checked={atraso} onChange={() => setAtraso(!atraso)} {...switchStyle} />
         </div>
 
         <div className="noti-item">
@@ -75,21 +63,13 @@ export default function Notificacoes() {
             <span className="noti-title">Lembretes de Devolução</span>
             <p>Notificar sobre devoluções próximas</p>
           </div>
-          <Switch
-            checked={devolucao}
-            onChange={() => setDevolucao(!devolucao)}
-            {...switchStyle}
-          />
+          <Switch checked={devolucao} onChange={() => setDevolucao(!devolucao)} {...switchStyle} />
         </div>
       </div>
 
       <div className="form-group full">
         <label>Dias de Antecedência para Lembrete</label>
-        <input
-          type="number"
-          value={dias}
-          onChange={(e) => setDias(e.target.value)}
-        />
+        <input type="number" value={dias} onChange={(e) => setDias(e.target.value)} />
       </div>
 
       <div className="card-actions">

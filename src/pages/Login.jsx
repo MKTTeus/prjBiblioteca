@@ -31,19 +31,14 @@ export default function Login() {
       setLoading(false);
 
       if (!result || !result.access_token) {
-        setError("Email ou senha inválidos");
+        setError("E-mail ou senha inválidos");
         return;
       }
 
-      // salva token
       localStorage.setItem("token", result.access_token);
-
-      // salva tipo de usuário
       localStorage.setItem("tipo", result.tipo);
 
-      // redireciona
-      navigate("/");
-
+      navigate(result.tipo === "admin" ? "/admin" : "/user", { replace: true });
     } catch (err) {
       setLoading(false);
       setError("Erro ao fazer login");
@@ -54,7 +49,6 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-wrapper">
-
         <div className="login-header">
           <div className="logo-circle">
             <LuBook className="user-icon" />
@@ -65,12 +59,9 @@ export default function Login() {
 
         <main className="login-card">
           <h2>Fazer Login</h2>
-          <p className="login-subtitle">
-            Selecione seu tipo de usuário
-          </p>
+          <p className="login-subtitle">Selecione seu tipo de usuário</p>
 
           <div className="user-types">
-
             <div
               className={`user-option admin ${userType === "admin" ? "selected" : ""}`}
               onClick={() => setUserType("admin")}
@@ -103,11 +94,9 @@ export default function Login() {
                 <span>Acesso para visitantes</span>
               </div>
             </div>
-
           </div>
 
           <form onSubmit={handleSubmit}>
-
             <div className="input-group">
               <label>RA ou E-mail</label>
               <input
@@ -142,17 +131,11 @@ export default function Login() {
 
             {userType !== "admin" && (
               <p className="signup-link">
-                Não tem cadastro?{" "}
-                <span onClick={() => navigate("/signup")}>
-                  Clique aqui
-                </span>
+                Não tem cadastro? <span onClick={() => navigate("/signup")}>Clique aqui</span>
               </p>
             )}
-
           </form>
-
         </main>
-
       </div>
     </div>
   );

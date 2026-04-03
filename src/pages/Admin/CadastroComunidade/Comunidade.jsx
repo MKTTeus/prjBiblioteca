@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Comunidade.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import {
-  Users,
-  UserCheck,
-  UserX,
-  BookOpen,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2 } from "lucide-react";
 import {
   getComunidade,
   createComunidade,
@@ -318,20 +311,13 @@ export default function Comunidade() {
                 <td>{membro.telefone}</td>
                 <td className="col-livros">{membro.livros}</td>
                 <td>
-                  <span
-                    className={
-                      membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"
-                    }
-                  >
+                  <span className={membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {membro.status}
                   </span>
                 </td>
 
                 <td className="acoes">
-                  <button
-                    className="btn-status"
-                    onClick={() => handleToggleStatus(membro.idUsuario)}
-                  >
+                  <button className="btn-status" onClick={() => handleToggleStatus(membro.idUsuario)}>
                     {membro.status === "Ativo" ? (
                       <UserX size={16} className="icon-red" />
                     ) : (
@@ -339,17 +325,11 @@ export default function Comunidade() {
                     )}
                   </button>
 
-                  <button
-                    className="btn-edit"
-                    onClick={() => abrirEdicao(membro.idUsuario)}
-                  >
+                  <button className="btn-edit" onClick={() => abrirEdicao(membro.idUsuario)}>
                     <Pencil size={16} />
                   </button>
 
-                  <button
-                    className="btn-delete"
-                    onClick={() => handleExcluir(membro.idUsuario)}
-                  >
+                  <button className="btn-delete" onClick={() => handleExcluir(membro.idUsuario)}>
                     <Trash2 size={16} />
                   </button>
                 </td>

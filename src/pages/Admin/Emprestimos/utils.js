@@ -145,8 +145,7 @@ export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios
       .toLowerCase();
 
     const correspondeBusca = textoBusca.includes(termoBusca);
-    const statusOk =
-      filtroStatus === "todos" || getStatusEmprestimo(emprestimo) === filtroStatus;
+    const statusOk = filtroStatus === "todos" || getStatusEmprestimo(emprestimo) === filtroStatus;
 
     return correspondeBusca && statusOk;
   });

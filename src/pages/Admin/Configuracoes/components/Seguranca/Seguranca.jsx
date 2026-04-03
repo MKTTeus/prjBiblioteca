@@ -21,19 +21,15 @@ export default function Seguranca() {
 
   return (
     <div className="card">
-      {/* TÍTULO */}
       <div className="seguranca-header">
         <FiShield className="shield-icon" />
         <h3>Configurações de Segurança</h3>
       </div>
 
-      {/* ALERTA */}
       <div className="alert-box">
-        Estas configurações afetam a segurança do sistema. Faça alterações com
-        cuidado.
+        Estas configurações afetam a segurança do sistema. Faça alterações com cuidado.
       </div>
 
-      {/* INPUTS */}
       <div className="grid-2">
         <div className="form-group">
           <label>Timeout da Sessão (minutos)</label>
@@ -54,46 +50,27 @@ export default function Seguranca() {
         </div>
       </div>
 
-      {/* SWITCHES */}
       <div className="switch-row">
         <div>
           <span className="switch-title">Exigir Senha Forte</span>
           <p>Senhas devem conter letras, números e símbolos</p>
         </div>
 
-        <Switch
-          checked={senhaForte}
-          onChange={() => setSenhaForte(!senhaForte)}
-          {...switchStyle}
-        />
+        <Switch checked={senhaForte} onChange={() => setSenhaForte(!senhaForte)} {...switchStyle} />
       </div>
 
       <div className="switch-row">
         <div>
-          <span className="switch-title">
-            Autenticação de Dois Fatores
-          </span>
+          <span className="switch-title">Autenticação de Dois Fatores</span>
           <p>Adicionar camada extra de segurança</p>
         </div>
 
-        <Switch
-          checked={doisFatores}
-          onChange={() => setDoisFatores(!doisFatores)}
-          {...switchStyle}
-        />
+        <Switch checked={doisFatores} onChange={() => setDoisFatores(!doisFatores)} {...switchStyle} />
       </div>
 
-
-
-      {/* AÇÕES */}
       <div className="card-actions">
-        <button className="btn-secondary">
-          Restaurar Padrão
-        </button>
-
-        <button className="btn-dark">
-          Salvar Configurações
-        </button>
+        <button className="btn-secondary">Restaurar Padrão</button>
+        <button className="btn-dark">Salvar Configurações</button>
       </div>
     </div>
   );

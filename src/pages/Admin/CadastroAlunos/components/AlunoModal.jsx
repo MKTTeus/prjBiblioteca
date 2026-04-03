@@ -39,8 +39,8 @@ export default function AlunoModal({
                   {isProcessing
                     ? "Processando..."
                     : modoEdicao
-                    ? "Salvar Alterações"
-                    : "Criar Usuário"}
+                      ? "Salvar Alterações"
+                      : "Criar Usuário"}
                 </span>
               </button>
 
@@ -160,11 +160,7 @@ export default function AlunoModal({
 
                   <label className="editor-field">
                     <span>Status</span>
-                    <select
-                      name="status"
-                      value={aluno.status}
-                      onChange={onChange}
-                    >
+                    <select name="status" value={aluno.status} onChange={onChange}>
                       <option value="Ativo">Ativo</option>
                       <option value="Inativo">Inativo</option>
                     </select>

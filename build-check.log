@@ -1,0 +1,21 @@
+
+> biblioteca@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  221.15 kB  build\static\js\main.9b4a1002.js
+  11.74 kB   build\static\css\main.b207ee75.css
+
+The project was built assuming it is hosted at ./.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

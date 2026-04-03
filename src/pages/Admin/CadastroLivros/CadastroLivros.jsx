@@ -36,7 +36,9 @@ export default function CadastroLivros() {
     if (q) {
       const matchTitulo = (b.livTitulo || "").toLowerCase().includes(q);
       const matchAutor = (b.livAutor || "").toLowerCase().includes(q);
-      const matchIsbn = String(b.livISBN || b.exeLivISBN || b.exemplarISBN || "").toLowerCase().includes(q);
+      const matchIsbn = String(b.livISBN || b.exeLivISBN || b.exemplarISBN || "")
+        .toLowerCase()
+        .includes(q);
       const matchTombo = String(b.tombo || b.idLivro || "").toLowerCase().includes(q);
 
       if (!(matchTitulo || matchAutor || matchIsbn || matchTombo)) return false;

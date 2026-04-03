@@ -1,5 +1,13 @@
 import "./Dashboard.css";
-import { FaBook,FaUsers,FaExchangeAlt,FaClock,FaCheckCircle,FaExclamationTriangle,FaPlus} from "react-icons/fa";
+import {
+  FaBook,
+  FaUsers,
+  FaExchangeAlt,
+  FaClock,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaPlus,
+} from "react-icons/fa";
 import { PiStudentFill } from "react-icons/pi";
 import { NavLink } from "react-router-dom";
 import { RiUserCommunityFill } from "react-icons/ri";
@@ -8,6 +16,7 @@ import { getDashboardStats } from "../../../services/api";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+
   useEffect(() => {
     async function fetchStats() {
       try {
@@ -17,10 +26,11 @@ export default function Dashboard() {
         console.error("Erro ao carregar estatísticas do dashboard:", err);
       }
     }
+
     fetchStats();
   }, []);
 
-   if (!stats) {
+  if (!stats) {
     return <p>Carregando...</p>;
   }
 
@@ -29,24 +39,24 @@ export default function Dashboard() {
       <div className="header-dashboard">
         <h1>Bem-vindo ao Sistema de Biblioteca</h1>
         <p>
-          Gerencie o acervo, empréstimos e cadastros da biblioteca escolar de forma simples e eficiente.
+          Gerencie o acervo, empréstimos e cadastros da biblioteca escolar de forma
+          simples e eficiente.
         </p>
       </div>
 
-   <div className="cards">
-    {/* Card Total de Livros */}
-    <NavLink to="/livros" className="card card-link">
-      <div className="card-header">
-        <span>Total de Livros</span>
-        <div className="icon blue">
-          <FaBook />
-        </div>
-      </div>
-      <h2>{stats.totalLivros}</h2>
-      <small className="positive">Clique para ver os livros</small>
-    </NavLink>
-        {/* Card Total de Usuários  */}
-        <NavLink to="/alunos" className="card card-link">
+      <div className="cards">
+        <NavLink to="/admin/livros" className="card card-link">
+          <div className="card-header">
+            <span>Total de Livros</span>
+            <div className="icon blue">
+              <FaBook />
+            </div>
+          </div>
+          <h2>{stats.totalLivros}</h2>
+          <small className="positive">Clique para ver os livros</small>
+        </NavLink>
+
+        <NavLink to="/admin/alunos" className="card card-link">
           <div className="card-header">
             <span>Total de Usuários</span>
             <div className="icon green">
@@ -54,10 +64,9 @@ export default function Dashboard() {
             </div>
           </div>
           <h2>{stats.totalUsuarios}</h2>
-          <small className="positive">Clique para ver os Alunos</small>
+          <small className="positive">Clique para ver os alunos</small>
         </NavLink>
 
-        {/* Empréstimos Ativos */}
         <div className="card">
           <div className="card-header">
             <span>Empréstimos Ativos</span>
@@ -69,7 +78,6 @@ export default function Dashboard() {
           <small>Em andamento</small>
         </div>
 
-        {/* Devoluções Pendentes */}
         <div className="card">
           <div className="card-header">
             <span>Devoluções Pendentes</span>
@@ -82,23 +90,21 @@ export default function Dashboard() {
         </div>
       </div>
 
-              {/* NOTIFICAÇÕES */}
       <div className="notifications">
         <div className="notifications-header">
           <div>
             <h3>Notificações e Avisos</h3>
             <p>Atualizações recentes do sistema</p>
           </div>
-          <span className="badge">
+          <span className="notifications-badge">
             {stats.atrasados + stats.reservados + stats.devolucoesHoje} novas
           </span>
         </div>
 
-        {/* ATRASADOS */}
         {stats.atrasados > 0 && (
-          <div className="notification warning">
-            <div className="notification-content">
-              <div className="notification-icon warning-icon">
+          <div className="dashboard-notification dashboard-notification--warning">
+            <div className="dashboard-notification__content">
+              <div className="dashboard-notification__icon dashboard-notification__icon--warning">
                 <FaExclamationTriangle />
               </div>
               <div>
@@ -110,11 +116,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* RESERVAS */}
         {stats.reservados > 0 && (
-          <div className="notification info">
-            <div className="notification-content">
-              <div className="notification-icon info-icon">
+          <div className="dashboard-notification dashboard-notification--info">
+            <div className="dashboard-notification__content">
+              <div className="dashboard-notification__icon dashboard-notification__icon--info">
                 <FaClock />
               </div>
               <div>
@@ -126,11 +131,10 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* DEVOLUÇÕES */}
         {stats.devolucoesHoje > 0 && (
-          <div className="notification success">
-            <div className="notification-content">
-              <div className="notification-icon success-icon">
+          <div className="dashboard-notification dashboard-notification--success">
+            <div className="dashboard-notification__content">
+              <div className="dashboard-notification__icon dashboard-notification__icon--success">
                 <FaCheckCircle />
               </div>
               <div>
@@ -142,51 +146,56 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* SEM NOTIFICAÇÕES */}
-        {stats.atrasados === 0 &&
-          stats.reservados === 0 &&
-          stats.devolucoesHoje === 0 && (
-            <p style={{ padding: "10px" }}>
-              Sem notificações no momento 
-            </p>
-          )}
+        {stats.atrasados === 0 && stats.reservados === 0 && stats.devolucoesHoje === 0 && (
+          <p style={{ padding: "10px" }}>Sem notificações no momento</p>
+        )}
       </div>
 
+      <div className="quick-actions">
+        <p>Ações Rápidas</p>
 
-         <div className="quick-actions">
-          <p>Ações Rápidas</p>
+        <div className="actions-container">
+          <NavLink
+            to="/admin/emprestimos"
+            className={({ isActive }) => (isActive ? "active" : undefined)}
+          >
+            <button className="action-btn red">
+              <FaPlus />
+              Novo Empréstimo
+            </button>
+          </NavLink>
 
-          <div className="actions-container">
-            <NavLink to="/emprestimos" className={({ isActive }) => (isActive ? "active" : undefined)}  >
-              <button className="action-btn red">
-                <FaPlus />
-                Novo Empréstimo
-              </button>
-            </NavLink>
+          <NavLink
+            to="/admin/livros"
+            className={({ isActive }) => (isActive ? "active" : undefined)}
+          >
+            <button className="action-btn blue">
+              <FaBook />
+              Cadastrar Livro
+            </button>
+          </NavLink>
 
-            <NavLink to="/livros" className={({ isActive }) => (isActive ? "active" : undefined)}  >
-              <button className="action-btn blue">
-                <FaBook />
-                Cadastrar Livro
-              </button>
-            </NavLink>
+          <NavLink
+            to="/admin/alunos"
+            className={({ isActive }) => (isActive ? "active" : undefined)}
+          >
+            <button className="action-btn green">
+              <PiStudentFill />
+              Cadastrar Aluno
+            </button>
+          </NavLink>
 
-            <NavLink to="/alunos" className={({ isActive }) => (isActive ? "active" : undefined)}  >
-              <button className="action-btn green">
-                <PiStudentFill />
-                Cadastrar Aluno
-              </button>
-            </NavLink>
-
-            <NavLink to="/comunidade" className={({ isActive }) => (isActive ? "active" : undefined)}  >
-              <button className="action-btn orange">
-                <RiUserCommunityFill />
-                Cadastrar Comunidade
-              </button>
-            </NavLink>
-          </div>
+          <NavLink
+            to="/admin/comunidade"
+            className={({ isActive }) => (isActive ? "active" : undefined)}
+          >
+            <button className="action-btn orange">
+              <RiUserCommunityFill />
+              Cadastrar Comunidade
+            </button>
+          </NavLink>
         </div>
-
+      </div>
     </div>
   );
 }

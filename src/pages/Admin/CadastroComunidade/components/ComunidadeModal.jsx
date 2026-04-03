@@ -40,8 +40,8 @@ export default function ComunidadeModal({
                   {isProcessing
                     ? "Processando..."
                     : modoEdicao
-                    ? "Salvar Alterações"
-                    : "Criar Membro"}
+                      ? "Salvar Alterações"
+                      : "Criar Membro"}
                 </span>
               </button>
 
@@ -122,7 +122,7 @@ export default function ComunidadeModal({
                       name="telefone2"
                       value={membro.telefone2}
                       onChange={onChange}
-                          placeholder="Contato alternativo"
+                      placeholder="Contato alternativo"
                     />
                   </label>
 
@@ -163,11 +163,7 @@ export default function ComunidadeModal({
 
                   <label className="editor-field">
                     <span>Status</span>
-                    <select
-                      name="status"
-                      value={membro.status}
-                      onChange={onChange}
-                    >
+                    <select name="status" value={membro.status} onChange={onChange}>
                       <option value="Ativo">Ativo</option>
                       <option value="Inativo">Inativo</option>
                     </select>

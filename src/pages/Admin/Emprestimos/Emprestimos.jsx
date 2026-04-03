@@ -76,10 +76,7 @@ export default function Emprestimos() {
     [emprestimos, busca, filtroStatus, mapUsuarios, mapExemplares]
   );
 
-  const usuariosFiltrados = useMemo(
-    () => filtrarUsuarios(usuarios, buscaUsuario),
-    [usuarios, buscaUsuario]
-  );
+  const usuariosFiltrados = useMemo(() => filtrarUsuarios(usuarios, buscaUsuario), [usuarios, buscaUsuario]);
 
   const exemplaresFiltrados = useMemo(
     () => filtrarExemplares(exemplares, buscaExemplar),

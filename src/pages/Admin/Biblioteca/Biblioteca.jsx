@@ -4,7 +4,6 @@ import { getBooks, getBook } from "../../../services/api";
 import BookInfoModal from "../CadastroLivros/components/BookInfo/BookInfoModal";
 
 function Biblioteca() {
-
   const [books, setBooks] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
@@ -24,14 +23,13 @@ function Biblioteca() {
   }, []);
 
   useEffect(() => {
-
-    const result = books.filter((b) =>
-      (b.livTitulo || "").toLowerCase().includes(search.toLowerCase()) ||
-      (b.livAutor || "").toLowerCase().includes(search.toLowerCase())
+    const result = books.filter(
+      (b) =>
+        (b.livTitulo || "").toLowerCase().includes(search.toLowerCase()) ||
+        (b.livAutor || "").toLowerCase().includes(search.toLowerCase())
     );
 
     setFiltered(result);
-
   }, [search, books]);
 
   async function abrirInfo(book) {
@@ -39,7 +37,7 @@ function Biblioteca() {
       const detalhes = await getBook(book.idLivro);
       setSelectedBook({
         ...book,
-        exemplares: detalhes.exemplares || []
+        exemplares: detalhes.exemplares || [],
       });
       setInfoModal(true);
     } catch (error) {
@@ -50,41 +48,27 @@ function Biblioteca() {
   }
 
   return (
-
     <div className="biblioteca-page">
-
       <div className="biblioteca-header">
-
         <h2>Biblioteca</h2>
 
         <div className="header-actions">
-
           <input
             className="input-pesquisa"
             placeholder="Pesquisar livro ou autor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-
         </div>
-
       </div>
 
       <div className="book-grid">
-
         {filtered.map((book) => {
-
           const totalExemplares = book.total_exemplares || 0;
           const disponiveis = book.disponiveis || 0;
 
           return (
-
-            <div
-              key={book.idLivro}
-              className="book-card"
-              onClick={() => abrirInfo(book)}
-            >
-
+            <div key={book.idLivro} className="book-card" onClick={() => abrirInfo(book)}>
               <img
                 loading="lazy"
                 src={book.livCapaURL || "https://via.placeholder.com/150x220"}
@@ -93,36 +77,19 @@ function Biblioteca() {
 
               <div className="book-overlay">
                 <h3>{book.livTitulo}</h3>
-
                 <p>{book.livAutor}</p>
 
-                <span className="book-count">
-                📚 {totalExemplares} exemplares
-                </span>
+                <span className="book-count">Exemplares: {totalExemplares}</span>
 
-                <span className="book-disponivel">
-                🟢 {disponiveis} disponíveis
-                </span>
+                <span className="book-disponivel">Disponíveis: {disponiveis}</span>
               </div>
-
             </div>
-
           );
         })}
-
       </div>
 
-      {infoModal && (
-
-        <BookInfoModal
-          book={selectedBook}
-          onClose={() => setInfoModal(false)}
-        />
-
-      )}
-
+      {infoModal && <BookInfoModal book={selectedBook} onClose={() => setInfoModal(false)} />}
     </div>
-
   );
 }
 

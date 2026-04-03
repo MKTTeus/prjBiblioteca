@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Admin.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import {
-  Shield,
-  UserCheck,
-  UserX,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
 import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../services/api";
 import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
@@ -49,7 +43,7 @@ export default function Admin() {
           }))
         );
       } catch (err) {
-        console.error("Erro ao carregar admins:", err);
+        console.error("Erro ao carregar administradores:", err);
       }
     }
 
@@ -131,7 +125,7 @@ export default function Admin() {
 
       fecharModal();
     } catch (err) {
-      console.error("Erro ao salvar admin:", err);
+      console.error("Erro ao salvar administrador:", err);
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
@@ -168,7 +162,7 @@ export default function Admin() {
       await deleteAdmin(idAdmin);
       setAdmins((prev) => prev.filter((admin) => admin.idAdmin !== idAdmin));
     } catch (err) {
-      console.error("Erro ao excluir admin:", err);
+      console.error("Erro ao excluir administrador:", err);
     }
   };
 
@@ -206,10 +200,7 @@ export default function Admin() {
   const adminsInativos = admins.filter((a) => a.status === "Inativo").length;
   const adminsFiltrados = admins.filter((admin) => {
     const termo = pesquisa.toLowerCase();
-    return (
-      admin.nome.toLowerCase().includes(termo) ||
-      admin.email.toLowerCase().includes(termo)
-    );
+    return admin.nome.toLowerCase().includes(termo) || admin.email.toLowerCase().includes(termo);
   });
 
   return (
@@ -277,21 +268,14 @@ export default function Admin() {
                 <td>{admin.nome}</td>
                 <td>{admin.email}</td>
                 <td>
-                  <span
-                    className={
-                      admin.status === "Ativo" ? "badge-ativo" : "badge-inativo"
-                    }
-                  >
+                  <span className={admin.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {admin.status}
                   </span>
                 </td>
 
                 <td className="acoes-cell">
                   <div className="acoes">
-                    <button
-                      className="btn-status"
-                      onClick={() => handleToggleStatus(admin.idAdmin)}
-                    >
+                    <button className="btn-status" onClick={() => handleToggleStatus(admin.idAdmin)}>
                       {admin.status === "Ativo" ? (
                         <UserX size={16} className="icon-red" />
                       ) : (
@@ -299,17 +283,11 @@ export default function Admin() {
                       )}
                     </button>
 
-                    <button
-                      className="btn-edit"
-                      onClick={() => abrirEdicao(admin.idAdmin)}
-                    >
+                    <button className="btn-edit" onClick={() => abrirEdicao(admin.idAdmin)}>
                       <Pencil size={16} />
                     </button>
 
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleExcluir(admin.idAdmin)}
-                    >
+                    <button className="btn-delete" onClick={() => handleExcluir(admin.idAdmin)}>
                       <Trash2 size={16} />
                     </button>
                   </div>

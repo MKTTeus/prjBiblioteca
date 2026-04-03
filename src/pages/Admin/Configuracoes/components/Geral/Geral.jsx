@@ -4,7 +4,7 @@ export default function Geral() {
   return (
     <div className="card">
       <div className="geral-header">
-        <h3>⚙ Configurações Gerais</h3>
+        <h3>Configurações Gerais</h3>
       </div>
 
       <div className="form-grid">

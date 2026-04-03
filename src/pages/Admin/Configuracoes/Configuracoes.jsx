@@ -16,7 +16,6 @@ export default function Configuracoes() {
 
   return (
     <div className="config-container">
-      {/* TOPO */}
       <div className="top-bar">
         <div>
           <h1>Configurações do Sistema</h1>
@@ -24,27 +23,23 @@ export default function Configuracoes() {
         </div>
 
         <div className="top-actions">
-          <button  className="btn-outline">Exportar</button>
+          <button className="btn-outline">Exportar</button>
           <button className="btn-success">Salvar Tudo</button>
         </div>
       </div>
 
-      {/* ABAS */}
       <div className="tabs">
         {abas.map((aba) => (
           <NavLink
             key={aba.id}
             to={aba.id}
-            className={({ isActive }) =>
-              `tab-btn ${isActive ? "active" : ""}`
-            }
+            className={({ isActive }) => `tab-btn ${isActive ? "active" : ""}`}
           >
             {aba.label}
           </NavLink>
         ))}
       </div>
 
-      {/* CONTEÚDO COM ANIMAÇÃO SUAVE */}
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}

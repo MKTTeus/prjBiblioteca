@@ -23,15 +23,17 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
-    if (!email.trim()) return "O email é obrigatório.";
+    if (!email.trim()) return "O e-mail é obrigatório.";
     if (!nome.trim()) return "O nome é obrigatório.";
     if (!endereco.trim()) return "O endereço é obrigatório.";
     if (!isCommunity && !ra.trim()) return "O RA é obrigatório.";
     if (isCommunity && !cpf.trim()) return "O CPF é obrigatório.";
     if (!telefone.trim()) return "O telefone é obrigatório.";
     if (telefone.length < 11) return "O telefone deve conter 11 números.";
-    if (!senha || senha.length < 6)
+    if (!senha || senha.length < 6) {
       return "A senha deve ter pelo menos 6 caracteres.";
+    }
+
     return "";
   };
 
@@ -72,17 +74,15 @@ export default function Signup() {
 
   return (
     <div className="signup-wrapper">
-
       <div className="signup-header">
         <div className="icon-circle">
           <LuBook className="user-icon" />
         </div>
-        <h1>Sistema de biblioteca</h1>
+        <h1>Sistema de Biblioteca</h1>
         <p>Escola 9 de Julho de Taquaritinga</p>
       </div>
 
       <div className="signup-card">
-
         <button className="back-link" onClick={() => navigate("/login")}>
           <FiArrowLeft />
           <span>Voltar ao Login</span>
@@ -128,7 +128,6 @@ export default function Signup() {
         </div>
 
         <form onSubmit={handleSignup}>
-
           <div className="input-group">
             <label className="required">Nome Completo</label>
             <input value={nome} onChange={(e) => setNome(e.target.value)} required />
@@ -180,7 +179,7 @@ export default function Signup() {
           </div>
 
           <div className="input-group">
-            <label className="required">Email</label>
+            <label className="required">E-mail</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
 
@@ -194,7 +193,6 @@ export default function Signup() {
           <button className="submit-btn" disabled={loading}>
             {loading ? "Criando..." : "Criar Usuário"}
           </button>
-
         </form>
       </div>
     </div>
