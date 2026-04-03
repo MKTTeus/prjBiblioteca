@@ -2,7 +2,7 @@
   "name": "biblioteca",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://MKTTeus.github.io/prjBiblioteca",
+  "homepage": ".",
   "dependencies": {
     "@radix-ui/react-icons": "^1.3.2",
     "@radix-ui/react-select": "^2.2.6",
