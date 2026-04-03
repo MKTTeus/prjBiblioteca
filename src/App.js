@@ -3,14 +3,14 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Header from "./components/Header/Header";
 
-import Dashboard from "./pages/Admin/DashboardAdmin/Dashboard";
+import Dashboard from "./pages/Admin/Dashboard/Dashboard";
 import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
 import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
 import Comunidade from "./pages/Admin/CadastroComunidade/Comunidade";
 import Emprestimos from "./pages/Admin/Emprestimos/Emprestimos";
 import Admin from "./pages/Admin/CadastroAdmins/Admin";
 import Login from "./pages/Login";
-import Biblioteca from "./pages/Admin/BibliotecaAdmin/Biblioteca";
+import Biblioteca from "./pages/Admin/Biblioteca/Biblioteca";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Configuracoes from "./pages/Admin/Configuracoes/Configuracoes";
