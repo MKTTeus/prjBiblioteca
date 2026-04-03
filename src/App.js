@@ -3,23 +3,23 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar/Sidebar";
 import Header from "./components/Header/Header";
 
-import Dashboard from "./pages/Dashboard";
-import Livros from "./pages/CadastroLivros/CadastroLivros";
-import Aluno from "./pages/CadastroAlunos/Aluno";
-import Comunidade from "./pages/CadastroComunidade/Comunidade";
-import Emprestimos from "./pages/Emprestimos/Emprestimos";
-import Admin from "./pages/CadastroAdmins/Admin";
+import Dashboard from "./pages/Admin/DashboardAdmin/Dashboard";
+import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
+import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
+import Comunidade from "./pages/Admin/CadastroComunidade/Comunidade";
+import Emprestimos from "./pages/Admin/Emprestimos/Emprestimos";
+import Admin from "./pages/Admin/CadastroAdmins/Admin";
 import Login from "./pages/Login";
-import Biblioteca from "./pages/Biblioteca";
+import Biblioteca from "./pages/Admin/BibliotecaAdmin/Biblioteca";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Configuracoes from "./pages/Configuracoes/Configuracoes";
-import Geral from "./pages/Configuracoes/components/Geral/Geral";
-import Notificacoes from "./pages/Configuracoes/components/Notificacoes/Notificacoes";
-import Seguranca from "./pages/Configuracoes/components/Seguranca/Seguranca";
-import Sistema from "./pages/Configuracoes/components/Sistema/Sistema";
-import Email from "./pages/Configuracoes/components/Email/Email";
-import Avancado from "./pages/Configuracoes/components/Avancado/Avancado";
+import Configuracoes from "./pages/Admin/Configuracoes/Configuracoes";
+import Geral from "./pages/Admin/Configuracoes/components/Geral/Geral";
+import Notificacoes from "./pages/Admin/Configuracoes/components/Notificacoes/Notificacoes";
+import Seguranca from "./pages/Admin/Configuracoes/components/Seguranca/Seguranca";
+import Sistema from "./pages/Admin/Configuracoes/components/Sistema/Sistema";
+import Email from "./pages/Admin/Configuracoes/components/Email/Email";
+import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
 
 function App() {
   const location = useLocation();

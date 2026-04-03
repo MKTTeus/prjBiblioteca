@@ -7,12 +7,12 @@ import {
   HiOutlineCalendar,
 } from "react-icons/hi";
 
-import { getBooks, deleteBook } from "../../services/api";
+import { getBooks, deleteBook } from "../../../services/api";
 import BookList from "./components/BookList/BookList";
 import BookFormModal from "./components/BookForm/BookFormModal";
 import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
-import { useAuth } from "../../contexts/AuthContext";
-import StatsCard from "../../components/StatsCard/StatsCard";
+import { useAuth } from "../../../contexts/AuthContext";
+import StatsCard from "../../../components/StatsCard/StatsCard";
 
 import "./cadastroLivros.css";
 

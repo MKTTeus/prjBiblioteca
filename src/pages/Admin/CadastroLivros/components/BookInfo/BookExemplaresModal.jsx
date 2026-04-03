@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./BookInfoModal.css";
-import { updateExemplar } from "../../../../services/api";
+import { updateExemplar } from "../../../../../services/api";
 
 export default function BookExemplaresModal({ book, onClose, onSaved }) {
   const [exemplares, setExemplares] = useState([]);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDownIcon, CheckIcon } from "@radix-ui/react-icons";
-import { getCategorias } from "../../../../services/api";
+import { getCategorias } from "../../../../../services/api";
 import "./SelectCategoria.css";
 
 function SelectCategoria({ value = "todas", onChange }) {

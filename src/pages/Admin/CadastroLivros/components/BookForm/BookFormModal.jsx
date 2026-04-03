@@ -8,7 +8,7 @@ import {
   updateBook,
   updateExemplar,
   uploadCover,
-} from "../../../../services/api";
+} from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
 import BasicInfoSection from "./BasicInfoSection";
 import PublicationInfoSection from "./PublicationInfoSection";

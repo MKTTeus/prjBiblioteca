@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Emprestimos.css";
 
-import StatsCard from "../../components/StatsCard/StatsCard";
+import StatsCard from "../../../components/StatsCard/StatsCard";
 import {
   criarEmprestimo,
   devolverEmprestimo,
@@ -9,7 +9,7 @@ import {
   getComunidade,
   getEmprestimos,
   getExemplares,
-} from "../../services/api";
+} from "../../../services/api";
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import NovoEmprestimoModal from "./components/NovoEmprestimoModal";

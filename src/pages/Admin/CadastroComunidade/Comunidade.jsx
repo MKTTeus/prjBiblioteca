@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./Aluno.css";
+import "./Comunidade.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import {
   Users,
@@ -9,14 +9,21 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { getAlunos, createAluno, updateAluno, deleteAluno } from "../../services/api";
+import {
+  getComunidade,
+  createComunidade,
+  updateComunidade,
+  deleteComunidade,
+} from "../../../services/api";
 import SearchBar from "./components/SearchBar";
-import AlunoModal from "./components/AlunoModal";
-import StatsCard from "../../components/StatsCard/StatsCard";
+import ComunidadeModal from "./components/ComunidadeModal";
+import StatsCard from "../../../components/StatsCard/StatsCard";
 
-const EMPTY_ALUNO = {
+const maxCPFLength = 11;
+
+const EMPTY_MEMBRO = {
   nome: "",
-  ra: "",
+  cpf: "",
   email: "",
   telefone: "",
   telefone2: "",
@@ -25,25 +32,25 @@ const EMPTY_ALUNO = {
   status: "Ativo",
 };
 
-export default function Aluno() {
+export default function Comunidade() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [indexEditando, setIndexEditando] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
-  const [novoAluno, setNovoAluno] = useState(EMPTY_ALUNO);
-  const [alunos, setAlunos] = useState([]);
+  const [novoMembro, setNovoMembro] = useState(EMPTY_MEMBRO);
+  const [membros, setMembros] = useState([]);
 
   useEffect(() => {
-    async function fetchAlunos() {
+    async function fetchMembros() {
       try {
-        const data = await getAlunos();
-        setAlunos(
+        const data = await getComunidade();
+        setMembros(
           (data || []).map((u) => ({
             idUsuario: u.idUsuario,
             nome: u.usuNome,
-            ra: u.usuRA || "",
+            cpf: u.usuCPF || "",
             email: u.usuEmail || "",
             telefone: u.usuTelefone || "",
             telefone2: u.usuTelefoneResponsavel || "",
@@ -53,15 +60,15 @@ export default function Aluno() {
           }))
         );
       } catch (err) {
-        console.error("Erro ao carregar alunos:", err);
+        console.error("Erro ao carregar comunidade:", err);
       }
     }
 
-    fetchAlunos();
+    fetchMembros();
   }, []);
 
   const handleChange = (e) => {
-    setNovoAluno((prev) => ({
+    setNovoMembro((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
@@ -72,90 +79,81 @@ export default function Aluno() {
     setModalAberto(false);
     setModoEdicao(false);
     setIndexEditando(null);
-    setNovoAluno(EMPTY_ALUNO);
+    setNovoMembro(EMPTY_MEMBRO);
     setIsDirty(false);
   };
 
   const handleSalvar = async () => {
     if (isProcessing) return;
     if (modoEdicao && !isDirty) return;
-
-    if (
-      !novoAluno.nome ||
-      !novoAluno.email ||
-      !novoAluno.telefone ||
-      !novoAluno.endereco ||
-      !novoAluno.status
-    ) {
-      return;
-    }
+    if (!novoMembro.nome || !novoMembro.email || !novoMembro.telefone || !novoMembro.endereco) return;
 
     setIsProcessing(true);
 
     try {
       if (modoEdicao && indexEditando != null) {
-        const alvo = alunos[indexEditando];
+        const alvo = membros[indexEditando];
         const payload = {
-          nome: novoAluno.nome,
-          email: novoAluno.email,
-          telefone: novoAluno.telefone,
-          telefoneResponsavel: novoAluno.telefone2,
-          endereco: novoAluno.endereco,
-          ra: novoAluno.ra,
-          status: novoAluno.status === "Ativo",
+          nome: novoMembro.nome,
+          email: novoMembro.email,
+          telefone: novoMembro.telefone,
+          telefoneResponsavel: novoMembro.telefone2,
+          endereco: novoMembro.endereco,
+          cpf: novoMembro.cpf,
+          status: novoMembro.status === "Ativo",
         };
 
-        const updated = await updateAluno(alvo.idUsuario, payload);
-        setAlunos((prev) =>
-          prev.map((aluno, i) =>
+        const updated = await updateComunidade(alvo.idUsuario, payload);
+        setMembros((prev) =>
+          prev.map((membro, i) =>
             i === indexEditando
               ? {
-                  ...aluno,
+                  ...membro,
                   nome: updated.usuNome,
-                  ra: updated.usuRA || "",
+                  cpf: updated.usuCPF || "",
                   email: updated.usuEmail || "",
                   telefone: updated.usuTelefone || "",
                   telefone2: updated.usuTelefoneResponsavel || "",
                   endereco: updated.usuEndereco || "",
                   status: updated.usuStatus === false ? "Inativo" : "Ativo",
                 }
-              : aluno
+              : membro
           )
         );
       } else {
-        if (!novoAluno.senha || novoAluno.senha.length < 6) return;
+        if (!novoMembro.senha || novoMembro.senha.length < 6) return;
 
-        const created = await createAluno({
-          nome: novoAluno.nome,
-          email: novoAluno.email,
-          senha: novoAluno.senha,
-          telefone: novoAluno.telefone,
-          telefoneResponsavel: novoAluno.telefone2,
-          endereco: novoAluno.endereco,
-          ra: novoAluno.ra,
-          tipo: "Aluno",
-          status: novoAluno.status === "Ativo",
+        const created = await createComunidade({
+          nome: novoMembro.nome,
+          email: novoMembro.email,
+          senha: novoMembro.senha,
+          telefone: novoMembro.telefone,
+          telefoneResponsavel: novoMembro.telefone2,
+          endereco: novoMembro.endereco,
+          cpf: novoMembro.cpf,
+          tipo: "Comunidade",
+          status: novoMembro.status === "Ativo",
         });
 
-        setAlunos((prev) => [
+        setMembros((prev) => [
           ...prev,
           {
             idUsuario: created.idUsuario,
             nome: created.usuNome,
-            ra: created.usuRA || "",
+            cpf: created.usuCPF || "",
             email: created.usuEmail || "",
             telefone: created.usuTelefone || "",
             telefone2: created.usuTelefoneResponsavel || "",
             endereco: created.usuEndereco || "",
             livros: 0,
-            status: novoAluno.status || "Ativo",
+            status: novoMembro.status || "Ativo",
           },
         ]);
       }
 
       fecharModal();
     } catch (err) {
-      console.error("Erro ao salvar aluno:", err);
+      console.error("Erro ao salvar membro:", err);
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
@@ -163,7 +161,7 @@ export default function Aluno() {
   };
 
   const abrirCriacao = () => {
-    setNovoAluno(EMPTY_ALUNO);
+    setNovoMembro(EMPTY_MEMBRO);
     setModoEdicao(false);
     setIndexEditando(null);
     setModalAberto(true);
@@ -171,19 +169,19 @@ export default function Aluno() {
   };
 
   const abrirEdicao = (idUsuario) => {
-    const index = alunos.findIndex((aluno) => aluno.idUsuario === idUsuario);
+    const index = membros.findIndex((membro) => membro.idUsuario === idUsuario);
     if (index === -1) return;
 
-    const aluno = alunos[index];
-    setNovoAluno({
-      nome: aluno.nome || "",
-      ra: aluno.ra || "",
-      email: aluno.email || "",
-      telefone: aluno.telefone || "",
-      telefone2: aluno.telefone2 || "",
-      endereco: aluno.endereco || "",
+    const membro = membros[index];
+    setNovoMembro({
+      nome: membro.nome || "",
+      cpf: membro.cpf || "",
+      email: membro.email || "",
+      telefone: membro.telefone || "",
+      telefone2: membro.telefone2 || "",
+      endereco: membro.endereco || "",
       senha: "",
-      status: aluno.status || "Ativo",
+      status: membro.status || "Ativo",
     });
     setIndexEditando(index);
     setModoEdicao(true);
@@ -193,88 +191,88 @@ export default function Aluno() {
 
   const handleExcluir = async (idUsuario) => {
     try {
-      await deleteAluno(idUsuario);
-      setAlunos((prev) => prev.filter((aluno) => aluno.idUsuario !== idUsuario));
+      await deleteComunidade(idUsuario);
+      setMembros((prev) => prev.filter((membro) => membro.idUsuario !== idUsuario));
     } catch (err) {
-      console.error("Erro ao excluir aluno:", err);
+      console.error("Erro ao excluir membro:", err);
     }
   };
 
   const handleToggleStatus = async (idUsuario) => {
-    const index = alunos.findIndex((aluno) => aluno.idUsuario === idUsuario);
+    const index = membros.findIndex((membro) => membro.idUsuario === idUsuario);
     if (index === -1) return;
 
-    const alvo = alunos[index];
+    const alvo = membros[index];
     const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
 
     try {
-      const updated = await updateAluno(alvo.idUsuario, {
+      const updated = await updateComunidade(alvo.idUsuario, {
         ...alvo,
         status: novoStatus === "Ativo",
       });
 
-      setAlunos((prev) =>
-        prev.map((aluno, i) =>
+      setMembros((prev) =>
+        prev.map((membro, i) =>
           i === index
             ? {
-                ...aluno,
+                ...membro,
                 status: updated.usuStatus === false ? "Inativo" : "Ativo",
               }
-            : aluno
+            : membro
         )
       );
     } catch (err) {
-      console.error("Erro ao alterar status do aluno:", err);
+      console.error("Erro ao alterar status do membro:", err);
     }
   };
 
-  const totalAlunos = alunos.length;
-  const alunosAtivos = alunos.filter((a) => a.status === "Ativo").length;
-  const alunosInativos = alunos.filter((a) => a.status === "Inativo").length;
-  const totalLivros = alunos.reduce((acc, aluno) => acc + aluno.livros, 0);
-  const alunosFiltrados = alunos.filter((aluno) => {
+  const totalMembros = membros.length;
+  const membrosAtivos = membros.filter((m) => m.status === "Ativo").length;
+  const membrosInativos = membros.filter((m) => m.status === "Inativo").length;
+  const totalLivros = membros.reduce((acc, membro) => acc + membro.livros, 0);
+  const membrosFiltrados = membros.filter((membro) => {
     const termo = pesquisa.toLowerCase();
     return (
-      aluno.nome.toLowerCase().includes(termo) ||
-      aluno.email.toLowerCase().includes(termo) ||
-      aluno.ra.toLowerCase().includes(termo)
+      membro.nome.toLowerCase().includes(termo) ||
+      membro.email.toLowerCase().includes(termo) ||
+      membro.cpf.toLowerCase().includes(termo)
     );
   });
 
   return (
-    <div className="aluno-page">
+    <div className="comunidade-page">
       <div className="titulo">
         <div>
-          <h1>Gestão de Alunos</h1>
-          <p>Cadastre e acompanhe os alunos da biblioteca.</p>
+          <h1>Gestão da Comunidade</h1>
+          <p>Cadastre e acompanhe os membros da biblioteca.</p>
         </div>
 
-        <button className="btn-novo-aluno" onClick={abrirCriacao}>
-          + Novo Aluno
+        <button className="btn-novo" onClick={abrirCriacao}>
+          + Novo Membro
         </button>
       </div>
 
       <div className="stats-cards-grid">
         <StatsCard
-          title="Total de Alunos"
-          value={totalAlunos}
-          subtitle="Cadastros registrados"
+          title="Total de Membros"
+          value={totalMembros}
+          subtitle="Cadastros da comunidade"
           icon={<Users size={18} />}
           color="blue"
         />
 
         <StatsCard
-          title="Alunos Ativos"
-          value={alunosAtivos}
-          subtitle="Com acesso liberado"
+          title="Membros Ativos"
+          value={membrosAtivos}
+          subtitle="Aptos para empréstimo"
           icon={<UserCheck size={18} />}
           color="green"
         />
 
         <StatsCard
-          title="Alunos Inativos"
-          value={alunosInativos}
-          subtitle="Com acesso suspenso"
+          title="Membros Inativos"
+          value={membrosInativos}
+          subtitle="Com acesso indisponível"
           icon={<UserX size={18} />}
           color="red"
         />
@@ -282,18 +280,18 @@ export default function Aluno() {
         <StatsCard
           title="Livros Emprestados"
           value={totalLivros}
-          subtitle="Em posse dos alunos"
+          subtitle="Em posse da comunidade"
           icon={<BookOpen size={18} />}
           color="orange"
         />
       </div>
 
       <div className="topo-lista">
-        <h2>Lista de Alunos</h2>
+        <h2>Lista de Membros</h2>
         <SearchBar
           value={pesquisa}
           onChange={setPesquisa}
-          placeholder="Buscar por nome, e-mail ou RA..."
+          placeholder="Buscar por nome, e-mail ou CPF..."
         />
       </div>
 
@@ -302,8 +300,9 @@ export default function Aluno() {
           <thead>
             <tr>
               <th>Nome</th>
-              <th>RA</th>
+              <th>CPF</th>
               <th>E-mail</th>
+              <th>Telefone</th>
               <th>Livros</th>
               <th>Status</th>
               <th>Ações</th>
@@ -311,28 +310,29 @@ export default function Aluno() {
           </thead>
 
           <tbody>
-            {alunosFiltrados.map((aluno) => (
-              <tr key={aluno.idUsuario}>
-                <td>{aluno.nome}</td>
-                <td>{aluno.ra}</td>
-                <td>{aluno.email}</td>
-                <td>{aluno.livros}</td>
+            {membrosFiltrados.map((membro) => (
+              <tr key={membro.idUsuario}>
+                <td>{membro.nome}</td>
+                <td>{membro.cpf}</td>
+                <td>{membro.email}</td>
+                <td>{membro.telefone}</td>
+                <td className="col-livros">{membro.livros}</td>
                 <td>
                   <span
                     className={
-                      aluno.status === "Ativo" ? "badge-ativo" : "badge-inativo"
+                      membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"
                     }
                   >
-                    {aluno.status}
+                    {membro.status}
                   </span>
                 </td>
 
                 <td className="acoes">
                   <button
                     className="btn-status"
-                    onClick={() => handleToggleStatus(aluno.idUsuario)}
+                    onClick={() => handleToggleStatus(membro.idUsuario)}
                   >
-                    {aluno.status === "Ativo" ? (
+                    {membro.status === "Ativo" ? (
                       <UserX size={16} className="icon-red" />
                     ) : (
                       <UserCheck size={16} className="icon-green" />
@@ -341,14 +341,14 @@ export default function Aluno() {
 
                   <button
                     className="btn-edit"
-                    onClick={() => abrirEdicao(aluno.idUsuario)}
+                    onClick={() => abrirEdicao(membro.idUsuario)}
                   >
                     <Pencil size={16} />
                   </button>
 
                   <button
                     className="btn-delete"
-                    onClick={() => handleExcluir(aluno.idUsuario)}
+                    onClick={() => handleExcluir(membro.idUsuario)}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -359,12 +359,13 @@ export default function Aluno() {
         </table>
       </div>
 
-      <AlunoModal
+      <ComunidadeModal
         aberto={modalAberto}
         modoEdicao={modoEdicao}
-        aluno={novoAluno}
+        membro={novoMembro}
         isProcessing={isProcessing}
         isDirty={isDirty}
+        maxCPFLength={maxCPFLength}
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}

@@ -8,7 +8,7 @@ import {
   HiOutlinePencil,
   HiOutlineXCircle,
 } from "react-icons/hi";
-import { getCategorias, getGeneros } from "../../../../services/api";
+import { getCategorias, getGeneros } from "../../../../../services/api";
 import "./BookList.css";
 
 const BookList = (props) => {

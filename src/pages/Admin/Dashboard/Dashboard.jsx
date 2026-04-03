@@ -1,10 +1,10 @@
-import "../styles/Dashboard.css";
+import "./Dashboard.css";
 import { FaBook,FaUsers,FaExchangeAlt,FaClock,FaCheckCircle,FaExclamationTriangle,FaPlus} from "react-icons/fa";
 import { PiStudentFill } from "react-icons/pi";
 import { NavLink } from "react-router-dom";
 import { RiUserCommunityFill } from "react-icons/ri";
 import { useEffect, useState } from "react";
-import { getDashboardStats } from "../services/api";
+import { getDashboardStats } from "../../../services/api";
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);

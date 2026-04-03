@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import "../styles/Biblioteca.css";
-import { getBooks, getBook } from "../services/api";
-import BookInfoModal from "./CadastroLivros/components/BookInfo/BookInfoModal";
+import "./Biblioteca.css";
+import { getBooks, getBook } from "../../../services/api";
+import BookInfoModal from "../CadastroLivros/components/BookInfo/BookInfoModal";
 
 function Biblioteca() {
 

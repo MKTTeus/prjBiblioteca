@@ -8,10 +8,10 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../services/api";
+import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../services/api";
 import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
-import StatsCard from "../../components/StatsCard/StatsCard";
+import StatsCard from "../../../components/StatsCard/StatsCard";
 
 const EMPTY_ADMIN = {
   nome: "",
