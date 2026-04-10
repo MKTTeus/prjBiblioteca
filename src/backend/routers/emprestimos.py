@@ -62,6 +62,103 @@ def listar_emprestimos(user=Depends(get_optional_user)):
         return []
 
 
+@router.get("/emprestimos/notificacoes-admin")
+def notificacoes_admin(admin=Depends(get_admin)):
+    try:
+        agora = datetime.utcnow()
+        hoje = agora.date()
+        limite_24h = agora - timedelta(hours=24)
+
+        emprestimos_resp = supabase.table("EmprestimoLivro").select(
+            "idEmprestimo, idUsuario, idExemplar, empLiv_DataPrevistaDevolucao, empLiv_DataEmprestimo, empLiv_DataDevolucao"
+        ).execute()
+        emprestimos = emprestimos_resp.data or []
+
+        usuario_ids = list({emp["idUsuario"] for emp in emprestimos if emp.get("idUsuario")})
+        exemplar_ids = list({emp["idExemplar"] for emp in emprestimos if emp.get("idExemplar")})
+
+        usuarios = []
+        if usuario_ids:
+            usuarios = supabase.table("Usuario").select(
+                "idUsuario, usuNome, usuRA, usuCPF, usuTelefone, usuTipo"
+            ).in_("idUsuario", usuario_ids).execute().data or []
+
+        exemplares = []
+        if exemplar_ids:
+            exemplares = supabase.table("ExemplarLivro").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", exemplar_ids).execute().data or []
+
+        livro_ids = list({ex["idLivro"] for ex in exemplares if ex.get("idLivro")})
+        livros = []
+        if livro_ids:
+            livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
+
+        usuario_map = {usuario["idUsuario"]: usuario for usuario in usuarios}
+        exemplar_map = {ex["idExemplar"]: ex for ex in exemplares}
+        livro_map = {livro["idLivro"]: livro for livro in livros}
+
+        def build_entry(loan):
+            usuario = usuario_map.get(loan.get("idUsuario"), {})
+            exemplar = exemplar_map.get(loan.get("idExemplar"), {})
+            livro = livro_map.get(exemplar.get("idLivro"), {})
+            document = usuario.get("usuRA") or usuario.get("usuCPF") or "N/A"
+
+            return {
+                "id": loan.get("idEmprestimo"),
+                "userName": usuario.get("usuNome") or "Usuário desconhecido",
+                "userDocument": document,
+                "telefone": usuario.get("usuTelefone") or "-",
+                "userType": usuario.get("usuTipo") or "Aluno",
+                "bookTitle": livro.get("livTitulo") or "Livro desconhecido",
+                "tombo": exemplar.get("exeLivTombo") or "-",
+                "loanDate": loan.get("empLiv_DataEmprestimo"),
+            }
+
+        atrasados_alunos = []
+        atrasados_comunidade = []
+        recentes = []
+
+        for emp in emprestimos:
+            data_prevista = None
+            data_emprestimo = None
+            data_devolucao = emp.get("empLiv_DataDevolucao")
+
+            if emp.get("empLiv_DataPrevistaDevolucao"):
+                try:
+                    data_prevista = datetime.fromisoformat(emp["empLiv_DataPrevistaDevolucao"])
+                except:
+                    data_prevista = None
+
+            if emp.get("empLiv_DataEmprestimo"):
+                try:
+                    data_emprestimo = datetime.fromisoformat(emp["empLiv_DataEmprestimo"])
+                except:
+                    data_emprestimo = None
+
+            if data_prevista and data_prevista.date() < hoje and not data_devolucao:
+                entry = build_entry(emp)
+                if entry["userType"] == "Comunidade":
+                    atrasados_comunidade.append(entry)
+                else:
+                    atrasados_alunos.append(entry)
+
+            if data_emprestimo and data_emprestimo >= limite_24h:
+                recentes.append(build_entry(emp))
+
+        recentes.sort(
+            key=lambda loan: loan.get("loanDate") or "",
+            reverse=True,
+        )
+
+        return {
+            "atrasadosAlunos": atrasados_alunos,
+            "atrasadosComunidade": atrasados_comunidade,
+            "recentes": recentes,
+        }
+    except Exception as e:
+        print("Erro notificacoes admin:", e)
+        raise HTTPException(status_code=500, detail="Erro ao buscar notificações de empréstimos")
+
+
 @router.post("/emprestimos")
 def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
     try:

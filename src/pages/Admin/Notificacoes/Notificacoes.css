@@ -1,0 +1,50 @@
+.admin-notifications-page .admin-section-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-notifications-page .admin-section-toggle h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.admin-notifications-page .admin-section-toggle p {
+  margin: 6px 0 0;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+.admin-notifications-page .admin-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-notifications-page .admin-section-content.collapsed {
+  display: none;
+}
+
+.admin-notifications-page .admin-notification-section {
+  padding: 20px 18px;
+}
+
+.admin-notifications-page .admin-notification-section + .admin-notification-section {
+  margin-top: 18px;
+}
+
+.admin-notifications-page .user-notification-item__body p {
+  margin-top: 4px;
+}
+
+.admin-notifications-page .user-notification-item__body small {
+  display: block;
+  margin-top: 4px;
+}

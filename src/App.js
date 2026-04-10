@@ -19,6 +19,7 @@ import Seguranca from "./pages/Admin/Configuracoes/components/Seguranca/Seguranc
 import Sistema from "./pages/Admin/Configuracoes/components/Sistema/Sistema";
 import Email from "./pages/Admin/Configuracoes/components/Email/Email";
 import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
+import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
 import UserDashboard from "./pages/user/UserDashboard";
 
 function RoleHomeRedirect() {
@@ -91,6 +92,7 @@ function App() {
         <Route path="alunos" element={<Aluno />} />
         <Route path="comunidade" element={<Comunidade />} />
         <Route path="emprestimos" element={<Emprestimos />} />
+        <Route path="notificacoes" element={<AdminNotificacoes />} />
         <Route path="admins" element={<Admin />} />
         <Route path="biblioteca" element={<Biblioteca />} />
         <Route path="configuracoes" element={<Configuracoes />}>

@@ -8,6 +8,7 @@ import {
   FiSettings,
   FiChevronDown,
   FiBookmark,
+  FiBell,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Sidebar.css";
@@ -113,6 +114,15 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             >
               <FiRepeat />
               <span>Empréstimos e Devoluções</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/admin/notificacoes"
+              className={({ isActive }) => (isActive ? "active" : undefined)}
+            >
+              <FiBell />
+              <span>Notificações</span>
             </NavLink>
           </li>
         </ul>
