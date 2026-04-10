@@ -1,7 +1,12 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 .layout {
   display: flex;
   min-height: 100vh;
   background: #f5f6fa;
+  min-width: 0;
 }
 
 .content {
@@ -11,4 +16,5 @@
   width: calc(100% - 250px);
   min-height: calc(100vh - 70px);
   box-sizing: border-box;
+  min-width: 0;
 }

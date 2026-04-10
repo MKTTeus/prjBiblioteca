@@ -116,11 +116,12 @@ def notificacoes_admin(admin=Depends(get_admin)):
         atrasados_alunos = []
         atrasados_comunidade = []
         recentes = []
+        devolucoes_recentes = []
 
         for emp in emprestimos:
             data_prevista = None
             data_emprestimo = None
-            data_devolucao = emp.get("empLiv_DataDevolucao")
+            data_devolucao = None
 
             if emp.get("empLiv_DataPrevistaDevolucao"):
                 try:
@@ -134,6 +135,12 @@ def notificacoes_admin(admin=Depends(get_admin)):
                 except:
                     data_emprestimo = None
 
+            if emp.get("empLiv_DataDevolucao"):
+                try:
+                    data_devolucao = datetime.fromisoformat(emp["empLiv_DataDevolucao"])
+                except:
+                    data_devolucao = None
+
             if data_prevista and data_prevista.date() < hoje and not data_devolucao:
                 entry = build_entry(emp)
                 if entry["userType"] == "Comunidade":
@@ -141,10 +148,18 @@ def notificacoes_admin(admin=Depends(get_admin)):
                 else:
                     atrasados_alunos.append(entry)
 
-            if data_emprestimo and data_emprestimo >= limite_24h:
+            if data_emprestimo and data_emprestimo >= limite_24h and not data_devolucao:
                 recentes.append(build_entry(emp))
 
+            if data_devolucao and data_devolucao >= limite_24h:
+                devolucoes_recentes.append(build_entry(emp))
+
         recentes.sort(
+            key=lambda loan: loan.get("loanDate") or "",
+            reverse=True,
+        )
+
+        devolucoes_recentes.sort(
             key=lambda loan: loan.get("loanDate") or "",
             reverse=True,
         )
@@ -153,6 +168,7 @@ def notificacoes_admin(admin=Depends(get_admin)):
             "atrasadosAlunos": atrasados_alunos,
             "atrasadosComunidade": atrasados_comunidade,
             "recentes": recentes,
+            "devolucoesRecentes": devolucoes_recentes,
         }
     except Exception as e:
         print("Erro notificacoes admin:", e)
