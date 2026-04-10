@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { LuBookOpen } from "react-icons/lu";
 import "./Header.css";
@@ -40,9 +40,6 @@ function Header() {
       </div>
 
       <div className="header-right">
-        <div className="notification">
-          <Bell size={20} />
-        </div>
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair
         </button>

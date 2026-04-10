@@ -2,27 +2,59 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, get_admin_id
+from core import get_admin, get_admin_id, get_optional_user
 from schemas import Emprestimo
 
 router = APIRouter()
 
 
 @router.get("/emprestimos")
-def listar_emprestimos(admin=Depends(get_admin)):
+def listar_emprestimos(user=Depends(get_optional_user)):
     try:
         hoje = datetime.utcnow().date()
-        emprestimos = supabase.table("EmprestimoLivro").select("*").execute().data or []
+        query = supabase.table("EmprestimoLivro").select("*")
+
+        if user and user.get("tipo") == "usuario":
+            usuario_resp = supabase.table("Usuario").select("idUsuario").eq("usuEmail", user["sub"]).execute()
+            if not usuario_resp.data:
+                raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+            id_usuario = usuario_resp.data[0]["idUsuario"]
+            query = query.eq("idUsuario", id_usuario)
+
+        emprestimos = query.execute().data or []
+        exemplar_ids = [emp["idExemplar"] for emp in emprestimos if emp.get("idExemplar")]
+        exemplares = []
+        livros = []
+
+        if exemplar_ids:
+            exemplares = supabase.table("ExemplarLivro").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", exemplar_ids).execute().data or []
+            livro_ids = list({ex["idLivro"] for ex in exemplares if ex.get("idLivro")})
+            if livro_ids:
+                livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
+
+        livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
+        exemplar_map = {e["idExemplar"]: e for e in exemplares}
 
         for emp in emprestimos:
             data_prev = emp.get("empLiv_DataPrevistaDevolucao")
-            if emp["empLiv_Status"] == "Ativo" and data_prev:
+            if emp.get("empLiv_Status") == "Ativo" and data_prev:
                 try:
                     data_prevista = datetime.fromisoformat(data_prev).date()
                     if data_prevista < hoje:
                         emp["empLiv_Status"] = "Atrasado"
                 except:
                     pass
+
+            exemplar = exemplar_map.get(emp.get("idExemplar"))
+            if exemplar:
+                emp["codigo"] = exemplar.get("exeLivTombo")
+                emp["titulo"] = livro_map.get(exemplar.get("idLivro"), emp.get("titulo"))
+
+            emp["dataEmprestimo"] = emp.get("empLiv_DataEmprestimo")
+            emp["dataDevolucao"] = emp.get("empLiv_DataPrevistaDevolucao") or emp.get("empLiv_DataDevolucao")
+            emp["status"] = (emp.get("empLiv_Status") or "").lower()
+            emp["renovacoes"] = emp.get("empLiv_Renovacoes", 0)
 
         return emprestimos
     except Exception as e:

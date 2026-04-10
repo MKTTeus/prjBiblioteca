@@ -58,11 +58,6 @@
   gap: 20px;
 }
 
-.notification {
-  position: relative;
-  cursor: pointer;
-}
-
 .badge {
   position: absolute;
   top: -1px;

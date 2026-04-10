@@ -100,3 +100,19 @@ Notes
 Project Overview
 ```
 <img width="1789" height="914" alt="image" src="https://github.com/user-attachments/assets/4f1ffaa6-08b4-4a0c-9284-1cba13da3b5a" /> 
+
+# Ctrl C - Ctrl V
+
+# Backend
+cd .\src\
+cd .\backend\
+pip install -r requirements.txt
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r .\requirements.txt
+uvicorn main:app --reload --port 5000
+
+# Frontend
+npm install
+npm start  

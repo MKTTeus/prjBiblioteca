@@ -8,7 +8,6 @@ import {
   FiSettings,
   FiChevronDown,
   FiBookmark,
-  FiBell,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Sidebar.css";
@@ -17,7 +16,6 @@ const userMenuItems = [
   { key: "dashboard", label: "Dashboard", icon: FiHome },
   { key: "biblioteca", label: "Biblioteca", icon: FiBookmark },
   { key: "emprestimos", label: "Empréstimos", icon: FiRepeat },
-  { key: "notificacoes", label: "Notificações", icon: FiBell },
 ];
 
 function Sidebar({ type = "admin", activePage, setActivePage }) {
