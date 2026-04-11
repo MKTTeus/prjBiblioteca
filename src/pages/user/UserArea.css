@@ -70,8 +70,8 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
-  -webkit-backdrop-filter: blur(10px); 
-  backdrop-filter: blur(10px);       
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   transition: transform 0.15s ease, background 0.15s ease,
     border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -214,7 +214,7 @@
   display: block;
   font-size: 14px;
   color: #111827;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 

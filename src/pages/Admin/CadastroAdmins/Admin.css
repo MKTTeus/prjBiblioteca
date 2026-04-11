@@ -23,7 +23,7 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.admin-page .btn-novo {
+.admin-page .btn-novo-admin {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -38,7 +38,7 @@
   transition: 0.2s;
 }
 
-.admin-page .btn-novo:hover {
+.admin-page .btn-novo-admin:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
@@ -222,12 +222,13 @@
 .admin-page .admin-editor-shell { display: flex; flex-direction: column; }
 .admin-page .admin-editor-topbar {
   margin-bottom: 0;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 3;
   background: #ffffff;
 }
-.admin-page .admin-editor-content { min-height: auto; }
+.admin-page .admin-editor-content { height: auto; }
 .admin-page .admin-editor-grid {
   grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) minmax(280px, 0.92fr);
   align-items: start;

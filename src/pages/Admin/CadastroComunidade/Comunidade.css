@@ -23,7 +23,7 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-.comunidade-page .btn-novo {
+.comunidade-page .btn-novo-comunidade {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -38,7 +38,7 @@
   transition: 0.2s;
 }
 
-.comunidade-page .btn-novo:hover {
+.comunidade-page .btn-novo-comunidade:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
@@ -199,12 +199,13 @@
 .comunidade-page .comunidade-editor-shell { display: flex; flex-direction: column; }
 .comunidade-page .comunidade-editor-topbar {
   margin-bottom: 0;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 3;
   background: #ffffff;
 }
-.comunidade-page .comunidade-editor-content { min-height: auto; }
+.comunidade-page .comunidade-editor-content { height: auto; }
 .comunidade-page .comunidade-editor-grid {
   grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr) minmax(280px, 0.92fr);
   align-items: start;

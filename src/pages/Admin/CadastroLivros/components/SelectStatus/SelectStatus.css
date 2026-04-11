@@ -39,7 +39,6 @@
   max-width: 420px;
   max-height: 260px;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .SelectViewport {
@@ -54,6 +53,7 @@
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   transition: background 0.18s ease;
 }

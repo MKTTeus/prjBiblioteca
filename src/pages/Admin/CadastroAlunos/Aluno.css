@@ -210,6 +210,7 @@
 
 .aluno-page .aluno-editor-topbar {
   margin-bottom: 0;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 3;
@@ -217,7 +218,7 @@
 }
 
 .aluno-page .aluno-editor-content {
-  min-height: auto;
+  height: auto;
 }
 
 .aluno-page .aluno-editor-grid {

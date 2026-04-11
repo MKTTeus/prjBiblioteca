@@ -109,7 +109,7 @@ export default function AdminNotificacoes() {
             <div className="user-empty-state">{error}</div>
           ) : atrasadosAlunos.length > 0 ? (
             <div className="user-notifications-list">
-              {atrasadosAlunos.map((item) => renderLoanItem(item, "warning", "atrasado"))}
+              {atrasadosAlunos.map((item) => renderLoanItem(item, "Atrasado", "atrasado"))}
             </div>
           ) : (
             <div className="user-empty-state">Nenhum empréstimo atrasado de aluno encontrado.</div>
@@ -142,7 +142,7 @@ export default function AdminNotificacoes() {
             <div className="user-empty-state">{error}</div>
           ) : atrasadosComunidade.length > 0 ? (
             <div className="user-notifications-list">
-              {atrasadosComunidade.map((item) => renderLoanItem(item, "warning", "atrasado"))}
+              {atrasadosComunidade.map((item) => renderLoanItem(item, "Atrasado", "atrasado"))}
             </div>
           ) : (
             <div className="user-empty-state">Nenhum empréstimo atrasado de comunidade encontrado.</div>
@@ -175,7 +175,7 @@ export default function AdminNotificacoes() {
             <div className="user-empty-state">{error}</div>
           ) : recentes.length > 0 ? (
             <div className="user-notifications-list">
-              {recentes.map((item) => renderLoanItem(item, "warning", "recent"))}
+              {recentes.map((item) => renderLoanItem(item, "Retirada", "recent"))}
             </div>
           ) : (
             <div className="user-empty-state">Nenhuma retirada recente encontrada.</div>
@@ -208,7 +208,7 @@ export default function AdminNotificacoes() {
             <div className="user-empty-state">{error}</div>
           ) : devolucoesRecentes.length > 0 ? (
             <div className="user-notifications-list">
-              {devolucoesRecentes.map((item) => renderLoanItem(item, "success", "returned"))}
+              {devolucoesRecentes.map((item) => renderLoanItem(item, "Devolvido", "returned"))}
             </div>
           ) : (
             <div className="user-empty-state">Nenhuma devolução recente encontrada.</div>

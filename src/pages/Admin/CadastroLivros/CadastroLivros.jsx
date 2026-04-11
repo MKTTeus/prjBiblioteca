@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { useToast } from "../../../contexts/ToastContext";
 import {
@@ -61,7 +61,7 @@ export default function CadastroLivros() {
     return true;
   });
 
-  async function loadBooks(params = {}) {
+  const loadBooks = useCallback(async (params = {}) => {
     try {
       setLoading(true);
       const data = await getBooks(params);
@@ -72,11 +72,11 @@ export default function CadastroLivros() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [addToast]);
 
   useEffect(() => {
     loadBooks();
-  }, []);
+  }, [loadBooks]);
 
   function handleAdd() {
     setCurrentBook(null);

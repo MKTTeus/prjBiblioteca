@@ -258,7 +258,7 @@ export default function Comunidade() {
           <p>Cadastre e acompanhe os membros da biblioteca.</p>
         </div>
 
-        <button className="btn-novo" onClick={abrirCriacao}>
+        <button className="btn-novo-comunidade" onClick={abrirCriacao}>
           + Novo Membro
         </button>
       </div>

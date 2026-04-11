@@ -1,7 +1,11 @@
 .modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(15, 23, 42, 0.36);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
@@ -308,7 +312,7 @@
 .cover-preview-frame {
   width: 100%;
   max-width: 220px;
-  aspect-ratio: 2 / 3;
+  height: calc(min(220px, 100%) * 1.5);
   border: 1px solid #d1d5db;
   border-radius: 16px;
   background: #ffffff;

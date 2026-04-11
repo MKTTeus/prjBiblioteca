@@ -241,14 +241,14 @@
   display: block;
   font-size: 14px;
   color: #111827;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .dashboard-notification p {
   margin: 3px 0;
   font-size: 12px;
   color: #4b5563;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .dashboard-notification small {

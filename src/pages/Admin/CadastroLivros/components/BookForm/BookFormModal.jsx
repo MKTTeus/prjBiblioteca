@@ -110,9 +110,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     } finally {
       setLoadingDetails(false);
     }
-  }, [bookToEdit]);
+  }, [bookToEdit, addToast]);
 
-  async function carregarMetadados() {
+  const carregarMetadados = useCallback(async () => {
     try {
       const [cats, gens] = await Promise.all([getCategorias(), getGeneros()]);
       setCategorias(cats || []);
@@ -121,11 +121,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       console.error(err);
       addToast("Falha ao carregar categorias e gêneros", "error");
     }
-  }
+  }, [addToast]);
 
   useEffect(() => {
     carregarMetadados();
-  }, []);
+  }, [carregarMetadados]);
 
   useEffect(() => {
     carregarLivroEmEdicao();

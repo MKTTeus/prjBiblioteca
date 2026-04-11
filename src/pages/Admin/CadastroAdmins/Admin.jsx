@@ -229,7 +229,7 @@ export default function Admin() {
           <p>Cadastre e acompanhe os administradores do sistema.</p>
         </div>
 
-        <button className="btn-novo" onClick={abrirCriacao}>
+        <button className="btn-novo-admin" onClick={abrirCriacao}>
           + Novo Administrador
         </button>
       </div>
