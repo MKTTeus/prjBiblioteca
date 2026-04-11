@@ -16,10 +16,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Stage 3: final
 FROM python:3.12-slim
 WORKDIR /app
+# Copia backend
 COPY src/backend ./backend
+# Copia build do frontend
 COPY --from=frontend-builder /app/build ./frontend_build
+# Copia dependências Python instaladas
 COPY --from=backend-builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+# Define o path do backend
 ENV PYTHONPATH=/app/backend
-ENV PORT=5000
+
+# Expõe a porta (Railway usa dinamicamente)
 EXPOSE 5000
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5000"]
+# conexão com Railway
+CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"]
