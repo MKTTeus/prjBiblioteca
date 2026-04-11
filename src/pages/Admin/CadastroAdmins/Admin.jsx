@@ -3,6 +3,8 @@ import "./Admin.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
 import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../services/api";
+import { useToast } from "../../../contexts/ToastContext";
+import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -23,6 +25,8 @@ export default function Admin() {
   const [pesquisa, setPesquisa] = useState("");
   const [novoAdmin, setNovoAdmin] = useState(EMPTY_ADMIN);
   const [admins, setAdmins] = useState([]);
+  const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null);
+  const { addToast } = useToast();
 
   useEffect(() => {
     async function fetchAdmins() {
@@ -97,6 +101,7 @@ export default function Admin() {
               : admin
           )
         );
+        addToast("Informações atualizadas com sucesso", "success");
       } else {
         const created = await createAdmin({
           nome: novoAdmin.nome,
@@ -121,11 +126,13 @@ export default function Admin() {
                 : created.admStatus || novoAdmin.status,
           },
         ]);
+        addToast("Cadastro realizado com sucesso", "success");
       }
 
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar administrador:", err);
+      addToast(modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro", "error");
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
@@ -157,12 +164,23 @@ export default function Admin() {
     setIsDirty(false);
   };
 
-  const handleExcluir = async (idAdmin) => {
+  const handleExcluir = (idAdmin) => {
+    const target = admins.find((admin) => admin.idAdmin === idAdmin);
+    setPendingDeleteAdmin(target || { idAdmin, nome: "este administrador" });
+  };
+
+  const confirmExcluirAdmin = async () => {
+    if (!pendingDeleteAdmin) return;
+
     try {
-      await deleteAdmin(idAdmin);
-      setAdmins((prev) => prev.filter((admin) => admin.idAdmin !== idAdmin));
+      await deleteAdmin(pendingDeleteAdmin.idAdmin);
+      setAdmins((prev) => prev.filter((admin) => admin.idAdmin !== pendingDeleteAdmin.idAdmin));
+      addToast("Administrador excluído com sucesso", "success");
     } catch (err) {
       console.error("Erro ao excluir administrador:", err);
+      addToast("Falha ao excluir o administrador", "error");
+    } finally {
+      setPendingDeleteAdmin(null);
     }
   };
 
@@ -307,6 +325,20 @@ export default function Admin() {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+      />
+
+      <ConfirmModal
+        show={Boolean(pendingDeleteAdmin)}
+        title="Confirmar exclusão"
+        message={
+          pendingDeleteAdmin
+            ? `Tem certeza que deseja excluir este administrador?`
+            : "Tem certeza que deseja excluir este administrador?"
+        }
+        onConfirm={confirmExcluirAdmin}
+        onCancel={() => setPendingDeleteAdmin(null)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
       />
     </div>
   );

@@ -8,6 +8,8 @@ import {
   updateComunidade,
   deleteComunidade,
 } from "../../../services/api";
+import { useToast } from "../../../contexts/ToastContext";
+import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -34,6 +36,8 @@ export default function Comunidade() {
   const [pesquisa, setPesquisa] = useState("");
   const [novoMembro, setNovoMembro] = useState(EMPTY_MEMBRO);
   const [membros, setMembros] = useState([]);
+  const [pendingDeleteMembro, setPendingDeleteMembro] = useState(null);
+  const { addToast } = useToast();
 
   useEffect(() => {
     async function fetchMembros() {
@@ -113,6 +117,7 @@ export default function Comunidade() {
               : membro
           )
         );
+        addToast("Informações atualizadas com sucesso", "success");
       } else {
         if (!novoMembro.senha || novoMembro.senha.length < 6) return;
 
@@ -142,11 +147,13 @@ export default function Comunidade() {
             status: novoMembro.status || "Ativo",
           },
         ]);
+        addToast("Cadastro realizado com sucesso", "success");
       }
 
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar membro:", err);
+      addToast(modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro", "error");
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
@@ -182,12 +189,23 @@ export default function Comunidade() {
     setIsDirty(false);
   };
 
-  const handleExcluir = async (idUsuario) => {
+  const handleExcluir = (idUsuario) => {
+    const target = membros.find((membro) => membro.idUsuario === idUsuario);
+    setPendingDeleteMembro(target || { idUsuario, nome: "este usuário" });
+  };
+
+  const confirmExcluirMembro = async () => {
+    if (!pendingDeleteMembro) return;
+
     try {
-      await deleteComunidade(idUsuario);
-      setMembros((prev) => prev.filter((membro) => membro.idUsuario !== idUsuario));
+      await deleteComunidade(pendingDeleteMembro.idUsuario);
+      setMembros((prev) => prev.filter((membro) => membro.idUsuario !== pendingDeleteMembro.idUsuario));
+      addToast("Usuário excluído com sucesso", "success");
     } catch (err) {
       console.error("Erro ao excluir membro:", err);
+      addToast("Falha ao excluir o usuário", "error");
+    } finally {
+      setPendingDeleteMembro(null);
     }
   };
 
@@ -349,6 +367,20 @@ export default function Comunidade() {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+      />
+
+      <ConfirmModal
+        show={Boolean(pendingDeleteMembro)}
+        title="Confirmar exclusão"
+        message={
+          pendingDeleteMembro
+            ? `Tem certeza que deseja excluir este usuário?`
+            : "Tem certeza que deseja excluir este usuário?"
+        }
+        onConfirm={confirmExcluirMembro}
+        onCancel={() => setPendingDeleteMembro(null)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
       />
     </div>
   );

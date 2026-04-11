@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getBooks, deleteBook } from "../../../../../services/api";
+import { useToast } from "../../../../../contexts/ToastContext";
+import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
 import BookFormModal from "../BookForm/BookFormModal";
 import "./BookForm.css";
 
@@ -8,6 +10,8 @@ const BookList = () => {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editBook, setEditBook] = useState(null);
+  const [pendingDeleteBook, setPendingDeleteBook] = useState(null);
+  const { addToast } = useToast();
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -25,13 +29,23 @@ const BookList = () => {
     fetchBooks();
   }, []);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Deseja realmente deletar este livro?")) return;
+  const handleDelete = (id) => {
+    const target = books.find((book) => book.idLivro === id);
+    setPendingDeleteBook(target || { idLivro: id, livTitulo: "este livro" });
+  };
+
+  const confirmDeleteBook = async () => {
+    if (!pendingDeleteBook) return;
+
     try {
-      await deleteBook(id);
-      setBooks(books.filter((b) => b.idLivro !== id));
+      await deleteBook(pendingDeleteBook.idLivro);
+      setBooks((prev) => prev.filter((b) => b.idLivro !== pendingDeleteBook.idLivro));
+      addToast("Livro excluído com sucesso", "success");
     } catch (err) {
-      alert("Erro ao deletar: " + err.message);
+      console.error(err);
+      addToast("Falha ao excluir o livro", "error");
+    } finally {
+      setPendingDeleteBook(null);
     }
   };
 
@@ -59,6 +73,19 @@ const BookList = () => {
           editData={editBook}
         />
       )}
+      <ConfirmModal
+        show={Boolean(pendingDeleteBook)}
+        title="Confirmar exclusão"
+        message={
+          pendingDeleteBook
+            ? `Tem certeza que deseja excluir este livro?`
+            : "Tem certeza que deseja excluir este livro?"
+        }
+        onConfirm={confirmDeleteBook}
+        onCancel={() => setPendingDeleteBook(null)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
       {loading ? (
         <p>Carregando livros...</p>
       ) : (

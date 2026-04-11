@@ -3,6 +3,8 @@ import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2 } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno } from "../../../services/api";
+import { useToast } from "../../../contexts/ToastContext";
+import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -27,6 +29,8 @@ export default function Aluno() {
   const [pesquisa, setPesquisa] = useState("");
   const [novoAluno, setNovoAluno] = useState(EMPTY_ALUNO);
   const [alunos, setAlunos] = useState([]);
+  const [pendingDeleteAluno, setPendingDeleteAluno] = useState(null);
+  const { addToast } = useToast();
 
   useEffect(() => {
     async function fetchAlunos() {
@@ -115,6 +119,7 @@ export default function Aluno() {
               : aluno
           )
         );
+        addToast("Informações atualizadas com sucesso", "success");
       } else {
         if (!novoAluno.senha || novoAluno.senha.length < 6) return;
 
@@ -144,11 +149,13 @@ export default function Aluno() {
             status: novoAluno.status || "Ativo",
           },
         ]);
+        addToast("Cadastro realizado com sucesso", "success");
       }
 
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar aluno:", err);
+      addToast(modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro", "error");
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
@@ -184,12 +191,23 @@ export default function Aluno() {
     setIsDirty(false);
   };
 
-  const handleExcluir = async (idUsuario) => {
+  const handleExcluir = (idUsuario) => {
+    const target = alunos.find((aluno) => aluno.idUsuario === idUsuario);
+    setPendingDeleteAluno(target || { idUsuario, nome: "este usuário" });
+  };
+
+  const confirmExcluirAluno = async () => {
+    if (!pendingDeleteAluno) return;
+
     try {
-      await deleteAluno(idUsuario);
-      setAlunos((prev) => prev.filter((aluno) => aluno.idUsuario !== idUsuario));
+      await deleteAluno(pendingDeleteAluno.idUsuario);
+      setAlunos((prev) => prev.filter((aluno) => aluno.idUsuario !== pendingDeleteAluno.idUsuario));
+      addToast("Usuário excluído com sucesso", "success");
     } catch (err) {
       console.error("Erro ao excluir aluno:", err);
+      addToast("Falha ao excluir o usuário", "error");
+    } finally {
+      setPendingDeleteAluno(null);
     }
   };
 
@@ -348,6 +366,20 @@ export default function Aluno() {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+      />
+
+      <ConfirmModal
+        show={Boolean(pendingDeleteAluno)}
+        title="Confirmar exclusão"
+        message={
+          pendingDeleteAluno
+            ? `Tem certeza que deseja excluir este usuário?`
+            : "Tem certeza que deseja excluir este usuário?"
+        }
+        onConfirm={confirmExcluirAluno}
+        onCancel={() => setPendingDeleteAluno(null)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
       />
     </div>
   );

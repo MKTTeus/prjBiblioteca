@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./Emprestimos.css";
 
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import { useToast } from "../../../contexts/ToastContext";
 import {
   criarEmprestimo,
   devolverEmprestimo,
@@ -42,6 +43,7 @@ export default function Emprestimos() {
     idUsuario: null,
     idExemplar: null,
   });
+  const { addToast } = useToast();
 
   useEffect(() => {
     carregarDados();
@@ -108,9 +110,15 @@ export default function Emprestimos() {
     : "Nenhum exemplar selecionado";
 
   async function registrarEmprestimo() {
-    await criarEmprestimo(selecionado);
-    fecharModal();
-    carregarDados();
+    try {
+      await criarEmprestimo(selecionado);
+      addToast("Empréstimo realizado com sucesso", "success");
+      fecharModal();
+      carregarDados();
+    } catch (error) {
+      console.error(error);
+      addToast("Falha ao realizar o empréstimo", "error");
+    }
   }
 
   async function devolver(idEmprestimo) {

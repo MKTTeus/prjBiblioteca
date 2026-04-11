@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
+import { useToast } from "../../../contexts/ToastContext";
 import {
   HiOutlineBookOpen,
   HiOutlineCheckCircle,
@@ -8,6 +9,7 @@ import {
 } from "react-icons/hi";
 
 import { getBooks, deleteBook } from "../../../services/api";
+import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import BookList from "./components/BookList/BookList";
 import BookFormModal from "./components/BookForm/BookFormModal";
 import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
@@ -23,6 +25,8 @@ export default function CadastroLivros() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [pendingDeleteBook, setPendingDeleteBook] = useState(null);
+  const { addToast } = useToast();
   const [currentBook, setCurrentBook] = useState(null);
   const [filters, setFilters] = useState({
     q: "",
@@ -64,7 +68,7 @@ export default function CadastroLivros() {
       setBooks(data || []);
     } catch (err) {
       console.error(err);
-      alert("Erro ao carregar livros.");
+      addToast("Falha ao carregar livros", "error");
     } finally {
       setLoading(false);
     }
@@ -84,15 +88,22 @@ export default function CadastroLivros() {
     setModalOpen(true);
   }
 
-  async function handleDelete(book) {
-    if (!window.confirm(`Excluir "${book.livTitulo}"?`)) return;
+  function handleDelete(book) {
+    setPendingDeleteBook(book);
+  }
+
+  async function confirmDeleteBook() {
+    if (!pendingDeleteBook) return;
 
     try {
-      await deleteBook(book.idLivro);
+      await deleteBook(pendingDeleteBook.idLivro);
+      addToast("Livro excluído com sucesso", "success");
       loadBooks();
     } catch (err) {
       console.error(err);
-      alert("Erro ao excluir livro.");
+      addToast("Falha ao excluir o livro", "error");
+    } finally {
+      setPendingDeleteBook(null);
     }
   }
 
@@ -191,6 +202,20 @@ export default function CadastroLivros() {
           onBookSaved={handleSaved}
         />
       )}
+
+      <ConfirmModal
+        show={Boolean(pendingDeleteBook)}
+        title="Confirmar exclusão"
+        message={
+          pendingDeleteBook
+            ? `Tem certeza que deseja excluir este livro?`
+            : "Tem certeza que deseja excluir este livro?"
+        }
+        onConfirm={confirmDeleteBook}
+        onCancel={() => setPendingDeleteBook(null)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
     </div>
   );
 }

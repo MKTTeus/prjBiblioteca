@@ -10,6 +10,7 @@ import {
   uploadCover,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
+import { useToast } from "../../../../../contexts/ToastContext";
 import BasicInfoSection from "./BasicInfoSection";
 import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
@@ -45,6 +46,7 @@ const DEFAULT_EDIT_ADD_CONFIG = {
 };
 
 export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
+  const { addToast } = useToast();
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -104,7 +106,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setInitialAddConfig(DEFAULT_EDIT_ADD_CONFIG);
     } catch (err) {
       console.error(err);
-      alert("Erro ao carregar detalhes do livro.");
+      addToast("Falha ao carregar detalhes do livro", "error");
     } finally {
       setLoadingDetails(false);
     }
@@ -117,7 +119,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setGeneros(gens || []);
     } catch (err) {
       console.error(err);
-      alert("Erro ao carregar categorias e gêneros.");
+      addToast("Falha ao carregar categorias e gêneros", "error");
     }
   }
 
@@ -159,7 +161,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setForm((prev) => ({ ...prev, livCapaURL: res.url }));
     } catch (err) {
       console.error(err);
-      alert("Erro ao enviar a capa.");
+      addToast("Falha ao enviar a capa", "error");
     } finally {
       setLoading(false);
     }
@@ -237,12 +239,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         }
 
         if (saveErrors.length > 0) {
-          alert(saveErrors.join("\n"));
+          addToast(bookToEdit ? "Falha ao atualizar o livro" : "Falha ao cadastrar o livro", "error");
           return;
         }
       } else {
         if (Number(addConfig.quantidade) < 1) {
-          alert("Adicione pelo menos 1 tombo para criar o livro.");
+          addToast("Falha ao cadastrar o livro", "error");
           setLoading(false);
           return;
         }
@@ -256,10 +258,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         });
       }
 
+      addToast(bookToEdit ? "Livro atualizado com sucesso" : "Livro cadastrado com sucesso", "success");
       if (onBookSaved) onBookSaved();
     } catch (err) {
       console.error(err);
-      alert(getErrorMessage(err));
+      addToast(bookToEdit ? "Falha ao atualizar o livro" : "Falha ao cadastrar o livro", "error");
     } finally {
       setLoading(false);
     }
