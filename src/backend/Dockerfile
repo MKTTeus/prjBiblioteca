@@ -29,4 +29,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV PYTHONPATH=/app/backend
 # Expõe porta
 EXPOSE 5000
-CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT"]
