@@ -6,7 +6,10 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  const API_URL = "http://localhost:5000";
+  const API_URL =
+    window.location.hostname === "localhost"
+      ? "http://127.0.0.1:5000"
+      : "https://prjbiblioteca-production.up.railway.app";
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
