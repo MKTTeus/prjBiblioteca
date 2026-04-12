@@ -27,3 +27,7 @@ app.include_router(admins_router)
 app.include_router(usuarios_router)
 app.include_router(emprestimos_router)
 app.include_router(dashboard_router)
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
