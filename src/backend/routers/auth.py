@@ -11,23 +11,69 @@ router = APIRouter()
 def login(data: Login):
     email = normalize_email(data.email)
 
-    admin_resp = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
-    if admin_resp.data:
-        a = admin_resp.data[0]
-        if verify_password(data.senha, a["admSenha"]):
-            token = create_token({"sub": a["admEmail"], "tipo": "admin"})
-            return {"access_token": token, "tipo": "admin", "nome": a["admNome"]}
+    if data.UserType == "Administrador":
+        resp = supabase.table("Administrador")\
+.select("admEmail, admSenha, admNome, admStatus")\
+            .eq("admEmail", email)\
+            .eq("admStatus", True)\
+            .limit(1)\
+            .execute()
 
-    user_resp = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
-    if user_resp.data:
-        u = user_resp.data[0]
-        if verify_password(data.senha, u["usuSenha"]):
-            token = create_token({"sub": u["usuEmail"], "tipo": "usuario"})
-            return {"access_token": token, "tipo": "usuario", "nome": u["usuNome"]}
+        if not resp.data:
+            raise HTTPException(status_code=400, detail="Admin não encontrado ou conta desativada")
 
-    raise HTTPException(status_code=400, detail="Email ou senha inválidos")
+        a = resp.data[0]
 
+        if not verify_password(data.senha, a["admSenha"]):
+            raise HTTPException(status_code=400, detail="Senha inválida")
 
+        token = create_token({
+            "sub": a["admEmail"],
+            "tipo": "admin"
+        })
+
+        return {
+            "access_token": token,
+            "tipo": "admin",
+            "nome": a["admNome"]
+        }
+
+    elif data.UserType in ["Aluno", "Comunidade"]:
+        # Primeiro verifica se existe usuário independente do tipo
+        usuario_resp = supabase.table("Usuario")\
+            .select("usuEmail, usuSenha, usuNome, usuTipo, usuStatus")\
+            .eq("usuEmail", email)\
+            .eq("usuStatus", True)\
+            .limit(1)\
+            .execute()
+
+        if not usuario_resp.data:
+            raise HTTPException(status_code=400, detail="Usuário não encontrado ou conta desativada")
+
+        u = usuario_resp.data[0]
+
+        # Verifica tipo
+        if u["usuTipo"] != data.UserType:
+            raise HTTPException(status_code=400, detail="Tipo de usuário incorreto para este login")
+
+        # Verifica senha
+        if not verify_password(data.senha, u["usuSenha"]):
+            raise HTTPException(status_code=400, detail="Senha inválida")
+
+        token = create_token({
+            "sub": u["usuEmail"],
+            "tipo": u["usuTipo"]
+        })
+
+        return {
+            "access_token": token,
+            "tipo": u["usuTipo"],
+            "nome": u["usuNome"]
+        }
+
+    else:
+        raise HTTPException(status_code=400, detail="Tipo inválido")
+        
 @router.post("/signup")
 def signup(data: Signup):
     if data.tipo not in ["Aluno", "Comunidade"]:
@@ -36,7 +82,7 @@ def signup(data: Signup):
     email = normalize_email(data.email)
 
     email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
-    email_existe_usuario = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    email_existe_usuario = supabase.table("Usuario").select("usuEmail").eq("usuEmail", email).execute()
     if email_existe_admin.data or email_existe_usuario.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 

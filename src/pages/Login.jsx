@@ -15,6 +15,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const tipoMap = {
+    admin: "Administrador",
+    aluno: "Aluno",
+    comunidade: "Comunidade"
+  };
+
   if (loadingUser) {
     return <div>Carregando...</div>;
   }
@@ -25,24 +31,29 @@ export default function Login() {
     setError("");
     setLoading(true);
 
+    const payload = {
+      email,
+      senha: password,
+      UserType: tipoMap[userType]
+    };
+
+    console.log("Payload enviado:", payload);
+
     try {
-      const result = await login({ email, senha: password });
-
-      setLoading(false);
-
+      const result = await login(payload);
       if (!result || !result.access_token) {
-        setError("E-mail ou senha inválidos");
+        setError("Falha no login. Verifique suas credenciais.");
+        setLoading(false);
         return;
       }
-
       localStorage.setItem("token", result.access_token);
       localStorage.setItem("tipo", result.tipo);
-
       navigate(result.tipo === "admin" ? "/admin" : "/user", { replace: true });
-    } catch (err) {
+    } catch (error) {
+      console.error("Erro login:", error);
+      setError(error.response?.data?.detail || "Tipo de usuário incorreto para este login. E-mail ou senha inválidos.");
+    } finally {
       setLoading(false);
-      setError("Erro ao fazer login");
-      console.error(err);
     }
   };
 
@@ -131,7 +142,10 @@ export default function Login() {
 
             {userType !== "admin" && (
               <p className="signup-link">
-                Não tem cadastro? <span onClick={() => navigate("/signup")}>Clique aqui</span>
+                Não tem cadastro?{" "}
+                <span onClick={() => navigate("/signup")}>
+                  Clique aqui
+                </span>
               </p>
             )}
           </form>

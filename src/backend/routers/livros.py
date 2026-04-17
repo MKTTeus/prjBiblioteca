@@ -89,7 +89,8 @@ def listar_livros(
             mapa = {
                 "disponivel": "Disponível",
                 "emprestado": "Emprestado",
-                "reservado": "Reservado"
+                "reservado": "Reservado",
+                "desativado": "desativado"
             }
             cond = mapa.get(status.lower())
             if cond:
@@ -118,6 +119,9 @@ def listar_livros(
 
         mapa_exemplares = {}
         for ex in exemplares:
+            status_ex = (ex.get("exeLivStatus") or "").lower()
+            if "desativado" in status_ex:
+                continue  # Ignore desativados in stats
             id_livro = ex["idLivro"]
             if id_livro not in mapa_exemplares:
                 mapa_exemplares[id_livro] = {
@@ -127,7 +131,6 @@ def listar_livros(
                     "reservados": 0
                 }
             mapa_exemplares[id_livro]["total"] += 1
-            status_ex = (ex.get("exeLivStatus") or "").lower()
             if "dispon" in status_ex:
                 mapa_exemplares[id_livro]["disponiveis"] += 1
             elif "emprest" in status_ex:
@@ -135,6 +138,7 @@ def listar_livros(
             elif "reserv" in status_ex:
                 mapa_exemplares[id_livro]["reservados"] += 1
 
+        # Filter out fully deactivated books (no active exemplars)
         resultado = []
         for livro in livros:
             stats = mapa_exemplares.get(livro["idLivro"], {
@@ -143,13 +147,15 @@ def listar_livros(
                 "emprestados": 0,
                 "reservados": 0
             })
-            resultado.append({
-                **livro,
-                "total_exemplares": stats["total"],
-                "disponiveis": stats["disponiveis"],
-                "emprestados": stats["emprestados"],
-                "reservados": stats["reservados"],
-            })
+            # Only include if has active exemplars
+            if stats["total"] > 0:
+                resultado.append({
+                    **livro,
+                    "total_exemplares": stats["total"],
+                    "disponiveis": stats["disponiveis"],
+                    "emprestados": stats["emprestados"],
+                    "reservados": stats["reservados"],
+                })
 
         return resultado
     except Exception as e:
@@ -231,10 +237,10 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
 
 
 @router.delete("/livros/{idLivro}")
-def deletar_livro(idLivro: int, admin=Depends(get_admin)):
-    supabase.table("ExemplarLivro").delete().eq("idLivro", idLivro).execute()
-    supabase.table("Livro").delete().eq("idLivro", idLivro).execute()
-    return {"message": "Livro removido"}
+def deletar_exemplar(idLivro: int, admin=Depends(get_admin)):
+    # Soft delete individual exemplar - desativar exemplar específico (corrigido para exemplares)
+    supabase.table("ExemplarLivro").update({"exeLivStatus": "Inativo"}).eq("idLivro", idLivro).execute()
+    return {"message": "Exemplar desativado com sucesso"}
 
 
 @router.put("/exemplares/{idExemplar}")
@@ -291,6 +297,7 @@ def exemplares_disponiveis(admin=Depends(get_admin)):
             .table("ExemplarLivro")
             .select("idExemplar, exeLivTombo, idLivro")
             .ilike("exeLivStatus", "%Disponível%")
+            .not_ilike("exeLivStatus", "%desativado%")
             .execute()
             .data or []
         )

@@ -9,7 +9,7 @@ import {
   getAlunos,
   getComunidade,
   getEmprestimos,
-  getExemplares,
+  getExemplaresDisponiveis,
 } from "../../../services/api";
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
@@ -55,7 +55,7 @@ export default function Emprestimos() {
         getEmprestimos(),
         getAlunos(),
         getComunidade(),
-        getExemplares(),
+        getExemplaresDisponiveis(),
       ]);
 
       const usuariosFormatados = formatarUsuarios(alunos, comunidade);

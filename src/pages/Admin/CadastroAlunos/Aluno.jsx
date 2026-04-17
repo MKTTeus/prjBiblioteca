@@ -211,16 +211,24 @@ export default function Aluno() {
     }
   };
 
-  const handleToggleStatus = async (idUsuario) => {
-    const index = alunos.findIndex((aluno) => aluno.idUsuario === idUsuario);
-    if (index === -1) return;
+  const [pendingToggleAluno, setPendingToggleAluno] = useState(null);
 
-    const alvo = alunos[index];
-    const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
+  const handleToggleStatus = (idUsuario) => {
+    const target = alunos.find((aluno) => aluno.idUsuario === idUsuario);
+    setPendingToggleAluno(target || { idUsuario, status: "este aluno", novoStatus: target.status === "Ativo" ? "Inativo" : "Ativo" });
+  };
+
+  const confirmToggleAlunoStatus = async () => {
+    if (!pendingToggleAluno) return;
 
     try {
+      const index = alunos.findIndex((aluno) => aluno.idUsuario === pendingToggleAluno.idUsuario);
+      if (index === -1) return;
+
+      const alvo = alunos[index];
+      const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
+
       const updated = await updateAluno(alvo.idUsuario, {
-        ...alvo,
         status: novoStatus === "Ativo",
       });
 
@@ -229,13 +237,17 @@ export default function Aluno() {
           i === index
             ? {
                 ...aluno,
-                status: updated.usuStatus === false ? "Inativo" : "Ativo",
+                status: novoStatus,
               }
             : aluno
         )
       );
+      addToast(`Aluno ${novoStatus.toLowerCase()} com sucesso`, "success");
     } catch (err) {
       console.error("Erro ao alterar status do aluno:", err);
+      addToast("Falha ao alterar status", "error");
+    } finally {
+      setPendingToggleAluno(null);
     }
   };
 
@@ -335,7 +347,7 @@ export default function Aluno() {
                 </td>
 
                 <td className="acoes">
-                  <button className="btn-status" onClick={() => handleToggleStatus(aluno.idUsuario)}>
+                  <button className="btn-status" onClick={() => handleToggleStatus(aluno.idUsuario)} title="Alterar status">
                     {aluno.status === "Ativo" ? (
                       <UserX size={16} className="icon-red" />
                     ) : (
@@ -379,6 +391,15 @@ export default function Aluno() {
         onConfirm={confirmExcluirAluno}
         onCancel={() => setPendingDeleteAluno(null)}
         confirmText="Excluir"
+        cancelText="Cancelar"
+      />
+      <ConfirmModal
+        show={Boolean(pendingToggleAluno)}
+        title="Confirmar alteração de status"
+        message={`Tem certeza que deseja ${pendingToggleAluno?.novoStatus?.toLowerCase()} este aluno?`}
+        onConfirm={confirmToggleAlunoStatus}
+        onCancel={() => setPendingToggleAluno(null)}
+        confirmText={pendingToggleAluno?.novoStatus === "Inativo" ? "Desativar" : "Ativar"}
         cancelText="Cancelar"
       />
     </div>

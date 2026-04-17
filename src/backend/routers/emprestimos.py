@@ -178,6 +178,17 @@ def notificacoes_admin(admin=Depends(get_admin)):
 @router.post("/emprestimos")
 def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
     try:
+        # Validar usuário ativo
+        usuario_resp = supabase.table("Usuario").select("usuStatus").eq("idUsuario", data.idUsuario).limit(1).execute()
+        if not usuario_resp.data or not usuario_resp.data[0]["usuStatus"]:
+            raise HTTPException(status_code=400, detail="Usuário inativo não pode realizar empréstimos")
+
+        # Validar exemplar disponível e não desativado
+        exemplar_resp = supabase.table("ExemplarLivro").select("exeLivStatus").eq("idExemplar", data.idExemplar).limit(1).execute()
+        status = exemplar_resp.data[0]["exeLivStatus"] if exemplar_resp.data else None
+        if not status or status != "Disponível" or "desativado" in status.lower():
+            raise HTTPException(status_code=400, detail="Exemplar desativado ou não disponível para empréstimo")
+
         hoje = datetime.utcnow().date()
 
         config = supabase.table("configuracoes").select("dias_emprestimo").limit(1).execute()
@@ -200,9 +211,63 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
         }).eq("idExemplar", data.idExemplar).execute()
 
         return emp.data[0]
+    except HTTPException:
+        raise
     except Exception as e:
         print("Erro criar emprestimo:", e)
         raise HTTPException(status_code=500, detail="Erro ao criar empréstimo")
+
+
+@router.get("/exemplares/disponiveis")
+def exemplares_disponiveis():
+    try:
+        exemplares = (
+            supabase
+            .table("ExemplarLivro")
+            .select("idExemplar, exeLivTombo, idLivro")
+            .ilike("exeLivStatus", "%Disponível%")
+            .not_ilike("exeLivStatus", "%desativado%")
+            .execute()
+            .data or []
+        )
+
+        livros = supabase.table("Livro").select("idLivro, livTitulo").execute().data or []
+        mapa_livros = {l["idLivro"]: l["livTitulo"] for l in livros}
+
+        return [
+            {
+                "id": ex["idExemplar"],
+                "tombo": ex["exeLivTombo"],
+                "nome": mapa_livros.get(ex["idLivro"], "Livro"),
+            }
+            for ex in exemplares
+        ]
+    except Exception as e:
+        print("Erro exemplares disponiveis:", e)
+        return []
+
+
+@router.get("/exemplares")
+def listar_exemplares():
+    try:
+        exemplares = supabase.table("ExemplarLivro") \
+            .select("idExemplar, exeLivTombo, idLivro") \
+            .execute().data or []
+
+        livros = supabase.table("Livro").select("idLivro, livTitulo").execute().data or []
+        mapa = {l["idLivro"]: l["livTitulo"] for l in livros}
+
+        return [
+            {
+                "id": e["idExemplar"],
+                "tombo": e["exeLivTombo"],
+                "nome": mapa.get(e["idLivro"], "Livro"),
+            }
+            for e in exemplares
+        ]
+    except Exception as e:
+        print("Erro listar exemplares:", e)
+        return []
 
 
 @router.put("/emprestimos/{idEmprestimo}/devolver")

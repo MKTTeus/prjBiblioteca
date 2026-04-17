@@ -184,11 +184,20 @@ export default function Admin() {
     }
   };
 
-  const handleToggleStatus = async (idAdmin) => {
-    const index = admins.findIndex((admin) => admin.idAdmin === idAdmin);
-    if (index === -1) return;
+  const [pendingToggleAdmin, setPendingToggleAdmin] = useState(null);
+
+  const handleToggleStatus = (idAdmin) => {
+    const target = admins.find((admin) => admin.idAdmin === idAdmin);
+    setPendingToggleAdmin(target || { idAdmin, status: "este administrador", novoStatus: target.status === "Ativo" ? "Inativo" : "Ativo" });
+  };
+
+  const confirmToggleAdminStatus = async () => {
+    if (!pendingToggleAdmin) return;
 
     try {
+      const index = admins.findIndex((admin) => admin.idAdmin === pendingToggleAdmin.idAdmin);
+      if (index === -1) return;
+
       const admin = admins[index];
       const novoStatus = admin.status === "Ativo" ? "Inativo" : "Ativo";
       const payload = {
@@ -208,8 +217,12 @@ export default function Admin() {
             : item
         )
       );
+      addToast(`Admin ${novoStatus.toLowerCase()} com sucesso`, "success");
     } catch (err) {
       console.error("Erro ao atualizar status:", err);
+      addToast("Falha ao alterar status", "error");
+    } finally {
+      setPendingToggleAdmin(null);
     }
   };
 
@@ -293,7 +306,7 @@ export default function Admin() {
 
                 <td className="acoes-cell">
                   <div className="acoes">
-                    <button className="btn-status" onClick={() => handleToggleStatus(admin.idAdmin)}>
+                    <button className="btn-status" onClick={() => handleToggleStatus(admin.idAdmin)} title="Alterar status">
                       {admin.status === "Ativo" ? (
                         <UserX size={16} className="icon-red" />
                       ) : (
@@ -338,6 +351,15 @@ export default function Admin() {
         onConfirm={confirmExcluirAdmin}
         onCancel={() => setPendingDeleteAdmin(null)}
         confirmText="Excluir"
+        cancelText="Cancelar"
+      />
+      <ConfirmModal
+        show={Boolean(pendingToggleAdmin)}
+        title="Confirmar alteração de status"
+        message={`Tem certeza que deseja ${pendingToggleAdmin?.novoStatus?.toLowerCase()} este administrador?`}
+        onConfirm={confirmToggleAdminStatus}
+        onCancel={() => setPendingToggleAdmin(null)}
+        confirmText={pendingToggleAdmin?.novoStatus === "Inativo" ? "Desativar" : "Ativar"}
         cancelText="Cancelar"
       />
     </div>

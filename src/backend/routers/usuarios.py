@@ -73,8 +73,9 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
 
 @router.delete("/alunos/{idUsuario}")
 def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
-    supabase.table("Usuario").delete().eq("idUsuario", idUsuario).execute()
-    return {"message": "Aluno removido"}
+    # Soft delete: desativar usuário
+    supabase.table("Usuario").update({"usuStatus": "Inativo"}).eq("idUsuario", idUsuario).eq("usuTipo", "Aluno").execute()
+    return {"message": "Aluno desativado com sucesso"}
 
 
 @router.get("/comunidade")
@@ -141,5 +142,6 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 
 @router.delete("/comunidade/{idUsuario}")
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
-    supabase.table("Usuario").delete().eq("idUsuario", idUsuario).execute()
-    return {"message": "Membro removido"}
+    # Soft delete: desativar usuário
+    supabase.table("Usuario").update({"usuStatus": "Inativo"}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
+    return {"message": "Membro da comunidade desativado com sucesso"}

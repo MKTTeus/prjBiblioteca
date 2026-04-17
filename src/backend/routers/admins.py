@@ -62,5 +62,6 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
 
 @router.delete("/admins/{idAdmin}")
 def deletar_admin(idAdmin: int, admin=Depends(get_admin)):
-    supabase.table("Administrador").delete().eq("idAdmin", idAdmin).execute()
-    return {"message": "Admin removido"}
+    # Soft delete: desativar admin
+    supabase.table("Administrador").update({"admStatus": "Inativo"}).eq("idAdmin", idAdmin).execute()
+    return {"message": "Admin desativado com sucesso"}

@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
     setLoadingUser(false);
   }, []);
 
-  const login = async ({ email, senha }) => {
+  const login = async ({ email, senha, UserType }) => {
     try {
       const normalizedEmail = email?.trim().toLowerCase();
 
@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: normalizedEmail, senha }),
+        body: JSON.stringify({ email: normalizedEmail, senha ,UserType}),
       });
 
       const data = await response.json();

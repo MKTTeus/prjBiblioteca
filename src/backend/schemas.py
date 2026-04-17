@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class Login(BaseModel):
     email: str
     senha: str
+    UserType: str
 
 
 class Signup(BaseModel):
