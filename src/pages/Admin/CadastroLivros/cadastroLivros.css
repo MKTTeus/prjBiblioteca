@@ -1,0 +1,220 @@
+ .cadastro {
+  padding: 40px;
+  max-width: 1200px;
+  margin: auto;
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* HEADER */
+
+.cadastro-header {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  color: white;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 35px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cadastro-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.cadastro-header p {
+  margin-top: 8px;
+  font-size: 16px;
+  opacity: 0.9;
+}
+
+/* BOTÃO NOVO LIVRO */
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 16px;
+  background: white;
+  color: #2563eb;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-add:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* CARDS DE ESTATÍSTICAS */
+
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: #f3f4f6;
+  border-radius: 14px;
+  padding: 25px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+  transition: 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+.stat-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.stat-card h2 {
+  margin: 6px 0;
+  font-size: 26px;
+}
+
+.stat-card p {
+  font-size: 14px;
+  color: #374151;
+}
+
+/* CORES DOS ÍCONES */
+
+.blue-icon {
+  color: #2563eb;
+}
+
+.green-icon {
+  color: #16a34a;
+}
+
+.orange-icon {
+  color: #ea580c;
+}
+
+.blue2 {
+  color: #3b82f6;
+}
+
+/* TABELA DE LIVROS */
+
+.table-container h3 {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-container th,
+.table-container td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.table-container th {
+  background-color: #f8f8f8;
+  font-weight: 600;
+}
+
+/* STATUS */
+
+.status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status.disponivel {
+  background-color: #111;
+  color: white;
+}
+
+.status.emprestado {
+  background-color: #e5e7eb;
+  color: #111;
+}
+
+.status.reservado {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+/* AÇÕES */
+
+.acoes {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-editar,
+.btn-excluir {
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.2s;
+}
+
+.btn-editar:hover {
+  color: #22c55e;
+}
+
+.btn-excluir:hover {
+  color: #ef4444;
+}
+
+/* FOOTER */
+
+.footer {
+  margin-top: 40px;
+  text-align: center;
+  color: #777;
+  font-size: 0.85rem;
+}
+
+/* CATÁLOGO HEADER */
+.catalog-header {
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.catalog-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.catalog-count {
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-left: 8px;
+}

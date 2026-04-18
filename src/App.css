@@ -1,0 +1,76 @@
+/* ========= RESET GERAL ========= */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: "Inter", sans-serif;
+  background-color: #f9fafb;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* ========= ESTRUTURA GERAL ========= */
+.app-container   {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ========= SIDEBAR ========= */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  height: 100vh;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+/* ========= CONTEÚDO PRINCIPAL ========= */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: 220px; /* largura da sidebar */
+  width: calc(100% - 220px);
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.main-content.full {
+  margin-left: 0;
+  width: 100%;
+  display: block;     
+  min-height: 100vh;  
+}
+
+/* ========= CONTEÚDO DAS PÁGINAS ========= */
+.page-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* ========= AJUSTES DO HEADER ========= */
+.header {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}

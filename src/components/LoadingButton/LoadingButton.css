@@ -1,0 +1,10 @@
+.loading-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}

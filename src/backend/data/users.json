@@ -1,0 +1,16 @@
+{
+    "users": [
+        {
+            "id": 1,
+            "name": "Admin",
+            "email": "john.doe@.com",
+            "password": "hashed_password_1"
+        },
+        {
+            "id": 2,
+            "name": "Jane Smith",
+            "email": "jane.smith@example.com",
+            "password": "hashed_password_2"
+        }
+    ]
+}
