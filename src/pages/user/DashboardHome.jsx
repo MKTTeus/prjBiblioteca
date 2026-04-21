@@ -34,6 +34,10 @@ export default function DashboardHome({ onViewAllNotifications }) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [latestNotifications, setLatestNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
+  const [readNotifications, setReadNotifications] = useState(() => {
+    const stored = localStorage.getItem('user_notifications_read');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [stats, setStats] = useState({
     totalLivros: 0,
     livrosDisponiveis: 0,
@@ -78,7 +82,7 @@ export default function DashboardHome({ onViewAllNotifications }) {
           : 0;
 
         const loanItems = Array.isArray(loans) ? loans : [];
-        const notifications = loanItems
+        const allNotifications = loanItems
           .filter((loan) => loan.titulo && loan.dataDevolucao)
           .map((loan) => {
             const status = String(loan.status || "").toLowerCase();
@@ -97,16 +101,17 @@ export default function DashboardHome({ onViewAllNotifications }) {
               tipo: tone,
               label,
             };
-          })
-          .slice(0, 5);
+          });
+
+        const unreadNotifications = allNotifications.filter(notification => !readNotifications.includes(notification.id));
 
         setStats({
           totalLivros: Array.isArray(books) ? books.length : 0,
           livrosDisponiveis: availableBooks,
           meusEmprestimos: loanItems.length,
         });
-        setLatestNotifications(notifications);
-        setNotificationCount(notifications.length);
+        setLatestNotifications(unreadNotifications.slice(0, 5));
+        setNotificationCount(unreadNotifications.length);
       } catch (err) {
         console.error("Erro ao carregar dashboard de usuário:", err);
       }
@@ -144,6 +149,11 @@ export default function DashboardHome({ onViewAllNotifications }) {
 
   const handleViewAll = () => {
     setIsNotificationsOpen(false);
+    // Marcar todas as notificações atuais como lidas
+    const newRead = [...readNotifications, ...latestNotifications.map(n => n.id)];
+    const uniqueRead = [...new Set(newRead)];
+    setReadNotifications(uniqueRead);
+    localStorage.setItem('user_notifications_read', JSON.stringify(uniqueRead));
     if (onViewAllNotifications) {
       onViewAllNotifications();
     }

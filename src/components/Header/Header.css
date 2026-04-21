@@ -55,23 +55,6 @@
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
-}
-
-.badge {
-  position: absolute;
-  top: -1px;
-  right: -6px;
-  background: #FF4D4F;
-  color: #fff;
-  font-size: 10px;
-  padding: 2px 2px;
-  border-radius: 50%;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
   gap: 12px;
 }
 
