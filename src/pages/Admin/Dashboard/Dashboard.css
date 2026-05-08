@@ -590,7 +590,7 @@
 
 .actions-container {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   width: 100%;
   max-width: 100%;
@@ -609,12 +609,13 @@
   min-width: 0;
   max-width: 100%;
   min-height: 58px;
-  padding: 13px 20px;
+  padding: 13px 48px;
   border: none;
   border-radius: 12px;
   color: #f9fafb;
   font-size: 14px;
   font-weight: 600;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -629,6 +630,10 @@
 .action-btn svg {
   flex-shrink: 0;
   font-size: 16px;
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* CORES DOS BOTOES DE ACAO */
