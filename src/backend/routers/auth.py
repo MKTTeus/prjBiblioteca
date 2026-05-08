@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from database import supabase
-from core import hash_password, normalize_email, verify_password, create_token
+from core import hash_password, normalize_email, parse_status, verify_password, create_token
 from schemas import Login, Signup
 
 router = APIRouter()
@@ -12,17 +12,21 @@ def login(data: Login):
     email = normalize_email(data.email)
 
     if data.UserType == "Administrador":
-        resp = supabase.table("Administrador")\
-.select("admEmail, admSenha, admNome, admStatus")\
-            .eq("admEmail", email)\
-            .eq("admStatus", True)\
-            .limit(1)\
+        resp = (
+            supabase.table("Administrador")
+            .select("admEmail, admSenha, admNome, admStatus")
+            .eq("admEmail", email)
+            .limit(1)
             .execute()
+        )
 
         if not resp.data:
             raise HTTPException(status_code=400, detail="Admin não encontrado ou conta desativada")
 
         a = resp.data[0]
+
+        if not parse_status(a.get("admStatus")):
+            raise HTTPException(status_code=400, detail="Conta de administrador desativada")
 
         if not verify_password(data.senha, a["admSenha"]):
             raise HTTPException(status_code=400, detail="Senha inválida")
@@ -40,17 +44,21 @@ def login(data: Login):
 
     elif data.UserType in ["Aluno", "Comunidade"]:
         # Primeiro verifica se existe usuário independente do tipo
-        usuario_resp = supabase.table("Usuario")\
-            .select("usuEmail, usuSenha, usuNome, usuTipo, usuStatus")\
-            .eq("usuEmail", email)\
-            .eq("usuStatus", True)\
-            .limit(1)\
+        usuario_resp = (
+            supabase.table("Usuario")
+            .select("usuEmail, usuSenha, usuNome, usuTipo, usuStatus")
+            .eq("usuEmail", email)
+            .limit(1)
             .execute()
+        )
 
         if not usuario_resp.data:
             raise HTTPException(status_code=400, detail="Usuário não encontrado ou conta desativada")
 
         u = usuario_resp.data[0]
+
+        if not parse_status(u.get("usuStatus")):
+            raise HTTPException(status_code=400, detail="Conta de usuario desativada")
 
         # Verifica tipo
         if u["usuTipo"] != data.UserType:

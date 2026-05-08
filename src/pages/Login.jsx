@@ -38,21 +38,17 @@ export default function Login() {
       UserType: tipoMap[userType]
     };
 
-    console.log("Payload enviado:", payload);
-
     try {
       const result = await login(payload);
-      if (!result || !result.access_token) {
-        setError("Falha no login. Verifique suas credenciais.");
-        setLoading(false);
+      if (!result?.ok) {
+        setError(result?.message || "Falha no login. Verifique suas credenciais.");
         return;
       }
-      localStorage.setItem("token", result.access_token);
-      localStorage.setItem("tipo", result.tipo);
+
       navigate(result.tipo === "admin" ? "/admin" : "/user", { replace: true });
     } catch (error) {
       console.error("Erro login:", error);
-      setError(error.response?.data?.detail || "Tipo de usuário incorreto para este login. E-mail ou senha inválidos.");
+      setError("Erro inesperado ao fazer login.");
     } finally {
       setLoading(false);
     }
