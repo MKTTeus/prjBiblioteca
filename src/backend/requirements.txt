@@ -1,3 +1,4 @@
+# Local backend dependencies. The root requirements.txt mirrors this list for Vercel.
 fastapi
 uvicorn
 python-dotenv
