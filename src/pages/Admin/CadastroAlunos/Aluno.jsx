@@ -228,10 +228,6 @@ export default function Aluno() {
       const alvo = alunos[index];
       const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
 
-      const updated = await updateAluno(alvo.idUsuario, {
-        status: novoStatus === "Ativo",
-      });
-
       setAlunos((prev) =>
         prev.map((aluno, i) =>
           i === index

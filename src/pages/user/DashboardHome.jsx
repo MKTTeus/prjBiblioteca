@@ -118,7 +118,7 @@ export default function DashboardHome({ onViewAllNotifications }) {
     }
 
     loadDashboardData();
-  }, []);
+  }, [readNotifications]);
 
   useEffect(() => {
     function handlePointerDown(event) {

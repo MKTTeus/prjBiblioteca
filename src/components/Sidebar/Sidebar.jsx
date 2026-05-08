@@ -68,6 +68,16 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             </NavLink>
           </li>
 
+          <li>
+            <NavLink
+              to="/admin/emprestimos"
+              className={({ isActive }) => (isActive ? "active" : undefined)}
+            >
+              <FiRepeat />
+              <span>Empréstimos e Devoluções</span>
+            </NavLink>
+          </li>
+
           {isAdmin && (
             <li>
               <NavLink
@@ -108,15 +118,6 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             </li>
           )}
 
-          <li>
-            <NavLink
-              to="/admin/emprestimos"
-              className={({ isActive }) => (isActive ? "active" : undefined)}
-            >
-              <FiRepeat />
-              <span>Empréstimos e Devoluções</span>
-            </NavLink>
-          </li>
           <li>
             <NavLink
               to="/admin/notificacoes"

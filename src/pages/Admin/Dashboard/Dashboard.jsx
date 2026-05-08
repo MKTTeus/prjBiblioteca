@@ -8,6 +8,7 @@ import {
   FaExclamationTriangle,
   FaPlus,
   FaBell,
+  FaUserShield,
 } from "react-icons/fa";
 import { PiStudentFill } from "react-icons/pi";
 import { NavLink, useNavigate } from "react-router-dom";
@@ -295,7 +296,7 @@ export default function Dashboard() {
           >
             <button className="action-btn red">
               <FaPlus />
-              Novo Empréstimo
+              Novo <br />Empréstimo
             </button>
           </NavLink>
 
@@ -305,7 +306,7 @@ export default function Dashboard() {
           >
             <button className="action-btn blue">
               <FaBook />
-              Cadastrar Livro
+              Cadastrar <br />Livro
             </button>
           </NavLink>
 
@@ -315,7 +316,7 @@ export default function Dashboard() {
           >
             <button className="action-btn green">
               <PiStudentFill />
-              Cadastrar Aluno
+              Cadastrar <br />Aluno
             </button>
           </NavLink>
 
@@ -325,7 +326,17 @@ export default function Dashboard() {
           >
             <button className="action-btn orange">
               <RiUserCommunityFill />
-              Cadastrar Comunidade
+              Cadastrar <br />Comunidade
+            </button>
+          </NavLink>
+
+          <NavLink
+            to="/admin/admins"
+            className={({ isActive }) => (isActive ? "active" : undefined)}
+          >
+            <button className="action-btn blue">
+              <FaUserShield />
+              Cadastrar <br />Admin
             </button>
           </NavLink>
         </div>
