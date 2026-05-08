@@ -1,0 +1,12 @@
+# Runtime dependencies for the Vercel Python Function.
+# Keep local backend installs pointed here through src/backend/requirements.txt.
+fastapi
+uvicorn
+python-dotenv
+python-jose
+python-multipart
+passlib==1.7.4
+bcrypt==4.0.1
+cryptography
+pydantic
+supabase
