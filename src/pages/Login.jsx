@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { FiShield, FiUser, FiUsers } from "react-icons/fi";
@@ -9,6 +9,7 @@ import "../styles/Login.css";
 export default function Login() {
   const navigate = useNavigate();
   const { login, loadingUser } = useAuth();
+  const submitRef = useRef(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +30,11 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading || submitRef.current) {
+      return;
+    }
+
+    submitRef.current = true;
     setError("");
     setLoading(true);
 
@@ -51,6 +57,7 @@ export default function Login() {
       setError("Erro inesperado ao fazer login.");
     } finally {
       setLoading(false);
+      submitRef.current = false;
     }
   };
 

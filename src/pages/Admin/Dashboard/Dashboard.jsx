@@ -334,7 +334,7 @@ export default function Dashboard() {
             to="/admin/admins"
             className={({ isActive }) => (isActive ? "active" : undefined)}
           >
-            <button className="action-btn blue">
+            <button className="action-btn yellow">
               <FaUserShield />
               Cadastrar <br />Admin
             </button>
