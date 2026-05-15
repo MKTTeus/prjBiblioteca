@@ -28,7 +28,7 @@ def listar_emprestimos(user=Depends(get_optional_user)):
         livros = []
 
         if exemplar_ids:
-            exemplares = supabase.table("ExemplarLivro").select("idExemplar, exeLivTombo, idLivro, exeLivISBN").in_("idExemplar", exemplar_ids).execute().data or []
+            exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro, exeLivISBN").in_("idExemplar", exemplar_ids).execute().data or []
             livro_ids = list({ex["idLivro"] for ex in exemplares if ex.get("idLivro")})
             if livro_ids:
                 livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
@@ -86,7 +86,7 @@ def notificacoes_admin(admin=Depends(get_admin)):
 
         exemplares = []
         if exemplar_ids:
-            exemplares = supabase.table("ExemplarLivro").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", exemplar_ids).execute().data or []
+            exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", exemplar_ids).execute().data or []
 
         livro_ids = list({ex["idLivro"] for ex in exemplares if ex.get("idLivro")})
         livros = []
@@ -185,7 +185,7 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
             raise HTTPException(status_code=400, detail="Usuário inativo não pode realizar empréstimos")
 
         # Validar exemplar disponível e não desativado
-        exemplar_resp = supabase.table("ExemplarLivro").select("exeLivStatus").eq("idExemplar", data.idExemplar).limit(1).execute()
+        exemplar_resp = supabase.table("Exemplar").select("exeLivStatus").eq("idExemplar", data.idExemplar).limit(1).execute()
         status = exemplar_resp.data[0]["exeLivStatus"] if exemplar_resp.data else None
         if not status or status != "Disponível" or "desativado" in status.lower():
             raise HTTPException(status_code=400, detail="Exemplar desativado ou não disponível para empréstimo")
@@ -207,7 +207,7 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
         }
 
         emp = supabase.table("Emprestimo").insert(novo).execute()
-        supabase.table("ExemplarLivro").update({
+        supabase.table("Exemplar").update({
             "exeLivStatus": "Emprestado"
         }).eq("idExemplar", data.idExemplar).execute()
 
@@ -224,7 +224,7 @@ def exemplares_disponiveis():
     try:
         exemplares = (
             supabase
-            .table("ExemplarLivro")
+            .table("Exemplar")
             .select("idExemplar, exeLivTombo, idLivro")
             .eq("exeLivStatus", "Disponível")
             .execute().data or []
@@ -249,7 +249,7 @@ def exemplares_disponiveis():
 @router.get("/exemplares")
 def listar_exemplares():
     try:
-        exemplares = supabase.table("ExemplarLivro") \
+        exemplares = supabase.table("Exemplar") \
             .select("idExemplar, exeLivTombo, idLivro") \
             .execute().data or []
 
@@ -284,7 +284,7 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 
         idExemplar = emp.data[0]["idExemplar"]
 
-        supabase.table("ExemplarLivro").update({
+        supabase.table("Exemplar").update({
             "exeLivStatus": "Disponível"
         }).eq("idExemplar", idExemplar).execute()
 
