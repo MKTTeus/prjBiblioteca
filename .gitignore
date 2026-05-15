@@ -77,3 +77,5 @@ htmlcov/
 # Other
 .cache/
 .tmp/
+
+.env
