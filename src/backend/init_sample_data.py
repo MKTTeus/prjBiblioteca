@@ -4,7 +4,7 @@ from datetime import datetime
 
 def init_sample_data():
     print("Current available exemplars:")
-    ex_disp = supabase.table("ExemplarLivro").select("*").ilike("exeLivStatus", "%Disponível%").execute()
+    ex_disp = supabase.table("Exemplar").select("*").ilike("exeLivStatus", "%Disponível%").execute()
     print(f"Found {len(ex_disp.data)} available exemplars")
     
     print("Initializing sample data...")
@@ -24,12 +24,12 @@ def init_sample_data():
         print(f"✓ Using existing book ID: {book_id}")
     
     # Create exemplars
-    exs = supabase.table("ExemplarLivro").select("idExemplar").eq("idLivro", book_id).execute()
+    exs = supabase.table("Exemplar").select("idExemplar").eq("idLivro", book_id).execute()
     if len(exs.data) == 0:
         from core import gerar_tombos
         tombos = gerar_tombos(2, "T")
         for tombo in tombos:
-            supabase.table("ExemplarLivro").insert({
+            supabase.table("Exemplar").insert({
                 "idLivro": book_id,
                 "exeLivTombo": tombo,
                 "exeLivStatus": "Disponível"
@@ -38,7 +38,7 @@ def init_sample_data():
     else:
         # Ensure available
         for ex in exs.data:
-            supabase.table("ExemplarLivro").update({"exeLivStatus": "Disponível"}).eq("idExemplar", ex["idExemplar"]).execute()
+            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", ex["idExemplar"]).execute()
         print("✓ Ensured exemplars available")
     
 # Sample admin if none
@@ -67,7 +67,7 @@ def init_sample_data():
         }).execute()
         print("✓ Created sample Aluno")
     
-    ex_disp_final = supabase.table("ExemplarLivro").select("*").ilike("exeLivStatus", "%Disponível%").execute()
+    ex_disp_final = supabase.table("Exemplar").select("*").ilike("exeLivStatus", "%Disponível%").execute()
     print(f"Final available: {len(ex_disp_final.data)}")
     print("✅ Done! Refresh Emprestimos page")
 

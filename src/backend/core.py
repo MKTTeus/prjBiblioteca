@@ -80,7 +80,7 @@ def get_admin_id(admin):
 def gerar_tombos(quantidade: int, prefixo: str = "T"):
     resp = (
         supabase
-        .table("ExemplarLivro")
+        .table("Exemplar")
         .select("exeLivTombo")
         .like("exeLivTombo", f"{prefixo}%")
         .order("exeLivTombo", desc=True)

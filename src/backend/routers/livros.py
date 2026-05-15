@@ -14,7 +14,7 @@ def adicionar_exemplares(
     prefixo: str = "T",
     admin=Depends(get_admin)
 ):
-    livro_resp = supabase.table("ExemplarLivro").select("idLivro, exeLivISBN").eq("idLivro", idLivro).execute()
+    livro_resp = supabase.table("Exemplar").select("idLivro, exeLivISBN").eq("idLivro", idLivro).execute()
 
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado")
@@ -35,7 +35,7 @@ def adicionar_exemplares(
         if isbn_padrao:
             ex_data["exeLivISBN"] = isbn_padrao
 
-        ex = supabase.table("ExemplarLivro").insert(ex_data).execute()
+        ex = supabase.table("Exemplar").insert(ex_data).execute()
         exemplares.append(ex.data[0])
 
     return {
@@ -67,7 +67,7 @@ def listar_livros(
             if livros_autor.data:
                 ids.update([l["idLivro"] for l in livros_autor.data])
 
-            exemplares_tombo = supabase.table("ExemplarLivro").select("idLivro").ilike("exeLivTombo", q_str).execute()
+            exemplares_tombo = supabase.table("Exemplar").select("idLivro").ilike("exeLivTombo", q_str).execute()
             if exemplares_tombo.data:
                 ids.update([e["idLivro"] for e in exemplares_tombo.data])
 
@@ -94,7 +94,7 @@ def listar_livros(
             }
             cond = mapa.get(status.lower())
             if cond:
-                resp = supabase.table("ExemplarLivro").select("idLivro").ilike("exeLivStatus", f"%{cond}%").execute()
+                resp = supabase.table("Exemplar").select("idLivro").ilike("exeLivStatus", f"%{cond}%").execute()
                 status_ids = set([e["idLivro"] for e in (resp.data or [])])
                 if allowed_ids is None:
                     allowed_ids = status_ids
@@ -115,7 +115,7 @@ def listar_livros(
         livro_ids = [l["idLivro"] for l in livros]
         exemplares = []
         if livro_ids:
-            exemplares = supabase.table("ExemplarLivro").select("*").in_("idLivro", livro_ids).execute().data or []
+            exemplares = supabase.table("Exemplar").select("*").in_("idLivro", livro_ids).execute().data or []
 
         mapa_exemplares = {}
         for ex in exemplares:
@@ -166,7 +166,7 @@ def listar_livros(
 @router.get("/livros/{idLivro}")
 def detalhes_livro(idLivro: int):
     livro_resp = supabase.table("Livro").select("*").eq("idLivro", idLivro).execute()
-    exemplares_resp = supabase.table("ExemplarLivro").select("*").eq("idLivro", idLivro).execute()
+    exemplares_resp = supabase.table("Exemplar").select("*").eq("idLivro", idLivro).execute()
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado")
 
@@ -176,7 +176,7 @@ def detalhes_livro(idLivro: int):
     if llib_isbn:
         for ex in exemplares_resp.data:
             if not ex.get("exeLivISBN"):
-                supabase.table("ExemplarLivro").update({"exeLivISBN": llib_isbn}).eq("idExemplar", ex.get("idExemplar")).execute()
+                supabase.table("Exemplar").update({"exeLivISBN": llib_isbn}).eq("idExemplar", ex.get("idExemplar")).execute()
                 ex["exeLivISBN"] = llib_isbn
 
     return {"livro": livro, "exemplares": exemplares_resp.data}
@@ -204,7 +204,7 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
             }
             if isbn_padrao:
                 ex_data["exeLivISBN"] = isbn_padrao
-            ex = supabase.table("ExemplarLivro").insert(ex_data).execute()
+            ex = supabase.table("Exemplar").insert(ex_data).execute()
             exemplares.append(ex.data[0])
 
         return {"livro": livro_resp.data[0], "exemplares": exemplares}
@@ -226,7 +226,7 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
             raise HTTPException(status_code=404, detail="Livro não encontrado")
 
         if isbn_padrao:
-            supabase.table("ExemplarLivro").update({"exeLivISBN": isbn_padrao}).eq("idLivro", idLivro).execute()
+            supabase.table("Exemplar").update({"exeLivISBN": isbn_padrao}).eq("idLivro", idLivro).execute()
 
         return resp.data[0]
     except HTTPException:
@@ -239,13 +239,13 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
 @router.delete("/livros/{idLivro}")
 def deletar_exemplar(idLivro: int, admin=Depends(get_admin)):
     # Soft delete individual exemplar - desativar exemplar específico (corrigido para exemplares)
-    supabase.table("ExemplarLivro").update({"exeLivStatus": "Inativo"}).eq("idLivro", idLivro).execute()
+    supabase.table("Exemplar").update({"exeLivStatus": "Inativo"}).eq("idLivro", idLivro).execute()
     return {"message": "Exemplar desativado com sucesso"}
 
 
 @router.put("/exemplares/{idExemplar}")
 def atualizar_exemplar(idExemplar: int, data: ExemplarUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("ExemplarLivro").select("*").eq("idExemplar", idExemplar).execute()
+    resp = supabase.table("Exemplar").select("*").eq("idExemplar", idExemplar).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Exemplar não encontrado")
 
@@ -262,14 +262,14 @@ def atualizar_exemplar(idExemplar: int, data: ExemplarUpdate, admin=Depends(get_
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
-    atual = supabase.table("ExemplarLivro").update(payload).eq("idExemplar", idExemplar).execute()
+    atual = supabase.table("Exemplar").update(payload).eq("idExemplar", idExemplar).execute()
     return atual.data[0]
 
 
 @router.get("/exemplares")
 def listar_exemplares(admin=Depends(get_admin)):
     try:
-        exemplares = supabase.table("ExemplarLivro") \
+        exemplares = supabase.table("Exemplar") \
             .select("idExemplar, exeLivTombo, idLivro, exeLivISBN") \
             .execute().data or []
 
@@ -296,7 +296,7 @@ def exemplares_disponiveis(admin=Depends(get_admin)):
     try:
         exemplares = (
             supabase
-            .table("ExemplarLivro")
+            .table("Exemplar")
             .select("idExemplar, exeLivTombo, idLivro, exeLivISBN")
             .eq("exeLivStatus", "Disponível")
             .execute()
