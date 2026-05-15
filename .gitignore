@@ -79,3 +79,5 @@ htmlcov/
 .tmp/
 
 .env
+src/backend/.env
+src/backend/.env.local      
