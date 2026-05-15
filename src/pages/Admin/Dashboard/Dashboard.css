@@ -648,7 +648,9 @@
 .action-btn.green {
   background: linear-gradient(135deg, #22c55e, #15803d);
 }
-
+.action-btn.yellow {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
 .action-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
