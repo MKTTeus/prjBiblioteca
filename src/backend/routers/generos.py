@@ -9,7 +9,7 @@ router = APIRouter()
 @router.get("/generos")
 def listar_generos():
     try:
-        res = supabase.table("GeneroLivro").select("*").execute()
+        res = supabase.table("LivroGenero").select("*").execute()
         return res.data or []
     except Exception as e:
         print("Erro generos:", e)
@@ -17,5 +17,5 @@ def listar_generos():
 
 @router.post("/generos")
 def criar_genero(gen: Genero, admin=Depends(get_admin)):
-    res = supabase.table("GeneroLivro").insert(gen.dict()).execute()
+    res = supabase.table("LivroGenero").insert(gen.dict()).execute()
     return res.data[0]

@@ -14,7 +14,7 @@ def dashboard_stats(user=Depends(get_optional_user)):
 
         livros = supabase.table("Livro").select("idLivro").execute().data or []
         usuarios = supabase.table("Usuario").select("idUsuario").execute().data or []
-        emprestimos = supabase.table("EmprestimoLivro").select("*").execute().data or []
+        emprestimos = supabase.table("Emprestimo").select("*").execute().data or []
 
         ativos = 0
         pendentes = 0

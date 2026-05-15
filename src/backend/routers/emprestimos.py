@@ -12,7 +12,7 @@ router = APIRouter()
 def listar_emprestimos(user=Depends(get_optional_user)):
     try:
         hoje = datetime.utcnow().date()
-        query = supabase.table("EmprestimoLivro").select("*")
+        query = supabase.table("Emprestimo").select("*")
 
         if user and user.get("tipo") == "usuario":
             usuario_resp = supabase.table("Usuario").select("idUsuario").eq("usuEmail", user["sub"]).execute()
@@ -70,7 +70,7 @@ def notificacoes_admin(admin=Depends(get_admin)):
         hoje = agora.date()
         limite_24h = agora - timedelta(hours=24)
 
-        emprestimos_resp = supabase.table("EmprestimoLivro").select(
+        emprestimos_resp = supabase.table("Emprestimo").select(
             "idEmprestimo, idUsuario, idExemplar, empLiv_DataPrevistaDevolucao, empLiv_DataEmprestimo, empLiv_DataDevolucao"
         ).execute()
         emprestimos = emprestimos_resp.data or []
@@ -206,7 +206,7 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
             "empLiv_Status": "Ativo"
         }
 
-        emp = supabase.table("EmprestimoLivro").insert(novo).execute()
+        emp = supabase.table("Emprestimo").insert(novo).execute()
         supabase.table("ExemplarLivro").update({
             "exeLivStatus": "Emprestado"
         }).eq("idExemplar", data.idExemplar).execute()
@@ -274,7 +274,7 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
         hoje = datetime.utcnow().date()
 
-        emp = supabase.table("EmprestimoLivro").update({
+        emp = supabase.table("Emprestimo").update({
             "empLiv_Status": "Devolvido",
             "empLiv_DataDevolucao": hoje.isoformat()
         }).eq("idEmprestimo", idEmprestimo).execute()
@@ -298,7 +298,7 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
         # Buscar empréstimo atual
-        emp_resp = supabase.table("EmprestimoLivro").select("*").eq("idEmprestimo", idEmprestimo).execute()
+        emp_resp = supabase.table("Emprestimo").select("*").eq("idEmprestimo", idEmprestimo).execute()
         
         if not emp_resp.data:
             raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
@@ -314,7 +314,7 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
         nova_data = data_prevista + timedelta(days=dias)
         
         # Atualizar empréstimo
-        resultado = supabase.table("EmprestimoLivro").update({
+        resultado = supabase.table("Emprestimo").update({
             "empLiv_DataPrevistaDevolucao": nova_data.isoformat(),
             "empLiv_Renovacoes": (emp.get("empLiv_Renovacoes") or 0) + 1
         }).eq("idEmprestimo", idEmprestimo).execute()
