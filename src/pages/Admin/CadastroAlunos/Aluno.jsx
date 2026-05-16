@@ -261,7 +261,7 @@ export default function Aluno() {
   });
 
   return (
-    <div className="aluno-page">
+    <div className="aluno-page page-shell">
       <div className="titulo">
         <div>
           <h1>Gestão de Alunos</h1>

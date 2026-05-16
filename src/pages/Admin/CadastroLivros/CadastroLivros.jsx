@@ -113,7 +113,7 @@ export default function CadastroLivros() {
   }
 
   return (
-    <div className="cadastro">
+    <div className="cadastro page-shell">
       <div className="cadastro-header">
         <div>
           <h1>Bem-vindo ao Cadastro de Livros</h1>

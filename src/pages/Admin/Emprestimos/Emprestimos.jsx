@@ -165,7 +165,7 @@ export default function Emprestimos() {
   }
 
   return (
-    <div className="emp-page">
+    <div className="emp-page page-shell">
       <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
 
       <section className="stats-cards-grid" aria-label="Resumo de empréstimos">

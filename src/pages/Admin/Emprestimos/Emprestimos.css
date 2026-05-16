@@ -4,11 +4,6 @@
   --emp-text: #182337;
   --emp-text-soft: #667085;
   --emp-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
-  padding: 30px 40px;
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(52, 120, 246, 0.08), transparent 26%),
-    linear-gradient(180deg, #fbfcff 0%, var(--emp-bg) 100%);
   color: var(--emp-text);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   box-sizing: border-box;

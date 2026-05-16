@@ -4,6 +4,7 @@ import { HashRouter } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import App from "./App";
+import "./styles/sharedLayout.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 

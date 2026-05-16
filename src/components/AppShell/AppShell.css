@@ -5,16 +5,26 @@
 .layout {
   display: flex;
   min-height: 100vh;
-  background: #f5f6fa;
+  width: 100%;
+  background: var(--canvas-bg);
   min-width: 0;
 }
 
 .content {
   margin-left: 250px;
   margin-top: 70px;
-  padding: 20px;
+  padding: 24px 28px;
   width: calc(100% - 250px);
   min-height: calc(100vh - 70px);
+  background: transparent;
   box-sizing: border-box;
   min-width: 0;
+}
+
+@media (max-width: 960px) {
+  .content {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px 18px;
+  }
 }

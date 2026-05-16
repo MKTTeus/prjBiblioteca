@@ -239,7 +239,7 @@ export default function Admin() {
   });
 
   return (
-    <div className="admin-page">
+    <div className="admin-page page-shell">
       <div className="titulo">
         <div>
           <h1>Gestão de Administradores</h1>

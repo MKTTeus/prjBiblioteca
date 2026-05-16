@@ -1,15 +1,23 @@
 .user-page {
   width: 100%;
-  max-width: 1200px;
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: 40px;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 24px;
   color: #111827;
   font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.user-page.page-shell {
+  max-width: var(--page-max-width);
+  padding: var(--page-padding);
+  gap: 0;
+}
+
+.user-page.page-shell > :not(.user-page__hero) + :not(.user-page__hero) {
+  margin-top: 24px;
 }
 
 .user-page__hero {
@@ -19,11 +27,20 @@
   color: #f9fafb;
   padding: 25px;
   border-radius: 16px;
+  margin-bottom: 35px;
   box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
   box-sizing: border-box;
+  position: relative;
+  text-align: left;
+}
+
+.user-page__hero-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .user-page__hero h1,
@@ -31,6 +48,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
+  color: #f9fafb;
 }
 
 .user-page__hero p {
@@ -47,6 +65,7 @@
   justify-content: space-between;
   gap: 20px;
   position: relative;
+  width: 100%;
 }
 
 .user-dashboard-hero__copy {
@@ -549,17 +568,19 @@
 }
 
 @media (max-width: 1100px) {
-  .user-page {
-    padding: 32px 24px;
-  }
-
   .user-loans-grid {
     grid-template-columns: 1fr;
   }
 }
 
+@media (max-width: 960px) {
+  .user-page.page-shell {
+    padding: 28px 20px;
+  }
+}
+
 @media (max-width: 700px) {
-  .user-page {
+  .user-page.page-shell {
     padding: 20px 16px 24px;
   }
 
@@ -571,6 +592,7 @@
   .user-page__hero h1,
   .user-page__hero h2 {
     font-size: 22px;
+    color: #f9fafb;
   }
 
   .user-page__hero p {

@@ -75,10 +75,12 @@ export default function Emprestimos() {
   };
 
   return (
-    <div className="user-page">
+    <div className="user-page page-shell">
       <section className="user-page__hero">
-        <h2>Meus empréstimos</h2>
-        <p>Acompanhe reservas pendentes e empréstimos ativos com dados reais do banco.</p>
+        <div className="user-page__hero-content">
+          <h2>Meus empréstimos</h2>
+          <p>Acompanhe reservas pendentes e empréstimos ativos com dados reais do banco.</p>
+        </div>
       </section>
 
       <section className="user-loans-grid">

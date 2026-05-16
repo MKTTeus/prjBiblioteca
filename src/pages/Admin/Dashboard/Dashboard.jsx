@@ -139,7 +139,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard page-shell">
       <div className="header-dashboard">
         <div className="header-dashboard-content">
           <h1>Bem-vindo ao Sistema de Biblioteca</h1>
