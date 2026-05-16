@@ -134,13 +134,44 @@
   width: 100%;
   min-width: 0;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .comunidade-page th,
 .comunidade-page td {
-  padding: 12px;
+  padding: 12px 10px;
   border-bottom: 1px solid #eee;
   font-size: 14px;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.comunidade-page .col-nome {
+  width: 19%;
+}
+
+.comunidade-page .col-cpf {
+  width: 13%;
+}
+
+.comunidade-page .col-email {
+  width: 23%;
+}
+
+.comunidade-page .col-telefone {
+  width: 14%;
+}
+
+.comunidade-page .col-livros-table {
+  width: 7%;
+}
+
+.comunidade-page .col-status {
+  width: 10%;
+}
+
+.comunidade-page .col-acoes {
+  width: 132px;
 }
 
 .comunidade-page .col-livros {
@@ -163,9 +194,35 @@
   font-size: 12px;
 }
 
+.comunidade-page .acoes-coluna,
+.comunidade-page .acoes-cell {
+  width: 132px;
+  text-align: right;
+}
+
 .comunidade-page .acoes {
   display: flex;
-  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.comunidade-page .btn-edit,
+.comunidade-page .btn-delete,
+.comunidade-page .btn-status {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.comunidade-page .acoes svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .comunidade-page .btn-edit {

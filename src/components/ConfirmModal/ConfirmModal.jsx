@@ -32,9 +32,6 @@ export default function ConfirmModal({
             type="button" className="confirm-modal-btn cancel" onClick={onCancel} disabled={confirming} >
             {cancelText}
           </button>
-          <button type="button" className="confirm-modal-btn confirm" onClick={onConfirm}>
-            {confirmText}
-          </button>
           <LoadingButton type="button" className="confirm-modal-btn confirm" loading={confirming} loadingText="Processando..." onClick={onConfirm}>
             {confirmText}
           </LoadingButton>
