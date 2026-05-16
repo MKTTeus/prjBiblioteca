@@ -1,7 +1,4 @@
 .config-container {
-  padding: 40px;
-  background: #f3f4f6;
-  min-height: 100vh;
 }
 
 /* TOPO */
@@ -22,6 +19,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
+  color: #f9fafb;
 }
 
 .top-bar p {

@@ -78,10 +78,12 @@ export default function AdminNotificacoes() {
   }, []);
 
   return (
-    <div className="user-page admin-notifications-page">
+    <div className="user-page admin-notifications-page page-shell">
       <section className="user-page__hero">
-        <h2>Notificações do Admin</h2>
-        <p>Veja os empréstimos em atraso, retiradas e devoluções recentes.</p>
+        <div className="user-page__hero-content">
+          <h2>Notificações do Admin</h2>
+          <p>Veja os empréstimos em atraso, retiradas e devoluções recentes.</p>
+        </div>
       </section>
 
       <section className="user-section-card admin-notification-section">

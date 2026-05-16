@@ -48,7 +48,7 @@ function Biblioteca() {
   }
 
   return (
-    <div className="biblioteca-page">
+    <div className="biblioteca-page page-shell">
       <div className="biblioteca-header">
         <h2>Biblioteca</h2>
 

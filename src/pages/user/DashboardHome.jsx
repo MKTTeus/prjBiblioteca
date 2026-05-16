@@ -160,7 +160,7 @@ export default function DashboardHome({ onViewAllNotifications }) {
   };
 
   return (
-    <div className="user-page user-dashboard-page">
+    <div className="user-page user-dashboard-page page-shell">
       <section className="user-page__hero">
         <div className="user-dashboard-hero">
           <div className="user-dashboard-hero__copy">

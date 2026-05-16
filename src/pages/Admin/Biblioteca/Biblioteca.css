@@ -1,17 +1,22 @@
 .biblioteca-page{
-  padding:30px;
-  min-height:100vh;
-  background:#f5f6fa;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 /* HEADER */
 
 .biblioteca-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:30px;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: #f9fafb;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 35px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  gap: 16px;
 }
 
 .header-actions{

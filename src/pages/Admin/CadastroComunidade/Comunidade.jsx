@@ -251,7 +251,7 @@ export default function Comunidade() {
   });
 
   return (
-    <div className="comunidade-page">
+    <div className="comunidade-page page-shell">
       <div className="titulo">
         <div>
           <h1>Gestão da Comunidade</h1>

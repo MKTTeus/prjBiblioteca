@@ -15,7 +15,7 @@ export default function Configuracoes() {
   ];
 
   return (
-    <div className="config-container">
+    <div className="config-container page-shell">
       <div className="top-bar">
         <div>
           <h1>Configurações do Sistema</h1>

@@ -1,7 +1,13 @@
 .admin-notifications-page {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 0;
+}
+
+.user-page.admin-notifications-page.page-shell
+  > .admin-notification-section
+  + .admin-notification-section {
+  margin-top: 22px;
 }
 
 .admin-notifications-page .admin-notification-section {

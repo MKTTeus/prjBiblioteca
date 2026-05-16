@@ -1,8 +1,4 @@
- .cadastro {
-  padding: 40px;
-  max-width: 1200px;
-  margin: auto;
-  min-height: 100vh;
+.cadastro {
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
@@ -25,6 +21,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
+  color: #f9fafb;
 }
 
 .cadastro-header p {

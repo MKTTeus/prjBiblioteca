@@ -33,10 +33,12 @@ export default function Biblioteca() {
   }, [search]);
 
   return (
-    <div className="user-page user-library-page">
+    <div className="user-page user-library-page page-shell">
       <section className="user-page__hero">
-        <h2>Biblioteca</h2>
-        <p>Pesquise livros por título, autor ou categoria usando dados reais do banco.</p>
+        <div className="user-page__hero-content">
+          <h2>Biblioteca</h2>
+          <p>Pesquise livros por título, autor ou categoria usando dados reais do banco.</p>
+        </div>
       </section>
 
       <section className="user-section-card user-library-toolbar">

@@ -67,10 +67,12 @@ export default function Notificacoes() {
   }, []);
 
   return (
-    <div className="user-page">
+    <div className="user-page page-shell">
       <section className="user-page__hero">
-        <h2>Notificações</h2>
-        <p>Visualize avisos a partir do seu histórico de empréstimos.</p>
+        <div className="user-page__hero-content">
+          <h2>Notificações</h2>
+          <p>Visualize avisos a partir do seu histórico de empréstimos.</p>
+        </div>
       </section>
 
       <section className="user-section-card">
