@@ -308,6 +308,15 @@ export default function Comunidade() {
 
       <div className="table-container">
         <table>
+          <colgroup>
+            <col className="col-nome" />
+            <col className="col-cpf" />
+            <col className="col-email" />
+            <col className="col-telefone" />
+            <col className="col-livros-table" />
+            <col className="col-status" />
+            <col className="col-acoes" />
+          </colgroup>
           <thead>
             <tr>
               <th>Nome</th>
@@ -316,7 +325,7 @@ export default function Comunidade() {
               <th>Telefone</th>
               <th>Livros</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th className="acoes-coluna">Ações</th>
             </tr>
           </thead>
 
@@ -334,22 +343,24 @@ export default function Comunidade() {
                   </span>
                 </td>
 
-                <td className="acoes">
-                  <button className="btn-status" onClick={() => handleToggleStatus(membro.idUsuario)}>
-                    {membro.status === "Ativo" ? (
-                      <UserX size={16} className="icon-red" />
-                    ) : (
-                      <UserCheck size={16} className="icon-green" />
-                    )}
-                  </button>
+                <td className="acoes-cell">
+                  <div className="acoes">
+                    <button className="btn-status" onClick={() => handleToggleStatus(membro.idUsuario)}>
+                      {membro.status === "Ativo" ? (
+                        <UserX size={16} className="icon-red" />
+                      ) : (
+                        <UserCheck size={16} className="icon-green" />
+                      )}
+                    </button>
 
-                  <button className="btn-edit" onClick={() => abrirEdicao(membro.idUsuario)}>
-                    <Pencil size={16} />
-                  </button>
+                    <button className="btn-edit" onClick={() => abrirEdicao(membro.idUsuario)}>
+                      <Pencil size={16} />
+                    </button>
 
-                  <button className="btn-delete" onClick={() => handleExcluir(membro.idUsuario)}>
-                    <Trash2 size={16} />
-                  </button>
+                    <button className="btn-delete" onClick={() => handleExcluir(membro.idUsuario)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
