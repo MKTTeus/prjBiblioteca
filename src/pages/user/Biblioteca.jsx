@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from "react";
 import BookCard from "../../components/BookCard/BookCard";
 import SearchBar from "../../components/SearchBar/SearchBar";
+import { useToast } from "../../contexts/ToastContext";
 import { getBooks } from "../../services/api";
 import "./UserArea.css";
 
 export default function Biblioteca() {
+  const { addToast } = useToast();
   const [search, setSearch] = useState("");
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const handleRequestLoan = () => {
+    addToast("Empréstimo Solicitado", "success");
+  };
 
   useEffect(() => {
     async function fetchBooks() {
@@ -62,6 +68,7 @@ export default function Biblioteca() {
                 book={book}
                 categoryName={book.livCategoria || book.categoria}
                 genreName={book.livGenero || book.genero}
+                onRequestLoan={handleRequestLoan}
               />
             ))}
           </div>

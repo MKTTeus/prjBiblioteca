@@ -244,6 +244,24 @@
   box-shadow: 0 10px 18px rgba(15, 23, 42, 0.1);
 }
 
+.shared-book-card__button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+.shared-book-card__button:active {
+  transform: translateY(0);
+}
+
+.shared-book-card__button--request {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.shared-book-card__button--request:hover {
+  background: #15803d;
+}
+
 .shared-book-card__button--edit {
   background: #ffffff;
   color: #111827;
