@@ -1,7 +1,6 @@
 import React from "react";
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { LuBookOpen } from "react-icons/lu";
 import "./Header.css";
 
 function Header() {
@@ -22,9 +21,13 @@ function Header() {
       <div className="header-left">
         <div className="header-logo">
           <div className="header-icon">
-            <LuBookOpen className="user-icon" />
+            <img
+              src="/logo-novedejulho-semfundo.png"
+              alt="Logo Nove de Julho"
+              className="login-logo"
+            />
           </div>
-          <h1 className="header-title">Biblioteca</h1>
+          <h1 className="header-title">Sala de Leitura</h1>
         </div>
       </div>
 

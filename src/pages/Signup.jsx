@@ -3,7 +3,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { IMaskInput } from "react-imask";
 import { FiUser, FiUsers, FiArrowLeft } from "react-icons/fi";
-import { LuBook } from "react-icons/lu";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
 import "../styles/Signup.css";
 
@@ -77,7 +76,11 @@ export default function Signup() {
     <div className="signup-wrapper">
       <div className="signup-header">
         <div className="icon-circle">
-          <LuBook className="user-icon" />
+            <img
+              src="/logo-novedejulho-semfundo.png"
+              alt="Logo Nove de Julho"
+              className="login-logo"
+            />
         </div>
         <h1>Sistema de Biblioteca</h1>
         <p>Escola 9 de Julho de Taquaritinga</p>

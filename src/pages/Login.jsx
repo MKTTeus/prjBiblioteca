@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { FiShield, FiUser, FiUsers } from "react-icons/fi";
-import { LuBook } from "react-icons/lu";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
 import "../styles/Login.css";
 
@@ -66,7 +65,11 @@ export default function Login() {
       <div className="login-wrapper">
         <div className="login-header">
           <div className="logo-circle">
-            <LuBook className="user-icon" />
+            <img
+              src="/logo-novedejulho-semfundo.png"
+              alt="Logo Nove de Julho"
+              className="login-logo"
+            />
           </div>
           <h1>Sistema de Biblioteca</h1>
           <p>Escola 9 de Julho de Taquaritinga</p>
