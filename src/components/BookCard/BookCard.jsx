@@ -69,6 +69,7 @@ export default function BookCard({
   isAdmin = false,
   onEdit,
   onDelete,
+  onRequestLoan,
 }) {
   const titulo = book?.livTitulo ?? book?.titulo ?? "Sem título";
   const autor = book?.livAutor ?? book?.autor ?? "Autor desconhecido";
@@ -157,25 +158,41 @@ export default function BookCard({
           </div>
         </div>
 
-        {isAdmin && (
+        {(isAdmin || onRequestLoan) && (
           <div className="shared-book-card__actions">
-            <button
-              type="button"
-              className="shared-book-card__button shared-book-card__button--edit"
-              onClick={() => onEdit && onEdit(book)}
-            >
-              <HiOutlinePencil />
-              <span>Editar</span>
-            </button>
+            {onRequestLoan && (
+              <button
+                type="button"
+                className="shared-book-card__button shared-book-card__button--request"
+                onClick={() => onRequestLoan(book)}
+                aria-label={`Solicitar empréstimo de ${titulo}`}
+              >
+                <HiOutlineBookOpen />
+                <span>Solicitar Empréstimo</span>
+              </button>
+            )}
 
-            <button
-              type="button"
-              className="shared-book-card__button shared-book-card__button--delete"
-              onClick={() => onDelete && onDelete(book)}
-            >
-              <HiOutlineXCircle />
-              <span>Inativar</span>
-            </button>
+            {isAdmin && (
+              <>
+                <button
+                  type="button"
+                  className="shared-book-card__button shared-book-card__button--edit"
+                  onClick={() => onEdit && onEdit(book)}
+                >
+                  <HiOutlinePencil />
+                  <span>Editar</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="shared-book-card__button shared-book-card__button--delete"
+                  onClick={() => onDelete && onDelete(book)}
+                >
+                  <HiOutlineXCircle />
+                  <span>Inativar</span>
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
