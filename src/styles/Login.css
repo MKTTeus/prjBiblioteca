@@ -38,7 +38,7 @@ body {
 .logo-circle {
   width: 60px;
   height: 60px;
-  background: #3b82f6;
+  background: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -46,6 +46,14 @@ body {
   font-size: 28px;
   color: white;
   margin: 0 auto;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(0,0,0,0.08);
+}
+
+.login-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .login-card {
