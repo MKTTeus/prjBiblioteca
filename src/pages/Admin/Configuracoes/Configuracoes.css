@@ -1,6 +1,3 @@
-.config-container {
-}
-
 /* TOPO */
 .top-bar {
   display: flex;
@@ -49,6 +46,21 @@ button:hover {
   transform: translateY(-2px);
 }
 
+.config-container button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.22);
+}
+
+.config-container button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.config-container button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
 .btn-outline {
   background: white;
   border: none;
@@ -56,9 +68,28 @@ button:hover {
   font-weight: 500;
 }
 
+.top-actions .config-export-btn {
+  background: rgba(255, 255, 255, 0.96);
+  color: #1e3a8a;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
+}
+
 .btn-outline:hover {
   background: white;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.top-actions .config-export-btn:hover {
+  background: #ffffff;
+  color: #1d4ed8;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+}
+
+.top-actions .config-export-btn:focus-visible {
+  box-shadow:
+    0 6px 16px rgba(15, 23, 42, 0.14),
+    0 0 0 3px rgba(255, 255, 255, 0.36);
 }
 
 .btn-success {
@@ -175,6 +206,58 @@ button:hover {
   flex-wrap: wrap;
 }
 
+.config-container .card-actions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.config-container .card-actions > .btn-secondary,
+.config-container .card-actions > .btn-primary {
+  min-height: var(--button-height, 44px);
+  padding: 0 16px;
+  border-radius: var(--button-radius, 12px);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+}
+
+.config-container .card-actions > .btn-secondary {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.config-container .card-actions > .btn-secondary:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.config-container .card-actions > .btn-secondary:disabled {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.config-container .card-actions > .btn-primary {
+  background: #111827;
+  color: #ffffff;
+}
+
+.config-container .card-actions > .btn-primary:hover:not(:disabled) {
+  background: #1f2937;
+}
+
+.config-container .card-actions > .btn-primary:disabled {
+  background: #111827;
+  color: #ffffff;
+}
+
 /* RESPONSIVO */
 @media (max-width: 768px) {
   .form-grid {
@@ -192,5 +275,22 @@ button:hover {
 
   .top-actions {
     margin-top: 15px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .top-actions button {
+    flex: 1 1 150px;
+  }
+}
+
+@media (max-width: 520px) {
+  .config-container .card-actions {
+    justify-content: stretch;
+  }
+
+  .config-container .card-actions > .btn-secondary,
+  .config-container .card-actions > .btn-primary {
+    flex: 1 1 100%;
   }
 }

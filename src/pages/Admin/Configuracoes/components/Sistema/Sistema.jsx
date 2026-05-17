@@ -84,7 +84,7 @@ export default function Sistema() {
 
       <div className="card-actions">
         <button className="btn-secondary">Restaurar Padrão</button>
-        <button className="btn-dark">Salvar Configurações</button>
+        <button className="btn-primary">Salvar Configurações</button>
       </div>
     </div>
   );

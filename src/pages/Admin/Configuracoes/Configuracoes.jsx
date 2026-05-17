@@ -23,7 +23,7 @@ export default function Configuracoes() {
         </div>
 
         <div className="top-actions">
-          <button className="btn-outline">Exportar</button>
+          <button className="btn-outline config-export-btn">Exportar</button>
           <button className="btn-success">Salvar Tudo</button>
         </div>
       </div>

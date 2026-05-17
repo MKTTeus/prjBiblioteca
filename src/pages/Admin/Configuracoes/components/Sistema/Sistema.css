@@ -59,15 +59,6 @@
   cursor: pointer;
 }
 
-.btn-dark {
-  background: #111827;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
