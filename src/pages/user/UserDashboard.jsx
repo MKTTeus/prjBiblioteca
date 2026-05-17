@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import AppShell from "../../components/AppShell/AppShell";
-import Biblioteca from "./Biblioteca";
-import DashboardHome from "./DashboardHome";
-import Emprestimos from "./Emprestimos";
-import Notificacoes from "./Notificacoes";
+import Biblioteca from "./Biblioteca/Biblioteca";
+import DashboardHome from "./Dashboard/DashboardHome";
+import Emprestimos from "./Emprestimos/Emprestimos";
+import Notificacoes from "./Notificacoes/Notificacoes";
 
 const pages = {
   dashboard: DashboardHome,

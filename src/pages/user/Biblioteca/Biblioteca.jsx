@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import BookCard from "../../components/BookCard/BookCard";
-import SearchBar from "../../components/SearchBar/SearchBar";
-import { useToast } from "../../contexts/ToastContext";
-import { getBooks } from "../../services/api";
-import "./UserArea.css";
+import BookCard from "../../../components/BookCard/BookCard";
+import SearchBar from "../../../components/SearchBar/SearchBar";
+import { useToast } from "../../../contexts/ToastContext";
+import { getBooks } from "../../../services/api";
+import "../UserArea.css";
+import "./Biblioteca.css";
 
 export default function Biblioteca() {
   const { addToast } = useToast();
