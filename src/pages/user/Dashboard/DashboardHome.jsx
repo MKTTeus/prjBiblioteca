@@ -8,9 +8,10 @@ import {
   FaExchangeAlt,
   FaExclamationTriangle,
 } from "react-icons/fa";
-import StatsCard from "../../components/StatsCard/StatsCard";
-import { getBooks, getEmprestimos } from "../../services/api";
-import "./UserArea.css";
+import StatsCard from "../../../components/StatsCard/StatsCard";
+import { getBooks, getEmprestimos } from "../../../services/api";
+import "../UserArea.css";
+import "./DashboardHome.css";
 
 const notificationTypeMap = {
   info: {

@@ -1,0 +1,102 @@
+.user-notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-notification-item {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 10px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.user-notification-item:hover {
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.user-notification-item--info {
+  background: #eff6ff;
+}
+
+.user-notification-item--warning {
+  background: #fffbeb;
+}
+
+.user-notification-item--success {
+  background: #ecfdf5;
+}
+
+.user-notification-item__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.user-notification-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-notification-item__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.user-notification-item__icon--info {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.user-notification-item__icon--warning {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.user-notification-item__icon--success {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.user-notification-item__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.user-notification-item h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.user-notification-item p {
+  margin: 3px 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.user-notification-item small {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+@media (max-width: 700px) {
+  .user-notification-item__content {
+    align-items: flex-start;
+  }
+}

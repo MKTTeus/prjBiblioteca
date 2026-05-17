@@ -4,8 +4,9 @@ import {
   FaClock,
   FaExclamationTriangle,
 } from "react-icons/fa";
-import { getEmprestimos } from "../../services/api";
-import "./UserArea.css";
+import { getEmprestimos } from "../../../services/api";
+import "../UserArea.css";
+import "./Notificacoes.css";
 
 const notificationTypeMap = {
   info: {

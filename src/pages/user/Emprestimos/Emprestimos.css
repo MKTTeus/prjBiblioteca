@@ -1,0 +1,87 @@
+.user-loans-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.user-loans-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-loans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-loan-item {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 10px;
+  border-radius: 10px;
+  box-sizing: border-box;
+  transition: background 0.15s ease, box-shadow 0.15s ease,
+    transform 0.12s ease;
+  background: #f9fafb;
+  border: 1px solid #eef2f7;
+}
+
+.user-loan-item:hover {
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.user-loan-item__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.user-loan-item h4 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #111827;
+}
+
+.user-loan-item p {
+  margin: 3px 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.user-loan-item small {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.status-badge.ativo {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.pendente {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+@media (max-width: 1100px) {
+  .user-loans-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { getEmprestimos } from "../../services/api";
-import "./UserArea.css";
+import { getEmprestimos } from "../../../services/api";
+import "../UserArea.css";
+import "./Emprestimos.css";
 
 const statusLabelMap = {
   pendente: "Pendente",
