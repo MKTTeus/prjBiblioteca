@@ -14,7 +14,8 @@ def dashboard_stats(user=Depends(get_optional_user)):
 
         livros = supabase.table("Livro").select("idLivro").execute().data or []
         usuarios = supabase.table("Usuario").select("idUsuario").execute().data or []
-        emprestimos = supabase.table("Emprestimo").select("*").execute().data or []
+        movimentacoes = supabase.table("Movimentacao").select("*").execute().data or []
+        movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").execute().data or []
 
         ativos = 0
         pendentes = 0
@@ -22,31 +23,42 @@ def dashboard_stats(user=Depends(get_optional_user)):
         devolvidos_hoje = 0
         reservados = 0
 
-        for emp in emprestimos:
-            status = (emp.get("empLiv_Status") or "").lower()
-            data_devolucao = emp.get("empLiv_DataPrevistaDevolucao")
-            data_entrega = emp.get("empLiv_DataDevolucao")
+        # map movimentacao -> exemplares
+        mov_ex_map = {}
+        for me in movimentacao_exemplares:
+            mov_ex_map.setdefault(me.get("idMovimentacao"), []).append(me)
+
+        for mov in movimentacoes:
+            status = (mov.get("movStatus") or "").lower()
+            me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
 
             if "ativo" in status:
                 ativos += 1
-                if data_devolucao:
-                    try:
-                        data_dev = datetime.fromisoformat(data_devolucao).date()
-                        if data_dev < hoje:
-                            atrasados += 1
-                    except:
-                        pass
+                # if any exemplar for this movimentacao is overdue
+                for me in me_list:
+                    data_prev = me.get("dataPrevistaDevolucao")
+                    if data_prev:
+                        try:
+                            data_dev = datetime.fromisoformat(data_prev).date()
+                            if data_dev < hoje and not me.get("dataDevolucao"):
+                                atrasados += 1
+                                break
+                        except:
+                            pass
 
             if status == "pendente":
                 pendentes += 1
 
-            if data_entrega:
-                try:
-                    data_ent = datetime.fromisoformat(data_entrega).date()
-                    if data_ent == hoje:
-                        devolvidos_hoje += 1
-                except:
-                    pass
+            # devolvidos hoje (any exemplar devolvido today)
+            for me in me_list:
+                data_entrega = me.get("dataDevolucao")
+                if data_entrega:
+                    try:
+                        data_ent = datetime.fromisoformat(data_entrega).date()
+                        if data_ent == hoje:
+                            devolvidos_hoje += 1
+                    except:
+                        pass
 
             if status == "reservado":
                 reservados += 1

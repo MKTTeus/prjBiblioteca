@@ -49,6 +49,14 @@ class Categoria(BaseModel):
     catNome: str
 
 
+class Configuracao(BaseModel):
+    chave: str
+    valor: str
+    descricao: Optional[str] = None
+    categoria: Optional[str] = None
+    ativo: Optional[Union[bool, str]] = True
+
+
 class Genero(BaseModel):
     genNome: str
 
@@ -56,7 +64,6 @@ class Genero(BaseModel):
 class ExemplarUpdate(BaseModel):
     exeLivTombo: Optional[str] = None
     exeLivStatus: Optional[str] = None
-    exeLivISBN: Optional[str] = None
     exeLivDescricao: Optional[str] = None
 
 

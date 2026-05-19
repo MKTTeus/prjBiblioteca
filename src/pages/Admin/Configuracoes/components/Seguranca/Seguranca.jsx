@@ -1,13 +1,51 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { FiShield } from "react-icons/fi";
+import { useToast } from "../../../../../contexts/ToastContext";
+import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
+import { configToBool, configToNumber } from "../../utils/configUtils";
 import "./Seguranca.css";
 
 export default function Seguranca() {
+  const { addToast } = useToast();
   const [senhaForte, setSenhaForte] = useState(true);
   const [doisFatores, setDoisFatores] = useState(false);
-  const [timeout, setTimeout] = useState(30);
+  const [timeout, setTimeoutValue] = useState(30);
   const [tamanhoSenha, setTamanhoSenha] = useState(8);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const configs = await getConfiguracoes();
+        setTimeoutValue(configToNumber(configs, "timeout_sessao", 30));
+        setTamanhoSenha(configToNumber(configs, "tamanho_minimo_senha", 8));
+        setSenhaForte(configToBool(configs, "exigir_senha_forte", true));
+        setDoisFatores(configToBool(configs, "autenticacao_dois_fatores", false));
+      } catch (error) {
+        addToast("Erro ao carregar configurações de segurança", "error");
+      }
+    }
+
+    load();
+  }, [addToast]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await Promise.all([
+        updateConfiguracao({ chave: "timeout_sessao", valor: String(timeout) }),
+        updateConfiguracao({ chave: "tamanho_minimo_senha", valor: String(tamanhoSenha) }),
+        updateConfiguracao({ chave: "exigir_senha_forte", valor: String(senhaForte) }),
+        updateConfiguracao({ chave: "autenticacao_dois_fatores", valor: String(doisFatores) }),
+      ]);
+      addToast("Configurações de segurança salvas com sucesso", "success");
+    } catch (error) {
+      addToast("Erro ao salvar configurações de segurança", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const switchStyle = {
     offColor: "#e5e7eb",
@@ -36,7 +74,8 @@ export default function Seguranca() {
           <input
             type="number"
             value={timeout}
-            onChange={(e) => setTimeout(e.target.value)}
+            min={0}
+            onChange={(e) => setTimeoutValue(Number(e.target.value) || 0)}
           />
         </div>
 
@@ -45,7 +84,8 @@ export default function Seguranca() {
           <input
             type="number"
             value={tamanhoSenha}
-            onChange={(e) => setTamanhoSenha(e.target.value)}
+            min={1}
+            onChange={(e) => setTamanhoSenha(Number(e.target.value) || 1)}
           />
         </div>
       </div>
@@ -69,8 +109,9 @@ export default function Seguranca() {
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary">Restaurar Padrão</button>
-        <button className="btn-primary">Salvar Configurações</button>
+        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Salvando..." : "Salvar Configurações"}
+        </button>
       </div>
     </div>
   );
