@@ -1,18 +1,106 @@
 from datetime import datetime, timedelta
+import os
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
 from core import get_admin, get_admin_id, get_optional_user
-from schemas import Emprestimo
+from schemas import Emprestimo, Configuracao
 
 router = APIRouter()
+
+
+def get_config_map():
+    try:
+        resp = supabase.table("Configuracoes").select("chave, valor").execute()
+        if resp.data:
+            return {row["chave"]: row["valor"] for row in resp.data}
+    except Exception:
+        pass
+    return {}
+
+
+def get_config_int(chave: str, default: int):
+    configs = get_config_map()
+    valor = configs.get(chave)
+    if valor is not None:
+        try:
+            return int(valor)
+        except Exception:
+            pass
+    env_key = chave.upper()
+    return int(os.getenv(env_key, default))
+
+
+def get_config_bool(chave: str, default: bool):
+    configs = get_config_map()
+    valor = configs.get(chave)
+    if isinstance(valor, bool):
+        return valor
+    if isinstance(valor, str):
+        return valor.lower() in ("1", "true", "yes", "on")
+    return default
+
+
+def get_config_days():
+    return get_config_int("dias_emprestimo", 14)
+
+
+def get_max_renewals():
+    return get_config_int("maximo_renovacoes", 2)
+
+
+def get_max_books_per_user():
+    return get_config_int("livros_por_aluno", 3)
+
+
+@router.get("/configuracoes")
+def listar_configuracoes(admin=Depends(get_admin)):
+    try:
+        configs = supabase.table("Configuracoes").select("*").execute().data or []
+        return configs
+    except Exception as e:
+        print("Erro listar configuracoes:", e)
+        raise HTTPException(status_code=500, detail="Erro ao buscar configurações")
+
+
+@router.put("/configuracoes")
+def atualizar_configuracao(config: Configuracao, admin=Depends(get_admin)):
+    try:
+        if not config.chave:
+            raise HTTPException(status_code=400, detail="Chave obrigatória")
+
+        payload = {"valor": config.valor, "atualizado_em": datetime.utcnow().isoformat()}
+        if config.descricao is not None:
+            payload["descricao"] = config.descricao
+        if config.categoria is not None:
+            payload["categoria"] = config.categoria
+        if config.ativo is not None:
+            payload["ativo"] = config.ativo
+
+        upd = supabase.table("Configuracoes").update(payload).eq("chave", config.chave).execute()
+        if not upd.data:
+            insert_payload = payload.copy()
+            insert_payload.update({
+                "chave": config.chave,
+                "criado_em": datetime.utcnow().isoformat(),
+            })
+            ins = supabase.table("Configuracoes").insert(insert_payload).execute()
+            if not ins.data:
+                raise HTTPException(status_code=500, detail="Erro ao salvar configuração")
+
+        return {"chave": config.chave, "valor": config.valor}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro atualizar configuracao:", e)
+        raise HTTPException(status_code=500, detail="Erro ao atualizar configuração")
 
 
 @router.get("/emprestimos")
 def listar_emprestimos(user=Depends(get_optional_user)):
     try:
         hoje = datetime.utcnow().date()
-        query = supabase.table("Emprestimo").select("*")
+        query = supabase.table("Movimentacao").select("*")
 
         if user and user.get("tipo") == "usuario":
             usuario_resp = supabase.table("Usuario").select("idUsuario").eq("usuEmail", user["sub"]).execute()
@@ -23,39 +111,76 @@ def listar_emprestimos(user=Depends(get_optional_user)):
             query = query.eq("idUsuario", id_usuario)
 
         emprestimos = query.execute().data or []
-        exemplar_ids = [emp["idExemplar"] for emp in emprestimos if emp.get("idExemplar")]
+
+        movimentacao_ids = [m["idMovimentacao"] for m in emprestimos if m.get("idMovimentacao")]
+        movimentacao_exemplares = []
+        if movimentacao_ids:
+            movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", movimentacao_ids).execute().data or []
+
+        # map movimentacao -> list of exemplares
+        mov_ex_map = {}
+        exemplar_ids = []
+        for me in movimentacao_exemplares:
+            mov_ex_map.setdefault(me["idMovimentacao"], []).append(me)
+            if me.get("idExemplar"):
+                exemplar_ids.append(me["idExemplar"])
+
         exemplares = []
         livros = []
-
         if exemplar_ids:
-            exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro, exeLivISBN").in_("idExemplar", exemplar_ids).execute().data or []
-            livro_ids = list({ex["idLivro"] for ex in exemplares if ex.get("idLivro")})
+            exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", list(set(exemplar_ids))).execute().data or []
+            livro_ids = list({ex.get("idLivro") for ex in exemplares if ex.get("idLivro")})
             if livro_ids:
                 livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
 
         livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
         exemplar_map = {e["idExemplar"]: e for e in exemplares}
 
-        for emp in emprestimos:
-            data_prev = emp.get("empLiv_DataPrevistaDevolucao")
-            if emp.get("empLiv_Status") == "Ativo" and data_prev:
+        for mov in emprestimos:
+            me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
+            exemplar = me_list[0] if me_list else None
+
+            data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
+            if (exemplar and (exemplar.get("itemStatus") or "") == "Ativo" and data_prev):
                 try:
                     data_prevista = datetime.fromisoformat(data_prev).date()
                     if data_prevista < hoje:
-                        emp["empLiv_Status"] = "Atrasado"
+                        mov["itemStatus"] = "Atrasado"
                 except:
                     pass
 
-            exemplar = exemplar_map.get(emp.get("idExemplar"))
-            if exemplar:
-                emp["codigo"] = exemplar.get("exeLivTombo")
-                emp["titulo"] = livro_map.get(exemplar.get("idLivro"), emp.get("titulo"))
-                emp["isbn"] = exemplar.get("exeLivISBN")
+                if exemplar:
+                    ex = exemplar_map.get(exemplar.get("idExemplar"))
+                    if ex:
+                        mov["codigo"] = ex.get("exeLivTombo")
+                        mov["titulo"] = livro_map.get(ex.get("idLivro"), mov.get("titulo"))
 
-            emp["dataEmprestimo"] = emp.get("empLiv_DataEmprestimo")
-            emp["dataDevolucao"] = emp.get("empLiv_DataPrevistaDevolucao") or emp.get("empLiv_DataDevolucao")
-            emp["status"] = (emp.get("empLiv_Status") or "").lower()
-            emp["renovacoes"] = emp.get("empLiv_Renovacoes", 0)
+                    mov["dataDevolucao"] = exemplar.get("dataDevolucao")
+                mov["renovacoes"] = exemplar.get("renovacoes", 0)
+            else:
+                mov["dataDevolucao"] = None
+                mov["renovacoes"] = 0
+
+            mov["dataEmprestimo"] = mov.get("movDataEmprestimo")
+            mov["status"] = (mov.get("movStatus") or "").lower()
+
+            # Compatibility layer for admin UI fields (legacy names expected by frontend)
+            try:
+                mov["idEmprestimo"] = mov.get("idMovimentacao")
+                mov["empLiv_DataEmprestimo"] = mov.get("movDataEmprestimo")
+                mov["empLiv_DataDevolucao"] = mov.get("dataDevolucao")
+                mov["empLiv_DataPrevistaDevolucao"] = (
+                    exemplar.get("dataPrevistaDevolucao") if exemplar else None
+                )
+                mov["empLiv_Status"] = (exemplar.get("itemStatus") if exemplar else None) or mov.get("movStatus")
+                mov["empLiv_RenovacoesTotais"] = exemplar.get("renovacoes", 0) if exemplar else mov.get("renovacoes", 0)
+                # tombo and title for quick display
+                if exemplar:
+                    ex_obj = exemplar_map.get(exemplar.get("idExemplar"))
+                    mov["empLiv_Tombo"] = ex_obj.get("exeLivTombo") if ex_obj else None
+                    mov["empLiv_Titulo"] = mov.get("titulo")
+            except Exception:
+                pass
 
         return emprestimos
     except Exception as e:
@@ -69,24 +194,40 @@ def notificacoes_admin(admin=Depends(get_admin)):
         agora = datetime.utcnow()
         hoje = agora.date()
         limite_24h = agora - timedelta(hours=24)
+        # fetch movimentacoes and associated exemplar entries
+        movimentacoes = supabase.table("Movimentacao").select("*").execute().data or []
+        movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").execute().data or []
 
-        emprestimos_resp = supabase.table("Emprestimo").select(
-            "idEmprestimo, idUsuario, idExemplar, empLiv_DataPrevistaDevolucao, empLiv_DataEmprestimo, empLiv_DataDevolucao"
-        ).execute()
-        emprestimos = emprestimos_resp.data or []
-
-        usuario_ids = list({emp["idUsuario"] for emp in emprestimos if emp.get("idUsuario")})
-        exemplar_ids = list({emp["idExemplar"] for emp in emprestimos if emp.get("idExemplar")})
+        # build joined loan entries (one per movimentacao_exemplar)
+        movimentacao_map = {m["idMovimentacao"]: m for m in movimentacoes}
+        usuario_ids = set()
+        exemplar_ids = set()
+        loans = []
+        for me in movimentacao_exemplares:
+            mov = movimentacao_map.get(me.get("idMovimentacao")) or {}
+            loan = {
+                "idMovimentacao": me.get("idMovimentacao"),
+                "idExemplar": me.get("idExemplar"),
+                "idUsuario": mov.get("idUsuario"),
+                "movDataEmprestimo": mov.get("movDataEmprestimo"),
+                "dataPrevistaDevolucao": me.get("dataPrevistaDevolucao"),
+                "dataDevolucao": me.get("dataDevolucao"),
+            }
+            loans.append(loan)
+            if loan.get("idUsuario"):
+                usuario_ids.add(loan.get("idUsuario"))
+            if loan.get("idExemplar"):
+                exemplar_ids.add(loan.get("idExemplar"))
 
         usuarios = []
         if usuario_ids:
             usuarios = supabase.table("Usuario").select(
                 "idUsuario, usuNome, usuRA, usuCPF, usuTelefone, usuTipo"
-            ).in_("idUsuario", usuario_ids).execute().data or []
+            ).in_("idUsuario", list(usuario_ids)).execute().data or []
 
         exemplares = []
         if exemplar_ids:
-            exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", exemplar_ids).execute().data or []
+            exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", list(exemplar_ids)).execute().data or []
 
         livro_ids = list({ex["idLivro"] for ex in exemplares if ex.get("idLivro")})
         livros = []
@@ -104,14 +245,14 @@ def notificacoes_admin(admin=Depends(get_admin)):
             document = usuario.get("usuRA") or usuario.get("usuCPF") or "N/A"
 
             return {
-                "id": loan.get("idEmprestimo"),
+                "id": loan.get("idMovimentacao"),
                 "userName": usuario.get("usuNome") or "Usuário desconhecido",
                 "userDocument": document,
                 "telefone": usuario.get("usuTelefone") or "-",
                 "userType": usuario.get("usuTipo") or "Aluno",
                 "bookTitle": livro.get("livTitulo") or "Livro desconhecido",
                 "tombo": exemplar.get("exeLivTombo") or "-",
-                "loanDate": loan.get("empLiv_DataEmprestimo"),
+                "loanDate": loan.get("movDataEmprestimo"),
             }
 
         atrasados_alunos = []
@@ -119,26 +260,26 @@ def notificacoes_admin(admin=Depends(get_admin)):
         recentes = []
         devolucoes_recentes = []
 
-        for emp in emprestimos:
+        for emp in loans:
             data_prevista = None
             data_emprestimo = None
             data_devolucao = None
 
-            if emp.get("empLiv_DataPrevistaDevolucao"):
+            if emp.get("dataPrevistaDevolucao"):
                 try:
-                    data_prevista = datetime.fromisoformat(emp["empLiv_DataPrevistaDevolucao"])
+                    data_prevista = datetime.fromisoformat(emp["dataPrevistaDevolucao"])
                 except:
                     data_prevista = None
 
-            if emp.get("empLiv_DataEmprestimo"):
+            if emp.get("movDataEmprestimo"):
                 try:
-                    data_emprestimo = datetime.fromisoformat(emp["empLiv_DataEmprestimo"])
+                    data_emprestimo = datetime.fromisoformat(emp["movDataEmprestimo"])
                 except:
                     data_emprestimo = None
 
-            if emp.get("empLiv_DataDevolucao"):
+            if emp.get("dataDevolucao"):
                 try:
-                    data_devolucao = datetime.fromisoformat(emp["empLiv_DataDevolucao"])
+                    data_devolucao = datetime.fromisoformat(emp["dataDevolucao"])
                 except:
                     data_devolucao = None
 
@@ -192,26 +333,53 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
 
         hoje = datetime.utcnow().date()
 
-        config = supabase.table("configuracoes").select("dias_emprestimo").limit(1).execute()
-        dias = config.data[0]["dias_emprestimo"] if config.data else 14
+        dias = get_config_days()
+        max_por_usuario = get_max_books_per_user()
 
-        vencimento = hoje + timedelta(days=dias)
+        # verificar limite de empréstimos ativos por usuário
+        movimentacoes_ativas = supabase.table("Movimentacao").select("idMovimentacao").eq("idUsuario", data.idUsuario).eq("movStatus", "Ativo").execute().data or []
+        movimentacao_ids = [mov["idMovimentacao"] for mov in movimentacoes_ativas if mov.get("idMovimentacao")]
+        emprestimos_ativos = []
+        if movimentacao_ids:
+            emprestimos_ativos = supabase.table("MovimentacaoExemplar").select("idMovimentacao").in_("idMovimentacao", movimentacao_ids).eq("itemStatus", "Ativo").execute().data or []
+
+        if len(emprestimos_ativos) >= max_por_usuario:
+            raise HTTPException(status_code=400, detail=f"O usuário já possui {max_por_usuario} empréstimos ativos")
+
         id_admin = get_admin_id(admin)
-        novo = {
+
+        novo_mov = {
             "idAdmin": id_admin,
             "idUsuario": data.idUsuario,
-            "idExemplar": data.idExemplar,
-            "empLiv_DataEmprestimo": hoje.isoformat(),
-            "empLiv_DataPrevistaDevolucao": vencimento.isoformat(),
-            "empLiv_Status": "Ativo"
+            "movTipo": "EMPRESTIMO",
+            "movStatus": "Ativo",
+            "movDataSolicitacao": hoje.isoformat(),
+            "movDataEmprestimo": hoje.isoformat()
         }
 
-        emp = supabase.table("Emprestimo").insert(novo).execute()
+        mov_resp = supabase.table("Movimentacao").insert(novo_mov).execute()
+        if not mov_resp.data:
+            raise HTTPException(status_code=500, detail="Erro ao criar movimentacao")
+
+        id_mov = mov_resp.data[0].get("idMovimentacao")
+
+        vencimento_date = (hoje + timedelta(days=dias)).isoformat()
+
+        novo_me = {
+            "idMovimentacao": id_mov,
+            "idExemplar": data.idExemplar,
+            "dataPrevistaDevolucao": vencimento_date,
+            "itemStatus": "Ativo",
+            "renovacoes": 0,
+        }
+
+        me_resp = supabase.table("MovimentacaoExemplar").insert(novo_me).execute()
+
         supabase.table("Exemplar").update({
             "exeLivStatus": "Emprestado"
         }).eq("idExemplar", data.idExemplar).execute()
 
-        return emp.data[0]
+        return {"idMovimentacao": id_mov}
     except HTTPException:
         raise
     except Exception as e:
@@ -273,16 +441,25 @@ def listar_exemplares():
 def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
         hoje = datetime.utcnow().date()
+        # marcar movimentacao como devolvida e atualizar movimentacao_exemplar
+        mov_resp = supabase.table("Movimentacao").update({
+            "movStatus": "Devolvido"
+        }).eq("idMovimentacao", idEmprestimo).execute()
 
-        emp = supabase.table("Emprestimo").update({
-            "empLiv_Status": "Devolvido",
-            "empLiv_DataDevolucao": hoje.isoformat()
-        }).eq("idEmprestimo", idEmprestimo).execute()
-
-        if not emp.data:
+        if not mov_resp.data:
             raise HTTPException(status_code=404, detail="Não encontrado")
 
-        idExemplar = emp.data[0]["idExemplar"]
+        # atualizar dataDevolucao e itemStatus na MovimentacaoExemplar
+        me_resp = supabase.table("MovimentacaoExemplar").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+        if not me_resp.data:
+            raise HTTPException(status_code=404, detail="Item de empréstimo não encontrado")
+
+        idExemplar = me_resp.data[0].get("idExemplar")
+
+        supabase.table("MovimentacaoExemplar").update({
+            "dataDevolucao": hoje.isoformat(),
+            "itemStatus": "Devolvido"
+        }).eq("idMovimentacao", idEmprestimo).execute()
 
         supabase.table("Exemplar").update({
             "exeLivStatus": "Disponível"
@@ -297,31 +474,38 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 @router.put("/emprestimos/{idEmprestimo}/renovar")
 def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
-        # Buscar empréstimo atual
-        emp_resp = supabase.table("Emprestimo").select("*").eq("idEmprestimo", idEmprestimo).execute()
-        
-        if not emp_resp.data:
+        # Buscar movimentacao_exemplar para este emprestimo
+        me_resp = supabase.table("MovimentacaoExemplar").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+        if not me_resp.data:
             raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
-        
-        emp = emp_resp.data[0]
-        
-        # Buscar configuração de dias de empréstimo
-        config = supabase.table("configuracoes").select("dias_emprestimo").limit(1).execute()
-        dias = config.data[0]["dias_emprestimo"] if config.data else 14
-        
-        # Adicionar dias à data prevista
-        data_prevista = datetime.fromisoformat(emp["empLiv_DataPrevistaDevolucao"]).date()
+
+        me = me_resp.data[0]
+
+        dias = get_config_days()
+        max_renovacoes = get_max_renewals()
+        renovacoes_atuais = me.get("renovacoes") or 0
+        if renovacoes_atuais >= max_renovacoes:
+            raise HTTPException(status_code=400, detail=f"Máximo de {max_renovacoes} renovações atingido")
+
+        if me.get("dataPrevistaDevolucao"):
+            try:
+                data_prevista = datetime.fromisoformat(me["dataPrevistaDevolucao"]).date()
+            except:
+                data_prevista = datetime.utcnow().date()
+        else:
+            data_prevista = datetime.utcnow().date()
+
         nova_data = data_prevista + timedelta(days=dias)
-        
-        # Atualizar empréstimo
-        resultado = supabase.table("Emprestimo").update({
-            "empLiv_DataPrevistaDevolucao": nova_data.isoformat(),
-            "empLiv_Renovacoes": (emp.get("empLiv_Renovacoes") or 0) + 1
-        }).eq("idEmprestimo", idEmprestimo).execute()
-        
+
+        # Atualizar movimentacao_exemplar
+        resultado = supabase.table("MovimentacaoExemplar").update({
+            "dataPrevistaDevolucao": nova_data.isoformat(),
+            "renovacoes": renovacoes_atuais + 1
+        }).eq("idMovimentacao", idEmprestimo).execute()
+
         if not resultado.data:
             raise HTTPException(status_code=500, detail="Erro ao renovar")
-        
+
         return {"message": "Empréstimo renovado com sucesso", "nova_data": nova_data.isoformat()}
     except HTTPException:
         raise

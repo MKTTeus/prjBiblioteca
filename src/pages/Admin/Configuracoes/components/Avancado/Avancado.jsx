@@ -1,12 +1,48 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { TbAdjustmentsAlt } from "react-icons/tb";
+import { useToast } from "../../../../../contexts/ToastContext";
+import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
+import { configToBool } from "../../utils/configUtils";
 import "./Avancado.css";
 
 export default function Avancado() {
+  const { addToast } = useToast();
   const [debug, setDebug] = useState(false);
   const [maintenance, setMaintenance] = useState(false);
   const [logApi, setLogApi] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const configs = await getConfiguracoes();
+        setDebug(configToBool(configs, "modo_debug", false));
+        setMaintenance(configToBool(configs, "modo_manutencao", false));
+        setLogApi(configToBool(configs, "log_api", true));
+      } catch (error) {
+        addToast("Erro ao carregar configurações avançadas", "error");
+      }
+    }
+
+    load();
+  }, [addToast]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await Promise.all([
+        updateConfiguracao({ chave: "modo_debug", valor: String(debug) }),
+        updateConfiguracao({ chave: "modo_manutencao", valor: String(maintenance) }),
+        updateConfiguracao({ chave: "log_api", valor: String(logApi) }),
+      ]);
+      addToast("Configurações avançadas salvas com sucesso", "success");
+    } catch (error) {
+      addToast("Erro ao salvar configurações avançadas", "error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const switchStyle = {
     offColor: "#e5e7eb",
@@ -62,15 +98,16 @@ export default function Avancado() {
         <h4>Ações do Sistema</h4>
 
         <div className="acoes-botoes">
-          <button className="btn-secondary">Limpar Cache</button>
-          <button className="btn-secondary">Reindexar Banco</button>
-          <button className="btn-secondary text-danger">Backup Completo</button>
+          <button className="btn-secondary" type="button">Limpar Cache</button>
+          <button className="btn-secondary" type="button">Reindexar Banco</button>
+          <button className="btn-secondary text-danger" type="button">Backup Completo</button>
         </div>
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary">Restaurar Padrão</button>
-        <button className="btn-primary">Salvar Configurações</button>
+        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+          {isSaving ? "Salvando..." : "Salvar Configurações"}
+        </button>
       </div>
     </div>
   );

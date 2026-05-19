@@ -117,6 +117,15 @@ export const getCategorias = () =>
 export const getGeneros = () =>
   apiFetch("/generos");
 
+export const getConfiguracoes = () =>
+  apiFetch("/configuracoes");
+
+export const updateConfiguracao = (payload) =>
+  apiFetch("/configuracoes", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
 // ========================
 // DASHBOARD
 // ========================

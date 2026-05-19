@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import AppShell from "./components/AppShell/AppShell";
@@ -64,6 +64,11 @@ function AdminLayout() {
 }
 
 function App() {
+  useEffect(() => {
+    import("./utils/theme").then(({ applyTheme, getSavedTheme }) => {
+      applyTheme(getSavedTheme());
+    });
+  }, []);
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

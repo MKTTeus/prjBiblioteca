@@ -14,13 +14,13 @@ def adicionar_exemplares(
     prefixo: str = "T",
     admin=Depends(get_admin)
 ):
-    livro_resp = supabase.table("Exemplar").select("idLivro, exeLivISBN").eq("idLivro", idLivro).execute()
+    livro_resp = supabase.table("Livro").select("livISBN").eq("idLivro", idLivro).execute()
 
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado")
 
     livro = livro_resp.data[0]
-    isbn_padrao = livro.get("exeLivISBN")
+    isbn_padrao = livro.get("livISBN")
 
     tombos = gerar_tombos(quantidade, prefixo)
 
@@ -31,9 +31,6 @@ def adicionar_exemplares(
             "exeLivTombo": t,
             "exeLivStatus": "Disponível"
         }
-
-        if isbn_padrao:
-            ex_data["exeLivISBN"] = isbn_padrao
 
         ex = supabase.table("Exemplar").insert(ex_data).execute()
         exemplares.append(ex.data[0])
@@ -171,14 +168,7 @@ def detalhes_livro(idLivro: int):
         raise HTTPException(status_code=404, detail="Livro não encontrado")
 
     livro = livro_resp.data[0]
-    llib_isbn = livro.get("exeLivISBN")
-
-    if llib_isbn:
-        for ex in exemplares_resp.data:
-            if not ex.get("exeLivISBN"):
-                supabase.table("Exemplar").update({"exeLivISBN": llib_isbn}).eq("idExemplar", ex.get("idExemplar")).execute()
-                ex["exeLivISBN"] = llib_isbn
-
+    # exemplares no longer store ISBN; return livro and exemplares as-is
     return {"livro": livro, "exemplares": exemplares_resp.data}
 
 
@@ -202,8 +192,6 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
                 "exeLivTombo": t,
                 "exeLivStatus": "Disponível"
             }
-            if isbn_padrao:
-                ex_data["exeLivISBN"] = isbn_padrao
             ex = supabase.table("Exemplar").insert(ex_data).execute()
             exemplares.append(ex.data[0])
 
@@ -225,8 +213,7 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         if not resp.data:
             raise HTTPException(status_code=404, detail="Livro não encontrado")
 
-        if isbn_padrao:
-            supabase.table("Exemplar").update({"exeLivISBN": isbn_padrao}).eq("idLivro", idLivro).execute()
+        # exemplares no longer store ISBN; do not propagate ISBN to exemplares
 
         return resp.data[0]
     except HTTPException:
@@ -254,8 +241,6 @@ def atualizar_exemplar(idExemplar: int, data: ExemplarUpdate, admin=Depends(get_
         payload["exeLivTombo"] = data.exeLivTombo
     if data.exeLivStatus is not None:
         payload["exeLivStatus"] = data.exeLivStatus
-    if data.exeLivISBN is not None:
-        payload["exeLivISBN"] = data.exeLivISBN
     if data.exeLivDescricao is not None:
         payload["exeLivDescricao"] = data.exeLivDescricao
 
@@ -270,7 +255,7 @@ def atualizar_exemplar(idExemplar: int, data: ExemplarUpdate, admin=Depends(get_
 def listar_exemplares(admin=Depends(get_admin)):
     try:
         exemplares = supabase.table("Exemplar") \
-            .select("idExemplar, exeLivTombo, idLivro, exeLivISBN") \
+            .select("idExemplar, exeLivTombo, idLivro") \
             .execute().data or []
 
         livros = supabase.table("Livro").select("idLivro, livTitulo").execute().data or []
@@ -281,8 +266,6 @@ def listar_exemplares(admin=Depends(get_admin)):
                 "id": e["idExemplar"],
                 "tombo": e["exeLivTombo"],
                 "nome": mapa.get(e["idLivro"], {}).get("livTitulo", "Livro"),
-                "isbn": e.get("exeLivISBN"),
-                "exeLivISBN": e.get("exeLivISBN"),
             }
             for e in exemplares
         ]
@@ -297,7 +280,7 @@ def exemplares_disponiveis(admin=Depends(get_admin)):
         exemplares = (
             supabase
             .table("Exemplar")
-            .select("idExemplar, exeLivTombo, idLivro, exeLivISBN")
+            .select("idExemplar, exeLivTombo, idLivro")
             .eq("exeLivStatus", "Disponível")
             .execute()
             .data or []
@@ -311,8 +294,6 @@ def exemplares_disponiveis(admin=Depends(get_admin)):
                 "id": ex["idExemplar"],
                 "tombo": ex["exeLivTombo"],
                 "nome": mapa_livros.get(ex["idLivro"], {}).get("livTitulo", "Livro"),
-                "isbn": ex.get("exeLivISBN"),
-                "exeLivISBN": ex.get("exeLivISBN"),
             }
             for ex in exemplares
         ]
