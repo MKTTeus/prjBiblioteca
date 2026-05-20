@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import React, { useState, useEffect } from "react";
 import "./Header.css";
 
 function Header() {
