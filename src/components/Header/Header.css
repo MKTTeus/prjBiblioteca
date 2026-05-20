@@ -15,10 +15,10 @@
   box-sizing: border-box; 
 }
 
-.header-left, .header-center {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.header-left {
+  flex: 0 0 auto;
+  max-width: 280px; 
+  min-width: 0;
 }
 
 .header-logo {
@@ -35,6 +35,10 @@
   font-size: 20px;
   font-weight: 600;
   color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px; 
 }
 
 .header-center {
@@ -56,6 +60,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 0 0 auto; 
 }
 
 .logout-btn {
