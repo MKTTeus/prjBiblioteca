@@ -16,10 +16,15 @@ export default function Geral() {
     async function load() {
       try {
         const configs = await getConfiguracoes();
-        setNome(getConfigValue(configs, "nome_biblioteca", "Biblioteca - Escola 9 de Julho de Taquaritinga"));
+
+        const nomeAtual = getConfigValue(configs, "nome_biblioteca", "Biblioteca - Escola 9 de Julho de Taquaritinga");
+        setNome(nomeAtual);
+        localStorage.setItem("nomeBiblioteca", nomeAtual);
+
         setDias(configToNumber(configs, "dias_emprestimo", 14));
         setRenovacoes(configToNumber(configs, "maximo_renovacoes", 2));
         setLivrosPorAluno(configToNumber(configs, "livros_por_aluno", 3));
+
       } catch (error) {
         addToast("Erro ao carregar configurações gerais", "error");
       }
@@ -37,6 +42,10 @@ export default function Geral() {
         updateConfiguracao({ chave: "maximo_renovacoes", valor: String(renovacoes) }),
         updateConfiguracao({ chave: "livros_por_aluno", valor: String(livrosPorAluno) }),
       ]);
+
+      localStorage.setItem("nomeBiblioteca", nome);
+      window.dispatchEvent(new Event("nomeBibliotecaAtualizado"));
+
       addToast("Configurações gerais salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações gerais", "error");
