@@ -6,6 +6,23 @@ import "./Header.css";
 function Header() {
   const { user, logout } = useAuth();
 
+  const [nomeBiblioteca, setNomeBiblioteca] = useState(
+    localStorage.getItem("nomeBiblioteca") || "Sala de Leitura"
+  );
+
+  useEffect(() => {
+    const handler = () =>
+      setNomeBiblioteca(localStorage.getItem("nomeBiblioteca") || "Sala de Leitura");
+
+    window.addEventListener("nomeBibliotecaAtualizado", handler);
+    window.addEventListener("storage", handler);
+
+    return () => {
+      window.removeEventListener("nomeBibliotecaAtualizado", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
   const roleLabel =
     {
       admin: "Administrador",
