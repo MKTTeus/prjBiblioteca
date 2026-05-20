@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { Link } from "react-router-dom";
 import "./Header.css";
 
 function Header() {
@@ -36,7 +37,7 @@ function Header() {
   return (
     <header className="header">
       <div className="header-left">
-        <div className="header-logo">
+        <Link to="/dashboard" className="header-logo">
           <div className="header-icon">
             <img
               src="/logo-novedejulho-semfundo.png"
@@ -45,7 +46,7 @@ function Header() {
             />
           </div>
           <h1 className="header-title">{nomeBiblioteca}</h1>
-        </div>
+        </Link>
       </div>
 
       <div className="header-center">
