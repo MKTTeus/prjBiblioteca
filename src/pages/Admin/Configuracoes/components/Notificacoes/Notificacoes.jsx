@@ -3,7 +3,7 @@ import Switch from "react-switch";
 import { FiBell } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
-import { getConfigValue, configToBool, configToNumber } from "../../utils/configUtils";
+import { configToBool, configToNumber } from "../../utils/configUtils";
 import "./Notificacoes.css";
 
 export default function Notificacoes() {
