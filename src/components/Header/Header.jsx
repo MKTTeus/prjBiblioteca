@@ -1,6 +1,7 @@
 import React from "react";
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import React, { useState, useEffect } from "react";
 import "./Header.css";
 
 function Header() {
@@ -44,7 +45,7 @@ function Header() {
               className="login-logo"
             />
           </div>
-          <h1 className="header-title">Sala de Leitura</h1>
+          <h1 className="header-title">{nomeBiblioteca}</h1>
         </div>
       </div>
 
