@@ -4,7 +4,6 @@
   background-color: #fff;
   border-bottom: 1px solid #e0e0e0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 0 20px;
   position: fixed;
@@ -12,13 +11,16 @@
   left: 0;
   z-index: 100;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .header-left {
   flex: 0 0 auto;
-  max-width: 280px; 
+  max-width: 280px;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .header-logo {
@@ -42,8 +44,12 @@
 }
 
 .header-center {
-  flex: 1;
-  justify-content: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
 }
 
 .welcome-text {
@@ -60,7 +66,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 0 0 auto; 
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .logout-btn {
