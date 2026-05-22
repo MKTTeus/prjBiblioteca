@@ -84,12 +84,24 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
             <ul className={`submenu ${openEmprestimos ? "open" : ""}`}>
               <li>
-                <NavLink to="/admin/emprestimos" end className={({ isActive }) => (isActive ? "active" : undefined)}>
+                <NavLink
+                  to="/admin/emprestimos"
+                  end
+                  className={({ isActive }) =>
+                    isActive ? "active" : undefined
+                  }
+                >
                   Empréstimos e Devoluções
                 </NavLink>
               </li>
+
               <li>
-                <NavLink to="/admin/emprestimos/solicitacoes" className={({ isActive }) => (isActive ? "active" : undefined)}>
+                <NavLink
+                  to="/admin/emprestimos/solicitacoes"
+                  className={({ isActive }) =>
+                    isActive ? "active" : undefined
+                  }
+                >
                   Solicitações de Empréstimo
                 </NavLink>
               </li>
@@ -124,13 +136,19 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
               <ul className={`submenu ${openPessoas ? "open" : ""}`}>
                 <li>
-                  <NavLink to="/admin/alunos">Cadastro de Alunos</NavLink>
+                  <NavLink to="/admin/alunos">
+                    Cadastro de Alunos
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/comunidade">Cadastro da Comunidade</NavLink>
+                  <NavLink to="/admin/comunidade">
+                    Cadastro da Comunidade
+                  </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/admins">Cadastro de Administradores</NavLink>
+                  <NavLink to="/admin/admins">
+                    Cadastro de Administradores
+                  </NavLink>
                 </li>
               </ul>
             </li>
