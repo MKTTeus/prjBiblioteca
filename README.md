@@ -46,6 +46,10 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
+
+# Se der erro de permissão no PowerShell, rode isso:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+
 Crie o arquivo `.env` em `src/backend/` com as variáveis necessárias e execute:
 
 ```powershell
