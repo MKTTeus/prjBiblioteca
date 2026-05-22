@@ -11,7 +11,7 @@
 }
 
 .admin-notifications-page .admin-notification-section {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--surface-bg);
   border: 1px solid var(--surface-border);
   border-radius: 22px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
@@ -89,8 +89,8 @@
   width: 100%;
   border-radius: 18px;
   padding: 20px 18px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid transparent;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
@@ -173,23 +173,23 @@
 }
 
 .admin-notification-card.user-notification-item--warning {
-  background: rgba(254, 242, 242, 0.95);
+  background: var(--danger-soft);
   border-color: var(--danger-border);
 }
 
 .admin-notification-card.user-notification-item--info {
-  background: rgba(224, 242, 254, 0.9);
+  background: var(--status-info-bg);
   border-color: var(--emp-accent-border, var(--primary-muted));
 }
 
 .admin-notification-card.user-notification-item--success,
 .admin-notification-card.user-notification-item--returned {
-  background: rgba(220, 252, 231, 0.9);
+  background: var(--status-success-bg);
   border-color: var(--success-border);
 }
 
 .admin-section-toggle__icon--success {
-  background: rgba(220, 252, 231, 0.9);
+  background: var(--status-success-bg);
   color: var(--status-success-text);
 }
 

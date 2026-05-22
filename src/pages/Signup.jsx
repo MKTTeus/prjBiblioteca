@@ -77,7 +77,7 @@ export default function Signup() {
       <div className="signup-header">
         <div className="icon-circle">
             <img
-              src="/logo-novedejulho-semfundo.png"
+              src="/logo-novedejulho-fundo.png"
               alt="Logo Nove de Julho"
               className="login-logo"
             />

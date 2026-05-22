@@ -40,7 +40,7 @@ function Header() {
         <Link to="/dashboard" className="header-logo">
           <div className="header-icon">
             <img
-              src="/logo-novedejulho-semfundo.png"
+              src="/logo-novedejulho-fundo.png"
               alt="Logo Nove de Julho"
               className="login-logo"
             />

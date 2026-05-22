@@ -1,5 +1,5 @@
 .filtro-container {
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--surface-bg);
   border-radius: 18px;
   padding: 22px 24px;
   border: 1px solid var(--surface-border);

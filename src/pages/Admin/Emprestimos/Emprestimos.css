@@ -71,7 +71,7 @@
   gap: 14px;
   margin-bottom: 24px;
   padding: 16px 18px;
-  background: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
+  background: var(--surface-bg);
   border: 1px solid var(--emp-border-strong);
   border-radius: 20px;
   box-shadow: var(--emp-shadow);
@@ -145,7 +145,7 @@
 }
 
 .emp-table-box {
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--surface-bg);
   border: 1px solid var(--emp-border-strong);
   border-radius: 18px;
   overflow: auto;

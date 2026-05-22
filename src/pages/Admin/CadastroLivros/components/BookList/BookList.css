@@ -75,7 +75,8 @@
 
 .booklist-container .book-card-code {
   color: var(--text-default);
-  background: rgba(255, 255, 255, 0.94);
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
 }
 
 .booklist-container .book-card-status.disponivel {

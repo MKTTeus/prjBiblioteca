@@ -66,7 +66,7 @@ export default function Login() {
         <div className="login-header">
           <div className="logo-circle">
             <img
-              src="/logo-novedejulho-semfundo.png"
+              src="/logo-novedejulho-fundo.png"
               alt="Logo Nove de Julho"
               className="login-logo"
             />
