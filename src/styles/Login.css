@@ -7,7 +7,7 @@ html {
 }
 
 body {
-  background: #f3f4f6;
+  background: var(--main-bg);
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
@@ -21,7 +21,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #f3f4f6;
+  background: var(--main-bg);
   width: 100%;
 }
 
@@ -32,19 +32,19 @@ body {
 
 .login-header p {
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .logo-circle {
   width: 60px;
   height: 60px;
-  background: #ffffff;
+  background: var(--surface-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
-  color: white;
+  color: var(--btn-primary-text);
   margin: 0 auto;
   overflow: hidden;
   box-shadow: 0 0 12px rgba(0,0,0,0.08);
@@ -60,7 +60,7 @@ body {
   width: 420px;
   margin-top: 20px;
   padding: 25px;
-  background: #fff;
+  background: var(--surface-bg);
   border-radius: 10px;
   box-shadow: 0 0 15px rgba(0,0,0,0.08);
   text-align: left;
@@ -74,7 +74,7 @@ body {
 .login-subtitle {
   text-align: center;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   margin-bottom: 20px;
 }
 
@@ -95,7 +95,7 @@ body {
 
 .user-option {
   padding: 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--input-border-alt);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.25s ease;
@@ -115,7 +115,7 @@ body {
 
 .user-option span {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .user-icon {
@@ -125,32 +125,32 @@ body {
 
 /* ADMIN */
 .user-option.admin.selected {
-  border-color: #ef4444;
-  background: #fee2e2;
+  border-color: var(--danger);
+  background: var(--status-danger-bg);
 }
 
 .user-option.admin.selected .user-icon {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 /* ALUNO */
 .user-option.aluno.selected {
-  border-color: #3b82f6;
-  background: #dbeafe;
+  border-color: var(--accent-blue);
+  background: var(--status-info-bg);
 }
 
 .user-option.aluno.selected .user-icon {
-  color: #3b82f6;
+  color: var(--accent-blue);
 }
 
 /* COMUNIDADE */
 .user-option.comunidade.selected {
-  border-color: #22c55e;
-  background: #dcfce7;
+  border-color: var(--accent-green);
+  background: var(--status-success-bg);
 }
 
 .user-option.comunidade.selected .user-icon {
-  color: #22c55e;
+  color: var(--accent-green);
 }
 
 /* INPUTS */
@@ -168,14 +168,14 @@ body {
 
 .input-group input {
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--input-border-muted);
   border-radius: 6px;
 }
 
 /* ERROR */
 
 .error {
-  color: red;
+  color: var(--danger);
   margin-bottom: 12px;
   font-size: 14px;
 }
@@ -189,20 +189,20 @@ body {
   border-radius: 6px;
   font-size: 15px;
   cursor: pointer;
-  color: white;
+  color: var(--btn-primary-text);
   transition: all 0.3s ease;
 }
 
 .login-btn.admin {
-  background: #ef4444;
+  background: var(--danger);
 }
 
 .login-btn.aluno {
-  background: #3b82f6;
+  background: var(--accent-blue);
 }
 
 .login-btn.comunidade {
-  background: #22c55e;
+  background: var(--accent-green);
 }
 
 .login-btn:hover {
@@ -216,6 +216,6 @@ body {
 }
 
 .signup-link span {
-  color: #3b82f6;
+  color: var(--accent-blue);
   cursor: pointer;
 }

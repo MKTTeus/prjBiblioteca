@@ -1,0 +1,33 @@
+/* Overrides globais para componentes com estilos legados */
+html.dark .top-actions .config-export-btn,
+.top-actions .config-export-btn {
+  border-color: color-mix(in srgb, var(--surface-border) 72%, transparent);
+}
+
+.SelectTrigger:focus,
+.input-standard:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.SelectContent,
+.SelectViewport {
+  background: var(--surface-bg);
+  border-color: var(--surface-border);
+  color: var(--text-default);
+}
+
+.SelectItem[data-highlighted],
+.SelectItem:hover {
+  background: var(--select-option-hover);
+  color: var(--text-default);
+}
+
+.book-card,
+.BookCard {
+  background: var(--surface-bg);
+  border-color: var(--surface-border);
+  color: var(--text-default);
+}

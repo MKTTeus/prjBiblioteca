@@ -5,12 +5,12 @@
 /* HEADER */
 
 .cadastro-header {
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
   color: white;
   padding: 25px;
   border-radius: 16px;
   margin-bottom: 35px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-soft);
 
   display: flex;
   justify-content: space-between;
@@ -21,7 +21,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--text-on-primary);
 }
 
 .cadastro-header p {
@@ -38,8 +38,8 @@
   gap: 8px;
 
   padding: 10px 16px;
-  background: white;
-  color: #2563eb;
+  background: var(--surface-bg);
+  color: var(--primary);
 
   border: none;
   border-radius: 8px;
@@ -66,11 +66,11 @@
 }
 
 .stat-card {
-  background: #f3f4f6;
+  background: var(--main-bg);
   border-radius: 14px;
   padding: 25px;
   text-align: center;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   transition: 0.2s;
 }
 
@@ -91,25 +91,25 @@
 
 .stat-card p {
   font-size: 14px;
-  color: #374151;
+  color: var(--text-label);
 }
 
 /* CORES DOS ÍCONES */
 
 .blue-icon {
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .green-icon {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .orange-icon {
-  color: #ea580c;
+  color: var(--warning);
 }
 
 .blue2 {
-  color: #3b82f6;
+  color: var(--accent-blue);
 }
 
 /* TABELA DE LIVROS */
@@ -122,7 +122,7 @@
 .table-container table {
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
+  background-color: var(--surface-bg);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -130,12 +130,12 @@
 .table-container th,
 .table-container td {
   padding: 12px 14px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--surface-border);
   text-align: left;
 }
 
 .table-container th {
-  background-color: #f8f8f8;
+  background-color: var(--surface-muted);
   font-weight: 600;
 }
 
@@ -149,18 +149,18 @@
 }
 
 .status.disponivel {
-  background-color: #111;
+  background-color: var(--btn-dark-bg);
   color: white;
 }
 
 .status.emprestado {
-  background-color: #e5e7eb;
-  color: #111;
+  background-color: var(--btn-muted-bg);
+  color: var(--text-default);
 }
 
 .status.reservado {
-  background-color: #dbeafe;
-  color: #1e40af;
+  background-color: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 /* AÇÕES */
@@ -178,11 +178,11 @@
 }
 
 .btn-editar:hover {
-  color: #22c55e;
+  color: var(--accent-green);
 }
 
 .btn-excluir:hover {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 /* FOOTER */
@@ -190,7 +190,7 @@
 .footer {
   margin-top: 40px;
   text-align: center;
-  color: #777;
+  color: var(--text-muted);
   font-size: 0.85rem;
 }
 
@@ -206,12 +206,12 @@
   margin: 0;
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .catalog-count {
   font-weight: 500;
-  color: #6b7280;
+  color: var(--text-subtle);
   font-size: 0.95rem;
   margin-left: 8px;
 }

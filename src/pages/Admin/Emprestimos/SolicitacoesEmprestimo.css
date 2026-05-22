@@ -17,12 +17,12 @@
 .solicitacoes-search-row h2 {
   margin: 0 0 8px;
   font-size: 1.1rem;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .solicitacoes-search-row p {
   margin: 0;
-  color: #475569;
+  color: var(--text-soft);
   line-height: 1.6;
 }
 
@@ -38,11 +38,11 @@
 .solicitacoes-list-header h2 {
   margin: 0;
   font-size: 1.2rem;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .solicitacoes-list-header span {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.95rem;
   white-space: nowrap;
 }
@@ -59,26 +59,26 @@
 }
 
 .solicitacao-status-ativo {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .solicitacao-status-pendente {
-  background: #fef9c3;
-  color: #a16207;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .solicitacao-status-cancelado,
 .solicitacao-status-nao-informado,
 .solicitacao-status-negado {
-  background: #fee2e2;
-  color: #be123c;
+  background: var(--status-danger-bg);
+  color: var(--danger);
 }
 
 .table-empty-row {
   text-align: center;
   padding: 32px 0;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 @media (max-width: 900px) {

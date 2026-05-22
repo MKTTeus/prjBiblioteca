@@ -14,8 +14,8 @@
 }
 
 .booklist-container .book-card {
-  background: #ffffff;
-  border: 1px solid #d7deea;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
@@ -31,14 +31,14 @@
 
 .booklist-container .book-card:hover {
   transform: translateY(-4px);
-  border-color: #b7c6dd;
+  border-color: var(--border-strong);
   box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12);
 }
 
 .booklist-container .book-card-media {
   position: relative;
   height: 302px;
-  background: linear-gradient(180deg, #eff4fb 0%, #dce6f3 100%);
+  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--surface-hover) 100%);
   overflow: hidden;
 }
 
@@ -74,27 +74,27 @@
 }
 
 .booklist-container .book-card-code {
-  color: #0f172a;
+  color: var(--text-default);
   background: rgba(255, 255, 255, 0.94);
 }
 
 .booklist-container .book-card-status.disponivel {
-  color: #047857;
+  color: var(--success-text);
   background: rgba(236, 253, 245, 0.96);
 }
 
 .booklist-container .book-card-status.emprestado {
-  color: #b45309;
+  color: var(--status-warning-text);
   background: rgba(255, 247, 237, 0.96);
 }
 
 .booklist-container .book-card-status.reservado {
-  color: #1d4ed8;
+  color: var(--status-info-text);
   background: rgba(239, 246, 255, 0.96);
 }
 
 .booklist-container .book-card-status.indisponivel {
-  color: #991b1b;
+  color: var(--confirm-danger-text);
   background: rgba(254, 242, 242, 0.96);
 }
 
@@ -118,7 +118,7 @@
   margin: 0;
   font-size: 1.02rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-default);
   line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -130,7 +130,7 @@
 
 .booklist-container .book-card-author {
   margin: 6px 0 0;
-  color: #334155;
+  color: var(--text-soft);
   font-size: 0.86rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -142,7 +142,7 @@
 
 .booklist-container .book-card-meta {
   margin: 6px 0 0;
-  color: #475569;
+  color: var(--text-soft);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
@@ -151,7 +151,7 @@
 
 .booklist-container .book-card-description {
   margin: 0;
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.78rem;
   line-height: 1.45;
   display: -webkit-box;
@@ -170,9 +170,9 @@
 
 .booklist-container .book-card-tags span {
   border-radius: 999px;
-  background: #f8fafc;
-  color: #334155;
-  border: 1px solid #e2e8f0;
+  background: var(--surface-muted);
+  color: var(--text-soft);
+  border: 1px solid var(--surface-border);
   padding: 5px 10px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -190,7 +190,7 @@
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  color: #475569;
+  color: var(--text-soft);
   font-size: 0.76rem;
   line-height: 1.35;
 }
@@ -201,29 +201,29 @@
 }
 
 .booklist-container .status-line.disponivel {
-  color: #16a34a;
+  color: var(--success);
 }
 
 .booklist-container .status-line.emprestado {
-  color: #ea580c;
+  color: var(--warning);
 }
 
 .booklist-container .status-line.reservado {
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .booklist-container .status-line.indisponivel {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .booklist-container .availability-line {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .booklist-container .loan-line {
-  color: #ef6c00;
-  background: #fff5eb;
-  border: 1px solid #fed7aa;
+  color: var(--warning);
+  background: var(--status-warning-surface);
+  border: 1px solid var(--status-warning-bg);
   border-radius: 10px;
   padding: 7px 9px;
 }
@@ -253,13 +253,13 @@
 }
 
 .booklist-container .btn-edit {
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #d1d5db;
+  background: var(--surface-bg);
+  color: var(--text-default);
+  border: 1px solid var(--input-border);
 }
 
 .booklist-container .btn-edit.secondary {
-  background: #f8fafc;
+  background: var(--surface-muted);
 }
 
 .booklist-container .btn-edit:hover,
@@ -269,8 +269,8 @@
 }
 
 .booklist-container .btn-delete {
-  background: #dc1c43;
-  color: #ffffff;
+  background: var(--danger);
+  color: var(--btn-primary-text);
 }
 
 @media (max-width: 1180px) {

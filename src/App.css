@@ -6,14 +6,15 @@ body,
   padding: 0;
   width: 100%;
   height: 100%;
-  font-family: "Inter", sans-serif;
-  background-color: #f9fafb;
+  font-family: var(--font-sans);
+  background-color: var(--canvas-bg);
+  color: var(--text-default);
   box-sizing: border-box;
   overflow-x: hidden;
 }
 
 /* ========= ESTRUTURA GERAL ========= */
-.app-container   {
+.app-container {
   display: flex;
   width: 100%;
   height: 100vh;
@@ -21,12 +22,12 @@ body,
 }
 
 /* ========= SIDEBAR ========= */
-.sidebar {
+.app-container .sidebar {
   width: 220px;
   flex-shrink: 0;
   height: 100vh;
-  background-color: #f9fafb;
-  border-right: 1px solid #e5e7eb;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--surface-border);
   padding: 1.1rem;
   display: flex;
   flex-direction: column;
@@ -43,17 +44,17 @@ body,
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 220px; /* largura da sidebar */
+  margin-left: 220px;
   width: calc(100% - 220px);
   min-height: 100vh;
-  background-color: #f3f4f6;
+  background-color: var(--main-bg);
 }
 
 .main-content.full {
   margin-left: 0;
   width: 100%;
-  display: block;     
-  min-height: 100vh;  
+  display: block;
+  min-height: 100vh;
 }
 
 /* ========= CONTEÚDO DAS PÁGINAS ========= */
@@ -65,12 +66,12 @@ body,
 }
 
 /* ========= AJUSTES DO HEADER ========= */
-.header {
+.app-container .header {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 20;
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-header);
 }

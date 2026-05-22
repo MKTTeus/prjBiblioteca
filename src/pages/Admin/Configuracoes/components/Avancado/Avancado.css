@@ -14,24 +14,24 @@
 
 .settings-icon {
   font-size: 20px;
-  color: #111827;
+  color: var(--text-default);
 }
 
 /* ALERT NEUTRO */
 .alert-neutral {
-  background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background-color: var(--main-bg);
+  border: 1px solid var(--surface-border);
   padding: 12px 14px;
   border-radius: 8px;
   font-size: 14px;
-  color: #374151;
+  color: var(--text-label);
   margin-bottom: 20px;
 }
 
 /* DIVISOR */
 .section-divider {
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--surface-border);
   margin: 20px 0;
 }
 
@@ -50,5 +50,5 @@
 
 /* Apenas texto vermelho */
 .text-danger {
-  color: #dc2626;
+  color: var(--danger);
 }

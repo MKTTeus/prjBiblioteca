@@ -9,8 +9,8 @@
   width: 100%;
   max-width: 100%;
   padding: 14px 18px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background: var(--canvas-bg);
+  border: 1px solid var(--surface-border);
   border-radius: 12px;
   box-sizing: border-box;
   transition: border-color 0.18s ease, box-shadow 0.18s ease,
@@ -18,14 +18,14 @@
 }
 
 .user-library-page .search-wrapper:focus-within {
-  background: #ffffff;
-  border-color: #bfdbfe;
+  background: var(--surface-bg);
+  border-color: var(--primary-muted);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 .user-library-page .search-icon {
   font-size: 22px;
-  color: #6b7280;
+  color: var(--text-subtle);
   flex-shrink: 0;
 }
 
@@ -34,13 +34,13 @@
   border: none;
   outline: none;
   background: transparent;
-  color: #111827;
+  color: var(--text-default);
   font-size: 14px;
   padding: 0;
 }
 
 .user-library-page .input-pesquisa::placeholder {
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
 .user-library-results {

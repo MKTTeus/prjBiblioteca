@@ -6,34 +6,34 @@
   min-height: 48px;
   padding: 0 14px;
   border-radius: 12px;
-  border: 1px solid #dbe1ea;
-  background: #f8fafc;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-muted);
   font-size: 14px;
-  color: #111827;
+  color: var(--text-default);
   cursor: pointer;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .SelectTrigger:hover {
-  border-color: #cbd5e1;
-  background: #ffffff;
+  border-color: var(--border-light);
+  background: var(--surface-bg);
 }
 
 .SelectTrigger:focus {
   outline: none;
-  border-color: #2563eb;
-  background: #ffffff;
+  border-color: var(--primary);
+  background: var(--surface-bg);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
 .SelectContent {
   position: fixed !important;
   z-index: 9999 !important;
-  background: #ffffff;
+  background: var(--surface-bg);
   border-radius: 14px;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   padding: 8px;
   min-width: 260px;
   max-width: 600px;
@@ -64,18 +64,18 @@
 }
 
 .SelectItem:hover {
-  background: #f3f4f6;
+  background: var(--main-bg);
 }
 
 .SelectItemText {
   flex: 1;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .SelectItemIndicator {
   margin-left: 8px;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .native-select,
@@ -84,9 +84,9 @@
   min-height: 48px;
   padding: 0 14px;
   border-radius: 12px;
-  border: 1px solid #dbe1ea;
+  border: 1px solid var(--surface-border);
   font-size: 14px;
-  background: #f8fafc;
+  background: var(--surface-muted);
   box-sizing: border-box;
 }
 

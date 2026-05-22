@@ -29,7 +29,7 @@
 .noti-item p {
   margin: 3px 0 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 /* HEADER */
@@ -41,5 +41,5 @@
 
 .bell-icon {
   font-size: 20px;
-  color: #111827;
+  color: var(--text-default);
 }

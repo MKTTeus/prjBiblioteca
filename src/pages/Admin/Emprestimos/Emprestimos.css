@@ -1,9 +1,13 @@
 .emp-page {
-  --emp-bg: #f6f7fb;
-  --emp-border-strong: #d7dce5;
-  --emp-text: #182337;
-  --emp-text-soft: #667085;
-  --emp-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --emp-bg: var(--canvas-bg);
+  --emp-border-strong: var(--surface-border);
+  --emp-text: var(--text-default);
+  --emp-text-soft: var(--text-muted);
+  --emp-shadow: var(--shadow-soft);
+  --emp-surface: var(--surface-bg);
+  --emp-surface-muted: var(--surface-muted);
+  --emp-surface-hover: var(--surface-hover);
+  --emp-accent-border: color-mix(in srgb, var(--primary) 35%, var(--surface-border));
   color: var(--emp-text);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   box-sizing: border-box;
@@ -14,25 +18,25 @@
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--btn-primary-text);
   padding: 25px;
   border-radius: 16px;
   margin-bottom: 35px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-soft);
 }
 
 .emp-header-copy h1 {
   margin: 0;
   font-size: 26px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--btn-primary-text);
 }
 
 .emp-header-copy p {
   margin: 8px 0 0;
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
+  color: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
 }
 
 .emp-header-actions {
@@ -48,8 +52,8 @@
   border: none;
   border-radius: 8px;
   padding: 10px 16px;
-  background: #ffffff;
-  color: #2563eb;
+  background: var(--surface-bg);
+  color: var(--primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -67,7 +71,7 @@
   gap: 14px;
   margin-bottom: 24px;
   padding: 16px 18px;
-  background: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
   border: 1px solid var(--emp-border-strong);
   border-radius: 20px;
   box-shadow: var(--emp-shadow);
@@ -80,18 +84,18 @@
   min-height: 54px;
   padding: 0 18px;
   border-radius: 14px;
-  background: #f3f4f8;
+  background: var(--emp-surface-muted, var(--surface-muted));
   border: 1px solid transparent;
 }
 
 .emp-search:focus-within {
-  border-color: #c7d2fe;
+  border-color: var(--emp-accent-border, var(--primary-muted));
   box-shadow: 0 0 0 4px rgba(52, 120, 246, 0.1);
 }
 
 .emp-search svg {
   font-size: 1.55rem;
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
   flex-shrink: 0;
 }
 
@@ -100,12 +104,12 @@
   outline: none;
   width: 100%;
   font-size: 0.98rem;
-  color: #344054;
+  color: var(--text-label);
   background: transparent;
 }
 
 .emp-search input::placeholder {
-  color: #8a94a6;
+  color: var(--text-muted);
 }
 
 .emp-filter-tabs {
@@ -118,10 +122,10 @@
 .emp-filter-tab {
   min-height: 38px;
   padding: 0 14px;
-  border: 1px solid #d7dce5;
+  border: 1px solid var(--emp-border-strong, var(--surface-border));
   border-radius: 999px;
-  background: #f3f4f8;
-  color: #344054;
+  background: var(--emp-surface-muted, var(--surface-muted));
+  color: var(--text-label);
   font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
@@ -129,14 +133,14 @@
 }
 
 .emp-filter-tab:hover {
-  background: #e9edf6;
-  border-color: #c8d1e0;
+  background: var(--surface-hover);
+  border-color: var(--surface-border);
 }
 
 .emp-filter-tab.is-active {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  color: #111827;
+  background: var(--surface-bg);
+  border-color: var(--border-light);
+  color: var(--text-default);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
 }
 
@@ -157,7 +161,7 @@
   margin: 0;
   font-size: 1.2rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .emp-table-box table {
@@ -168,8 +172,8 @@
 
 .emp-table-box thead {
   background: transparent;
-  color: #667085;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--emp-text-soft, var(--text-muted));
+  border-bottom: 1px solid var(--table-row-border);
 }
 
 .emp-table-box th,
@@ -186,21 +190,21 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
 }
 
 .emp-table-box td {
   font-size: 0.95rem;
-  color: #24324d;
-  border-bottom: 1px solid #edf0f5;
+  color: var(--text-default);
+  border-bottom: 1px solid var(--table-row-border);
 }
 
 .emp-table-box tbody tr:nth-child(even) {
-  background: #fbfcff;
+  background: var(--surface-muted);
 }
 
 .emp-table-box tbody tr:hover {
-  background: #f4f7ff;
+  background: var(--surface-hover);
 }
 
 .emp-table-box tbody tr:last-child td {
@@ -215,7 +219,7 @@
 
 .emp-id-cell {
   width: 72px;
-  color: #111827;
+  color: var(--text-default);
   font-weight: 600;
 }
 
@@ -223,7 +227,7 @@
   display: block;
   font-size: 0.98rem;
   font-weight: 700;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .emp-main-cell small {
@@ -231,7 +235,7 @@
   margin-top: 4px;
   font-size: 0.86rem;
   line-height: 1.45;
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
 }
 
 .emp-main-cell small + small {
@@ -255,34 +259,34 @@
 
 .emp-status.ativo {
   background: rgba(52, 120, 246, 0.12);
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .emp-status.atrasado {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--status-danger-bg);
+  color: var(--danger);
 }
 
 .emp-status.negado {
-  background: #fee2e2;
-  color: #dc2626;
+  background: var(--status-danger-bg);
+  color: var(--danger);
 }
 
 .emp-status.pendente {
-  background: #fef9c3;
-  color: #a16207;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 
 
 .emp-status.devolvido {
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--status-success-bg);
+  color: var(--success);
 }
 
 .emp-status.aceito {
-  background: #dcfce7;
-  color: #16a34a;
+  background: var(--status-success-bg);
+  color: var(--success);
 }
 
 .emp-actions-cell {
@@ -295,10 +299,10 @@
 .emp-btn-light {
   min-height: 38px;
   padding: 0 14px;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
-  background: #ffffff;
-  color: #24324d;
+  background: var(--surface-bg);
+  color: var(--text-default);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -306,8 +310,8 @@
 }
 
 .emp-btn-light:hover {
-  background: #f8fafc;
-  border-color: #98a2b3;
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
 }
 
 .emp-modal-overlay {
@@ -328,7 +332,7 @@
 }
 
 .emp-modal {
-  background: #ffffff;
+  background: var(--surface-bg);
   width: min(1180px, 100%);
   max-height: 92vh;
   border-radius: 20px;
@@ -348,22 +352,22 @@
   justify-content: space-between;
   gap: 16px;
   padding: 26px 30px 22px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--table-row-border);
 }
 
 .emp-modal-topbar h2 {
   margin: 0;
   font-size: 2rem;
-  color: #24324d;
+  color: var(--text-default);
 }
 
 .emp-modal-close {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 1px solid #d1d5db;
-  background: #f8fafc;
-  color: #667085;
+  border: 1px solid var(--input-border);
+  background: var(--surface-muted);
+  color: var(--emp-text-soft, var(--text-muted));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -387,16 +391,16 @@
 
 .emp-step-card,
 .emp-summary-card {
-  border: 1px solid #d6dbe6;
+  border: 1px solid var(--surface-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--surface-bg);
   overflow: hidden;
 }
 
 .emp-step-header {
   padding: 18px 24px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(180deg, #fbfcfe 0%, #f8fafc 100%);
+  border-bottom: 1px solid var(--table-row-border);
+  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--canvas-bg) 100%);
 }
 
 .emp-step-header div {
@@ -408,12 +412,12 @@
 .emp-step-header h3,
 .emp-summary-card h3 {
   margin: 0;
-  color: #24324d;
+  color: var(--text-default);
   font-size: 1.1rem;
 }
 
 .emp-step-number {
-  color: #24324d;
+  color: var(--text-default);
   font-weight: 700;
 }
 
@@ -423,14 +427,14 @@
   align-items: center;
   gap: 10px;
   padding: 13px 16px;
-  border: 1px solid #cfd7e3;
+  border: 1px solid var(--input-border);
   border-radius: 10px;
-  background: #ffffff;
+  background: var(--surface-bg);
 }
 
 .emp-step-search svg {
   flex-shrink: 0;
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
   font-size: 1.35rem;
 }
 
@@ -439,17 +443,17 @@
   outline: none;
   width: 100%;
   font-size: 1rem;
-  color: #344054;
+  color: var(--text-label);
   background: transparent;
 }
 
 .emp-list-box {
-  border: 1px solid #d6dbe6;
+  border: 1px solid var(--surface-border);
   border-radius: 0 0 12px 12px;
   overflow: hidden;
   height: 420px;
   overflow-y: auto;
-  background: #ffffff;
+  background: var(--surface-bg);
 }
 
 .emp-list-box-placeholder {
@@ -459,8 +463,8 @@
 .emp-list-item {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-bottom: 1px solid var(--table-row-border);
+  background: var(--surface-bg);
   padding: 14px 16px;
   text-align: left;
   cursor: pointer;
@@ -483,21 +487,21 @@
 }
 
 .emp-list-item:hover {
-  background: #f8fafc;
+  background: var(--surface-muted);
 }
 
 .emp-list-item.selected {
-  background: #eaf1ff;
-  box-shadow: inset 3px 0 0 #2563eb;
+  background: var(--primary-muted);
+  box-shadow: inset 3px 0 0 var(--primary);
 }
 
 .emp-list-item strong {
-  color: #24324d;
+  color: var(--text-default);
   font-size: 0.98rem;
 }
 
 .emp-list-item small {
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
 }
 
 .emp-empty-state {
@@ -505,7 +509,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
   padding: 24px;
   text-align: center;
   font-size: 1rem;
@@ -513,7 +517,7 @@
 
 .emp-summary-card {
   padding: 20px 22px;
-  background: linear-gradient(180deg, #fbfcfe 0%, #f8fafc 100%);
+  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--canvas-bg) 100%);
 }
 
 .emp-summary-card-fixed {
@@ -531,7 +535,7 @@
   align-items: center;
   gap: 16px;
   padding: 8px 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--surface-border);
 }
 
 .emp-summary-row:first-of-type {
@@ -540,13 +544,13 @@
 }
 
 .emp-summary-row span {
-  color: #667085;
+  color: var(--emp-text-soft, var(--text-muted));
   flex: 0 0 92px;
   font-size: 0.92rem;
 }
 
 .emp-summary-row strong {
-  color: #24324d;
+  color: var(--text-default);
   text-align: right;
   font-size: 0.96rem;
   font-weight: 600;
@@ -562,8 +566,8 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 18px 36px 24px;
-  border-top: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-top: 1px solid var(--surface-border);
+  background: var(--surface-bg);
   position: -webkit-sticky;
   position: sticky;
   bottom: 0;
@@ -573,18 +577,18 @@
   min-width: 146px;
   min-height: 48px;
   border-radius: 12px;
-  border: 1px solid #cfd7e3;
-  background: #ffffff;
-  color: #24324d;
+  border: 1px solid var(--input-border);
+  background: var(--surface-bg);
+  color: var(--text-default);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .emp-modal-actions .emp-confirmar {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #ffffff;
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--btn-primary-text);
   box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
 }
 

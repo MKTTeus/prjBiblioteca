@@ -22,7 +22,7 @@
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
-  color: #f9fafb;
+  color: var(--text-on-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -54,9 +54,9 @@
   height: 18px;
   padding: 0 4px;
   border-radius: 999px;
-  background: #ef4444;
-  color: #ffffff;
-  border: 2px solid #1e3a8a;
+  background: var(--danger);
+  color: var(--btn-primary-text);
+  border: 2px solid var(--primary-strong);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -72,10 +72,10 @@
   width: min(380px, calc(100vw - 48px));
   padding: 20px 18px;
   border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
-  color: #111827;
+  color: var(--text-default);
   z-index: 5;
   box-sizing: border-box;
 }
@@ -93,18 +93,18 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .user-dashboard-notifications__header p {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .user-dashboard-notifications__count {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
@@ -131,7 +131,7 @@
 }
 
 .user-dashboard-notification:hover {
-  background: #f9fafb;
+  background: var(--canvas-bg);
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
 }
@@ -171,14 +171,14 @@
 .user-dashboard-notification__top strong {
   display: block;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-default);
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .user-dashboard-notification__body p {
   margin: 0 0 4px;
-  color: #4b5563;
+  color: var(--tabs-text);
   font-size: 12px;
   line-height: 1.5;
   display: -webkit-box;
@@ -190,34 +190,34 @@
 
 .user-dashboard-notification__body small {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .user-dashboard-notification--warning {
-  background: #fffbeb;
+  background: var(--status-warning-surface);
 }
 
 .user-dashboard-notification--info {
-  background: #eff6ff;
+  background: var(--status-info-surface);
 }
 
 .user-dashboard-notification--success {
-  background: #ecfdf5;
+  background: var(--status-success-surface);
 }
 
 .user-dashboard-notification__icon--warning {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .user-dashboard-notification__icon--info {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .user-dashboard-notification__icon--success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .user-dashboard-notifications__empty {

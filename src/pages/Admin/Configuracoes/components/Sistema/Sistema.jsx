@@ -5,6 +5,7 @@ import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { getConfigValue } from "../../utils/configUtils";
 import { applyTheme, getSavedTheme } from "../../../../../utils/theme";
+import { getReactSelectStyles } from "../../../../../utils/reactSelectStyles";
 import "./Sistema.css";
 
 const temaOptions = [
@@ -30,33 +31,6 @@ const backupOptions = [
   { value: "mensal", label: "Mensal" },
 ];
 
-const customStyles = {
-  control: (base) => ({
-    ...base,
-    backgroundColor: "#f3f4f6",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    padding: "2px",
-    boxShadow: "none",
-    "&:hover": {
-      borderColor: "#111827",
-    },
-  }),
-  menu: (base) => ({
-    ...base,
-    borderRadius: "10px",
-    overflow: "hidden",
-    animation: "fadeIn 0.15s ease-in-out",
-  }),
-  option: (base, state) => ({
-    ...base,
-    backgroundColor: state.isFocused ? "#e5e7eb" : "white",
-    color: "#111827",
-    padding: "10px",
-    cursor: "pointer",
-  }),
-};
-
 export default function Sistema() {
   const { addToast } = useToast();
   const [tema, setTema] = useState(getSavedTheme());
@@ -64,6 +38,7 @@ export default function Sistema() {
   const [fuso, setFuso] = useState("sp");
   const [backup, setBackup] = useState("diario");
   const [isSaving, setIsSaving] = useState(false);
+  const selectStyles = getReactSelectStyles();
 
   useEffect(() => {
     async function load() {
@@ -116,7 +91,7 @@ export default function Sistema() {
             options={temaOptions}
             value={temaOptions.find((option) => option.value === tema)}
             onChange={(option) => setTema(option?.value || "Claro")}
-            styles={customStyles}
+            styles={selectStyles}
           />
         </div>
 
@@ -126,7 +101,7 @@ export default function Sistema() {
             options={idiomaOptions}
             value={idiomaOptions.find((option) => option.value === idioma)}
             onChange={(option) => setIdioma(option?.value || "pt-br")}
-            styles={customStyles}
+            styles={selectStyles}
           />
         </div>
 
@@ -136,7 +111,7 @@ export default function Sistema() {
             options={fusoOptions}
             value={fusoOptions.find((option) => option.value === fuso)}
             onChange={(option) => setFuso(option?.value || "sp")}
-            styles={customStyles}
+            styles={selectStyles}
           />
         </div>
 
@@ -146,7 +121,7 @@ export default function Sistema() {
             options={backupOptions}
             value={backupOptions.find((option) => option.value === backup)}
             onChange={(option) => setBackup(option?.value || "diario")}
-            styles={customStyles}
+            styles={selectStyles}
           />
         </div>
       </div>

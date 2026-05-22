@@ -11,7 +11,7 @@
   justify-content: space-between;
   align-items: center;
   background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-  color: #f9fafb;
+  color: var(--text-on-primary);
   padding: 25px;
   border-radius: 16px;
   margin-bottom: 35px;
@@ -26,21 +26,21 @@
 
 .book-disponivel{
   font-size:11px;
-  color:#7CFF9B;
+  color: var(--accent-available);
 }
 
 .input-pesquisa{
   padding:10px;
   border-radius:8px;
-  border:1px solid #ccc;
+  border: 1px solid var(--input-border-muted);
   width:250px;
 }
 
 /* BOTÃO */
 
 .btn-novo{
-  background:#ff3b3b;
-  color:white;
+  background: var(--danger);
+  color: var(--btn-primary-text);
   border:none;
   padding:10px 18px;
   border-radius:8px;
@@ -49,7 +49,7 @@
 }
 
 .btn-novo:hover{
-  background:#e02d2d;
+  background: color-mix(in srgb, var(--danger) 85%, black);
 }
 
 /* GRID NETFLIX */
@@ -98,16 +98,16 @@
 }
 
 .btn-editar-tombos-card{
-  background:#ffd60a;
-  border:1px solid #d8b100;
+  background: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 70%, black);
   border-radius:6px;
   padding:7px 9px;
   font-size:11px;
-  color:#1a1a1a;
+  color: var(--text-default);
   cursor:pointer;
   margin-bottom:6px;
 }
 
 .btn-editar-tombos-card:hover{
-  background:#f5c800;
+  background: color-mix(in srgb, var(--warning) 85%, black);
 }

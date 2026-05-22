@@ -1,6 +1,6 @@
 .signup-wrapper {
   min-height: 100vh;
-  background: #eef1f5;
+  background: var(--canvas-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -15,7 +15,7 @@
 .icon-circle {
   width: 55px;
   height: 55px;
-  background: #ffffff;
+  background: var(--surface-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -32,12 +32,12 @@
 
 .signup-header p {
   font-size: 13px;
-  color: #555;
+  color: var(--text-soft);
 }
 
 .signup-card {
   width: 540px;
-  background: white;
+  background: var(--surface-bg);
   padding: 25px;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.06);
@@ -51,7 +51,7 @@
 .subtlitle h3 {
   text-align: center;
   font-size: 13px;
-  color: #666;
+  color: var(--text-muted);
   margin-bottom: 20px;
 }
 
@@ -65,7 +65,7 @@
   border: none;
   font-size: 14px;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--primary);
   cursor: pointer;
   margin-bottom: 15px;
   transition: 0.2s;
@@ -80,7 +80,7 @@
 .toggle {
   position: relative;
   display: flex;
-  background: #e5e7eb;
+  background: var(--btn-muted-bg);
   border-radius: 30px;
   margin-bottom: 20px;
   overflow: hidden;
@@ -109,7 +109,7 @@
   width: 48%;
   height: calc(100% - 8px);
   border-radius: 30px;
-  background: white;
+  background: var(--surface-bg);
   transition: 0.3s ease;
   z-index: 1;
 }
@@ -119,11 +119,11 @@
 }
 
 .toggle.student .active {
-  color: #1d4ed8;
+  color: var(--status-info-text);
 }
 
 .toggle.community .active {
-  color: #15803d;
+  color: var(--status-success-text);
 }
 
 /* INFO BOX */
@@ -136,13 +136,13 @@
 }
 
 .info-box.student {
-  background: #e0ecff;
-  color: #1d4ed8;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .info-box.community {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 /* INPUTS */
@@ -156,7 +156,7 @@
 .input-group label {
   font-size: 13px;
   margin-bottom: 4px;
-  color: #444;
+  color: var(--text-soft);
 }
 
 .required {
@@ -166,16 +166,16 @@
 .input-group input {
   padding: 8px;
   border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #f3f4f6;
+  border: 1px solid var(--input-border-alt);
+  background: var(--main-bg);
   font-size: 14px;
   transition: 0.2s;
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #2563eb;
-  background: #fff;
+  border-color: var(--primary);
+  background: var(--surface-bg);
 }
 
 .row {
@@ -191,7 +191,7 @@
 
 .submit-btn {
   width: 100%;
-  background: #ef4444;
+  background: var(--danger);
   color: white;
   border: none;
   padding: 10px;

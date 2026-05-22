@@ -67,7 +67,7 @@ function AdminLayout() {
 function App() {
   useEffect(() => {
     import("./utils/theme").then(({ applyTheme, getSavedTheme }) => {
-      applyTheme(getSavedTheme());
+      applyTheme(getSavedTheme(), { animate: false });
     });
   }, []);
   return (

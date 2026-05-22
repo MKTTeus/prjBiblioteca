@@ -4,7 +4,7 @@
   width: 100%;
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
-  background: #f5f6fa;
+  background: var(--canvas-bg);
 }
 
 
@@ -38,8 +38,8 @@
   top: 0;
   width: calc(100% - 200px);
   height: 70px;
-  background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
+  background-color: var(--surface-bg);
+  border-bottom: 1px solid var(--sidebar-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -78,7 +78,7 @@
 
 .highlight {
   font-weight: 600;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .header-right {
@@ -98,8 +98,8 @@
   right: -4px;
   width: 16px;
   height: 16px;
-  background-color: #ef4444;
-  color: white;
+  background-color: var(--danger);
+  color: var(--btn-primary-text);
   font-size: 10px;
   border-radius: 50%;
   display: flex;
@@ -112,8 +112,8 @@
   align-items: center;
   gap: 4px;
   padding: 6px 10px;
-  background-color: #f3f4f6;
-  border: 1px solid #d1d5db;
+  background-color: var(--main-bg);
+  border: 1px solid var(--input-border);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
@@ -126,8 +126,8 @@
   top: 0;
   left: 0;
   bottom: 0;
-  background-color: #fff;
-  border-right: 1px solid #e5e7eb;
+  background-color: var(--surface-bg);
+  border-right: 1px solid var(--surface-border);
   padding: 20px;
   box-sizing: border-box;
   display: flex;
@@ -149,7 +149,7 @@
 .sidebar-title {
   font-size: 12px;
   font-weight: 600;
-  color: #6b7280;
+  color: var(--text-subtle);
   margin-bottom: 8px;
 }
 
@@ -168,15 +168,15 @@
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  color: #111827;
+  color: var(--text-default);
   font-size: 14px;
   padding: 6px 8px;
   border-radius: 6px;
 }
 
 .sidebar-section li a.active {
-  background-color: #e0f2fe;
-  color: #2563eb;
+  background-color: var(--primary-muted);
+  color: var(--primary);
 }
 
 .logout-section li {
@@ -187,12 +187,12 @@
   cursor: pointer;
   border-radius: 6px;
   font-size: 14px;
-  color: #ef4444;
+  color: var(--danger);
   transition: background 0.2s;
 }
 
 .logout-section li:hover {
-  background-color: #fee2e2;
+  background-color: var(--status-danger-bg);
 }
 
 /* Remove layout lateral nas páginas de autenticação */

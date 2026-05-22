@@ -21,15 +21,15 @@
 }
 
 .user-notification-item--info {
-  background: #eff6ff;
+  background: var(--status-info-surface);
 }
 
 .user-notification-item--warning {
-  background: #fffbeb;
+  background: var(--status-warning-surface);
 }
 
 .user-notification-item--success {
-  background: #ecfdf5;
+  background: var(--status-success-surface);
 }
 
 .user-notification-item__content {
@@ -55,18 +55,18 @@
 }
 
 .user-notification-item__icon--info {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .user-notification-item__icon--warning {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .user-notification-item__icon--success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .user-notification-item__top {
@@ -80,19 +80,19 @@
 .user-notification-item h4 {
   margin: 0 0 6px;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .user-notification-item p {
   margin: 3px 0;
-  color: #4b5563;
+  color: var(--tabs-text);
   font-size: 12px;
   line-height: 1.5;
 }
 
 .user-notification-item small {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 @media (max-width: 700px) {

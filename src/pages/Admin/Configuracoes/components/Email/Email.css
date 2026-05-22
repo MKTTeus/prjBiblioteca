@@ -14,7 +14,7 @@
 
 .email-icon {
   font-size: 18px;
-  color: #111827;
+  color: var(--text-default);
 }
 
 /* GRID */
@@ -41,9 +41,9 @@
 .form-group input {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid var(--surface-border);
   border-radius: 8px;
-  background-color: #f9fafb;
+  background-color: var(--canvas-bg);
   font-size: 14px;
   transition: all 0.2s ease;
 }
@@ -51,8 +51,8 @@
 /* ANIMAÇÃO DE FOCO */
 .form-group input:focus {
   outline: none;
-  border-color: #111827;
-  background-color: #ffffff;
+  border-color: var(--text-default);
+  background-color: var(--surface-bg);
   box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
 }
 
@@ -73,14 +73,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #6b7280;
+  color: var(--text-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .toggle-password:hover {
-  color: #111827;
+  color: var(--text-default);
 }
 
 /* BOTÕES TESTE */
@@ -91,8 +91,8 @@
 }
 
 .btn-outline {
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--surface-bg);
+  border: 1px solid var(--input-border);
   padding: 9px 16px;
   border-radius: 6px;
   cursor: pointer;
@@ -100,7 +100,7 @@
 }
 
 .btn-outline:hover {
-  background-color: #f3f4f6;
+  background-color: var(--main-bg);
 }
 
 /* AÇÕES */
@@ -111,8 +111,8 @@
 }
 
 .btn-secondary {
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--surface-bg);
+  border: 1px solid var(--input-border);
   padding: 9px 16px;
   border-radius: 6px;
   cursor: pointer;

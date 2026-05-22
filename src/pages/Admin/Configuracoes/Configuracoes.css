@@ -3,12 +3,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: white;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--text-on-primary);
   padding: 25px;
   border-radius: 16px;
   margin-bottom: 35px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-soft);
   flex-wrap: wrap;
 }
 
@@ -16,12 +16,12 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--text-on-primary);
 }
 
 .top-bar p {
   margin: 8px 0 0 0;
-  color: rgba(255, 255, 255, 0.9);
+  color: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
   font-size: 16px;
 }
 
@@ -48,7 +48,7 @@ button:hover {
 
 .config-container button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .config-container button:active:not(:disabled) {
@@ -62,27 +62,27 @@ button:hover {
 }
 
 .btn-outline {
-  background: white;
+  background: var(--surface-bg);
   border: none;
-  color: #2563eb;
+  color: var(--primary);
   font-weight: 500;
 }
 
 .top-actions .config-export-btn {
-  background: rgba(255, 255, 255, 0.96);
-  color: #1e3a8a;
+  background: color-mix(in srgb, var(--surface-bg) 96%, transparent);
+  color: var(--primary-strong);
   border: 1px solid rgba(255, 255, 255, 0.72);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
 }
 
 .btn-outline:hover {
-  background: white;
+  background: var(--surface-bg);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 .top-actions .config-export-btn:hover {
-  background: #ffffff;
-  color: #1d4ed8;
+  background: var(--surface-bg);
+  color: var(--status-info-text);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
 }
 
@@ -93,8 +93,8 @@ button:hover {
 }
 
 .btn-success {
-  background: rgba(255, 255, 255, 0.16);
-  color: white;
+  background: color-mix(in srgb, var(--surface-bg) 16%, transparent);
+  color: var(--text-on-primary);
   border: 1px solid rgba(255, 255, 255, 0.28);
   font-weight: 500;
 }
@@ -104,27 +104,27 @@ button:hover {
 }
 
 .btn-primary {
-  background: #111827;
-  color: white;
+  background: var(--btn-dark-bg);
+  color: var(--text-on-primary);
 }
 
 .btn-primary:hover {
-  background: #1f2937;
+  background: var(--btn-dark-hover);
 }
 
 .btn-secondary {
-  background: #e5e7eb;
+  background: var(--btn-muted-bg);
 }
 
 .btn-secondary:hover {
-  background: #d1d5db;
+  background: var(--btn-muted-hover);
 }
 
 /* ===== TABS MODERNAS ===== */
 .tabs {
   display: flex;
   justify-content: space-between; /* distribui até o final */
-  background: #e5e7eb;
+  background: var(--btn-muted-bg);
   padding: 6px;
   border-radius: 14px;
   margin-bottom: 25px;
@@ -134,7 +134,7 @@ button:hover {
   flex: 1;                 /* todas ocupam espaço igual */
   text-align: center;      /* centraliza o texto */
   text-decoration: none;
-  color: #4b5563;
+  color: var(--tabs-text);
   padding: 8px 0;
   border-radius: 10px;
   font-weight: 500;
@@ -142,12 +142,12 @@ button:hover {
 }
 
 .tab-btn:hover {
-  background: #d1d5db;
+  background: var(--btn-muted-hover);
 }
 
 .tab-btn.active {
-  background: white;
-  color: #111827;
+  background: var(--surface-bg);
+  color: var(--text-default);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
   cursor: default;
@@ -155,10 +155,10 @@ button:hover {
 
 /* CARD */
 .card {
-  background: white;
+  background: var(--surface-bg);
   padding: 25px;
   border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-soft);
 }
 
 /* FORM */
@@ -181,19 +181,19 @@ button:hover {
 .form-group label {
   margin-bottom: 6px;
   font-size: 14px;
-  color: #374151;
+  color: var(--text-label);
 }
 
 .form-group input {
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   transition: 0.2s;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: var(--input-focus-border);
   box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
 }
 
@@ -231,31 +231,31 @@ button:hover {
 }
 
 .config-container .card-actions > .btn-secondary {
-  background: #e5e7eb;
-  color: #111827;
+  background: var(--btn-muted-bg);
+  color: var(--text-default);
 }
 
 .config-container .card-actions > .btn-secondary:hover:not(:disabled) {
-  background: #d1d5db;
+  background: var(--btn-muted-hover);
 }
 
 .config-container .card-actions > .btn-secondary:disabled {
-  background: #e5e7eb;
-  color: #111827;
+  background: var(--btn-muted-bg);
+  color: var(--text-default);
 }
 
 .config-container .card-actions > .btn-primary {
-  background: #111827;
-  color: #ffffff;
+  background: var(--btn-dark-bg);
+  color: var(--btn-primary-text);
 }
 
 .config-container .card-actions > .btn-primary:hover:not(:disabled) {
-  background: #1f2937;
+  background: var(--btn-dark-hover);
 }
 
 .config-container .card-actions > .btn-primary:disabled {
-  background: #111827;
-  color: #ffffff;
+  background: var(--btn-dark-bg);
+  color: var(--btn-primary-text);
 }
 
 /* RESPONSIVO */

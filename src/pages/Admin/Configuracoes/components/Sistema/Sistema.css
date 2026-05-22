@@ -14,7 +14,7 @@
 
 .sistema-icon {
   font-size: 18px;
-  color: #111827;
+  color: var(--text-default);
 }
 
 /* GRID */
@@ -36,9 +36,9 @@
 .form-group select {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   border-radius: 8px;
-  background-color: #f3f4f6;
+  background-color: var(--main-bg);
   font-size: 14px;
   appearance: none;
   cursor: pointer;
@@ -52,8 +52,8 @@
 }
 
 .btn-secondary {
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--surface-bg);
+  border: 1px solid var(--input-border);
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;

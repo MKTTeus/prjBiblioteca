@@ -18,12 +18,12 @@
 .header-dashboard {
   width: 100%;
   max-width: 100%;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: #f9fafb;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--text-on-primary);
   padding: 25px;
   border-radius: 16px;
   margin-bottom: 35px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  box-shadow: var(--shadow-soft);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -40,7 +40,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--text-on-primary);
 }
 
 .header-dashboard p {
@@ -59,19 +59,19 @@
 }
 
 .card {
-  background: #ffffff;
+  background: var(--surface-bg);
   padding: 18px 18px 16px;
   border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--surface-border);
   transition: transform 0.18s ease, box-shadow 0.18s ease,
     border-color 0.18s ease;
 }
 
 .card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
-  border-color: #d1d5db;
+  box-shadow: var(--shadow-soft);
+  border-color: var(--input-border);
 }
 
 .card-header {
@@ -80,7 +80,7 @@
   align-items: center;
   margin-bottom: 10px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-label);
   font-size: 13px;
 }
 
@@ -88,12 +88,12 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .card small {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .card-link {
@@ -118,7 +118,7 @@
 
 /* Opcional: quando estiver ativo (rota atual) */
 .card-link.active {
-  outline: 2px solid #4a90e2;
+  outline: 2px solid var(--hero-outline);
 }
 
 /* ICONES DOS CARDS */
@@ -129,45 +129,45 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #f9fafb;
+  color: var(--text-on-primary);
   font-size: 18px;
 }
 
 .blue {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, var(--accent-blue), var(--primary));
 }
 
 .green {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: linear-gradient(135deg, var(--accent-green), var(--success));
 }
 
 .orange {
-  background: linear-gradient(135deg, #f97316, #ea580c);
+  background: linear-gradient(135deg, var(--accent-orange), var(--warning));
 }
 
 .red {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, var(--accent-red), var(--danger));
 }
 
 /* INDICADORES */
 .positive {
-  color: #16a34a;
+  color: var(--success);
   font-weight: 500;
 }
 
 .danger {
-  color: #dc2626;
+  color: var(--danger);
   font-weight: 500;
 }
 
 /* BLOCO DE NOTIFICACOES */
 .notifications {
   margin-top: 10px;
-  background: #ffffff;
+  background: var(--surface-bg);
   padding: 20px 18px;
   border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
-  border: 1px solid #e5e7eb;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--surface-border);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -188,18 +188,18 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .notifications-header p {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .notifications-badge {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
@@ -222,7 +222,7 @@
 }
 
 .dashboard-notification:hover {
-  background: #f9fafb;
+  background: var(--canvas-bg);
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
 }
@@ -243,20 +243,20 @@
 .dashboard-notification strong {
   display: block;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-default);
   overflow-wrap: break-word;
 }
 
 .dashboard-notification p {
   margin: 3px 0;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--tabs-text);
   overflow-wrap: break-word;
 }
 
 .dashboard-notification small {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .dashboard-notification button {
@@ -265,7 +265,7 @@
   font-weight: 500;
   font-size: 12px;
   cursor: pointer;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 /* ICONES NAS NOTIFICACOES */
@@ -280,31 +280,31 @@
 }
 
 .dashboard-notification__icon--warning {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .dashboard-notification__icon--info {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .dashboard-notification__icon--success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 /* CORES DE BACKGROUND DAS NOTIFICACOES */
 .dashboard-notification--warning {
-  background: #fffbeb;
+  background: var(--status-warning-surface);
 }
 
 .dashboard-notification--info {
-  background: #eff6ff;
+  background: var(--status-info-surface);
 }
 
 .dashboard-notification--success {
-  background: #ecfdf5;
+  background: var(--status-success-surface);
 }
 
 /* NOTIFICATIONS DROPDOWN */
@@ -319,7 +319,7 @@
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.12);
-  color: #f9fafb;
+  color: var(--text-on-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -351,9 +351,9 @@
   height: 18px;
   padding: 0 4px;
   border-radius: 999px;
-  background: #ef4444;
-  color: #ffffff;
-  border: 2px solid #1e3a8a;
+  background: var(--danger);
+  color: var(--btn-primary-text);
+  border: 2px solid var(--primary-strong);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -369,10 +369,10 @@
   width: min(380px, calc(100vw - 48px));
   padding: 20px 18px;
   border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
   box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
-  color: #111827;
+  color: var(--text-default);
   z-index: 5;
   box-sizing: border-box;
 }
@@ -390,18 +390,18 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .admin-dashboard-notifications__header p {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .admin-dashboard-notifications__count {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--status-danger-bg);
+  color: var(--status-danger-text);
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 11px;
@@ -428,7 +428,7 @@
 }
 
 .admin-dashboard-notification:hover {
-  background: #f9fafb;
+  background: var(--canvas-bg);
   box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
 }
@@ -468,14 +468,14 @@
 .admin-dashboard-notification__top strong {
   display: block;
   font-size: 14px;
-  color: #111827;
+  color: var(--text-default);
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 .admin-dashboard-notification__body p {
   margin: 0 0 4px;
-  color: #4b5563;
+  color: var(--tabs-text);
   font-size: 12px;
   line-height: 1.5;
   display: -webkit-box;
@@ -487,34 +487,34 @@
 
 .admin-dashboard-notification__body small {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .admin-dashboard-notification--warning {
-  background: #fffbeb;
+  background: var(--status-warning-surface);
 }
 
 .admin-dashboard-notification--info {
-  background: #eff6ff;
+  background: var(--status-info-surface);
 }
 
 .admin-dashboard-notification--success {
-  background: #ecfdf5;
+  background: var(--status-success-surface);
 }
 
 .admin-dashboard-notification__icon--warning {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .admin-dashboard-notification__icon--info {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .admin-dashboard-notification__icon--success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .admin-empty-state {
@@ -530,9 +530,9 @@
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background: #ffffff;
-  color: #374151;
+  border: 1px solid var(--input-border);
+  background: var(--surface-bg);
+  color: var(--text-label);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -541,9 +541,9 @@
 }
 
 .view-all:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #111827;
+  background: var(--canvas-bg);
+  border-color: var(--border-strong);
+  color: var(--text-default);
 }
 
 /* BOTAO "VER TODOS" */
@@ -552,8 +552,8 @@
   margin-top: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--surface-border);
+  background: var(--canvas-bg);
   font-weight: 500;
   font-size: 13px;
   cursor: pointer;
@@ -561,18 +561,18 @@
 }
 
 .view-all:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: var(--main-bg);
+  border-color: var(--input-border);
 }
 
 /* ACOES RAPIDAS */
 .quick-actions {
   margin-top: 20px;
-  background: #ffffff;
+  background: var(--surface-bg);
   padding: 20px 18px;
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-soft);
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -582,7 +582,7 @@
   margin: 0 0 16px;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .actions-container {
@@ -610,7 +610,7 @@
   padding: 13px 48px;
   border: none;
   border-radius: 12px;
-  color: #f9fafb;
+  color: var(--text-on-primary);
   font-size: 14px;
   font-weight: 600;
   position: relative;
@@ -636,18 +636,18 @@
 
 /* CORES DOS BOTOES DE ACAO */
 .action-btn.red {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  background: linear-gradient(135deg, var(--accent-red), var(--status-danger-text));
 }
 
 .action-btn.blue {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, var(--accent-blue), var(--info));
 }
 
 .action-btn.green {
-  background: linear-gradient(135deg, #22c55e, #15803d);
+  background: linear-gradient(135deg, var(--accent-green), var(--status-success-text));
 }
 .action-btn.yellow {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  background: linear-gradient(135deg, var(--warning), var(--status-warning-text));
 }
 .action-btn:hover {
   transform: translateY(-2px);

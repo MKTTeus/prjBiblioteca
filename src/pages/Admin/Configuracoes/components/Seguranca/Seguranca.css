@@ -14,13 +14,13 @@
 
 .shield-icon {
   font-size: 18px;
-  color: #111827;
+  color: var(--text-default);
 }
 
 /* ALERT */
 .alert-box {
-  background-color: #ff3616;
-  border: 1px solid #e5e7eb;
+  background-color: var(--danger);
+  border: 1px solid var(--surface-border);
   padding: 12px 14px;
   border-radius: 8px;
   font-size: 14px;
@@ -46,7 +46,7 @@
 .form-group input {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--surface-border);
   border-radius: 6px;
   font-size: 14px;
 }
@@ -62,7 +62,7 @@
 .switch-row p {
   margin: 3px 0 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--text-subtle);
 }
 
 .switch-title {
@@ -79,8 +79,8 @@
 }
 
 .btn-secondary {
-  background: white;
-  border: 1px solid #d1d5db;
+  background: var(--surface-bg);
+  border: 1px solid var(--input-border);
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;

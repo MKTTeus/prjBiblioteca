@@ -1,0 +1,65 @@
+function readCssVar(name) {
+  if (typeof window === "undefined") {
+    return "";
+  }
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+export function getReactSelectStyles() {
+  const surfaceBg = readCssVar("--input-bg") || "#ffffff";
+  const border = readCssVar("--input-border") || "#e5e7eb";
+  const text = readCssVar("--text-default") || "#111827";
+  const hover = readCssVar("--select-option-hover") || "#e5e7eb";
+  const menuBg = readCssVar("--select-menu-bg") || surfaceBg;
+
+  return {
+    control: (base, state) => ({
+      ...base,
+      backgroundColor: surfaceBg,
+      border: `1px solid ${border}`,
+      borderRadius: "8px",
+      padding: "2px",
+      boxShadow: "none",
+      color: text,
+      "&:hover": {
+        borderColor: readCssVar("--text-default") || text,
+      },
+      ...(state.isFocused && {
+        borderColor: readCssVar("--primary") || "#2563eb",
+        boxShadow: `0 0 0 3px ${readCssVar("--focus-ring") || "rgba(37, 99, 235, 0.12)"}`,
+      }),
+    }),
+    menu: (base) => ({
+      ...base,
+      backgroundColor: menuBg,
+      borderRadius: "10px",
+      overflow: "hidden",
+      border: `1px solid ${border}`,
+      zIndex: 20,
+    }),
+    menuList: (base) => ({
+      ...base,
+      backgroundColor: menuBg,
+      padding: 0,
+    }),
+    option: (base, state) => ({
+      ...base,
+      backgroundColor: state.isFocused || state.isSelected ? hover : menuBg,
+      color: text,
+      padding: "10px",
+      cursor: "pointer",
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: text,
+    }),
+    input: (base) => ({
+      ...base,
+      color: text,
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: readCssVar("--text-muted") || "#64748b",
+    }),
+  };
+}

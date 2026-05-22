@@ -17,7 +17,7 @@
 
 /* Container principal do modal */
 .modal-container {
-  background: #fff;
+  background: var(--surface-bg);
   width: 90%;
   max-width: 900px;
   max-height: 95vh;
@@ -36,14 +36,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--surface-border);
   padding-bottom: 10px;
 }
 
 .modal-header h2 {
   font-size: 1.6rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--text-default);
 }
 
 .close-btn {
@@ -51,11 +51,11 @@
   border: none;
   font-size: 28px;
   cursor: pointer;
-  color: #777;
+  color: var(--text-muted);
   transition: color 0.2s ease;
 }
 .close-btn:hover {
-  color: #4a87ff;
+  color: var(--primary);
 }
 
 /* Conteúdo do formulário */
@@ -76,7 +76,7 @@
 input, select, textarea {
   padding: 10px 14px;
   border-radius: 8px;
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--input-border);
   outline: none;
   font-size: 0.95rem;
   transition: 0.2s;
@@ -85,13 +85,13 @@ input, select, textarea {
 }
 
 input:focus, textarea:focus, select:focus {
-  border-color: #4a87ff;
+  border-color: var(--primary);
   box-shadow: 0 0 6px rgba(74,135,255,0.3);
 }
 
 /* Upload de capa */
 input[type="file"] {
-  border: 1px dashed #ccc;
+  border: 1px dashed var(--input-border-muted);
   padding: 8px;
   border-radius: 8px;
   cursor: pointer;
@@ -115,22 +115,22 @@ input[type="file"] {
 }
 
 .btn-cancel {
-  background: #f0f0f0;
-  color: #555;
+  background: var(--surface-hover);
+  color: var(--text-soft);
 }
 
 .btn-cancel:hover {
-  background: #e0e0e0;
+  background: var(--surface-border);
   transform: translateY(-2px);
 }
 
 .btn-save {
-  background: #4a87ff;
-  color: #fff;
+  background: var(--primary);
+  color: var(--btn-primary-text);
 }
 
 .btn-save:hover {
-  background: #3a6fe0;
+  background: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(58,111,224,0.3);
 }

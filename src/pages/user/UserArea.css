@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  color: #111827;
+  color: var(--text-default);
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
@@ -23,12 +23,12 @@
 .user-page__hero {
   width: 100%;
   max-width: 100%;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
-  color: #f9fafb;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--text-on-primary);
   padding: 25px;
   border-radius: 16px;
   margin-bottom: 35px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  box-shadow: var(--shadow-soft);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -48,7 +48,7 @@
   margin: 0;
   font-size: 26px;
   font-weight: 600;
-  color: #f9fafb;
+  color: var(--text-on-primary);
 }
 
 .user-page__hero p {
@@ -62,11 +62,11 @@
 .user-section-card {
   width: 100%;
   max-width: 100%;
-  background: #ffffff;
+  background: var(--surface-bg);
   padding: 20px 18px;
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-soft);
   box-sizing: border-box;
 }
 
@@ -83,7 +83,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: var(--text-default);
 }
 
 .notification-badge {
@@ -98,18 +98,18 @@
 }
 
 .notification-badge.info {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
 }
 
 .notification-badge.warning {
-  background: #ffedd5;
-  color: #c2410c;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
 }
 
 .notification-badge.success {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
 }
 
 .view-all {
@@ -117,8 +117,8 @@
   margin-top: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border: 1px solid var(--surface-border);
+  background: var(--canvas-bg);
   font-weight: 500;
   font-size: 13px;
   cursor: pointer;
@@ -126,17 +126,17 @@
 }
 
 .view-all:hover {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: var(--main-bg);
+  border-color: var(--input-border);
 }
 
 .user-empty-state {
   padding: 28px;
   text-align: center;
-  background: #ffffff;
-  border: 1px dashed #cbd5e1;
+  background: var(--surface-bg);
+  border: 1px dashed var(--border-light);
   border-radius: 14px;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 @media (max-width: 960px) {
@@ -158,7 +158,7 @@
   .user-page__hero h1,
   .user-page__hero h2 {
     font-size: 22px;
-    color: #f9fafb;
+    color: var(--text-on-primary);
   }
 
   .user-page__hero p {
