@@ -23,6 +23,7 @@ const userMenuItems = [
 function Sidebar({ type = "admin", activePage, setActivePage }) {
   const { user } = useAuth();
   const [openPessoas, setOpenPessoas] = useState(false);
+  const [openEmprestimos, setOpenEmprestimos] = useState(false);
 
   const isAdmin = type === "admin" || (!type && user?.tipo === "admin");
 
@@ -68,14 +69,31 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             </NavLink>
           </li>
 
-          <li>
-            <NavLink
-              to="/admin/emprestimos"
-              className={({ isActive }) => (isActive ? "active" : undefined)}
+          <li className="submenu-container">
+            <button
+              type="button"
+              className={`submenu-toggle ${openEmprestimos ? "open" : ""}`}
+              onClick={() => setOpenEmprestimos((current) => !current)}
             >
-              <FiRepeat />
-              <span>Empréstimos e Devoluções</span>
-            </NavLink>
+              <div className="submenu-left">
+                <FiRepeat />
+                <span>Empréstimos</span>
+              </div>
+              <FiChevronDown className="arrow" />
+            </button>
+
+            <ul className={`submenu ${openEmprestimos ? "open" : ""}`}>
+              <li>
+                <NavLink to="/admin/emprestimos" end className={({ isActive }) => (isActive ? "active" : undefined)}>
+                  Empréstimos e Devoluções
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/admin/emprestimos/solicitacoes" className={({ isActive }) => (isActive ? "active" : undefined)}>
+                  Solicitações de Empréstimo
+                </NavLink>
+              </li>
+            </ul>
           </li>
 
           {isAdmin && (

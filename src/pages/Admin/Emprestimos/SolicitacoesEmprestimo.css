@@ -1,0 +1,95 @@
+.solicitacoes-page {
+  min-height: calc(100vh - 70px - 80px);
+}
+
+.solicitacoes-search-card,
+.solicitacoes-list-card {
+  padding: 24px;
+}
+
+.solicitacoes-search-row {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 400px);
+  gap: 24px;
+  align-items: center;
+}
+
+.solicitacoes-search-row h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
+.solicitacoes-search-row p {
+  margin: 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+
+.solicitacoes-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.solicitacoes-list-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #111827;
+}
+
+.solicitacoes-list-header span {
+  color: #64748b;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.solicitacao-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.solicitacao-status-ativo {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.solicitacao-status-pendente {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.solicitacao-status-cancelado,
+.solicitacao-status-nao-informado,
+.solicitacao-status-negado {
+  background: #fee2e2;
+  color: #be123c;
+}
+
+.table-empty-row {
+  text-align: center;
+  padding: 32px 0;
+  color: #64748b;
+}
+
+@media (max-width: 900px) {
+  .solicitacoes-search-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .solicitacoes-list-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

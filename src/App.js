@@ -7,6 +7,7 @@ import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
 import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
 import Comunidade from "./pages/Admin/CadastroComunidade/Comunidade";
 import Emprestimos from "./pages/Admin/Emprestimos/Emprestimos";
+import SolicitacoesEmprestimo from "./pages/Admin/Emprestimos/SolicitacoesEmprestimo";
 import Admin from "./pages/Admin/CadastroAdmins/Admin";
 import Login from "./pages/Login";
 import Biblioteca from "./pages/Admin/Biblioteca/Biblioteca";
@@ -97,6 +98,7 @@ function App() {
         <Route path="alunos" element={<Aluno />} />
         <Route path="comunidade" element={<Comunidade />} />
         <Route path="emprestimos" element={<Emprestimos />} />
+        <Route path="emprestimos/solicitacoes" element={<SolicitacoesEmprestimo />} />
         <Route path="notificacoes" element={<AdminNotificacoes />} />
         <Route path="admins" element={<Admin />} />
         <Route path="biblioteca" element={<Biblioteca />} />
