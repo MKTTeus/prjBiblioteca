@@ -57,7 +57,8 @@ export default function Sistema() {
   }, [addToast]);
 
   useEffect(() => {
-    applyTheme(tema);
+    // Nota: removido efeito que aplicava o tema imediatamente ao alterar o formulário.
+    // O tema será aplicado apenas quando o usuário clicar em "Salvar Configurações".
   }, [tema]);
 
   const handleSave = async () => {
@@ -69,6 +70,12 @@ export default function Sistema() {
         updateConfiguracao({ chave: "fuso_horario", valor: fuso }),
         updateConfiguracao({ chave: "frequencia_backup", valor: backup }),
       ]);
+      // Aplicar o tema global somente após o salvamento bem-sucedido
+      try {
+        applyTheme(tema);
+      } catch (e) {
+        console.error('Erro ao aplicar tema após salvar', e);
+      }
       addToast("Configurações do sistema salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações do sistema", "error");
