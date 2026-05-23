@@ -21,7 +21,7 @@
 
 .top-bar p {
   margin: 8px 0 0 0;
-  color: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
+  color: rgba(249,250,251,0.9); /* collapsed fallback for color-mix(text-on-primary 90% + transparent) */
   font-size: 16px;
 }
 
@@ -69,7 +69,7 @@ button:hover {
 }
 
 .top-actions .config-export-btn {
-  background: color-mix(in srgb, var(--surface-bg) 96%, transparent);
+  background: rgba(255,255,255,0.96); /* collapsed fallback for color-mix(surface-bg 96% + transparent) */
   color: var(--primary-strong);
   border: 1px solid rgba(255, 255, 255, 0.72);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
@@ -93,7 +93,7 @@ button:hover {
 }
 
 .btn-success {
-  background: color-mix(in srgb, var(--surface-bg) 16%, transparent);
+  background: rgba(255,255,255,0.16); /* collapsed fallback for color-mix(surface-bg 16% + transparent) */
   color: var(--text-on-primary);
   border: 1px solid rgba(255, 255, 255, 0.28);
   font-weight: 500;

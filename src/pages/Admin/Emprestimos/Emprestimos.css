@@ -7,7 +7,7 @@
   --emp-surface: var(--surface-bg);
   --emp-surface-muted: var(--surface-muted);
   --emp-surface-hover: var(--surface-hover);
-  --emp-accent-border: color-mix(in srgb, var(--primary) 35%, var(--surface-border));
+  --emp-accent-border: #a2b9eb; /* fallback for color-mix(primary 35% + surface-border) */
   color: var(--emp-text);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   box-sizing: border-box;
@@ -36,7 +36,7 @@
 .emp-header-copy p {
   margin: 8px 0 0;
   font-size: 16px;
-  color: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
+  color: rgba(249,250,251,0.9); /* collapsed fallback for color-mix(text-on-primary 90% + transparent) */
 }
 
 .emp-header-actions {

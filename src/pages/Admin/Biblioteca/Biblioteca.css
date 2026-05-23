@@ -49,7 +49,7 @@
 }
 
 .btn-novo:hover{
-  background: color-mix(in srgb, var(--danger) 85%, black);
+  background: #cb3a3a; /* collapsed fallback for color-mix(danger 85% + black) */
 }
 
 /* GRID NETFLIX */
@@ -99,7 +99,7 @@
 
 .btn-editar-tombos-card{
   background: var(--warning);
-  border: 1px solid color-mix(in srgb, var(--warning) 70%, black);
+  border: 1px solid #ae500f; /* collapsed fallback for color-mix(warning 70% + black) */
   border-radius:6px;
   padding:7px 9px;
   font-size:11px;
@@ -109,5 +109,5 @@
 }
 
 .btn-editar-tombos-card:hover{
-  background: color-mix(in srgb, var(--warning) 85%, black);
+  background: #d46213; /* collapsed fallback for color-mix(warning 85% + black) */
 }

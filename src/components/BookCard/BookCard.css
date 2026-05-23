@@ -71,7 +71,7 @@
 
 .shared-book-card__status.disponivel {
   color: var(--success-text);
-  background: color-mix(in srgb, var(--success-soft) 96%, transparent);
+  background: rgba(236,253,245,0.96); /* collapsed fallback for color-mix */
 }
 
 .shared-book-card__status.emprestado {
@@ -86,7 +86,7 @@
 
 .shared-book-card__status.indisponivel {
   color: var(--confirm-danger-text);
-  background: color-mix(in srgb, var(--danger-soft) 96%, transparent);
+  background: rgba(254,226,226,0.96); /* collapsed fallback for color-mix */
 }
 
 .shared-book-card__content {

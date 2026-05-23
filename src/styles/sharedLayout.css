@@ -114,7 +114,7 @@ html:not(.dark) .page-shell {
   opacity: 0.9;
   max-width: 760px;
   line-height: 1.6;
-  color: color-mix(in srgb, var(--text-on-primary) 90%, transparent);
+  color: rgba(249,250,251,0.9); /* collapsed fallback for color-mix(text-on-primary 90% + transparent) */
   text-align: left;
 }
 

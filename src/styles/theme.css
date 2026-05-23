@@ -240,13 +240,7 @@ html.dark {
   --shadow-header: 0 2px 8px rgba(var(--shadow-color), 0.3);
 }
 
-html {
-  color-scheme: light;
-}
-
-html.dark {
-  color-scheme: dark;
-}
+/* color-scheme handled via JS for broader compatibility */
 
 html.theme-transition,
 html.theme-transition *:not(img):not(svg):not(video):not(canvas) {

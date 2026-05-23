@@ -1,7 +1,7 @@
 /* Overrides globais para componentes com estilos legados */
 html.dark .top-actions .config-export-btn,
 .top-actions .config-export-btn {
-  border-color: color-mix(in srgb, var(--surface-border) 72%, transparent);
+  border-color: rgba(229,231,235,0.72); /* collapsed fallback for color-mix(surface-border 72% + transparent) */
 }
 
 .SelectTrigger:focus,

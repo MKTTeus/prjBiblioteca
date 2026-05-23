@@ -143,7 +143,9 @@
   border-bottom: 1px solid var(--surface-border);
   font-size: 14px;
   vertical-align: middle;
-  overflow-wrap: anywhere;
+  /* 'anywhere' has limited support; use more compatible fallbacks */
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .comunidade-page .col-nome {
