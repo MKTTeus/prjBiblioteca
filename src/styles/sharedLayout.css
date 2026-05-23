@@ -37,6 +37,22 @@ svg {
   text-align: left;
 }
 
+/* Dark theme: remove intermediate surface from page wrapper so background is uniform
+   between canvas and main container. Cards and other surfaces keep their contrast. */
+html.dark .page-shell {
+  background: transparent; /* use canvas-bg through root */
+  border: none;
+  box-shadow: none;
+}
+
+/* Light theme: keep same visual pattern as dark — remove intermediate page surface
+   so the application background and page container are visually uniform. */
+html:not(.dark) .page-shell {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
 .page-hero,
 .cadastro-header,
 .page-shell .titulo,
