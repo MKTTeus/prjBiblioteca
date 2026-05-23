@@ -5,7 +5,7 @@
   border-right: 1px solid var(--sidebar-border);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start; 
   position: fixed;
   top: 70px;
   left: 0;
@@ -13,14 +13,21 @@
   box-shadow: var(--shadow-header);
   box-sizing: border-box;
   z-index: 90;
+  overflow-y: auto; 
+  padding-bottom: 24px; 
 }
 
 .sidebar-section {
   margin-bottom: 20px;
+  flex: none;
 }
 
 .sidebar-system {
-  margin-top: 20px;
+  position: -webkit-sticky;
+  position: sticky;
+  bottom: 0;
+  background: var(--sidebar-bg);
+  padding: 20px 0;
 }
 
 .sidebar-title {
