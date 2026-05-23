@@ -1,0 +1,223 @@
+.user-config-cards {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, 360px);
+  gap: 18px;
+  align-items: start;
+  grid-auto-rows: auto;
+}
+
+.user-config-cards .left-col,
+.user-config-cards .right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-grid.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.user-config-cards .left-col > .card + .card,
+.user-config-cards .right-col > .card + .card {
+  margin-top: 18px;
+}
+
+.user-config-page .form-group input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-default);
+}
+
+@media (max-width: 980px) {
+  .user-config-cards { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .user-config-cards { grid-template-columns: 1fr; }
+}
+
+.user-config-page .card:hover {
+  transform: none !important;
+}
+
+.user-config-page .switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-config-page .switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.user-config-page .switch-row .switch {
+  order: -1;
+  margin-right: 8px;
+}
+
+.user-config-page .form-group.switch-row {
+  padding: 0;
+  margin: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
+.user-config-page .form-group.switch-row > label {
+  margin: 0 12px 0 0;
+  min-width: auto;
+  white-space: nowrap;
+}
+
+.user-config-page .switch {
+  margin-left: 0;
+}
+
+.user-config-page .toggle-text {
+  margin-left: 8px;
+}
+
+.user-config-page .switch-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-config-page .switch-section .section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-label);
+  margin: 0;
+}
+
+.user-config-page .control-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.user-config-page .control-row .toggle-switch {
+  margin: 0;
+}
+
+.user-config-page .control-row .toggle-text {
+  font-size: 13px;
+  color: var(--text-default);
+}
+
+@media (min-width: 640px) {
+  .user-config-cards .right-col > .card:first-child {
+    min-height: 170px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+}
+
+.user-config-page .switch-label {
+  display: inline-block;
+  width: 46px;
+  height: 28px;
+  position: relative;
+}
+
+.user-config-page .switch-label input { display: none; }
+
+.user-config-page .switch-label .slider {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: var(--surface-border);
+  border-radius: 999px;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.user-config-page .switch-label .slider::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 4px;
+  top: 4px;
+  background: var(--surface-bg);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+
+.user-config-page .switch-label input:checked + .slider {
+  background: var(--primary);
+}
+
+.user-config-page .switch-label input:checked + .slider::after {
+  transform: translateX(18px);
+}
+
+.user-config-page .toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.user-config-page .toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.user-config-page .toggle-track {
+  display: inline-block;
+  width: 56px;
+  height: 30px;
+  background: var(--surface-muted);
+  border-radius: 999px;
+  padding: 3px;
+  box-sizing: border-box;
+  border: 1px solid var(--input-border);
+  transition: background 0.18s ease, border-color 0.18s ease;
+  position: relative;
+}
+
+.user-config-page .toggle-knob {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background: var(--surface-bg);
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(2,6,23,0.06);
+  transform: translateX(0);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.user-config-page .toggle-text {
+  font-size: 14px;
+  color: var(--text-label);
+  min-width: 48px;
+}
+
+.user-config-page .toggle-switch input:checked + .toggle-track {
+  background: var(--primary);
+  border-color: transparent;
+}
+
+.user-config-page .toggle-switch input:checked + .toggle-track .toggle-knob {
+  transform: translateX(26px);
+  background: var(--surface-bg);
+}
+
+.user-config-page .toggle-switch input:focus-visible + .toggle-track {
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}

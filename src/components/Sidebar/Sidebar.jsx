@@ -18,6 +18,7 @@ const userMenuItems = [
   { key: "biblioteca", label: "Biblioteca", icon: FiBookmark },
   { key: "emprestimos", label: "Empréstimos", icon: FiRepeat },
   { key: "notificacoes", label: "Notificações", icon: FiBell },
+  { key: "configuracoes", label: "Configurações", icon: FiSettings },
 ];
 
 function Sidebar({ type = "admin", activePage, setActivePage }) {

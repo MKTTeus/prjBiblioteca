@@ -4,12 +4,14 @@ import Biblioteca from "./Biblioteca/Biblioteca";
 import DashboardHome from "./Dashboard/DashboardHome";
 import Emprestimos from "./Emprestimos/Emprestimos";
 import Notificacoes from "./Notificacoes/Notificacoes";
+import ConfiguracoesUser from "./Configuracoes/Configuracoes";
 
 const pages = {
   dashboard: DashboardHome,
   biblioteca: Biblioteca,
   emprestimos: Emprestimos,
-  notificacoes: Notificacoes,
+    notificacoes: Notificacoes,
+    configuracoes: ConfiguracoesUser,
 };
 
 export default function UserDashboard() {
