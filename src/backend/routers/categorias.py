@@ -9,7 +9,7 @@ router = APIRouter()
 @router.get("/categorias")
 def listar_categorias():
     try:
-        res = supabase.table("LivroCategoria").select("*").execute()
+        res = supabase.table("Categoria").select("*").execute()
         return res.data or []
     except Exception as e:
         print("Erro categorias:", e)
@@ -17,5 +17,5 @@ def listar_categorias():
 
 @router.post("/categorias")
 def criar_categoria(cat: Categoria, admin=Depends(get_admin)):
-    res = supabase.table("LivroCategoria").insert(cat.dict()).execute()
+    res = supabase.table("Categoria").insert(cat.dict()).execute()
     return res.data[0]
