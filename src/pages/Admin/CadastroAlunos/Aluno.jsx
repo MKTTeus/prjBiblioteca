@@ -398,7 +398,7 @@ export default function Aluno() {
       <ConfirmModal
         show={Boolean(pendingToggleAluno)}
         title="Confirmar alteração de status"
-        message={`Tem certeza que deseja ${pendingToggleAluno?.novoStatus?.toLowerCase()} este aluno?`}
+        message={`Tem certeza que deseja ${pendingToggleAluno?.novoStatus === "Inativo" ? "desativar" : "ativar"} este aluno?`}
         onConfirm={confirmToggleAlunoStatus}
         onCancel={() => setPendingToggleAluno(null)}
         confirmText={pendingToggleAluno?.novoStatus === "Inativo" ? "Desativar" : "Ativar"}
