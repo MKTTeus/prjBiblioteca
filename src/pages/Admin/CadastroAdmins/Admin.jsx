@@ -191,44 +191,46 @@ export default function Admin() {
   const [pendingToggleAdmin, setPendingToggleAdmin] = useState(null);
 
   const handleToggleStatus = (idAdmin) => {
-    const target = admins.find((admin) => admin.idAdmin === idAdmin);
-    setPendingToggleAdmin(target || { idAdmin, status: "este administrador", novoStatus: target.status === "Ativo" ? "Inativo" : "Ativo" });
+  const target = admins.find((admin) => admin.idAdmin === idAdmin);
+  if (!target) return;
+
+  setPendingToggleAdmin({
+      ...target,
+      novoStatus: target.status === "Ativo" ? "Inativo" : "Ativo",
+    });
   };
 
   const confirmToggleAdminStatus = async () => {
-    if (!pendingToggleAdmin) return;
+  if (!pendingToggleAdmin) return;
 
-    try {
-      const index = admins.findIndex((admin) => admin.idAdmin === pendingToggleAdmin.idAdmin);
-      if (index === -1) return;
+  try {
+    const index = admins.findIndex((admin) => admin.idAdmin === pendingToggleAdmin.idAdmin);
+    if (index === -1) return;
 
-      const admin = admins[index];
-      const novoStatus = admin.status === "Ativo" ? "Inativo" : "Ativo";
-      const payload = {
-        nome: admin.nome,
-        email: admin.email,
-        status: novoStatus === "Ativo",
-      };
-      await updateAdmin(admin.idAdmin, payload);
+    const admin = admins[index];
+    const novoStatus = pendingToggleAdmin.novoStatus;
+    const payload = {
+      nome: admin.nome,
+      email: admin.email,
+      status: novoStatus === "Ativo",
+    };
+    await updateAdmin(admin.idAdmin, payload);
 
-      setAdmins((prev) =>
-        prev.map((item, i) =>
-          i === index
-            ? {
-                ...item,
-                status: novoStatus,
-              }
-            : item
-        )
-      );
-      addToast(`Admin ${novoStatus.toLowerCase()} com sucesso`, "success");
-    } catch (err) {
-      console.error("Erro ao atualizar status:", err);
-      addToast("Falha ao alterar status", "error");
-    } finally {
-      setPendingToggleAdmin(null);
-    }
-  };
+    setAdmins((prev) =>
+      prev.map((item, i) =>
+        i === index
+          ? { ...item, status: novoStatus }
+          : item
+      )
+    );
+    addToast(`Admin ${novoStatus.toLowerCase()} com sucesso`, "success");
+  } catch (err) {
+    console.error("Erro ao atualizar status:", err);
+    addToast("Falha ao alterar status", "error");
+  } finally {
+    setPendingToggleAdmin(null);
+  }
+};
 
   const totalAdmins = admins.length;
   const adminsAtivos = admins.filter((a) => a.status === "Ativo").length;
