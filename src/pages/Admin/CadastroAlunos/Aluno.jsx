@@ -214,11 +214,16 @@ export default function Aluno() {
   const [pendingToggleAluno, setPendingToggleAluno] = useState(null);
 
   const handleToggleStatus = (idUsuario) => {
-    const target = alunos.find((aluno) => aluno.idUsuario === idUsuario);
-    setPendingToggleAluno(target || { idUsuario, status: "este aluno", novoStatus: target.status === "Ativo" ? "Inativo" : "Ativo" });
+  const target = alunos.find((aluno) => aluno.idUsuario === idUsuario);
+  if (!target) return;
+
+  setPendingToggleAluno({
+    ...target,
+    novoStatus: target.status === "Ativo" ? "Inativo" : "Ativo",
+    });
   };
 
-  const confirmToggleAlunoStatus = async () => {
+    const confirmToggleAlunoStatus = async () => {
     if (!pendingToggleAluno) return;
 
     try {
@@ -226,19 +231,20 @@ export default function Aluno() {
       if (index === -1) return;
 
       const alvo = alunos[index];
-      const novoStatus = alvo.status === "Ativo" ? "Inativo" : "Ativo";
+      const novoStatus = pendingToggleAluno.novoStatus;
+
+      await updateAluno(alvo.idUsuario, {
+        nome: alvo.nome,
+        email: alvo.email,
+        status: novoStatus === "Ativo",
+      });
 
       setAlunos((prev) =>
         prev.map((aluno, i) =>
-          i === index
-            ? {
-                ...aluno,
-                status: novoStatus,
-              }
-            : aluno
+          i === index ? { ...aluno, status: novoStatus } : aluno
         )
       );
-      addToast(`Aluno ${novoStatus.toLowerCase()} com sucesso`, "success");
+      addToast(`Aluno ${novoStatus === "Ativo" ? "ativado" : "desativado"} com sucesso`, "success");
     } catch (err) {
       console.error("Erro ao alterar status do aluno:", err);
       addToast("Falha ao alterar status", "error");

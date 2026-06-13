@@ -218,12 +218,10 @@ export default function Admin() {
 
     setAdmins((prev) =>
       prev.map((item, i) =>
-        i === index
-          ? { ...item, status: novoStatus }
-          : item
+        i === index ? { ...item, status: novoStatus } : item
       )
     );
-    addToast(`Admin ${novoStatus.toLowerCase()} com sucesso`, "success");
+    addToast(`Admin ${novoStatus === "Ativo" ? "ativado" : "desativado"} com sucesso`, "success");
   } catch (err) {
     console.error("Erro ao atualizar status:", err);
     addToast("Falha ao alterar status", "error");
