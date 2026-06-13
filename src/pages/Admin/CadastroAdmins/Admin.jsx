@@ -361,7 +361,7 @@ export default function Admin() {
       <ConfirmModal
         show={Boolean(pendingToggleAdmin)}
         title="Confirmar alteração de status"
-        message={`Tem certeza que deseja ${pendingToggleAdmin?.novoStatus === "Inativo" ? "desativar" : "ativar"} este aluno?`}
+        message={`Tem certeza que deseja ${pendingToggleAdmin?.novoStatus === "Inativo" ? "desativar" : "ativar"} este admin?`}
         onConfirm={confirmToggleAdminStatus}
         onCancel={() => setPendingToggleAdmin(null)}
         confirmText={pendingToggleAdmin?.novoStatus === "Inativo" ? "Desativar" : "Ativar"}
