@@ -46,6 +46,7 @@ ROUTERS = [
     usuarios_router,
     emprestimos_router,
     dashboard_router,
+    emails_router,
 ]
 
 
