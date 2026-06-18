@@ -40,7 +40,7 @@ export default function Dashboard() {
   const [latestNotifications, setLatestNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
   const [readNotifications, setReadNotifications] = useState(() => {
-    const stored = localStorage.getItem('admin_notifications_read');
+    const stored = localStorage.getItem("admin_notifications_read");
     return stored ? JSON.parse(stored) : [];
   });
   const notificationsRef = useRef(null);
@@ -56,37 +56,44 @@ export default function Dashboard() {
         const notifications = [];
         if (data.atrasados > 0) {
           notifications.push({
-            id: 'atrasados',
-            titulo: 'Devoluções em atraso',
-            descricao: data.atrasados + ' empréstimo(s) estão com devolução atrasada. Acompanhe para evitar multas.',
-            data: 'Agora',
-            tipo: 'warning',
-            label: 'Atraso',
+            id: "atrasados",
+            titulo: "Devoluções em atraso",
+            descricao:
+              data.atrasados +
+              " empréstimo(s) estão com devolução atrasada. Acompanhe para evitar multas.",
+            data: "Agora",
+            tipo: "warning",
+            label: "Atraso",
           });
         }
         if (data.reservados > 0) {
           notifications.push({
-            id: 'reservados',
-            titulo: 'Reservas pendentes',
-            descricao: data.reservados + ' reserva(s) aguardam retirada. Notifique os usuários.',
-            data: 'Agora',
-            tipo: 'info',
-            label: 'Reserva',
+            id: "reservados",
+            titulo: "Reservas pendentes",
+            descricao:
+              data.reservados +
+              " reserva(s) aguardam retirada. Notifique os usuários.",
+            data: "Agora",
+            tipo: "info",
+            label: "Reserva",
           });
         }
         if (data.devolucoesHoje > 0) {
           notifications.push({
-            id: 'devolucoesHoje',
-            titulo: 'Devoluções hoje',
-            descricao: data.devolucoesHoje + ' empréstimo(s) vencem hoje. Prepare-se para receber os livros.',
-            data: 'Hoje',
-            tipo: 'success',
-            label: 'Vencimento',
+            id: "devolucoesHoje",
+            titulo: "Devoluções hoje",
+            descricao:
+              data.devolucoesHoje +
+              " empréstimo(s) vencem hoje. Prepare-se para receber os livros.",
+            data: "Hoje",
+            tipo: "success",
+            label: "Vencimento",
           });
         }
-  
 
-        const unreadNotifications = notifications.filter(notification => !readNotifications.includes(notification.id));
+        const unreadNotifications = notifications.filter(
+          (notification) => !readNotifications.includes(notification.id),
+        );
 
         setLatestNotifications(unreadNotifications.slice(0, 5));
         setNotificationCount(unreadNotifications.length);
@@ -128,10 +135,16 @@ export default function Dashboard() {
   const handleViewAll = () => {
     setIsNotificationsOpen(false);
     // Marcar todas as notificações atuais como lidas
-    const newRead = [...readNotifications, ...latestNotifications.map(n => n.id)];
+    const newRead = [
+      ...readNotifications,
+      ...latestNotifications.map((n) => n.id),
+    ];
     const uniqueRead = [...new Set(newRead)];
     setReadNotifications(uniqueRead);
-    localStorage.setItem('admin_notifications_read', JSON.stringify(uniqueRead));
+    localStorage.setItem(
+      "admin_notifications_read",
+      JSON.stringify(uniqueRead),
+    );
     navigate("/admin/notificacoes");
   };
 
@@ -145,8 +158,8 @@ export default function Dashboard() {
         <div className="header-dashboard-content">
           <h1>Bem-vindo ao Sistema de Biblioteca</h1>
           <p>
-            Gerencie o acervo, empréstimos e cadastros da biblioteca escolar de forma
-            simples e eficiente.
+            Gerencie o acervo, empréstimos e cadastros da biblioteca escolar de
+            forma simples e eficiente.
           </p>
         </div>
 
@@ -264,27 +277,31 @@ export default function Dashboard() {
           <small className="positive">Clique para ver os alunos</small>
         </NavLink>
 
-        <div className="card">
-          <div className="card-header">
-            <span>Empréstimos Ativos</span>
-            <div className="icon orange">
-              <FaExchangeAlt />
+        <NavLink to="/admin/emprestimo" className="card card-link">
+          <div className="card">
+            <div className="card-header">
+              <span>Empréstimos Ativos</span>
+              <div className="icon orange">
+                <FaExchangeAlt />
+              </div>
             </div>
+            <h2>{stats.emprestimosAtivos}</h2>
+            <small>Em andamento</small>
           </div>
-          <h2>{stats.emprestimosAtivos}</h2>
-          <small>Em andamento</small>
-        </div>
+        </NavLink>
 
-        <div className="card">
-          <div className="card-header">
-            <span>Devoluções Pendentes</span>
-            <div className="icon red">
-              <FaClock />
+        <NavLink to="/admin/emprestimo" className="card card-link">
+          <div className="card">
+            <div className="card-header">
+              <span>Devoluções Pendentes</span>
+              <div className="icon red">
+                <FaClock />
+              </div>
             </div>
+            <h2>{stats.atrasados}</h2>
+            <small className="danger">Acompanhe os atrasos</small>
           </div>
-          <h2>{stats.atrasados}</h2>
-          <small className="danger">Acompanhe os atrasos</small>
-        </div>
+        </NavLink>
       </div>
 
       <div className="quick-actions">
@@ -297,7 +314,8 @@ export default function Dashboard() {
           >
             <button className="action-btn red">
               <FaPlus />
-              Novo <br />Empréstimo
+              Novo <br />
+              Empréstimo
             </button>
           </NavLink>
 
@@ -307,7 +325,8 @@ export default function Dashboard() {
           >
             <button className="action-btn blue">
               <FaBook />
-              Cadastrar <br />Livro
+              Cadastrar <br />
+              Livro
             </button>
           </NavLink>
 
@@ -317,7 +336,8 @@ export default function Dashboard() {
           >
             <button className="action-btn green">
               <PiStudentFill />
-              Cadastrar <br />Aluno
+              Cadastrar <br />
+              Aluno
             </button>
           </NavLink>
 
@@ -327,7 +347,8 @@ export default function Dashboard() {
           >
             <button className="action-btn orange">
               <RiUserCommunityFill />
-              Cadastrar <br />Comunidade
+              Cadastrar <br />
+              Comunidade
             </button>
           </NavLink>
 
@@ -337,7 +358,8 @@ export default function Dashboard() {
           >
             <button className="action-btn yellow">
               <FaUserShield />
-              Cadastrar <br />Admin
+              Cadastrar <br />
+              Admin
             </button>
           </NavLink>
         </div>
