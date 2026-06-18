@@ -11,6 +11,7 @@ from routers.admins import router as admins_router
 from routers.usuarios import router as usuarios_router
 from routers.emprestimos import router as emprestimos_router
 from routers.dashboard import router as dashboard_router
+from routers.emails import router as emails_router
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
