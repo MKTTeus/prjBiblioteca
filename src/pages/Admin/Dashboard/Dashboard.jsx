@@ -277,7 +277,7 @@ export default function Dashboard() {
           <small className="positive">Clique para ver os alunos</small>
         </NavLink>
 
-        <NavLink to="/admin/emprestimo" className="card-link">
+        <NavLink to="/admin/emprestimos" className="card-link">
           <div className="card">
             <div className="card-header">
               <span>Empréstimos Ativos</span>
@@ -290,7 +290,7 @@ export default function Dashboard() {
           </div>
         </NavLink>
 
-        <NavLink to="/admin/emprestimo" className="card-link">
+        <NavLink to="/admin/emprestimos" className="card-link">
           <div className="card">
             <div className="card-header">
               <span>Devoluções Pendentes</span>
