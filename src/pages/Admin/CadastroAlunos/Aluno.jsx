@@ -8,8 +8,8 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
-import { importarAlunos } from "../../../services/api";
 import ImportModal from "../../../components/ImportModal/ImportModal";
+import { importarAlunos } from "../../../services/api";
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -35,30 +35,30 @@ export default function Aluno() {
   const [modalImportar, setModalImportar] = useState(false);
   const { addToast } = useToast();
 
-  useEffect(() => {
-    async function fetchAlunos() {
-      try {
-        const data = await getAlunos();
-        setAlunos(
-          (data || []).map((u) => ({
-            idUsuario: u.idUsuario,
-            nome: u.usuNome,
-            ra: u.usuRA || "",
-            email: u.usuEmail || "",
-            telefone: u.usuTelefone || "",
-            telefone2: u.usuTelefoneResponsavel || "",
-            endereco: u.usuEndereco || "",
-            livros: 0,
-            status: u.usuStatus === false ? "Inativo" : "Ativo",
-          }))
-        );
-      } catch (err) {
-        console.error("Erro ao carregar alunos:", err);
-      }
-    }
+const fetchAlunos = async () => {
+  try {
+    const data = await getAlunos();
+    setAlunos(
+      (data || []).map((u) => ({
+        idUsuario: u.idUsuario,
+        nome: u.usuNome,
+        ra: u.usuRA || "",
+        email: u.usuEmail || "",
+        telefone: u.usuTelefone || "",
+        telefone2: u.usuTelefoneResponsavel || "",
+        endereco: u.usuEndereco || "",
+        livros: 0,
+        status: u.usuStatus === false ? "Inativo" : "Ativo",
+      }))
+    );
+  } catch (err) {
+    console.error("Erro ao carregar alunos:", err);
+  }
+};
 
-    fetchAlunos();
-  }, []);
+useEffect(() => {
+  fetchAlunos();
+}, []);
 
   const handleChange = (e) => {
     setNovoAluno((prev) => ({

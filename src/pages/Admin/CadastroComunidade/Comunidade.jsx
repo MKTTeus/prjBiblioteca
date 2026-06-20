@@ -13,8 +13,8 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
-import { importarComunidade } from "../../../services/api";
 import ImportModal from "../../../components/ImportModal/ImportModal";
+import { importarComunidade } from "../../../services/api";
 
 const maxCPFLength = 11;
 
@@ -42,30 +42,30 @@ export default function Comunidade() {
   const [modalImportar, setModalImportar] = useState(false);
   const { addToast } = useToast();
 
-  useEffect(() => {
-    async function fetchMembros() {
-      try {
-        const data = await getComunidade();
-        setMembros(
-          (data || []).map((u) => ({
-            idUsuario: u.idUsuario,
-            nome: u.usuNome,
-            cpf: u.usuCPF || "",
-            email: u.usuEmail || "",
-            telefone: u.usuTelefone || "",
-            telefone2: u.usuTelefoneResponsavel || "",
-            endereco: u.usuEndereco || "",
-            livros: 0,
-            status: u.usuStatus === false ? "Inativo" : "Ativo",
-          }))
-        );
-      } catch (err) {
-        console.error("Erro ao carregar comunidade:", err);
-      }
-    }
+const fetchMembros = async () => {
+  try {
+    const data = await getComunidade();
+    setMembros(
+      (data || []).map((u) => ({
+        idUsuario: u.idUsuario,
+        nome: u.usuNome,
+        cpf: u.usuCPF || "",
+        email: u.usuEmail || "",
+        telefone: u.usuTelefone || "",
+        telefone2: u.usuTelefoneResponsavel || "",
+        endereco: u.usuEndereco || "",
+        livros: 0,
+        status: u.usuStatus === false ? "Inativo" : "Ativo",
+      }))
+    );
+  } catch (err) {
+    console.error("Erro ao carregar comunidade:", err);
+  }
+};
 
-    fetchMembros();
-  }, []);
+useEffect(() => {
+  fetchMembros();
+}, []);
 
   const handleChange = (e) => {
     setNovoMembro((prev) => ({
@@ -390,7 +390,7 @@ export default function Comunidade() {
       <ImportarModal
         aberto={modalImportar}
         titulo="Importar Membros via Excel"
-        onClose={() => { setModalImportar(false); fetchAlunos(); }}
+        onClose={() => { setModalImportar(false); fetchMembros(); }}
         onImportar={importarComunidade}
       />
 
