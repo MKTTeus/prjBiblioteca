@@ -45,9 +45,12 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuStatus", True).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
     if exist.data:
-        raise HTTPException(status_code=400, detail="Aluno já existe")
+        usuario = exist.data[0]
+        if usuario.get("usuStatus") == True:
+            raise HTTPException(status_code=400, detail="Aluno já existe")
+        raise HTTPException(status_code=409, detail="USUARIO_INATIVO")
 
     novo = {
         "usuNome": data.nome,
@@ -63,6 +66,25 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     criado = supabase.table("Usuario").insert(novo).execute()
     return criado.data[0]
 
+@router.post("/alunos/reativar")
+def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
+    email = normalize_email(data.email)
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    if not exist.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    usuario = exist.data[0]
+    payload = {
+        "usuNome": data.nome,
+        "usuSenha": hash_password(data.senha),
+        "usuTelefone": data.telefone,
+        "usuTelefoneResponsavel": data.telefoneResponsavel,
+        "usuEndereco": data.endereco,
+        "usuRA": data.ra,
+        "usuStatus": True,
+    }
+    reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    return reativado.data[0]
 
 @router.post("/alunos/importar") # importa aluno de tabela excel
 async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)):
@@ -154,9 +176,12 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).eq("usuStatus", True).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).execute()
     if exist.data:
-        raise HTTPException(status_code=400, detail="Membro já existe")
+        usuario = exist.data[0]
+        if usuario.get("usuStatus") == True:
+            raise HTTPException(status_code=400, detail="Membro já existe")
+        raise HTTPException(status_code=409, detail="USUARIO_INATIVO")
 
     novo = {
         "usuNome": data.nome,
@@ -171,6 +196,28 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     }
     criado = supabase.table("Usuario").insert(novo).execute()
     return criado.data[0]
+
+@router.post("/comunidade/reativar")
+def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
+    email = normalize_email(data.email)
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    if not exist.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    usuario = exist.data[0]
+    payload = {
+        "usuNome": data.nome,
+        "usuEmail": data.email,
+        "usuSenha": hash_password(data.senha),
+        "usuTelefone": data.telefone,
+        "usuTelefoneResponsavel": data.telefoneResponsavel,
+        "usuEndereco": data.endereco,
+        "usuCPF": data.cpf,
+        "usuTipo": "Comunidade",
+        "usuStatus": True
+    }
+    reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    return reativado.data[0]
 
 
 @router.post("/comunidade/importar") # importa membro da comunidade de tabela excel 

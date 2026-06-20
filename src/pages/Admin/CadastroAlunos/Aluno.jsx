@@ -10,7 +10,7 @@ import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
-
+import { reativarAluno } from "../../../services/api";
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -34,6 +34,7 @@ export default function Aluno() {
   const [alunos, setAlunos] = useState([]);
   const [pendingDeleteAluno, setPendingDeleteAluno] = useState(null);
   const [modalImportar, setModalImportar] = useState(false);
+  const [pendingReativar, setPendingReativar] = useState(null);
   const { addToast } = useToast();
 
 const fetchAlunos = async () => {
@@ -77,56 +78,73 @@ useEffect(() => {
     setIsDirty(false);
   };
 
-  const handleSalvar = async () => {
-    if (isProcessing) return;
-    if (modoEdicao && !isDirty) return;
+const handleSalvar = async () => {
+  if (isProcessing) return;
+  if (modoEdicao && !isDirty) return;
 
-    if (
-      !novoAluno.nome ||
-      !novoAluno.email ||
-      !novoAluno.telefone ||
-      !novoAluno.endereco ||
-      !novoAluno.status
-    ) {
-      return;
+  if (
+    !novoAluno.nome ||
+    !novoAluno.email ||
+    !novoAluno.telefone ||
+    !novoAluno.endereco ||
+    !novoAluno.status
+  ) {
+    return;
+  }
+
+  setIsProcessing(true);
+
+  try {
+    // ===== EDIÇÃO =====
+    if (modoEdicao && indexEditando != null) {
+      const alvo = alunos[indexEditando];
+
+      const payload = {
+        nome: novoAluno.nome,
+        email: novoAluno.email,
+        telefone: novoAluno.telefone,
+        telefoneResponsavel: novoAluno.telefone2,
+        endereco: novoAluno.endereco,
+        ra: novoAluno.ra,
+        status: novoAluno.status === "Ativo",
+      };
+
+      const updated = await updateAluno(alvo.idUsuario, payload);
+
+      setAlunos((prev) =>
+        prev.map((aluno, i) =>
+          i === indexEditando
+            ? {
+                ...aluno,
+                nome: updated.usuNome,
+                ra: updated.usuRA || "",
+                email: updated.usuEmail || "",
+                telefone: updated.usuTelefone || "",
+                telefone2: updated.usuTelefoneResponsavel || "",
+                endereco: updated.usuEndereco || "",
+                status:
+                  updated.usuStatus === false
+                    ? "Inativo"
+                    : "Ativo",
+              }
+            : aluno
+        )
+      );
+
+      addToast("Informações atualizadas com sucesso", "success");
     }
 
-    setIsProcessing(true);
-
-    try {
-      if (modoEdicao && indexEditando != null) {
-        const alvo = alunos[indexEditando];
-        const payload = {
-          nome: novoAluno.nome,
-          email: novoAluno.email,
-          telefone: novoAluno.telefone,
-          telefoneResponsavel: novoAluno.telefone2,
-          endereco: novoAluno.endereco,
-          ra: novoAluno.ra,
-          status: novoAluno.status === "Ativo",
-        };
-
-        const updated = await updateAluno(alvo.idUsuario, payload);
-        setAlunos((prev) =>
-          prev.map((aluno, i) =>
-            i === indexEditando
-              ? {
-                  ...aluno,
-                  nome: updated.usuNome,
-                  ra: updated.usuRA || "",
-                  email: updated.usuEmail || "",
-                  telefone: updated.usuTelefone || "",
-                  telefone2: updated.usuTelefoneResponsavel || "",
-                  endereco: updated.usuEndereco || "",
-                  status: updated.usuStatus === false ? "Inativo" : "Ativo",
-                }
-              : aluno
-          )
+    // ===== CRIAÇÃO =====
+    else {
+      if (!novoAluno.senha || novoAluno.senha.length < 6) {
+        addToast(
+          "A senha deve possuir pelo menos 6 caracteres",
+          "error"
         );
-        addToast("Informações atualizadas com sucesso", "success");
-      } else {
-        if (!novoAluno.senha || novoAluno.senha.length < 6) return;
+        return;
+      }
 
+      try {
         const created = await createAluno({
           nome: novoAluno.nome,
           email: novoAluno.email,
@@ -153,18 +171,39 @@ useEffect(() => {
             status: novoAluno.status || "Ativo",
           },
         ]);
-        addToast("Cadastro realizado com sucesso", "success");
-      }
 
-      fecharModal();
-    } catch (err) {
-      console.error("Erro ao salvar aluno:", err);
-      addToast(modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro", "error");
-    } finally {
-      setTimeout(() => setIsProcessing(false), 600);
-      setIsDirty(false);
+        addToast("Cadastro realizado com sucesso", "success");
+      } catch (err) {
+        // Usuário existe, mas está inativo
+        if (
+          err.response?.data?.message === "USUARIO_INATIVO" ||
+          err.response?.data?.detail === "USUARIO_INATIVO" ||
+          err.message?.includes("USUARIO_INATIVO")
+        ) {
+          setPendingReativar({ ...novoAluno });
+          fecharModal();
+          return;
+        }
+
+        throw err;
+      }
     }
-  };
+
+    fecharModal();
+  } catch (err) {
+    console.error("Erro ao salvar aluno:", err);
+
+    addToast(
+      modoEdicao
+        ? "Falha ao atualizar as informações"
+        : "Falha ao realizar o cadastro",
+      "error"
+    );
+  } finally {
+    setTimeout(() => setIsProcessing(false), 600);
+    setIsDirty(false);
+  }
+};
 
   const abrirCriacao = () => {
     setNovoAluno(EMPTY_ALUNO);
@@ -254,6 +293,44 @@ useEffect(() => {
       addToast("Falha ao alterar status", "error");
     } finally {
       setPendingToggleAluno(null);
+    }
+  };
+
+    const confirmReativar = async () => {
+    if (!pendingReativar) return;
+
+    try {
+      const reativado = await reativarAluno({
+        nome: pendingReativar.nome,
+        email: pendingReativar.email,
+        senha: pendingReativar.senha,
+        telefone: pendingReativar.telefone,
+        telefoneResponsavel: pendingReativar.telefone2,
+        endereco: pendingReativar.endereco,
+        ra: pendingReativar.ra,
+      });
+
+      setAlunos((prev) => [
+        ...prev,
+        {
+          idUsuario: reativado.idUsuario,
+          nome: reativado.usuNome,
+          ra: reativado.usuRA || "",
+          email: reativado.usuEmail || "",
+          telefone: reativado.usuTelefone || "",
+          telefone2: reativado.usuTelefoneResponsavel || "",
+          endereco: reativado.usuEndereco || "",
+          livros: 0,
+          status: "Ativo",
+        },
+      ]);
+
+      addToast("Aluno reativado com sucesso", "success");
+    } catch (err) {
+      console.error("Erro ao reativar aluno:", err);
+      addToast("Falha ao reativar o aluno", "error");
+    } finally {
+      setPendingReativar(null);
     }
   };
 
@@ -419,6 +496,15 @@ useEffect(() => {
         onConfirm={confirmToggleAlunoStatus}
         onCancel={() => setPendingToggleAluno(null)}
         confirmText={pendingToggleAluno?.novoStatus === "Inativo" ? "Desativar" : "Ativar"}
+        cancelText="Cancelar"
+      />
+      <ConfirmModal
+        show={Boolean(pendingReativar)}
+        title="Usuário já cadastrado"
+        message={`O aluno "${pendingReativar?.nome}" já existe na base mas está inativo. Deseja reativá-lo com os novos dados?`}
+        onConfirm={confirmReativar}
+        onCancel={() => setPendingReativar(null)}
+        confirmText="Reativar"
         cancelText="Cancelar"
       />
     </div>

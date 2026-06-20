@@ -187,6 +187,9 @@ export const importarAlunos = (file) => {
   return apiFetch("/alunos/importar", { method: "POST", body: form });
 };
 
+export const reativarAluno = (payload) =>
+  apiFetch("/alunos/reativar", { method: "POST", body: JSON.stringify(payload) });
+
 // ========================
 // COMUNIDADE
 // ========================
@@ -216,6 +219,9 @@ export const importarComunidade = (file) => {
   form.append("file", file);
   return apiFetch("/comunidade/importar", { method: "POST", body: form });
 };
+
+export const reativarComunidade = (payload) =>
+  apiFetch("/comunidade/reativar", { method: "POST", body: JSON.stringify(payload) });
 
 // ========================
 // GOOGLE BOOKS ISBN
