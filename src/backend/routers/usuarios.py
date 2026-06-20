@@ -45,7 +45,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuStatus", True).execute()
     if exist.data:
         raise HTTPException(status_code=400, detail="Aluno já existe")
 
@@ -80,7 +80,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             resultados["ignorados"] += 1
             continue
 
-        existe = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).execute()
+        existe = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuStatus", True).execute()
         if existe.data:
             resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
             resultados["ignorados"] += 1
@@ -154,7 +154,7 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).eq("usuStatus", True).execute()
     if exist.data:
         raise HTTPException(status_code=400, detail="Membro já existe")
 
@@ -189,7 +189,7 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             resultados["ignorados"] += 1
             continue
 
-        existe = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).execute()
+        existe = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuStatus", True).execute()
         if existe.data:
             resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
             resultados["ignorados"] += 1
