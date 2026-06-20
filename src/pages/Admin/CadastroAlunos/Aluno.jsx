@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2 } from "lucide-react";
+import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -10,6 +10,7 @@ import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
+
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -277,13 +278,14 @@ useEffect(() => {
           <p>Cadastre e acompanhe os alunos da biblioteca.</p>
         </div>
 
-        <button className="btn-novo-aluno" onClick={abrirCriacao}>
-          + Novo Aluno
-        </button>
-
-        <button className="btn-importar" onClick={() => setModalImportar(true)}>
-          Importar Excel
-        </button>
+        <div className="titulo-acoes">
+          <button className="btn-novo-aluno" onClick={abrirCriacao}>
+            + Novo Aluno
+          </button>
+          <button className="btn-importar" onClick={() => setModalImportar(true)}>
+            <Upload size={16} /> Importar
+          </button>
+        </div>
       </div>
 
 

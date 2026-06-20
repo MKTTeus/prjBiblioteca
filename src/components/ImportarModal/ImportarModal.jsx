@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { Upload, FileSpreadsheet, X, AlertCircle, CheckCircle } from "lucide-react";
+import "./ImportarModal.css";
+import { Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Info } from "lucide-react";
 
 export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
   const [arquivo, setArquivo] = useState(null);
@@ -21,7 +22,7 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
       const res = await onImportar(arquivo);
       setResultado(res);
     } catch (err) {
-      setResultado({ erros: ["Falha na importação. Verifique o arquivo."] });
+      setResultado({ importados: 0, ignorados: 0, erros: ["Falha na importação. Verifique o arquivo."] });
     } finally {
       setCarregando(false);
     }
@@ -34,35 +35,37 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={handleFechar}>
-      <div className="modal-box" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-        <div className="modal-header">
+    <div className="importar-overlay" onClick={handleFechar}>
+      <div className="importar-box" onClick={(e) => e.stopPropagation()}>
+
+        <div className="importar-header">
           <h2>{titulo}</h2>
-          <button className="btn-close" onClick={handleFechar}><X size={18} /></button>
+          <button className="btn-fechar" onClick={handleFechar}>
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="modal-body" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          {/* Instruções */}
-          <p style={{ fontSize: "0.875rem", color: "var(--text-muted)" }}>
-            Envie um arquivo <strong>.xlsx</strong> com as colunas na primeira linha.
+        <div className="importar-body">
+          <p className="importar-instrucao">
+            Envie um arquivo <strong>.xlsx</strong> ou <strong>.csv</strong> com as colunas na primeira linha.
           </p>
 
-          {/* Área de upload */}
+          <div className="importar-senha-aviso">
+            <Info size={15} />
+            Os usuários serão cadastrados com a senha padrão <strong>&nbsp;mudar@123</strong>
+          </div>
+
           <div
+            className={`importar-dropzone${arquivo ? " tem-arquivo" : ""}`}
             onClick={() => inputRef.current.click()}
-            style={{
-              border: "2px dashed var(--border)",
-              borderRadius: 8,
-              padding: "2rem",
-              textAlign: "center",
-              cursor: "pointer",
-              background: arquivo ? "var(--bg-subtle)" : "transparent",
-            }}
           >
-            <FileSpreadsheet size={32} style={{ color: "var(--primary)", marginBottom: 8 }} />
-            <p style={{ margin: 0, fontSize: "0.875rem" }}>
+            <div className="importar-dropzone-icon">
+              <FileSpreadsheet size={36} />
+            </div>
+            <p className={arquivo ? "nome-arquivo" : ""}>
               {arquivo ? arquivo.name : "Clique para selecionar o arquivo"}
             </p>
+            {!arquivo && <p style={{ marginTop: 4, fontSize: "0.75rem" }}>.xlsx ou .csv</p>}
             <input
               ref={inputRef}
               type="file"
@@ -72,23 +75,20 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
             />
           </div>
 
-          {/* Resultado */}
           {resultado && (
-            <div style={{ fontSize: "0.875rem" }}>
-              <p style={{ color: "var(--green)", display: "flex", alignItems: "center", gap: 6 }}>
+            <div className="importar-resultado">
+              <p className="res-sucesso">
                 <CheckCircle size={16} /> {resultado.importados} importado(s) com sucesso
               </p>
               {resultado.ignorados > 0 && (
-                <p style={{ color: "var(--yellow)" }}>
-                  {resultado.ignorados} ignorado(s)
+                <p className="res-ignorados">
+                  <AlertCircle size={16} /> {resultado.ignorados} ignorado(s)
                 </p>
               )}
               {resultado.erros?.length > 0 && (
-                <ul style={{ color: "var(--red)", paddingLeft: 16, margin: "0.5rem 0 0" }}>
+                <ul className="res-erros">
                   {resultado.erros.map((e, i) => (
-                    <li key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <AlertCircle size={13} /> {e}
-                    </li>
+                    <li key={i}><AlertCircle size={13} /> {e}</li>
                   ))}
                 </ul>
               )}
@@ -96,10 +96,10 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
           )}
         </div>
 
-        <div className="modal-footer" style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        <div className="importar-footer">
           <button className="btn-cancelar" onClick={handleFechar}>Fechar</button>
           <button
-            className="btn-salvar"
+            className="btn-importar-acao"
             onClick={handleImportar}
             disabled={!arquivo || carregando}
           >
@@ -107,6 +107,7 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
             {carregando ? "Importando..." : "Importar"}
           </button>
         </div>
+
       </div>
     </div>
   );

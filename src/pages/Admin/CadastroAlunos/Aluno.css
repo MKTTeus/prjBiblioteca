@@ -264,3 +264,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+.aluno-page .titulo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aluno-page .btn-importar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.aluno-page .btn-importar:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+}

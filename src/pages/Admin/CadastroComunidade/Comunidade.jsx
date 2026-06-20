@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Comunidade.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2 } from "lucide-react";
+import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
 import {
   getComunidade,
   createComunidade,
@@ -261,13 +261,14 @@ useEffect(() => {
           <p>Cadastre e acompanhe os membros da biblioteca.</p>
         </div>
 
-        <button className="btn-novo-comunidade" onClick={abrirCriacao}>
-          + Novo Membro
-        </button>
-
-        <button className="btn-importar" onClick={() => setModalImportar(true)}>
-          Importar Excel
-        </button>
+        <div className="titulo-acoes">
+          <button className="btn-novo-aluno" onClick={abrirCriacao}>
+            + Novo Membro
+          </button>
+          <button className="btn-importar" onClick={() => setModalImportar(true)}>
+            <Upload size={16} /> Importar
+          </button>
+        </div>
       </div>
 
       <div className="stats-cards-grid">

@@ -19,6 +19,12 @@
   box-shadow: var(--shadow-soft);
 }
 
+.comunidade-page .titulo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .comunidade-page .btn-novo-comunidade {
   display: flex;
   align-items: center;
@@ -37,6 +43,26 @@
 .comunidade-page .btn-novo-comunidade:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.comunidade-page .btn-importar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.2s;
+}
+
+.comunidade-page .btn-importar:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
 }
 
 .comunidade-page .titulo h1 {
@@ -143,42 +169,18 @@
   border-bottom: 1px solid var(--surface-border);
   font-size: 14px;
   vertical-align: middle;
-  /* 'anywhere' has limited support; use more compatible fallbacks */
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
-.comunidade-page .col-nome {
-  width: 19%;
-}
-
-.comunidade-page .col-cpf {
-  width: 13%;
-}
-
-.comunidade-page .col-email {
-  width: 23%;
-}
-
-.comunidade-page .col-telefone {
-  width: 14%;
-}
-
-.comunidade-page .col-livros-table {
-  width: 7%;
-}
-
-.comunidade-page .col-status {
-  width: 10%;
-}
-
-.comunidade-page .col-acoes {
-  width: 132px;
-}
-
-.comunidade-page .col-livros {
-  text-align: center;
-}
+.comunidade-page .col-nome { width: 19%; }
+.comunidade-page .col-cpf { width: 13%; }
+.comunidade-page .col-email { width: 23%; }
+.comunidade-page .col-telefone { width: 14%; }
+.comunidade-page .col-livros-table { width: 7%; }
+.comunidade-page .col-status { width: 10%; }
+.comunidade-page .col-acoes { width: 132px; }
+.comunidade-page .col-livros { text-align: center; }
 
 .comunidade-page .badge-ativo {
   background: var(--btn-dark-bg);
@@ -275,7 +277,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
   }
-
   .comunidade-page .comunidade-side-panel {
     grid-column: 1 / -1;
   }
@@ -286,7 +287,6 @@
     flex-direction: column;
     align-items: stretch;
   }
-
   .comunidade-page .search-wrapper {
     max-width: none;
     width: 100%;

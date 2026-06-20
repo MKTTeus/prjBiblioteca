@@ -1,0 +1,210 @@
+.importar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.importar-box {
+  background: var(--surface-bg);
+  border-radius: 16px;
+  width: min(480px, 94vw);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: importar-slide-in 0.2s ease;
+}
+
+@keyframes importar-slide-in {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.importar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.importar-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-label);
+}
+
+.importar-header .btn-fechar {
+  background: var(--surface-muted);
+  border: none;
+  border-radius: 8px;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: 0.15s;
+}
+
+.importar-header .btn-fechar:hover {
+  background: var(--status-danger-bg);
+  color: var(--danger);
+}
+
+.importar-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.importar-instrucao {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.importar-instrucao strong {
+  color: var(--text-label);
+}
+
+.importar-senha-aviso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-muted);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  color: var(--text-label);
+}
+
+.importar-dropzone {
+  border: 2px dashed var(--surface-border);
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+  background: var(--main-bg);
+}
+
+.importar-dropzone:hover {
+  border-color: var(--primary);
+  background: var(--primary-muted);
+}
+
+.importar-dropzone.tem-arquivo {
+  border-color: var(--primary);
+  background: var(--primary-muted);
+}
+
+.importar-dropzone-icon {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.importar-dropzone p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.importar-dropzone .nome-arquivo {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.importar-resultado {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+}
+
+.importar-resultado .res-sucesso {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-weight: 500;
+}
+
+.importar-resultado .res-ignorados {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warning);
+}
+
+.importar-resultado .res-erros {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.importar-resultado .res-erros li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--danger);
+  background: var(--status-danger-bg);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.importar-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--surface-border);
+}
+
+.importar-footer .btn-cancelar {
+  background: var(--surface-muted);
+  color: var(--text-label);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.15s;
+}
+
+.importar-footer .btn-cancelar:hover {
+  background: var(--surface-border);
+}
+
+.importar-footer .btn-importar-acao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: 0.15s;
+}
+
+.importar-footer .btn-importar-acao:hover:not(:disabled) {
+  background: var(--primary-strong);
+}
+
+.importar-footer .btn-importar-acao:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
