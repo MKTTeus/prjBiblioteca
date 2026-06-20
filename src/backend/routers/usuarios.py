@@ -104,11 +104,18 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             resultados["ignorados"] += 1
             continue
 
-        existe = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuStatus", True).execute()
-        if existe.data:
+        existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).execute()
+        if existe_email.data:
             resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
             resultados["ignorados"] += 1
             continue
+
+        if ra:
+            existe_ra = supabase.table("Usuario").select("idUsuario").eq("usuRA", ra).execute()
+            if existe_ra.data:
+                resultados["erros"].append(f"Linha {i}: RA '{ra}' já cadastrado")
+                resultados["ignorados"] += 1
+                continue
 
         novo = {
             "usuNome": nome,
