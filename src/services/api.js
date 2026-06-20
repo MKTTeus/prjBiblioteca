@@ -13,13 +13,13 @@ export const getToken = () => localStorage.getItem("token");
 // ========================
 
 async function apiFetch(endpoint, options = {}) {
-
   const token = getToken();
+  const isFormData = options.body instanceof FormData;
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token && { Authorization: `Bearer ${token}` }),
       ...(options.headers || {})
     }
