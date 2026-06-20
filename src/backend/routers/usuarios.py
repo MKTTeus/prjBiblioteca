@@ -84,6 +84,8 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuStatus": True,
     }
     reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    if not reativado.data:
+        raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     return reativado.data[0]
 
 @router.post("/alunos/importar") # importa aluno de tabela excel
@@ -119,8 +121,12 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             "usuTipo": "Aluno",
             "usuStatus": True,
         }
-        supabase.table("Usuario").insert(novo).execute()
-        resultados["importados"] += 1
+        try:
+            supabase.table("Usuario").insert(novo).execute()
+            resultados["importados"] += 1
+        except Exception as e:
+            resultados["erros"].append(f"Linha {i}: erro ao inserir — {str(e)}")
+            resultados["ignorados"] += 1
 
     return resultados
 
@@ -217,6 +223,8 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuStatus": True
     }
     reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    if not reativado.data:
+        raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     return reativado.data[0]
 
 

@@ -176,8 +176,8 @@ const handleSalvar = async () => {
       } catch (err) {
         // Usuário existe, mas está inativo
         if (
-          err.response?.data?.message === "USUARIO_INATIVO" ||
-          err.response?.data?.detail === "USUARIO_INATIVO" ||
+          err.status === 409 ||
+          err.data?.detail === "USUARIO_INATIVO" ||
           err.message?.includes("USUARIO_INATIVO")
         ) {
           setPendingReativar({ ...novoAluno });

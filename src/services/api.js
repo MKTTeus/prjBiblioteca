@@ -27,7 +27,10 @@ async function apiFetch(endpoint, options = {}) {
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Erro na requisição");
+    const err = new Error(text || "Erro na requisição");
+    err.status = res.status;
+    try { err.data = JSON.parse(text); } catch (_) {}
+    throw err;
   }
 
   return res.json();
