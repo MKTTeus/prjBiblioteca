@@ -13,7 +13,7 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
-import ImportModal from "../../../components/ImportarModal/ImportarModal";
+import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
 
 const maxCPFLength = 11;
