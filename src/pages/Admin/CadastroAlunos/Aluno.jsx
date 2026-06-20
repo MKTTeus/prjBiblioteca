@@ -8,7 +8,7 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
-import ImportModal from "../../../components/ImportModal/ImportModal";
+import ImportModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
 
 const EMPTY_ALUNO = {
