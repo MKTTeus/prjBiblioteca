@@ -181,6 +181,12 @@ export const deleteAluno = (idUsuario) =>
     method: "DELETE"
   });
 
+export const importarAlunos = (file) => {
+  const form = new FormData();
+  form.append("file", file);
+  return apiFetch("/alunos/importar", { method: "POST", body: form });
+};
+
 // ========================
 // COMUNIDADE
 // ========================
@@ -204,6 +210,12 @@ export const deleteComunidade = (idUsuario) =>
   apiFetch(`/comunidade/${idUsuario}`, {
     method: "DELETE"
   });
+
+export const importarComunidade = (file) => {
+  const form = new FormData();
+  form.append("file", file);
+  return apiFetch("/comunidade/importar", { method: "POST", body: form });
+};
 
 // ========================
 // GOOGLE BOOKS ISBN

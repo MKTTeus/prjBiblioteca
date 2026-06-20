@@ -8,6 +8,8 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import { importarAlunos } from "../../../services/api";
+import ImportModal from "../../../components/ImportModal/ImportModal";
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -30,6 +32,7 @@ export default function Aluno() {
   const [novoAluno, setNovoAluno] = useState(EMPTY_ALUNO);
   const [alunos, setAlunos] = useState([]);
   const [pendingDeleteAluno, setPendingDeleteAluno] = useState(null);
+  const [modalImportar, setModalImportar] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -277,7 +280,12 @@ export default function Aluno() {
         <button className="btn-novo-aluno" onClick={abrirCriacao}>
           + Novo Aluno
         </button>
+
+        <button className="btn-importar" onClick={() => setModalImportar(true)}>
+          Importar Excel
+        </button>
       </div>
+
 
       <div className="stats-cards-grid">
         <StatsCard
@@ -380,6 +388,13 @@ export default function Aluno() {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+      />
+
+      <ImportarModal
+        aberto={modalImportar}
+        titulo="Importar Alunos via Excel"
+        onClose={() => { setModalImportar(false); fetchAlunos(); }}
+        onImportar={importarAlunos}
       />
 
       <ConfirmModal

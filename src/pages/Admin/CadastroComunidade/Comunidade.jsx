@@ -13,6 +13,8 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import { importarComunidade } from "../../../services/api";
+import ImportModal from "../../../components/ImportModal/ImportModal";
 
 const maxCPFLength = 11;
 
@@ -37,6 +39,7 @@ export default function Comunidade() {
   const [novoMembro, setNovoMembro] = useState(EMPTY_MEMBRO);
   const [membros, setMembros] = useState([]);
   const [pendingDeleteMembro, setPendingDeleteMembro] = useState(null);
+  const [modalImportar, setModalImportar] = useState(false);
   const { addToast } = useToast();
 
   useEffect(() => {
@@ -261,6 +264,10 @@ export default function Comunidade() {
         <button className="btn-novo-comunidade" onClick={abrirCriacao}>
           + Novo Membro
         </button>
+
+        <button className="btn-importar" onClick={() => setModalImportar(true)}>
+          Importar Excel
+        </button>
       </div>
 
       <div className="stats-cards-grid">
@@ -378,6 +385,13 @@ export default function Comunidade() {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+      />
+
+      <ImportarModal
+        aberto={modalImportar}
+        titulo="Importar Membros via Excel"
+        onClose={() => { setModalImportar(false); fetchAlunos(); }}
+        onImportar={importarComunidade}
       />
 
       <ConfirmModal
