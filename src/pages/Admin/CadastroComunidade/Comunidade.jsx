@@ -55,7 +55,7 @@ const fetchMembros = async () => {
         telefone2: u.usuTelefoneResponsavel || "",
         endereco: u.usuEndereco || "",
         livros: 0,
-        status: u.usuStatus === false ? "Inativo" : "Ativo",
+        status: u.usuStatus === true ? "Ativo" : "Inativo",
       }))
     );
   } catch (err) {
@@ -115,7 +115,7 @@ useEffect(() => {
                   telefone: updated.usuTelefone || "",
                   telefone2: updated.usuTelefoneResponsavel || "",
                   endereco: updated.usuEndereco || "",
-                  status: updated.usuStatus === false ? "Inativo" : "Ativo",
+                  status: updated.usuStatus === true ? "Ativo" : "Inativo",
                 }
               : membro
           )
@@ -230,7 +230,7 @@ useEffect(() => {
           i === index
             ? {
                 ...membro,
-                status: updated.usuStatus === false ? "Inativo" : "Ativo",
+                status: updated.usuStatus === true ? "Ativo" : "Inativo",
               }
             : membro
         )

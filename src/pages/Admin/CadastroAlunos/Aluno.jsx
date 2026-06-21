@@ -50,7 +50,7 @@ const fetchAlunos = async () => {
         telefone2: u.usuTelefoneResponsavel || "",
         endereco: u.usuEndereco || "",
         livros: 0,
-        status: u.usuStatus === false ? "Inativo" : "Ativo",
+        status: u.usuStatus === true ? "Ativo" : "Inativo",
       }))
     );
   } catch (err) {
@@ -123,9 +123,9 @@ const handleSalvar = async () => {
                 telefone2: updated.usuTelefoneResponsavel || "",
                 endereco: updated.usuEndereco || "",
                 status:
-                  updated.usuStatus === false
-                    ? "Inativo"
-                    : "Ativo",
+                  updated.usuStatus === true
+                    ? "Ativo"
+                    : "Inativo",
               }
             : aluno
         )
