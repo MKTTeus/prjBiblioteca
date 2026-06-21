@@ -35,6 +35,25 @@ def criar_admin(data: AdminCreate, admin=Depends(get_admin)):
     return criado.data[0]
 
 
+@router.post("/admins/batch/excluir")
+def excluir_admins_lote(data: BatchIds, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Administrador").update({"admStatus": "Inativo"}).eq("idAdmin", id).execute()
+    return {"message": f"{len(data.ids)} admin(s) desativado(s) com sucesso"}
+
+
+@router.post("/admins/batch/status")
+def atualizar_status_admins_lote(data: BatchStatus, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    novo_status = "Ativo" if data.status else "Inativo"
+    for id in data.ids:
+        supabase.table("Administrador").update({"admStatus": novo_status}).eq("idAdmin", id).execute()
+    return {"message": f"{len(data.ids)} admin(s) atualizados com sucesso"}
+
+
 @router.put("/admins/{idAdmin}")
 def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
     resp = supabase.table("Administrador").select("*").eq("idAdmin", idAdmin).execute()
@@ -64,22 +83,3 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
 def deletar_admin(idAdmin: int, admin=Depends(get_admin)):
     supabase.table("Administrador").update({"admStatus": "Inativo"}).eq("idAdmin", idAdmin).execute()
     return {"message": "Admin desativado com sucesso"}
-
-
-@router.post("/admins/batch/excluir")
-def excluir_admins_lote(data: BatchIds, admin=Depends(get_admin)):
-    if not data.ids:
-        raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Administrador").update({"admStatus": "Inativo"}).eq("idAdmin", id).execute()
-    return {"message": f"{len(data.ids)} admin(s) desativado(s) com sucesso"}
-
-
-@router.post("/admins/batch/status")
-def atualizar_status_admins_lote(data: BatchStatus, admin=Depends(get_admin)):
-    if not data.ids:
-        raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    novo_status = "Ativo" if data.status else "Inativo"
-    for id in data.ids:
-        supabase.table("Administrador").update({"admStatus": novo_status}).eq("idAdmin", id).execute()
-    return {"message": f"{len(data.ids)} admin(s) atualizados com sucesso"}

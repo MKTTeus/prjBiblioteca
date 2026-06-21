@@ -144,6 +144,23 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
     return resultados
 
 
+@router.post("/alunos/batch/excluir")
+def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
+    return {"message": f"{len(data.ids)} aluno(s) excluído(s) com sucesso"}
+
+
+@router.post("/alunos/batch/status")
+def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
+    return {"message": f"{len(data.ids)} aluno(s) atualizados com sucesso"}
+
 @router.put("/alunos/{idUsuario}")
 def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
     resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).eq("usuExcluido", False).execute()
@@ -181,25 +198,6 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
 def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
     supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Aluno").execute()
     return {"message": "Aluno excluído com sucesso"}
-
-
-@router.post("/alunos/batch/excluir")
-def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
-    if not data.ids:
-        raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
-    return {"message": f"{len(data.ids)} aluno(s) excluído(s) com sucesso"}
-
-
-@router.post("/alunos/batch/status")
-def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
-    if not data.ids:
-        raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
-    return {"message": f"{len(data.ids)} aluno(s) atualizados com sucesso"}
-
 
 # ── COMUNIDADE ────────────────────────────────────────────────────
 
@@ -309,6 +307,23 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
     return resultados
 
 
+@router.post("/comunidade/batch/excluir")
+def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
+    return {"message": f"{len(data.ids)} membro(s) excluído(s) com sucesso"}
+
+
+@router.post("/comunidade/batch/status")
+def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
+    return {"message": f"{len(data.ids)} membro(s) atualizados com sucesso"}
+
 @router.put("/comunidade/{idUsuario}")
 def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
     resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).eq("usuExcluido", False).execute()
@@ -346,21 +361,3 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
     supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
     return {"message": "Membro da comunidade excluído com sucesso"}
-
-
-@router.post("/comunidade/batch/excluir")
-def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
-    if not data.ids:
-        raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
-    return {"message": f"{len(data.ids)} membro(s) excluído(s) com sucesso"}
-
-
-@router.post("/comunidade/batch/status")
-def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)):
-    if not data.ids:
-        raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
-    return {"message": f"{len(data.ids)} membro(s) atualizados com sucesso"}
