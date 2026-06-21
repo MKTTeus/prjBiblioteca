@@ -337,6 +337,17 @@ const handleSalvar = async () => {
     }
   };
 
+  const handleBatchStatus = (novoStatus) => {
+    const jaEstao = alunosFiltrados
+      .filter((a) => selecionados.includes(a.idUsuario))
+      .every((a) => a.status === novoStatus);
+    if (jaEstao) {
+      addToast(`Todos os selecionados já estão ${novoStatus === "Ativo" ? "ativos" : "inativos"}`, "info");
+      return;
+    }
+    setPendingBatchStatus(novoStatus);
+  };
+
   const toggleSelecionado = (id) => {
     setSelecionados((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
@@ -461,10 +472,10 @@ const handleSalvar = async () => {
         <div className="batch-bar">
           <span>{selecionados.length} selecionado(s)</span>
           <div className="batch-actions">
-            <button className="btn-batch btn-batch-ativar" onClick={() => setPendingBatchStatus("Ativo")}>
+            <button className="btn-batch btn-batch-ativar" onClick={() => handleBatchStatus("Ativo")}>
               <UserCheck size={15} /> Ativar
             </button>
-            <button className="btn-batch btn-batch-inativar" onClick={() => setPendingBatchStatus("Inativo")}>
+            <button className="btn-batch btn-batch-inativar" onClick={() => handleBatchStatus("Inativo")}>
               <UserX size={15} /> Inativar
             </button>
             <button className="btn-batch btn-batch-excluir" onClick={() => setPendingBatchExcluir(true)}>
@@ -562,15 +573,12 @@ const handleSalvar = async () => {
       <ConfirmModal
         show={Boolean(pendingDeleteAluno)}
         title="Confirmar exclusão"
-        message={
-          pendingDeleteAluno
-            ? `Tem certeza que deseja excluir este usuário?`
-            : "Tem certeza que deseja excluir este usuário?"
-        }
+        message="Tem certeza que deseja excluir este aluno?"
         onConfirm={confirmExcluirAluno}
         onCancel={() => setPendingDeleteAluno(null)}
         confirmText="Excluir"
         cancelText="Cancelar"
+        irreversivel
       />
       <ConfirmModal
         show={Boolean(pendingToggleAluno)}
@@ -593,11 +601,12 @@ const handleSalvar = async () => {
       <ConfirmModal
         show={pendingBatchExcluir}
         title="Excluir em lote"
-        message={`Tem certeza que deseja excluir ${selecionados.length} aluno(s)? Esta ação não pode ser desfeita.`}
+        message={`Tem certeza que deseja excluir ${selecionados.length} aluno(s)?`}
         onConfirm={confirmBatchExcluir}
         onCancel={() => setPendingBatchExcluir(false)}
         confirmText="Excluir"
         cancelText="Cancelar"
+        irreversivel
       />
       <ConfirmModal
         show={Boolean(pendingBatchStatus)}

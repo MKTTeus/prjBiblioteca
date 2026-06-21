@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
 from core import get_admin, hash_password, normalize_email, parse_status
-from schemas import AdminCreate, AdminUpdate
+from schemas import AdminCreate, AdminUpdate, BatchIds, BatchStatus
 
 router = APIRouter()
 
@@ -62,6 +62,24 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
 
 @router.delete("/admins/{idAdmin}")
 def deletar_admin(idAdmin: int, admin=Depends(get_admin)):
-    # Soft delete: desativar admin
     supabase.table("Administrador").update({"admStatus": "Inativo"}).eq("idAdmin", idAdmin).execute()
     return {"message": "Admin desativado com sucesso"}
+
+
+@router.post("/admins/batch/excluir")
+def excluir_admins_lote(data: BatchIds, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Administrador").update({"admStatus": "Inativo"}).eq("idAdmin", id).execute()
+    return {"message": f"{len(data.ids)} admin(s) desativado(s) com sucesso"}
+
+
+@router.post("/admins/batch/status")
+def atualizar_status_admins_lote(data: BatchStatus, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    novo_status = "Ativo" if data.status else "Inativo"
+    for id in data.ids:
+        supabase.table("Administrador").update({"admStatus": novo_status}).eq("idAdmin", id).execute()
+    return {"message": f"{len(data.ids)} admin(s) atualizados com sucesso"}

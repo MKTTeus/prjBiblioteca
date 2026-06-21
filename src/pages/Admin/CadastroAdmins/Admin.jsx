@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./Admin.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
-import { getAdmins, createAdmin, updateAdmin, deleteAdmin } from "../../../services/api";
+import { getAdmins, createAdmin, updateAdmin, deleteAdmin, excluirAdminsLote, atualizarStatusAdminsLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
@@ -30,6 +30,9 @@ export default function Admin() {
   const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null);
   const { addToast } = useToast();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [selecionados, setSelecionados] = useState([]);
+  const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
+  const [pendingBatchStatus, setPendingBatchStatus] = useState(null);
   useEffect(() => {
     async function fetchAdmins() {
       try {
@@ -230,6 +233,54 @@ export default function Admin() {
   }
 };
 
+  const toggleSelecionado = (id) =>
+    setSelecionados((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+
+  const toggleSelecionarTodos = () => {
+    if (selecionados.length === adminsFiltrados.length) setSelecionados([]);
+    else setSelecionados(adminsFiltrados.map((a) => a.idAdmin));
+  };
+
+  const handleBatchStatus = (novoStatus) => {
+    const jaEstao = adminsFiltrados
+      .filter((a) => selecionados.includes(a.idAdmin))
+      .every((a) => a.status === novoStatus);
+    if (jaEstao) {
+      addToast(`Todos os selecionados já estão ${novoStatus === "Ativo" ? "ativos" : "inativos"}`, "info");
+      return;
+    }
+    setPendingBatchStatus(novoStatus);
+  };
+
+  const confirmBatchExcluir = async () => {
+    try {
+      await excluirAdminsLote(selecionados);
+      setAdmins((prev) => prev.filter((a) => !selecionados.includes(a.idAdmin)));
+      addToast(`${selecionados.length} admin(s) excluído(s) com sucesso`, "success");
+      setSelecionados([]);
+    } catch (err) {
+      addToast("Falha ao excluir administradores", "error");
+    } finally {
+      setPendingBatchExcluir(false);
+    }
+  };
+
+  const confirmBatchStatus = async () => {
+    const novoStatusBool = pendingBatchStatus === "Ativo";
+    try {
+      await atualizarStatusAdminsLote(selecionados, novoStatusBool);
+      setAdmins((prev) =>
+        prev.map((a) => selecionados.includes(a.idAdmin) ? { ...a, status: pendingBatchStatus } : a)
+      );
+      addToast(`${selecionados.length} admin(s) ${novoStatusBool ? "ativados" : "desativados"} com sucesso`, "success");
+      setSelecionados([]);
+    } catch (err) {
+      addToast("Falha ao atualizar status", "error");
+    } finally {
+      setPendingBatchStatus(null);
+    }
+  };
+
   const totalAdmins = admins.length;
   const adminsAtivos = admins.filter((a) => a.status === "Ativo").length;
   const adminsInativos = admins.filter((a) => a.status === "Inativo").length;
@@ -286,10 +337,38 @@ export default function Admin() {
         />
       </div>
 
+      {selecionados.length > 0 && (
+        <div className="batch-bar">
+          <span>{selecionados.length} selecionado(s)</span>
+          <div className="batch-actions">
+            <button className="btn-batch btn-batch-ativar" onClick={() => handleBatchStatus("Ativo")}>
+              <UserCheck size={15} /> Ativar
+            </button>
+            <button className="btn-batch btn-batch-inativar" onClick={() => handleBatchStatus("Inativo")}>
+              <UserX size={15} /> Inativar
+            </button>
+            <button className="btn-batch btn-batch-excluir" onClick={() => setPendingBatchExcluir(true)}>
+              <Trash2 size={15} /> Excluir
+            </button>
+            <button className="btn-batch btn-batch-cancelar" onClick={() => setSelecionados([])}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="table-container">
         <table>
           <thead>
             <tr>
+              <th className="col-check">
+                <input
+                  type="checkbox"
+                  checked={adminsFiltrados.length > 0 && selecionados.length === adminsFiltrados.length}
+                  onChange={toggleSelecionarTodos}
+                  title="Selecionar todos"
+                />
+              </th>
               <th>Nome</th>
               <th>E-mail</th>
               <th>Status</th>
@@ -299,7 +378,14 @@ export default function Admin() {
 
           <tbody>
             {adminsFiltrados.map((admin) => (
-              <tr key={admin.idAdmin}>
+              <tr key={admin.idAdmin} className={selecionados.includes(admin.idAdmin) ? "row-selecionada" : ""}>
+                <td className="col-check">
+                  <input
+                    type="checkbox"
+                    checked={selecionados.includes(admin.idAdmin)}
+                    onChange={() => toggleSelecionado(admin.idAdmin)}
+                  />
+                </td>
                 <td>{admin.nome}</td>
                 <td>{admin.email}</td>
                 <td>
@@ -347,16 +433,13 @@ export default function Admin() {
       <ConfirmModal
         show={Boolean(pendingDeleteAdmin)}
         title="Confirmar exclusão"
-        message={
-          pendingDeleteAdmin
-            ? `Tem certeza que deseja excluir este administrador?`
-            : "Tem certeza que deseja excluir este administrador?"
-        }
+        message="Tem certeza que deseja excluir este administrador?"
         onConfirm={confirmExcluirAdmin}
         onCancel={() => setPendingDeleteAdmin(null)}
         confirmText="Excluir"
         cancelText="Cancelar"
         confirming={confirmingDelete}
+        irreversivel
       />
       <ConfirmModal
         show={Boolean(pendingToggleAdmin)}
@@ -365,6 +448,25 @@ export default function Admin() {
         onConfirm={confirmToggleAdminStatus}
         onCancel={() => setPendingToggleAdmin(null)}
         confirmText={pendingToggleAdmin?.novoStatus === "Inativo" ? "Desativar" : "Ativar"}
+        cancelText="Cancelar"
+      />
+      <ConfirmModal
+        show={pendingBatchExcluir}
+        title="Excluir em lote"
+        message={`Tem certeza que deseja excluir ${selecionados.length} administrador(es)?`}
+        onConfirm={confirmBatchExcluir}
+        onCancel={() => setPendingBatchExcluir(false)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        irreversivel
+      />
+      <ConfirmModal
+        show={Boolean(pendingBatchStatus)}
+        title={`${pendingBatchStatus === "Ativo" ? "Ativar" : "Inativar"} em lote`}
+        message={`Tem certeza que deseja ${pendingBatchStatus === "Ativo" ? "ativar" : "inativar"} ${selecionados.length} administrador(es)?`}
+        onConfirm={confirmBatchStatus}
+        onCancel={() => setPendingBatchStatus(null)}
+        confirmText={pendingBatchStatus === "Ativo" ? "Ativar" : "Inativar"}
         cancelText="Cancelar"
       />
     </div>

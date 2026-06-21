@@ -160,6 +160,20 @@ export const deleteAdmin = (idAdmin) =>
     method: "DELETE"
   });
 
+export const excluirAdminsLote = (ids) =>
+  apiFetch("/admins/batch/excluir", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+
+export const atualizarStatusAdminsLote = (ids, status) =>
+  apiFetch("/admins/batch/status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids, status }),
+  });
+
 // ========================
 // ALUNOS
 // ========================
@@ -229,6 +243,20 @@ export const updateComunidade = (idUsuario, payload) =>
 export const deleteComunidade = (idUsuario) =>
   apiFetch(`/comunidade/${idUsuario}`, {
     method: "DELETE"
+  });
+
+export const excluirComunidadeLote = (ids) =>
+  apiFetch("/comunidade/batch/excluir", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+
+export const atualizarStatusComunidadeLote = (ids, status) =>
+  apiFetch("/comunidade/batch/status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids, status }),
   });
 
 export const importarComunidade = (file) => {

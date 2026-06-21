@@ -346,3 +346,21 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
     supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
     return {"message": "Membro da comunidade excluído com sucesso"}
+
+
+@router.post("/comunidade/batch/excluir")
+def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
+    return {"message": f"{len(data.ids)} membro(s) excluído(s) com sucesso"}
+
+
+@router.post("/comunidade/batch/status")
+def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
+    return {"message": f"{len(data.ids)} membro(s) atualizados com sucesso"}

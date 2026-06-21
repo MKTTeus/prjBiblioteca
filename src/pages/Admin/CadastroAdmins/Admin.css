@@ -157,7 +157,7 @@
 }
 
 .admin-page .badge-ativo {
-  background: var(--accent-green);
+  background: var(--btn-dark-bg);
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
@@ -262,3 +262,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── SELEÇÃO EM LOTE ── */
+.col-check { width: 40px; text-align: center; }
+.col-check input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+.row-selecionada { background: var(--sidebar-active-bg) !important; }
+
+.batch-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--card-bg); border: 1px solid var(--primary);
+  border-radius: 10px; padding: 10px 16px; margin-bottom: 12px;
+  gap: 12px; flex-wrap: wrap;
+}
+.batch-bar span { font-size: 14px; font-weight: 600; color: var(--primary); }
+.batch-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-batch {
+  display: flex; align-items: center; gap: 6px; padding: 6px 14px;
+  border-radius: 7px; border: none; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: opacity 0.15s;
+}
+.btn-batch:hover { opacity: 0.85; }
+.btn-batch-ativar   { background: #22c55e; color: white; }
+.btn-batch-inativar { background: var(--warning, #f59e0b); color: white; }
+.btn-batch-excluir  { background: var(--danger); color: white; }
+.btn-batch-cancelar { background: var(--input-bg); color: var(--text-default); border: 1px solid var(--border); }

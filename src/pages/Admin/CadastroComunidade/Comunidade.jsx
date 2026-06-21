@@ -7,6 +7,8 @@ import {
   createComunidade,
   updateComunidade,
   deleteComunidade,
+  excluirComunidadeLote,
+  atualizarStatusComunidadeLote,
 } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -40,6 +42,9 @@ export default function Comunidade() {
   const [membros, setMembros] = useState([]);
   const [pendingDeleteMembro, setPendingDeleteMembro] = useState(null);
   const [modalImportar, setModalImportar] = useState(false);
+  const [selecionados, setSelecionados] = useState([]);
+  const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
+  const [pendingBatchStatus, setPendingBatchStatus] = useState(null);
   const { addToast } = useToast();
 
 const fetchMembros = async () => {
@@ -240,6 +245,54 @@ useEffect(() => {
     }
   };
 
+  const toggleSelecionado = (id) =>
+    setSelecionados((prev) => prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]);
+
+  const toggleSelecionarTodos = () => {
+    if (selecionados.length === membrosFiltrados.length) setSelecionados([]);
+    else setSelecionados(membrosFiltrados.map((m) => m.idUsuario));
+  };
+
+  const handleBatchStatus = (novoStatus) => {
+    const jaEstao = membrosFiltrados
+      .filter((m) => selecionados.includes(m.idUsuario))
+      .every((m) => m.status === novoStatus);
+    if (jaEstao) {
+      addToast(`Todos os selecionados já estão ${novoStatus === "Ativo" ? "ativos" : "inativos"}`, "info");
+      return;
+    }
+    setPendingBatchStatus(novoStatus);
+  };
+
+  const confirmBatchExcluir = async () => {
+    try {
+      await excluirComunidadeLote(selecionados);
+      setMembros((prev) => prev.filter((m) => !selecionados.includes(m.idUsuario)));
+      addToast(`${selecionados.length} membro(s) excluído(s) com sucesso`, "success");
+      setSelecionados([]);
+    } catch (err) {
+      addToast("Falha ao excluir membros", "error");
+    } finally {
+      setPendingBatchExcluir(false);
+    }
+  };
+
+  const confirmBatchStatus = async () => {
+    const novoStatusBool = pendingBatchStatus === "Ativo";
+    try {
+      await atualizarStatusComunidadeLote(selecionados, novoStatusBool);
+      setMembros((prev) =>
+        prev.map((m) => selecionados.includes(m.idUsuario) ? { ...m, status: pendingBatchStatus } : m)
+      );
+      addToast(`${selecionados.length} membro(s) ${novoStatusBool ? "ativados" : "desativados"} com sucesso`, "success");
+      setSelecionados([]);
+    } catch (err) {
+      addToast("Falha ao atualizar status", "error");
+    } finally {
+      setPendingBatchStatus(null);
+    }
+  };
+
   const totalMembros = membros.length;
   const membrosAtivos = membros.filter((m) => m.status === "Ativo").length;
   const membrosInativos = membros.filter((m) => m.status === "Inativo").length;
@@ -314,9 +367,30 @@ useEffect(() => {
         />
       </div>
 
+      {selecionados.length > 0 && (
+        <div className="batch-bar">
+          <span>{selecionados.length} selecionado(s)</span>
+          <div className="batch-actions">
+            <button className="btn-batch btn-batch-ativar" onClick={() => handleBatchStatus("Ativo")}>
+              <UserCheck size={15} /> Ativar
+            </button>
+            <button className="btn-batch btn-batch-inativar" onClick={() => handleBatchStatus("Inativo")}>
+              <UserX size={15} /> Inativar
+            </button>
+            <button className="btn-batch btn-batch-excluir" onClick={() => setPendingBatchExcluir(true)}>
+              <Trash2 size={15} /> Excluir
+            </button>
+            <button className="btn-batch btn-batch-cancelar" onClick={() => setSelecionados([])}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="table-container">
         <table>
           <colgroup>
+            <col style={{ width: "40px" }} />
             <col className="col-nome" />
             <col className="col-cpf" />
             <col className="col-email" />
@@ -327,6 +401,14 @@ useEffect(() => {
           </colgroup>
           <thead>
             <tr>
+              <th className="col-check">
+                <input
+                  type="checkbox"
+                  checked={membrosFiltrados.length > 0 && selecionados.length === membrosFiltrados.length}
+                  onChange={toggleSelecionarTodos}
+                  title="Selecionar todos"
+                />
+              </th>
               <th>Nome</th>
               <th>CPF</th>
               <th>E-mail</th>
@@ -339,7 +421,14 @@ useEffect(() => {
 
           <tbody>
             {membrosFiltrados.map((membro) => (
-              <tr key={membro.idUsuario}>
+              <tr key={membro.idUsuario} className={selecionados.includes(membro.idUsuario) ? "row-selecionada" : ""}>
+                <td className="col-check">
+                  <input
+                    type="checkbox"
+                    checked={selecionados.includes(membro.idUsuario)}
+                    onChange={() => toggleSelecionado(membro.idUsuario)}
+                  />
+                </td>
                 <td>{membro.nome}</td>
                 <td>{membro.cpf}</td>
                 <td>{membro.email}</td>
@@ -398,14 +487,30 @@ useEffect(() => {
       <ConfirmModal
         show={Boolean(pendingDeleteMembro)}
         title="Confirmar exclusão"
-        message={
-          pendingDeleteMembro
-            ? `Tem certeza que deseja excluir este usuário?`
-            : "Tem certeza que deseja excluir este usuário?"
-        }
+        message="Tem certeza que deseja excluir este membro?"
         onConfirm={confirmExcluirMembro}
         onCancel={() => setPendingDeleteMembro(null)}
         confirmText="Excluir"
+        cancelText="Cancelar"
+        irreversivel
+      />
+      <ConfirmModal
+        show={pendingBatchExcluir}
+        title="Excluir em lote"
+        message={`Tem certeza que deseja excluir ${selecionados.length} membro(s)?`}
+        onConfirm={confirmBatchExcluir}
+        onCancel={() => setPendingBatchExcluir(false)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        irreversivel
+      />
+      <ConfirmModal
+        show={Boolean(pendingBatchStatus)}
+        title={`${pendingBatchStatus === "Ativo" ? "Ativar" : "Inativar"} em lote`}
+        message={`Tem certeza que deseja ${pendingBatchStatus === "Ativo" ? "ativar" : "inativar"} ${selecionados.length} membro(s)?`}
+        onConfirm={confirmBatchStatus}
+        onCancel={() => setPendingBatchStatus(null)}
+        confirmText={pendingBatchStatus === "Ativo" ? "Ativar" : "Inativar"}
         cancelText="Cancelar"
       />
     </div>

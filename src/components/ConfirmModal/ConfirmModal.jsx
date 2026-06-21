@@ -12,6 +12,7 @@ export default function ConfirmModal({
   confirmText = "Excluir",
   cancelText = "Cancelar",
   confirming = false,
+  irreversivel = false,
 }) {
   if (!show) return null;
 
@@ -25,7 +26,7 @@ export default function ConfirmModal({
         <div className="confirm-modal-body">
           <h2>{title}</h2>
           <p>{message}</p>
-          <p className="confirm-modal-warning">Essa ação não poderá ser desfeita.</p>
+          {irreversivel && <p className="confirm-modal-warning">Essa ação não poderá ser desfeita.</p>}
         </div>
         <div className="confirm-modal-actions">
            <button
