@@ -37,7 +37,6 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
         <aside className={`sidebar ${isOpen ? "open" : ""}`}>
           <div className="sidebar-section">
             <p className="sidebar-title">Principal</p>
-
             <ul>
               {userMenuItems.map(({ key, label, icon: Icon }) => (
                 <li key={key}>
@@ -62,136 +61,136 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
     <>
       <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
       <aside className={`sidebar ${isOpen ? "open" : ""}`}>
-      <div className="sidebar-section">
-        <p className="sidebar-title">Principal</p>
-
-        <ul>
-          <li>
-            <NavLink
-              to="/admin"
-              end
-              className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
-            >
-              <FiHome />
-              <span>Dashboard</span>
-            </NavLink>
-          </li>
-
-          <li className="submenu-container">
-            <button
-              type="button"
-              className={`submenu-toggle ${openEmprestimos ? "open" : ""}`}
-              onClick={() => setOpenEmprestimos((current) => !current)}
-            >
-              <div className="submenu-left">
-                <FiRepeat />
-                <span>Empréstimos</span>
-              </div>
-              <FiChevronDown className="arrow" />
-            </button>
-
-            <ul className={`submenu ${openEmprestimos ? "open" : ""}`}>
-              <li>
-                <NavLink
-                  to="/admin/emprestimos"
-                  end
-                  className={({ isActive }) = onClick={close}>
-                    isActive ? "active" : undefined
-                  }
-                >
-                  Empréstimos e Devoluções
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink
-                  to="/admin/emprestimos/solicitacoes"
-                  className={({ isActive }) = onClick={close}>
-                    isActive ? "active" : undefined
-                  }
-                >
-                  Solicitações de Empréstimo
-                </NavLink>
-              </li>
-            </ul>
-          </li>
-
-          {isAdmin && (
-            <li>
-              <NavLink
-                to="/admin/livros"
-                className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
-              >
-                <FiBook />
-                <span>Livros</span>
-              </NavLink>
-            </li>
-          )}
-
-          {isAdmin && (
-            <li className="submenu-container">
-              <button
-                type="button"
-                className={`submenu-toggle ${openPessoas ? "open" : ""}`}
-                onClick={() => setOpenPessoas((current) => !current)}
-              >
-                <div className="submenu-left">
-                  <FiUsers />
-                  <span>Pessoas</span>
-                </div>
-                <FiChevronDown className="arrow" />
-              </button>
-
-              <ul className={`submenu ${openPessoas ? "open" : ""}`}>
-                <li>
-                  <NavLink to="/admin/alunos" onClick={close}>
-                    Cadastro de Alunos
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/admin/comunidade" onClick={close}>
-                    Cadastro da Comunidade
-                  </NavLink>
-                </li>
-                <li>
-                  <NavLink to="/admin/admins" onClick={close}>
-                    Cadastro de Administradores
-                  </NavLink>
-                </li>
-              </ul>
-            </li>
-          )}
-
-          <li>
-            <NavLink
-              to="/admin/notificacoes"
-              className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
-            >
-              <FiBell />
-              <span>Notificações</span>
-            </NavLink>
-          </li>
-        </ul>
-      </div>
-
-      {isAdmin && (
         <div className="sidebar-section">
-          <p className="sidebar-title sidebar-system">Sistema</p>
+          <p className="sidebar-title">Principal</p>
 
           <ul>
             <li>
               <NavLink
-                to="/admin/configuracoes"
-                className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
+                to="/admin"
+                end
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+                onClick={close}
               >
-                <FiSettings />
-                <span>Configurações</span>
+                <FiHome />
+                <span>Dashboard</span>
+              </NavLink>
+            </li>
+
+            <li className="submenu-container">
+              <button
+                type="button"
+                className={`submenu-toggle ${openEmprestimos ? "open" : ""}`}
+                onClick={() => setOpenEmprestimos((current) => !current)}
+              >
+                <div className="submenu-left">
+                  <FiRepeat />
+                  <span>Empréstimos</span>
+                </div>
+                <FiChevronDown className="arrow" />
+              </button>
+
+              <ul className={`submenu ${openEmprestimos ? "open" : ""}`}>
+                <li>
+                  <NavLink
+                    to="/admin/emprestimos"
+                    end
+                    className={({ isActive }) => (isActive ? "active" : undefined)}
+                    onClick={close}
+                  >
+                    Empréstimos e Devoluções
+                  </NavLink>
+                </li>
+                <li>
+                  <NavLink
+                    to="/admin/emprestimos/solicitacoes"
+                    className={({ isActive }) => (isActive ? "active" : undefined)}
+                    onClick={close}
+                  >
+                    Solicitações de Empréstimo
+                  </NavLink>
+                </li>
+              </ul>
+            </li>
+
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/admin/livros"
+                  className={({ isActive }) => (isActive ? "active" : undefined)}
+                  onClick={close}
+                >
+                  <FiBook />
+                  <span>Livros</span>
+                </NavLink>
+              </li>
+            )}
+
+            {isAdmin && (
+              <li className="submenu-container">
+                <button
+                  type="button"
+                  className={`submenu-toggle ${openPessoas ? "open" : ""}`}
+                  onClick={() => setOpenPessoas((current) => !current)}
+                >
+                  <div className="submenu-left">
+                    <FiUsers />
+                    <span>Pessoas</span>
+                  </div>
+                  <FiChevronDown className="arrow" />
+                </button>
+
+                <ul className={`submenu ${openPessoas ? "open" : ""}`}>
+                  <li>
+                    <NavLink to="/admin/alunos" onClick={close}>
+                      Cadastro de Alunos
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/admin/comunidade" onClick={close}>
+                      Cadastro da Comunidade
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/admin/admins" onClick={close}>
+                      Cadastro de Administradores
+                    </NavLink>
+                  </li>
+                </ul>
+              </li>
+            )}
+
+            <li>
+              <NavLink
+                to="/admin/notificacoes"
+                className={({ isActive }) => (isActive ? "active" : undefined)}
+                onClick={close}
+              >
+                <FiBell />
+                <span>Notificações</span>
               </NavLink>
             </li>
           </ul>
         </div>
-      )}
-    </aside>
+
+        {isAdmin && (
+          <div className="sidebar-section">
+            <p className="sidebar-title sidebar-system">Sistema</p>
+            <ul>
+              <li>
+                <NavLink
+                  to="/admin/configuracoes"
+                  className={({ isActive }) => (isActive ? "active" : undefined)}
+                  onClick={close}
+                >
+                  <FiSettings />
+                  <span>Configurações</span>
+                </NavLink>
+              </li>
+            </ul>
+          </div>
+        )}
+      </aside>
     </>
   );
 }
