@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
-import { getAlunos, createAluno, updateAluno, deleteAluno } from "../../../services/api";
+import { getAlunos, createAluno, updateAluno, deleteAluno, excluirAlunosLote, atualizarStatusLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
@@ -35,6 +35,9 @@ export default function Aluno() {
   const [pendingDeleteAluno, setPendingDeleteAluno] = useState(null);
   const [modalImportar, setModalImportar] = useState(false);
   const [pendingReativar, setPendingReativar] = useState(null);
+  const [selecionados, setSelecionados] = useState([]);
+  const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
+  const [pendingBatchStatus, setPendingBatchStatus] = useState(null); // "Ativo" | "Inativo"
   const { addToast } = useToast();
 
 const fetchAlunos = async () => {
@@ -334,6 +337,51 @@ const handleSalvar = async () => {
     }
   };
 
+  const toggleSelecionado = (id) => {
+    setSelecionados((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelecionarTodos = () => {
+    if (selecionados.length === alunosFiltrados.length) {
+      setSelecionados([]);
+    } else {
+      setSelecionados(alunosFiltrados.map((a) => a.idUsuario));
+    }
+  };
+
+  const confirmBatchExcluir = async () => {
+    try {
+      await excluirAlunosLote(selecionados);
+      setAlunos((prev) => prev.filter((a) => !selecionados.includes(a.idUsuario)));
+      addToast(`${selecionados.length} aluno(s) excluído(s) com sucesso`, "success");
+      setSelecionados([]);
+    } catch (err) {
+      addToast("Falha ao excluir alunos", "error");
+    } finally {
+      setPendingBatchExcluir(false);
+    }
+  };
+
+  const confirmBatchStatus = async () => {
+    const novoStatus = pendingBatchStatus === "Ativo";
+    try {
+      await atualizarStatusLote(selecionados, novoStatus);
+      setAlunos((prev) =>
+        prev.map((a) =>
+          selecionados.includes(a.idUsuario) ? { ...a, status: pendingBatchStatus } : a
+        )
+      );
+      addToast(`${selecionados.length} aluno(s) ${novoStatus ? "ativados" : "desativados"} com sucesso`, "success");
+      setSelecionados([]);
+    } catch (err) {
+      addToast("Falha ao atualizar status", "error");
+    } finally {
+      setPendingBatchStatus(null);
+    }
+  };
+
   const totalAlunos = alunos.length;
   const alunosAtivos = alunos.filter((a) => a.status === "Ativo").length;
   const alunosInativos = alunos.filter((a) => a.status === "Inativo").length;
@@ -409,10 +457,38 @@ const handleSalvar = async () => {
         />
       </div>
 
+      {selecionados.length > 0 && (
+        <div className="batch-bar">
+          <span>{selecionados.length} selecionado(s)</span>
+          <div className="batch-actions">
+            <button className="btn-batch btn-batch-ativar" onClick={() => setPendingBatchStatus("Ativo")}>
+              <UserCheck size={15} /> Ativar
+            </button>
+            <button className="btn-batch btn-batch-inativar" onClick={() => setPendingBatchStatus("Inativo")}>
+              <UserX size={15} /> Inativar
+            </button>
+            <button className="btn-batch btn-batch-excluir" onClick={() => setPendingBatchExcluir(true)}>
+              <Trash2 size={15} /> Excluir
+            </button>
+            <button className="btn-batch btn-batch-cancelar" onClick={() => setSelecionados([])}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="table-container">
         <table>
           <thead>
             <tr>
+              <th className="col-check">
+                <input
+                  type="checkbox"
+                  checked={alunosFiltrados.length > 0 && selecionados.length === alunosFiltrados.length}
+                  onChange={toggleSelecionarTodos}
+                  title="Selecionar todos"
+                />
+              </th>
               <th>Nome</th>
               <th>RA</th>
               <th>E-mail</th>
@@ -424,7 +500,14 @@ const handleSalvar = async () => {
 
           <tbody>
             {alunosFiltrados.map((aluno) => (
-              <tr key={aluno.idUsuario}>
+              <tr key={aluno.idUsuario} className={selecionados.includes(aluno.idUsuario) ? "row-selecionada" : ""}>
+                <td className="col-check">
+                  <input
+                    type="checkbox"
+                    checked={selecionados.includes(aluno.idUsuario)}
+                    onChange={() => toggleSelecionado(aluno.idUsuario)}
+                  />
+                </td>
                 <td>{aluno.nome}</td>
                 <td>{aluno.ra}</td>
                 <td>{aluno.email}</td>
@@ -505,6 +588,24 @@ const handleSalvar = async () => {
         onConfirm={confirmReativar}
         onCancel={() => setPendingReativar(null)}
         confirmText="Reativar"
+        cancelText="Cancelar"
+      />
+      <ConfirmModal
+        show={pendingBatchExcluir}
+        title="Excluir em lote"
+        message={`Tem certeza que deseja excluir ${selecionados.length} aluno(s)? Esta ação não pode ser desfeita.`}
+        onConfirm={confirmBatchExcluir}
+        onCancel={() => setPendingBatchExcluir(false)}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+      />
+      <ConfirmModal
+        show={Boolean(pendingBatchStatus)}
+        title={`${pendingBatchStatus === "Ativo" ? "Ativar" : "Inativar"} em lote`}
+        message={`Tem certeza que deseja ${pendingBatchStatus === "Ativo" ? "ativar" : "inativar"} ${selecionados.length} aluno(s)?`}
+        onConfirm={confirmBatchStatus}
+        onCancel={() => setPendingBatchStatus(null)}
+        confirmText={pendingBatchStatus === "Ativo" ? "Ativar" : "Inativar"}
         cancelText="Cancelar"
       />
     </div>

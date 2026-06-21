@@ -92,6 +92,13 @@ class UsuarioUpdate(BaseModel):
     status: Optional[Union[bool, str]] = None
 
 
+class BatchIds(BaseModel):
+    ids: list[int]
+
+class BatchStatus(BaseModel):
+    ids: list[int]
+    status: bool
+
 class AdminCreate(BaseModel):
     nome: str
     email: str

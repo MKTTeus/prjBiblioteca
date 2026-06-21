@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from database import supabase
 from core import get_admin, hash_password, normalize_email, parse_status
-from schemas import UsuarioCreate, UsuarioUpdate
+from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 import io
 import openpyxl
 import csv
@@ -181,6 +181,24 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
 def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
     supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Aluno").execute()
     return {"message": "Aluno excluído com sucesso"}
+
+
+@router.post("/alunos/batch/excluir")
+def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
+    return {"message": f"{len(data.ids)} aluno(s) excluído(s) com sucesso"}
+
+
+@router.post("/alunos/batch/status")
+def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
+    if not data.ids:
+        raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
+    return {"message": f"{len(data.ids)} aluno(s) atualizados com sucesso"}
 
 
 # ── COMUNIDADE ────────────────────────────────────────────────────
