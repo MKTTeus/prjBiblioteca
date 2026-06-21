@@ -152,7 +152,7 @@
 }
 
 .aluno-page .badge-ativo {
-  background: var(--btn-dark-bg);
+  background: #22c55e;
   color: white;
   padding: 4px 10px;
   border-radius: 12px;
