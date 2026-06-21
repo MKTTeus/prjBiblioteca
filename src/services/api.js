@@ -184,6 +184,20 @@ export const deleteAluno = (idUsuario) =>
     method: "DELETE"
   });
 
+export const excluirAlunosLote = (ids) =>
+  apiFetch("/alunos/batch/excluir", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  });
+
+export const atualizarStatusLote = (ids, status) =>
+  apiFetch("/alunos/batch/status", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids, status }),
+  });
+
 export const importarAlunos = (file) => {
   const form = new FormData();
   form.append("file", file);
