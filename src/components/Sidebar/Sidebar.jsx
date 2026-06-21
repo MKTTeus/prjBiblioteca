@@ -11,6 +11,7 @@ import {
   FiBell,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSidebar } from "../../contexts/SidebarContext";
 import "./Sidebar.css";
 
 const userMenuItems = [
@@ -23,6 +24,7 @@ const userMenuItems = [
 
 function Sidebar({ type = "admin", activePage, setActivePage }) {
   const { user } = useAuth();
+  const { isOpen, close } = useSidebar();
   const [openPessoas, setOpenPessoas] = useState(false);
   const [openEmprestimos, setOpenEmprestimos] = useState(false);
 
@@ -30,31 +32,36 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
   if (type === "user") {
     return (
-      <aside className="sidebar">
-        <div className="sidebar-section">
-          <p className="sidebar-title">Principal</p>
+      <>
+        <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
+        <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+          <div className="sidebar-section">
+            <p className="sidebar-title">Principal</p>
 
-          <ul>
-            {userMenuItems.map(({ key, label, icon: Icon }) => (
-              <li key={key}>
-                <button
-                  type="button"
-                  className={`sidebar-action ${activePage === key ? "active" : ""}`}
-                  onClick={() => setActivePage && setActivePage(key)}
-                >
-                  <Icon />
-                  <span>{label}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </aside>
+            <ul>
+              {userMenuItems.map(({ key, label, icon: Icon }) => (
+                <li key={key}>
+                  <button
+                    type="button"
+                    className={`sidebar-action ${activePage === key ? "active" : ""}`}
+                    onClick={() => { setActivePage && setActivePage(key); close(); }}
+                  >
+                    <Icon />
+                    <span>{label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </>
     );
   }
 
   return (
-    <aside className="sidebar">
+    <>
+      <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
+      <aside className={`sidebar ${isOpen ? "open" : ""}`}>
       <div className="sidebar-section">
         <p className="sidebar-title">Principal</p>
 
@@ -63,7 +70,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             <NavLink
               to="/admin"
               end
-              className={({ isActive }) => (isActive ? "active" : undefined)}
+              className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
             >
               <FiHome />
               <span>Dashboard</span>
@@ -88,7 +95,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                 <NavLink
                   to="/admin/emprestimos"
                   end
-                  className={({ isActive }) =>
+                  className={({ isActive }) = onClick={close}>
                     isActive ? "active" : undefined
                   }
                 >
@@ -99,7 +106,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
               <li>
                 <NavLink
                   to="/admin/emprestimos/solicitacoes"
-                  className={({ isActive }) =>
+                  className={({ isActive }) = onClick={close}>
                     isActive ? "active" : undefined
                   }
                 >
@@ -113,7 +120,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             <li>
               <NavLink
                 to="/admin/livros"
-                className={({ isActive }) => (isActive ? "active" : undefined)}
+                className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
               >
                 <FiBook />
                 <span>Livros</span>
@@ -137,17 +144,17 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
               <ul className={`submenu ${openPessoas ? "open" : ""}`}>
                 <li>
-                  <NavLink to="/admin/alunos">
+                  <NavLink to="/admin/alunos" onClick={close}>
                     Cadastro de Alunos
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/comunidade">
+                  <NavLink to="/admin/comunidade" onClick={close}>
                     Cadastro da Comunidade
                   </NavLink>
                 </li>
                 <li>
-                  <NavLink to="/admin/admins">
+                  <NavLink to="/admin/admins" onClick={close}>
                     Cadastro de Administradores
                   </NavLink>
                 </li>
@@ -158,7 +165,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
           <li>
             <NavLink
               to="/admin/notificacoes"
-              className={({ isActive }) => (isActive ? "active" : undefined)}
+              className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
             >
               <FiBell />
               <span>Notificações</span>
@@ -175,7 +182,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             <li>
               <NavLink
                 to="/admin/configuracoes"
-                className={({ isActive }) => (isActive ? "active" : undefined)}
+                className={({ isActive }) = onClick={close}> (isActive ? "active" : undefined)}
               >
                 <FiSettings />
                 <span>Configurações</span>
@@ -185,6 +192,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
         </div>
       )}
     </aside>
+    </>
   );
 }
 

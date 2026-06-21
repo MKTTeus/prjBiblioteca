@@ -152,3 +152,49 @@
   background-color: var(--sidebar-active-bg);
   color: var(--sidebar-active-text);
 }
+
+/* ── OVERLAY ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 89;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 90;
+    top: 0;
+    height: 100vh;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* ── DESKTOP: sempre visível, sem overlay ── */
+@media (min-width: 769px) {
+  .sidebar {
+    transform: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+}

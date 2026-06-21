@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { LogOut } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSidebar } from "../../contexts/SidebarContext";
 import { Link } from "react-router-dom";
 import "./Header.css";
 
 function Header() {
   const { user, logout } = useAuth();
+  const { toggle } = useSidebar();
 
   const [nomeBiblioteca, setNomeBiblioteca] = useState(
     localStorage.getItem("nomeBiblioteca") || "Sala de Leitura"
@@ -37,6 +39,9 @@ function Header() {
   return (
     <header className="header">
       <div className="header-left">
+        <button className="hamburger-btn" onClick={toggle} aria-label="Abrir menu">
+          <Menu size={22} />
+        </button>
         <Link to="/dashboard" className="header-logo">
           <div className="header-icon">
             <img

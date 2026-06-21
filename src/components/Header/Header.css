@@ -87,3 +87,37 @@
   font-size: 14px;
   white-space: nowrap;
 }
+
+/* ── HAMBÚRGUER ── */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-default);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.hamburger-btn:hover {
+  background: var(--sidebar-active-bg);
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .header-center {
+    display: none;
+  }
+
+  .header-title {
+    font-size: 16px;
+    max-width: 140px;
+  }
+}
