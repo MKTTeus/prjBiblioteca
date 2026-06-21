@@ -33,7 +33,7 @@ def _parse_upload(contents: bytes, filename: str) -> list[dict]:
 
 @router.get("/alunos")
 def listar_alunos(admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("usuTipo", "Aluno").order("usuNome").execute()
+    resp = supabase.table("Usuario").select("*").eq("usuTipo", "Aluno").eq("usuExcluido", False).order("usuNome").execute()
     return resp.data or []
 
 
@@ -45,7 +45,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
     if exist.data:
         usuario = exist.data[0]
         if usuario.get("usuStatus") == True:
@@ -61,15 +61,19 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuEndereco": data.endereco,
         "usuRA": data.ra,
         "usuTipo": "Aluno",
-        "usuStatus": parse_status(data.status)
+        "usuStatus": parse_status(data.status),
+        "usuExcluido": False,
     }
     criado = supabase.table("Usuario").insert(novo).execute()
+    if not criado.data:
+        raise HTTPException(status_code=500, detail="Falha ao criar aluno")
     return criado.data[0]
+
 
 @router.post("/alunos/reativar")
 def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
     if not exist.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
@@ -88,7 +92,8 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     return reativado.data[0]
 
-@router.post("/alunos/importar") # importa aluno de tabela excel
+
+@router.post("/alunos/importar")
 async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)):
     contents = await file.read()
     linhas = _parse_upload(contents, file.filename)
@@ -104,14 +109,14 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             resultados["ignorados"] += 1
             continue
 
-        existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).execute()
+        existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuExcluido", False).execute()
         if existe_email.data:
             resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
             resultados["ignorados"] += 1
             continue
 
         if ra:
-            existe_ra = supabase.table("Usuario").select("idUsuario").eq("usuRA", ra).execute()
+            existe_ra = supabase.table("Usuario").select("idUsuario").eq("usuRA", ra).eq("usuExcluido", False).execute()
             if existe_ra.data:
                 resultados["erros"].append(f"Linha {i}: RA '{ra}' já cadastrado")
                 resultados["ignorados"] += 1
@@ -127,6 +132,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             "usuRA": ra,
             "usuTipo": "Aluno",
             "usuStatus": True,
+            "usuExcluido": False,
         }
         try:
             supabase.table("Usuario").insert(novo).execute()
@@ -140,7 +146,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
 
 @router.put("/alunos/{idUsuario}")
 def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).execute()
+    resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).eq("usuExcluido", False).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
 
@@ -166,20 +172,22 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
     atual = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+    if not atual.data:
+        raise HTTPException(status_code=500, detail="Falha ao atualizar aluno")
     return atual.data[0]
 
 
 @router.delete("/alunos/{idUsuario}")
 def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
-    supabase.table("Usuario").update({"usuStatus": False}).eq("idUsuario", idUsuario).eq("usuTipo", "Aluno").execute()
-    return {"message": "Aluno desativado com sucesso"}
+    supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Aluno").execute()
+    return {"message": "Aluno excluído com sucesso"}
 
 
 # ── COMUNIDADE ────────────────────────────────────────────────────
 
 @router.get("/comunidade")
 def listar_comunidade(admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("usuTipo", "Comunidade").order("usuNome").execute()
+    resp = supabase.table("Usuario").select("*").eq("usuTipo", "Comunidade").eq("usuExcluido", False).order("usuNome").execute()
     return resp.data or []
 
 
@@ -189,7 +197,7 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).eq("usuExcluido", False).execute()
     if exist.data:
         usuario = exist.data[0]
         if usuario.get("usuStatus") == True:
@@ -205,15 +213,19 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuEndereco": data.endereco,
         "usuCPF": data.cpf,
         "usuTipo": "Comunidade",
-        "usuStatus": parse_status(data.status)
+        "usuStatus": parse_status(data.status),
+        "usuExcluido": False,
     }
     criado = supabase.table("Usuario").insert(novo).execute()
+    if not criado.data:
+        raise HTTPException(status_code=500, detail="Falha ao criar membro")
     return criado.data[0]
 
+
 @router.post("/comunidade/reativar")
-def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
+def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
     if not exist.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
@@ -227,7 +239,7 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuEndereco": data.endereco,
         "usuCPF": data.cpf,
         "usuTipo": "Comunidade",
-        "usuStatus": True
+        "usuStatus": True,
     }
     reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
     if not reativado.data:
@@ -235,7 +247,7 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     return reativado.data[0]
 
 
-@router.post("/comunidade/importar") # importa membro da comunidade de tabela excel 
+@router.post("/comunidade/importar")
 async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_admin)):
     contents = await file.read()
     linhas = _parse_upload(contents, file.filename)
@@ -251,8 +263,8 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             resultados["ignorados"] += 1
             continue
 
-        existe = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuStatus", True).execute()
-        if existe.data:
+        existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuExcluido", False).execute()
+        if existe_email.data:
             resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
             resultados["ignorados"] += 1
             continue
@@ -267,16 +279,21 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             "usuCPF": cpf,
             "usuTipo": "Comunidade",
             "usuStatus": True,
+            "usuExcluido": False,
         }
-        supabase.table("Usuario").insert(novo).execute()
-        resultados["importados"] += 1
+        try:
+            supabase.table("Usuario").insert(novo).execute()
+            resultados["importados"] += 1
+        except Exception as e:
+            resultados["erros"].append(f"Linha {i}: erro ao inserir — {str(e)}")
+            resultados["ignorados"] += 1
 
     return resultados
 
 
 @router.put("/comunidade/{idUsuario}")
 def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).execute()
+    resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).eq("usuExcluido", False).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Membro não encontrado")
 
@@ -302,10 +319,12 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
     atual = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+    if not atual.data:
+        raise HTTPException(status_code=500, detail="Falha ao atualizar membro")
     return atual.data[0]
 
 
 @router.delete("/comunidade/{idUsuario}")
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
-    supabase.table("Usuario").update({"usuStatus": False}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
-    return {"message": "Membro da comunidade desativado com sucesso"}
+    supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
+    return {"message": "Membro da comunidade excluído com sucesso"}
