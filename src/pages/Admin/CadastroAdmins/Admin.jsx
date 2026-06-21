@@ -347,9 +347,6 @@ export default function Admin() {
             <button className="btn-batch btn-batch-inativar" onClick={() => handleBatchStatus("Inativo")}>
               <UserX size={15} /> Inativar
             </button>
-            <button className="btn-batch btn-batch-excluir" onClick={() => setPendingBatchExcluir(true)}>
-              <Trash2 size={15} /> Excluir
-            </button>
             <button className="btn-batch btn-batch-cancelar" onClick={() => setSelecionados([])}>
               Cancelar
             </button>
