@@ -8,7 +8,6 @@ export function SidebarProvider({ children }) {
   const toggle = () => setIsOpen((v) => !v);
   const close = () => setIsOpen(false);
 
-  // Fecha ao redimensionar para desktop
   useEffect(() => {
     const handler = () => { if (window.innerWidth > 768) setIsOpen(false); };
     window.addEventListener("resize", handler);
