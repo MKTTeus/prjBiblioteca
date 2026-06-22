@@ -19,7 +19,6 @@ export default function Biblioteca() {
       const exemplares = await getExemplaresDisponiveis();
       
       // Encontrar um exemplar deste livro
-      const idLivroAlvo = book.idLivro;
       const exemplarDisponivel = exemplares.find(ex => ex.nome === book.livTitulo || ex.nome === book.titulo);
       
       if (!exemplarDisponivel) {
