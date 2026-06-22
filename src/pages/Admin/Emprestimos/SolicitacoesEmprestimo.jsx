@@ -5,7 +5,11 @@ import "./SolicitacoesEmprestimo.css";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
-import { getEmprestimos } from "../../../services/api";
+import { 
+  getEmprestimos,
+  aprovarSolicitacaoEmprestimo,
+  rejeitarSolicitacaoEmprestimo
+} from "../../../services/api";
 import "./Emprestimos.css";
 import LoadingButton from "../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../contexts/ToastContext";
@@ -47,6 +51,16 @@ export default function SolicitacoesEmprestimo() {
   const [solicitacoes, setSolicitacoes] = useState([]);
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
+  const [processando, setProcessando] = useState({});
+
+  const [filtroStatus, setFiltroStatus] = useState("todos");
+  const { addToast } = useToast();
+
+  const OPCOES_FILTRO = [
+    { valor: "todos", label: "Todos" },
+    { valor: "aprovados", label: "Aprovados" },
+    { valor: "negados", label: "Negados" },
+  ];
 
   useEffect(() => {
     async function carregarDados() {
@@ -54,21 +68,6 @@ export default function SolicitacoesEmprestimo() {
       try {
         const data = await getEmprestimos();
         const arr = Array.isArray(data) ? data : [];
-        // adicionar item mock para testes (pendente)
-        const mock = {
-          idMovimentacao: 999999,
-          idEmprestimo: 999999,
-          usuario: "João Silva",
-          usuarioTipo: "Aluno",
-          titulo: "Introdução à Programação",
-          empLiv_Titulo: "Introdução à Programação",
-          codigo: "TB-1234",
-          empLiv_Tombo: "TB-1234",
-          movDataSolicitacao: new Date().toISOString(),
-          status: "pendente",
-          movStatus: "pendente",
-        };
-        arr.push(mock);
         setSolicitacoes(arr);
       } catch (error) {
         console.error(error);
@@ -123,15 +122,6 @@ export default function SolicitacoesEmprestimo() {
     [metricas]
   );
 
-  const [filtroStatus, setFiltroStatus] = useState("todos");
-  const { addToast } = useToast();
-
-  const OPCOES_FILTRO = [
-    { valor: "todos", label: "Todos" },
-    { valor: "aprovados", label: "Aprovados" },
-    { valor: "negados", label: "Negados" },
-  ];
-
   const solicitacoesFiltradas = useMemo(() => {
     let list = filtrarSolicitacoes(solicitacoes, busca);
 
@@ -147,6 +137,60 @@ export default function SolicitacoesEmprestimo() {
 
     return list;
   }, [solicitacoes, busca, filtroStatus]);
+
+  async function handleAprovarSolicitacao(item) {
+    const id = item.idEmprestimo || item.idMovimentacao;
+    if (!id) {
+      addToast("Erro: ID da solicitação não encontrado", "error");
+      return;
+    }
+
+    setProcessando((prev) => ({ ...prev, [id]: true }));
+    try {
+      await aprovarSolicitacaoEmprestimo(id);
+      setSolicitacoes((prev) =>
+        prev.map((s) =>
+          (s.idEmprestimo || s.idMovimentacao) === id
+            ? { ...s, status: "ativo", movStatus: "Ativo" }
+            : s
+        )
+      );
+      addToast("Solicitação aprovada com sucesso", "success");
+    } catch (error) {
+      console.error(error);
+      const mensagem = error.data?.detail || error.message || "Erro ao aprovar solicitação";
+      addToast(mensagem, "error");
+    } finally {
+      setProcessando((prev) => ({ ...prev, [id]: false }));
+    }
+  }
+
+  async function handleNegarSolicitacao(item) {
+    const id = item.idEmprestimo || item.idMovimentacao;
+    if (!id) {
+      addToast("Erro: ID da solicitação não encontrado", "error");
+      return;
+    }
+
+    setProcessando((prev) => ({ ...prev, [id]: true }));
+    try {
+      await rejeitarSolicitacaoEmprestimo(id);
+      setSolicitacoes((prev) =>
+        prev.map((s) =>
+          (s.idEmprestimo || s.idMovimentacao) === id
+            ? { ...s, status: "negado", movStatus: "Negado" }
+            : s
+        )
+      );
+      addToast("Solicitação rejeitada", "error");
+    } catch (error) {
+      console.error(error);
+      const mensagem = error.data?.detail || error.message || "Erro ao rejeitar solicitação";
+      addToast(mensagem, "error");
+    } finally {
+      setProcessando((prev) => ({ ...prev, [id]: false }));
+    }
+  }
 
   return (
     <div className="solicitacoes-page emp-page page-shell">
@@ -214,33 +258,12 @@ export default function SolicitacoesEmprestimo() {
                 const usuario = item.usuario || item.nome || item.usuNome || "Usuário não informado";
                 const titulo = item.titulo || item.empLiv_Titulo || "Livro não informado";
                 const tombo = item.codigo || item.empLiv_Tombo || item.exemplar?.exeLivTombo || "-";
-
-                function handleAprovar() {
-                  // Presentation-only update; backend endpoint not available
-                  setSolicitacoes((prev) =>
-                    prev.map((s) =>
-                      (s.idEmprestimo || s.idMovimentacao) === (item.idEmprestimo || item.idMovimentacao)
-                        ? { ...s, status: "aceito", movStatus: "aceito" }
-                        : s
-                    )
-                  );
-                  addToast("Solicitação aprovada", "success");
-                }
-
-                function handleNegar() {
-                  setSolicitacoes((prev) =>
-                    prev.map((s) =>
-                      (s.idEmprestimo || s.idMovimentacao) === (item.idEmprestimo || item.idMovimentacao)
-                        ? { ...s, status: "negado", movStatus: "negado" }
-                        : s
-                    )
-                  );
-                  addToast("Solicitação negada", "error");
-                }
+                const id = item.idEmprestimo || item.idMovimentacao;
+                const isProcessando = processando[id];
 
                 return (
-                  <tr key={item.idEmprestimo || item.idMovimentacao || `${item.id}-${item.dataEmprestimo}`}>
-                    <td className="emp-id-cell">{item.idEmprestimo || item.idMovimentacao || "-"}</td>
+                  <tr key={id || `${item.id}-${item.dataEmprestimo}`}>
+                    <td className="emp-id-cell">{id || "-"}</td>
 
                     <td className="emp-main-cell">
                       <strong>{usuario}</strong>
@@ -264,11 +287,19 @@ export default function SolicitacoesEmprestimo() {
                     <td className="emp-actions-cell">
                       {status === "pendente" && (
                         <>
-                          <LoadingButton className="emp-btn-light" onClick={handleAprovar}>
+                          <LoadingButton 
+                            className="emp-btn-light" 
+                            onClick={() => handleAprovarSolicitacao(item)}
+                            disabled={isProcessando}
+                          >
                             Aprovar
                           </LoadingButton>
 
-                          <LoadingButton className="emp-btn-light" onClick={handleNegar}>
+                          <LoadingButton 
+                            className="emp-btn-light" 
+                            onClick={() => handleNegarSolicitacao(item)}
+                            disabled={isProcessando}
+                          >
                             Negar
                           </LoadingButton>
                         </>

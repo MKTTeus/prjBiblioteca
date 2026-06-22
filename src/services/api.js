@@ -315,6 +315,22 @@ export const criarEmprestimo = (payload) =>
     body: JSON.stringify(payload)
   });
 
+export const solicitarEmprestimo = (payload) =>
+  apiFetch("/emprestimos/solicitacao", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+export const aprovarSolicitacaoEmprestimo = (id) =>
+  apiFetch(`/emprestimos/${id}/aprovar`, {
+    method: "PUT"
+  });
+
+export const rejeitarSolicitacaoEmprestimo = (id) =>
+  apiFetch(`/emprestimos/${id}/rejeitar`, {
+    method: "PUT"
+  });
+
 export const devolverEmprestimo = (id) =>
   apiFetch(`/emprestimos/${id}/devolver`, {
     method: "PUT"

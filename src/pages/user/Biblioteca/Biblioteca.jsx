@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import BookCard from "../../../components/BookCard/BookCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import { useToast } from "../../../contexts/ToastContext";
-import { getBooks } from "../../../services/api";
+import { getBooks, solicitarEmprestimo, getExemplaresDisponiveis } from "../../../services/api";
 import "../UserArea.css";
 import "./Biblioteca.css";
 
@@ -13,8 +13,29 @@ export default function Biblioteca() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const handleRequestLoan = () => {
-    addToast("Empréstimo Solicitado", "success");
+  const handleRequestLoan = async (book) => {
+    try {
+      // Buscar exemplares disponíveis
+      const exemplares = await getExemplaresDisponiveis();
+      
+      // Encontrar um exemplar deste livro
+      const idLivroAlvo = book.idLivro;
+      const exemplarDisponivel = exemplares.find(ex => ex.nome === book.livTitulo || ex.nome === book.titulo);
+      
+      if (!exemplarDisponivel) {
+        addToast("Nenhum exemplar disponível para este livro no momento", "error");
+        return;
+      }
+
+      await solicitarEmprestimo({
+        idExemplar: exemplarDisponivel.id,
+      });
+      addToast("Solicitação de empréstimo enviada com sucesso! Aguarde aprovação do administrador.", "success");
+    } catch (err) {
+      console.error(err);
+      const mensagem = err.data?.detail || err.message || "Erro ao solicitar empréstimo";
+      addToast(mensagem, "error");
+    }
   };
 
   useEffect(() => {

@@ -512,3 +512,170 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     except Exception as e:
         print("Erro renovar:", e)
         raise HTTPException(status_code=500, detail="Erro ao renovar empréstimo")
+
+
+@router.post("/emprestimos/solicitacao")
+def criar_solicitacao_emprestimo(data: Emprestimo, user=Depends(get_optional_user)):
+    """
+    Criar uma solicitação de empréstimo (status: Pendente).
+    O empréstimo só se torna ativo quando aprovado pelo admin.
+    """
+    try:
+        # Validar se é um usuário comum (não admin)
+        if not user or user.get("tipo") != "usuario":
+            raise HTTPException(status_code=401, detail="Apenas usuários podem fazer solicitações de empréstimo")
+
+        # Obter ID do usuário
+        usuario_resp = supabase.table("Usuario").select("idUsuario, usuStatus").eq("usuEmail", user["sub"]).limit(1).execute()
+        if not usuario_resp.data:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+        id_usuario = usuario_resp.data[0]["idUsuario"]
+        if not usuario_resp.data[0].get("usuStatus"):
+            raise HTTPException(status_code=400, detail="Usuário inativo não pode fazer solicitações de empréstimo")
+
+        # Validar exemplar disponível
+        exemplar_resp = supabase.table("Exemplar").select("exeLivStatus").eq("idExemplar", data.idExemplar).limit(1).execute()
+        if not exemplar_resp.data:
+            raise HTTPException(status_code=404, detail="Exemplar não encontrado")
+
+        status = exemplar_resp.data[0].get("exeLivStatus")
+        if status != "Disponível":
+            raise HTTPException(status_code=400, detail="Exemplar não está disponível")
+
+        hoje = datetime.utcnow().date()
+        max_por_usuario = get_max_books_per_user()
+
+        # Verificar limite de empréstimos ativos
+        movimentacoes_ativas = supabase.table("Movimentacao").select("idMovimentacao").eq("idUsuario", id_usuario).in_("movStatus", ["Ativo", "Pendente"]).execute().data or []
+        movimentacao_ids = [mov["idMovimentacao"] for mov in movimentacoes_ativas if mov.get("idMovimentacao")]
+        emprestimos_ativos = []
+        if movimentacao_ids:
+            emprestimos_ativos = supabase.table("MovimentacaoExemplar").select("idMovimentacao").in_("idMovimentacao", movimentacao_ids).eq("itemStatus", "Ativo").execute().data or []
+
+        if len(emprestimos_ativos) >= max_por_usuario:
+            raise HTTPException(status_code=400, detail=f"Você já possui {max_por_usuario} empréstimos ativos")
+
+        # Criar movimentação com status Pendente
+        nova_mov = {
+            "idUsuario": id_usuario,
+            "movTipo": "EMPRESTIMO",
+            "movStatus": "Pendente",
+            "movDataSolicitacao": hoje.isoformat(),
+        }
+
+        mov_resp = supabase.table("Movimentacao").insert(nova_mov).execute()
+        if not mov_resp.data:
+            raise HTTPException(status_code=500, detail="Erro ao criar solicitação")
+
+        id_mov = mov_resp.data[0].get("idMovimentacao")
+
+        # Criar MovimentacaoExemplar (sem status Ativo por enquanto)
+        novo_me = {
+            "idMovimentacao": id_mov,
+            "idExemplar": data.idExemplar,
+            "itemStatus": "Pendente",
+            "renovacoes": 0,
+        }
+
+        supabase.table("MovimentacaoExemplar").insert(novo_me).execute()
+
+        return {"idMovimentacao": id_mov, "status": "Solicitação criada com sucesso"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro criar solicitacao:", e)
+        raise HTTPException(status_code=500, detail="Erro ao criar solicitação de empréstimo")
+
+
+@router.put("/emprestimos/{idEmprestimo}/aprovar")
+def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
+    """
+    Aprovar uma solicitação de empréstimo e ativá-la.
+    """
+    try:
+        hoje = datetime.utcnow().date()
+        dias = get_config_days()
+
+        # Buscar movimentação
+        mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+        if not mov_resp.data:
+            raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+
+        mov = mov_resp.data[0]
+        if mov.get("movStatus") != "Pendente":
+            raise HTTPException(status_code=400, detail="Apenas solicitações pendentes podem ser aprovadas")
+
+        # Buscar exemplar
+        me_resp = supabase.table("MovimentacaoExemplar").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+        if not me_resp.data:
+            raise HTTPException(status_code=404, detail="Item não encontrado")
+
+        me = me_resp.data[0]
+        idExemplar = me.get("idExemplar")
+
+        # Validar que exemplar está ainda disponível
+        exemplar_resp = supabase.table("Exemplar").select("exeLivStatus").eq("idExemplar", idExemplar).limit(1).execute()
+        if exemplar_resp.data and exemplar_resp.data[0].get("exeLivStatus") != "Disponível":
+            raise HTTPException(status_code=400, detail="Exemplar não está mais disponível")
+
+        id_admin = get_admin_id(admin)
+
+        # Atualizar movimentação para Ativa
+        supabase.table("Movimentacao").update({
+            "movStatus": "Ativo",
+            "movDataEmprestimo": hoje.isoformat(),
+            "idAdmin": id_admin,
+        }).eq("idMovimentacao", idEmprestimo).execute()
+
+        # Atualizar MovimentacaoExemplar
+        vencimento_date = (hoje + timedelta(days=dias)).isoformat()
+        supabase.table("MovimentacaoExemplar").update({
+            "itemStatus": "Ativo",
+            "dataPrevistaDevolucao": vencimento_date,
+        }).eq("idMovimentacao", idEmprestimo).execute()
+
+        # Atualizar status do exemplar
+        supabase.table("Exemplar").update({
+            "exeLivStatus": "Emprestado"
+        }).eq("idExemplar", idExemplar).execute()
+
+        return {"message": "Solicitação aprovada com sucesso"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro aprovar solicitacao:", e)
+        raise HTTPException(status_code=500, detail="Erro ao aprovar solicitação")
+
+
+@router.put("/emprestimos/{idEmprestimo}/rejeitar")
+def rejeitar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
+    """
+    Rejeitar uma solicitação de empréstimo.
+    """
+    try:
+        # Buscar movimentação
+        mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+        if not mov_resp.data:
+            raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+
+        mov = mov_resp.data[0]
+        if mov.get("movStatus") != "Pendente":
+            raise HTTPException(status_code=400, detail="Apenas solicitações pendentes podem ser rejeitadas")
+
+        # Atualizar movimentação para Negado
+        supabase.table("Movimentacao").update({
+            "movStatus": "Negado",
+        }).eq("idMovimentacao", idEmprestimo).execute()
+
+        # Atualizar MovimentacaoExemplar
+        supabase.table("MovimentacaoExemplar").update({
+            "itemStatus": "Negado",
+        }).eq("idMovimentacao", idEmprestimo).execute()
+
+        return {"message": "Solicitação rejeitada com sucesso"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro rejeitar solicitacao:", e)
+        raise HTTPException(status_code=500, detail="Erro ao rejeitar solicitação")
