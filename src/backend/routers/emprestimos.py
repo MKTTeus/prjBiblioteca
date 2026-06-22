@@ -518,7 +518,7 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_optional_user)):
     try:
         # Validar se é um usuário comum (não admin)
-        if not user or user.get("tipo") != "usuario":
+        if not user or user.get("tipo") not in ["Aluno", "Comunidade"]:
             raise HTTPException(status_code=401, detail="Apenas usuários podem fazer solicitações de empréstimo")
 
         # Obter ID do usuário
