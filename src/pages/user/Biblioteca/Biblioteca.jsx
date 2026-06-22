@@ -32,7 +32,12 @@ export default function Biblioteca() {
       addToast("Solicitação de empréstimo enviada com sucesso! Aguarde aprovação do administrador.", "success");
     } catch (err) {
       console.error(err);
-      const mensagem = err.data?.detail || err.message || "Erro ao solicitar empréstimo";
+      const detail = err.data?.detail;
+      const mensagem = typeof detail === "string"
+        ? detail
+        : Array.isArray(detail)
+        ? detail.map(d => d.msg).join(", ")
+        : err.message || "Erro ao solicitar empréstimo";
       addToast(mensagem, "error");
     }
   };

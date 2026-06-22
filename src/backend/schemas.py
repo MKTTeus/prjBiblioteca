@@ -40,6 +40,9 @@ class LivroCreate(BaseModel):
     prefixo_tombo: str = "T"
 
 
+class EmprestimoSolicitacao(BaseModel):
+    idExemplar: int
+
 class Emprestimo(BaseModel):
     idUsuario: int
     idExemplar: int

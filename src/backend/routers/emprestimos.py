@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
 from core import get_admin, get_admin_id, get_optional_user
-from schemas import Emprestimo, Configuracao
+from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao
 
 router = APIRouter()
 
@@ -515,11 +515,7 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 
 
 @router.post("/emprestimos/solicitacao")
-def criar_solicitacao_emprestimo(data: Emprestimo, user=Depends(get_optional_user)):
-    """
-    Criar uma solicitação de empréstimo (status: Pendente).
-    O empréstimo só se torna ativo quando aprovado pelo admin.
-    """
+def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_optional_user)):
     try:
         # Validar se é um usuário comum (não admin)
         if not user or user.get("tipo") != "usuario":
