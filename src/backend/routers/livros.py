@@ -274,29 +274,3 @@ def listar_exemplares(admin=Depends(get_admin)):
         return []
 
 
-@router.get("/exemplares/disponiveis")
-def exemplares_disponiveis(admin=Depends(get_admin)):
-    try:
-        exemplares = (
-            supabase
-            .table("Exemplar")
-            .select("idExemplar, exeLivTombo, idLivro")
-            .eq("exeLivStatus", "Disponível")
-            .execute()
-            .data or []
-        )
-
-        livros = supabase.table("Livro").select("idLivro, livTitulo").execute().data or []
-        mapa_livros = {l["idLivro"]: l for l in livros}
-
-        return [
-            {
-                "id": ex["idExemplar"],
-                "tombo": ex["exeLivTombo"],
-                "nome": mapa_livros.get(ex["idLivro"], {}).get("livTitulo", "Livro"),
-            }
-            for ex in exemplares
-        ]
-    except Exception as e:
-        print("Erro exemplares:", e)
-        return []
