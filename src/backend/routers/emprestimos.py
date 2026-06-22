@@ -552,12 +552,19 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
         if len(emprestimos_ativos) >= max_por_usuario:
             raise HTTPException(status_code=400, detail=f"Você já possui {max_por_usuario} empréstimos ativos")
 
-        # Criar movimentação com status Pendente
+        admin_placeholder = supabase.table("Administrador").select("idAdmin").limit(1).execute()
+        
+        if not admin_placeholder.data:
+            raise HTTPException(status_code=500, detail="Nenhum administrador cadastrado no sistema")
+        id_admin_placeholder = admin_placeholder.data[0]["idAdmin"]
+
         nova_mov = {
             "idUsuario": id_usuario,
+            "idAdmin": id_admin_placeholder,
             "movTipo": "EMPRESTIMO",
             "movStatus": "Pendente",
             "movDataSolicitacao": hoje.isoformat(),
+            "movDataEmprestimo": hoje.isoformat(),  # placeholder; sobrescrito na aprovação
         }
 
         mov_resp = supabase.table("Movimentacao").insert(nova_mov).execute()
