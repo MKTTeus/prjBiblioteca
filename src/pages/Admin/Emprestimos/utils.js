@@ -38,15 +38,12 @@ export function criarMapaPorId(itens = [], campoId = "id") {
 }
 
 export function getStatusEmprestimo(emprestimo) {
-  if (emprestimo.movStatus === "Pendente" || emprestimo.movTipo === "SOLICITACAO") return "pendente";
   if (emprestimo.empLiv_Status === "Devolvido") return "devolvido";
 
   const hoje = new Date();
-  const dataPrevista = emprestimo.empLiv_DataPrevistaDevolucao
-    ? new Date(emprestimo.empLiv_DataPrevistaDevolucao)
-    : null;
+  const dataPrevista = new Date(emprestimo.empLiv_DataPrevistaDevolucao);
 
-  if (dataPrevista && dataPrevista < hoje) return "atrasado";
+  if (dataPrevista < hoje) return "atrasado";
 
   return "ativo";
 }
@@ -126,9 +123,6 @@ export function criarCardsResumo(metricas) {
 }
 
 export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios, mapExemplares) {
-  const isPendente = emprestimo.movStatus === "Pendente" || emprestimo.movTipo === "SOLICITACAO";
-  if (isPendente) return false;
-  
   const termoBusca = (busca || "").toLowerCase();
 
   return emprestimos.filter((emprestimo) => {
@@ -148,6 +142,9 @@ export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios
       .filter(Boolean)
       .join(" ")
       .toLowerCase();
+
+    const isPendente = emprestimo.movStatus === "Pendente" || emprestimo.movTipo === "SOLICITACAO";
+    if (isPendente) return false;
 
     const correspondeBusca = textoBusca.includes(termoBusca);
     const statusOk = filtroStatus === "todos" || getStatusEmprestimo(emprestimo) === filtroStatus;
