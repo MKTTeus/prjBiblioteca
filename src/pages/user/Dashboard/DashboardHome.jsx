@@ -31,7 +31,7 @@ const notificationTypeMap = {
   },
 };
 
-export default function DashboardHome({ onViewAllNotifications }) {
+export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [latestNotifications, setLatestNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -72,6 +72,17 @@ export default function DashboardHome({ onViewAllNotifications }) {
       color: "orange",
     },
   ];
+
+  const handleCardClick = (key) => {
+    if (!onNavigate) return;
+    const map = {
+      total: "biblioteca",
+      available: "biblioteca",
+      loans: "emprestimos",
+    };
+    const page = map[key] || "dashboard";
+    onNavigate(page);
+  };
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -273,6 +284,7 @@ export default function DashboardHome({ onViewAllNotifications }) {
             subtitle={description}
             icon={icon}
             color={color}
+            onClick={() => handleCardClick(key)}
           />
         ))}
       </section>

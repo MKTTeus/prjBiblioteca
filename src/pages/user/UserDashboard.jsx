@@ -24,7 +24,10 @@ export default function UserDashboard() {
       activePage={activePage}
       setActivePage={setActivePage}
     >
-      <CurrentPage onViewAllNotifications={() => setActivePage("notificacoes")} />
+      <CurrentPage
+        onViewAllNotifications={() => setActivePage("notificacoes")}
+        onNavigate={setActivePage}
+      />
     </AppShell>
   );
 }

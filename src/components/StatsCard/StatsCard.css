@@ -20,6 +20,16 @@
   border-color: var(--input-border);
 }
 
+.stats-card--clickable,
+.stats-card[role="button"] {
+  cursor: pointer;
+}
+
+.stats-card[role="button"]:focus {
+  outline: 2px solid var(--input-border);
+  outline-offset: 2px;
+}
+
 .stats-card-header {
   display: flex;
   justify-content: space-between;
