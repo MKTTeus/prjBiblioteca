@@ -3,7 +3,6 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.routers import backup
 from routers.auth import router as auth_router
 from routers.livros import router as livros_router
 from routers.categorias import router as categorias_router
@@ -40,8 +39,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.include_router(backup.router, prefix="/api")
 
 ROUTERS = [
     auth_router,

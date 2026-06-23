@@ -54,7 +54,7 @@ def get_max_books_per_user():
 
 
 @router.get("/configuracoes")
-def listar_configuracoes(admin=Depends(get_admin)):
+def listar_configuracoes(user=Depends(get_optional_user)):
     try:
         configs = supabase.table("Configuracoes").select("*").execute().data or []
         return configs
