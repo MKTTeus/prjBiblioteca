@@ -9,6 +9,7 @@ import {
   FiChevronDown,
   FiBookmark,
   FiBell,
+  FiDatabase,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
@@ -177,6 +178,16 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
           <div className="sidebar-section">
             <p className="sidebar-title sidebar-system">Sistema</p>
             <ul>
+              <li>
+                <NavLink
+                  to="/admin/backups"
+                  className={({ isActive }) => (isActive ? "active" : undefined)}
+                  onClick={close}
+                >
+                  <FiDatabase />
+                  <span>Backups</span>
+                </NavLink>
+              </li>
               <li>
                 <NavLink
                   to="/admin/configuracoes"

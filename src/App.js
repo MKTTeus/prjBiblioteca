@@ -21,6 +21,7 @@ import Sistema from "./pages/Admin/Configuracoes/components/Sistema/Sistema";
 import Email from "./pages/Admin/Configuracoes/components/Email/Email";
 import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
 import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
+import Backups from "./pages/Admin/Backups/Backups";
 import UserDashboard from "./pages/user/UserDashboard";
 
 function RoleHomeRedirect() {
@@ -101,6 +102,7 @@ function App() {
         <Route path="emprestimos/solicitacoes" element={<SolicitacoesEmprestimo />} />
         <Route path="notificacoes" element={<AdminNotificacoes />} />
         <Route path="admins" element={<Admin />} />
+        <Route path="backups" element={<Backups />} />
         <Route path="biblioteca" element={<Biblioteca />} />
         <Route path="configuracoes" element={<Configuracoes />}>
           <Route index element={<Navigate to="geral" replace />} />

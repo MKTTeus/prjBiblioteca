@@ -57,6 +57,20 @@ def _salvar_no_storage(payload: dict) -> str:
     return nome_arquivo
 
 
+def _extrair_signed_url(resp) -> str | None:
+    """Extrai a URL assinada compatível com supabase-py v1 e v2."""
+    if isinstance(resp, str):
+        return resp
+    if isinstance(resp, dict):
+        return (
+            resp.get("signedURL")
+            or resp.get("signed_url")
+            or resp.get("signedUrl")
+        )
+    # supabase-py v2 retorna objeto com atributo .signed_url
+    return getattr(resp, "signed_url", None) or getattr(resp, "signedURL", None)
+
+
 # ── Cron: dispara diariamente às 16h ─────────────────────────────────────────
 
 @router.get("/cron/backup-diario")
@@ -96,8 +110,12 @@ def backup_listar(admin=Depends(get_admin)):
         )
         resultado = []
         for arq in (arquivos or []):
+            # Filtra entradas de sistema (.emptyFolderPlaceholder etc.)
+            nome = arq.get("name", "")
+            if not nome or nome.startswith("."):
+                continue
             resultado.append({
-                "nome": arq.get("name"),
+                "nome": nome,
                 "tamanho": arq.get("metadata", {}).get("size"),
                 "criado_em": arq.get("created_at"),
                 "atualizado_em": arq.get("updated_at"),
@@ -117,7 +135,7 @@ def backup_download_url(nome_arquivo: str, admin=Depends(get_admin)):
         resp = supabase.storage.from_(BACKUP_BUCKET).create_signed_url(
             path=nome_arquivo, expires_in=60
         )
-        url = resp.get("signedURL") or resp.get("signed_url") or (resp if isinstance(resp, str) else None)
+        url = _extrair_signed_url(resp)
         if not url:
             raise HTTPException(status_code=404, detail="Arquivo não encontrado ou URL inválida")
         return {"url": url}
