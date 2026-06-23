@@ -159,8 +159,8 @@ def listar_emprestimos(user=Depends(get_optional_user)):
 
             data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
 
-            # Checagem de atraso só para ativos
-            if (exemplar and (exemplar.get("itemStatus") or "") == "Ativo" and data_prev):
+            # Checagem de atraso só para exemplares marcados como ativos (case-insensitive)
+            if (exemplar and (exemplar.get("itemStatus") or "").lower() == "ativo" and data_prev):
                 try:
                     data_prevista = datetime.fromisoformat(data_prev).date()
                     if data_prevista < hoje:
@@ -170,11 +170,14 @@ def listar_emprestimos(user=Depends(get_optional_user)):
                         mov["status"] = (mov.get("movStatus") or "").lower()
                 except:
                     mov["status"] = (mov.get("movStatus") or "").lower()
-                mov["dataDevolucao"] = exemplar.get("dataDevolucao")
+
+                # Preferir dataDevolucao real; caso não exista, usar a data prevista (prazo)
+                mov["dataDevolucao"] = exemplar.get("dataDevolucao") or exemplar.get("dataPrevistaDevolucao")
                 mov["renovacoes"] = exemplar.get("renovacoes", 0)
             else:
-                mov["dataDevolucao"] = None
-                mov["renovacoes"] = 0
+                # Sem exemplar ativo ou sem prazo
+                mov["dataDevolucao"] = exemplar.get("dataDevolucao") if exemplar else None
+                mov["renovacoes"] = exemplar.get("renovacoes", 0) if exemplar else 0
                 mov["status"] = (mov.get("movStatus") or "").lower()
 
             mov["dataEmprestimo"] = mov.get("movDataEmprestimo")
