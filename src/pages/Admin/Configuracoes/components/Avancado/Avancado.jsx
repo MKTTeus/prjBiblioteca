@@ -5,6 +5,7 @@ import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { configToBool } from "../../utils/configUtils";
 import "./Avancado.css";
+import { baixarBackup } from "../../../../../services/backupService";
 
 export default function Avancado() {
   const { addToast } = useToast();
@@ -12,6 +13,7 @@ export default function Avancado() {
   const [maintenance, setMaintenance] = useState(false);
   const [logApi, setLogApi] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [fazendoBackup, setFazendoBackup] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -43,6 +45,18 @@ export default function Avancado() {
       setIsSaving(false);
     }
   };
+
+  async function handleBackupCompleto() {
+    setFazendoBackup(true);
+    try {
+      await baixarBackup();
+      addToast("Backup gerado com sucesso", "success");
+    } catch {
+      addToast("Erro ao gerar backup", "error");
+    } finally {
+      setFazendoBackup(false);
+    }
+  }
 
   const switchStyle = {
     offColor: "#e5e7eb",
@@ -100,7 +114,14 @@ export default function Avancado() {
         <div className="acoes-botoes">
           <button className="btn-secondary" type="button">Limpar Cache</button>
           <button className="btn-secondary" type="button">Reindexar Banco</button>
-          <button className="btn-secondary text-danger" type="button">Backup Completo</button>
+          <button
+            className="btn-secondary text-danger"
+            type="button"
+            onClick={handleBackupCompleto}
+            disabled={fazendoBackup}
+          >
+            {fazendoBackup ? "Gerando..." : "Backup Completo"}
+          </button>
         </div>
       </div>
 

@@ -182,6 +182,22 @@ export const atualizarStatusAdminsLote = (ids, status) =>
     body: JSON.stringify({ ids, status }),
   });
 
+export async function baixarBackup() {
+  const token = getToken();
+  const res = await fetch(`${API_URL}/backup/completo`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Erro ao gerar backup");
+  const data = await res.json();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `backup_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ========================
 // ALUNOS
 // ========================

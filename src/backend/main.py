@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.routers import backup
 from routers.auth import router as auth_router
 from routers.livros import router as livros_router
 from routers.categorias import router as categorias_router
@@ -12,6 +13,8 @@ from routers.usuarios import router as usuarios_router
 from routers.emprestimos import router as emprestimos_router
 from routers.dashboard import router as dashboard_router
 from routers.emails import router as emails_router
+from routers.backup import router as backup_router
+
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -38,6 +41,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(backup.router, prefix="/api")
+
 ROUTERS = [
     auth_router,
     livros_router,
@@ -48,6 +53,7 @@ ROUTERS = [
     emprestimos_router,
     dashboard_router,
     emails_router,
+    backup_router,
 ]
 
 
