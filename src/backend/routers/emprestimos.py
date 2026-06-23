@@ -561,7 +561,7 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
         nova_mov = {
             "idUsuario": id_usuario,
             "idAdmin": id_admin_placeholder,
-            "movTipo": "EMPRESTIMO",
+            "movTipo": "SOLICITACAO",
             "movStatus": "Pendente",
             "movDataSolicitacao": hoje.isoformat(),
             "movDataEmprestimo": hoje.isoformat(),  # placeholder; sobrescrito na aprovação
@@ -626,6 +626,7 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
 
         # Atualizar movimentação para Ativa
         supabase.table("Movimentacao").update({
+            "movTipo": "EMPRESTIMO",
             "movStatus": "Ativo",
             "movDataEmprestimo": hoje.isoformat(),
             "idAdmin": id_admin,
