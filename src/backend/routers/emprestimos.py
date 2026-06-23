@@ -165,16 +165,19 @@ def listar_emprestimos(user=Depends(get_optional_user)):
                     data_prevista = datetime.fromisoformat(data_prev).date()
                     if data_prevista < hoje:
                         mov["itemStatus"] = "Atrasado"
+                        mov["status"] = "atrasado"
+                    else:
+                        mov["status"] = (mov.get("movStatus") or "").lower()
                 except:
-                    pass
+                    mov["status"] = (mov.get("movStatus") or "").lower()
                 mov["dataDevolucao"] = exemplar.get("dataDevolucao")
                 mov["renovacoes"] = exemplar.get("renovacoes", 0)
             else:
                 mov["dataDevolucao"] = None
                 mov["renovacoes"] = 0
+                mov["status"] = (mov.get("movStatus") or "").lower()
 
             mov["dataEmprestimo"] = mov.get("movDataEmprestimo")
-            mov["status"] = (mov.get("movStatus") or "").lower()
 
             try:
                 mov["idEmprestimo"] = mov.get("idMovimentacao")
