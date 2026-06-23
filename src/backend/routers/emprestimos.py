@@ -140,26 +140,26 @@ def listar_emprestimos(user=Depends(get_optional_user)):
             me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
             exemplar = me_list[0] if me_list else None
 
-            data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
-            if (exemplar and (exemplar.get("itemStatus") or "") == "Ativo" and data_prev):
-                try:
-                    data_prevista = datetime.fromisoformat(data_prev).date()
-                    if data_prevista < hoje:
-                        mov["itemStatus"] = "Atrasado"
-                except:
-                    pass
+        if exemplar:
+            ex = exemplar_map.get(exemplar.get("idExemplar"))
+            if ex:
+                mov["codigo"] = ex.get("exeLivTombo")
+                mov["titulo"] = livro_map.get(ex.get("idLivro"), mov.get("titulo"))
 
-                if exemplar:
-                    ex = exemplar_map.get(exemplar.get("idExemplar"))
-                    if ex:
-                        mov["codigo"] = ex.get("exeLivTombo")
-                        mov["titulo"] = livro_map.get(ex.get("idLivro"), mov.get("titulo"))
-
-                    mov["dataDevolucao"] = exemplar.get("dataDevolucao")
-                mov["renovacoes"] = exemplar.get("renovacoes", 0)
-            else:
-                mov["dataDevolucao"] = None
-                mov["renovacoes"] = 0
+        data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
+        # checagem de atraso só para ativos
+        if (exemplar and (exemplar.get("itemStatus") or "") == "Ativo" and data_prev):
+            try:
+                data_prevista = datetime.fromisoformat(data_prev).date()
+                if data_prevista < hoje:
+                    mov["itemStatus"] = "Atrasado"
+            except:
+                pass
+            mov["dataDevolucao"] = exemplar.get("dataDevolucao")
+            mov["renovacoes"] = exemplar.get("renovacoes", 0)
+        else:
+            mov["dataDevolucao"] = None
+            mov["renovacoes"] = 0
 
             mov["dataEmprestimo"] = mov.get("movDataEmprestimo")
             mov["status"] = (mov.get("movStatus") or "").lower()
