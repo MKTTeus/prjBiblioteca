@@ -5,7 +5,7 @@ import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { configToBool } from "../../utils/configUtils";
 import "./Avancado.css";
-import { baixarBackup } from "../../../../../services/backupService";
+import { baixarBackup } from "../../../../../services/api";
 
 export default function Avancado() {
   const { addToast } = useToast();
