@@ -102,11 +102,10 @@ def listar_emprestimos(user=Depends(get_optional_user)):
         hoje = datetime.utcnow().date()
         query = supabase.table("Movimentacao").select("*")
 
-        if user and user.get("tipo") == "usuario":
+        if user and user.get("tipo") in ["Aluno", "Comunidade"]:
             usuario_resp = supabase.table("Usuario").select("idUsuario").eq("usuEmail", user["sub"]).execute()
             if not usuario_resp.data:
                 raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
             id_usuario = usuario_resp.data[0]["idUsuario"]
             query = query.eq("idUsuario", id_usuario)
 
@@ -117,7 +116,6 @@ def listar_emprestimos(user=Depends(get_optional_user)):
         if movimentacao_ids:
             movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", movimentacao_ids).execute().data or []
 
-        # map movimentacao -> list of exemplares
         mov_ex_map = {}
         exemplar_ids = []
         for me in movimentacao_exemplares:
@@ -136,35 +134,48 @@ def listar_emprestimos(user=Depends(get_optional_user)):
         livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
         exemplar_map = {e["idExemplar"]: e for e in exemplares}
 
+        # Buscar dados dos usuários
+        usuario_ids = list({m.get("idUsuario") for m in emprestimos if m.get("idUsuario")})
+        usuario_map = {}
+        if usuario_ids:
+            usuarios = supabase.table("Usuario").select("idUsuario, usuNome, usuTipo").in_("idUsuario", usuario_ids).execute().data or []
+            usuario_map = {u["idUsuario"]: u for u in usuarios}
+
         for mov in emprestimos:
             me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
             exemplar = me_list[0] if me_list else None
 
-        if exemplar:
-            ex = exemplar_map.get(exemplar.get("idExemplar"))
-            if ex:
-                mov["codigo"] = ex.get("exeLivTombo")
-                mov["titulo"] = livro_map.get(ex.get("idLivro"), mov.get("titulo"))
+            # Popular dados do usuário
+            u = usuario_map.get(mov.get("idUsuario"), {})
+            mov["usuario"] = u.get("usuNome", "Usuário não informado")
+            mov["usuarioTipo"] = u.get("usuTipo", "-")
 
-        data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
-        # checagem de atraso só para ativos
-        if (exemplar and (exemplar.get("itemStatus") or "") == "Ativo" and data_prev):
-            try:
-                data_prevista = datetime.fromisoformat(data_prev).date()
-                if data_prevista < hoje:
-                    mov["itemStatus"] = "Atrasado"
-            except:
-                pass
-            mov["dataDevolucao"] = exemplar.get("dataDevolucao")
-            mov["renovacoes"] = exemplar.get("renovacoes", 0)
-        else:
-            mov["dataDevolucao"] = None
-            mov["renovacoes"] = 0
+            # Título e código sempre, independente do status
+            if exemplar:
+                ex = exemplar_map.get(exemplar.get("idExemplar"))
+                if ex:
+                    mov["codigo"] = ex.get("exeLivTombo")
+                    mov["titulo"] = livro_map.get(ex.get("idLivro"), mov.get("titulo"))
+
+            data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
+
+            # Checagem de atraso só para ativos
+            if (exemplar and (exemplar.get("itemStatus") or "") == "Ativo" and data_prev):
+                try:
+                    data_prevista = datetime.fromisoformat(data_prev).date()
+                    if data_prevista < hoje:
+                        mov["itemStatus"] = "Atrasado"
+                except:
+                    pass
+                mov["dataDevolucao"] = exemplar.get("dataDevolucao")
+                mov["renovacoes"] = exemplar.get("renovacoes", 0)
+            else:
+                mov["dataDevolucao"] = None
+                mov["renovacoes"] = 0
 
             mov["dataEmprestimo"] = mov.get("movDataEmprestimo")
             mov["status"] = (mov.get("movStatus") or "").lower()
 
-            # Compatibility layer for admin UI fields (legacy names expected by frontend)
             try:
                 mov["idEmprestimo"] = mov.get("idMovimentacao")
                 mov["empLiv_DataEmprestimo"] = mov.get("movDataEmprestimo")
@@ -174,7 +185,6 @@ def listar_emprestimos(user=Depends(get_optional_user)):
                 )
                 mov["empLiv_Status"] = (exemplar.get("itemStatus") if exemplar else None) or mov.get("movStatus")
                 mov["empLiv_RenovacoesTotais"] = exemplar.get("renovacoes", 0) if exemplar else mov.get("renovacoes", 0)
-                # tombo and title for quick display
                 if exemplar:
                     ex_obj = exemplar_map.get(exemplar.get("idExemplar"))
                     mov["empLiv_Tombo"] = ex_obj.get("exeLivTombo") if ex_obj else None
@@ -237,7 +247,7 @@ def notificacoes_admin(admin=Depends(get_admin)):
         usuario_map = {usuario["idUsuario"]: usuario for usuario in usuarios}
         exemplar_map = {ex["idExemplar"]: ex for ex in exemplares}
         livro_map = {livro["idLivro"]: livro for livro in livros}
-
+        
         def build_entry(loan):
             usuario = usuario_map.get(loan.get("idUsuario"), {})
             exemplar = exemplar_map.get(loan.get("idExemplar"), {})
