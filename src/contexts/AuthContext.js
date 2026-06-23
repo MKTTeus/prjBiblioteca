@@ -23,24 +23,27 @@ export function AuthProvider({ children }) {
     if (storedUser && storedToken) {
       const expiry = getTokenExpiry(storedToken);
       if (expiry && Date.now() >= expiry) {
-        // Token já expirado — limpar tudo
+        // Token expirado — limpar e deixar ir para login
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         localStorage.removeItem("tipo");
       } else {
         setUser(JSON.parse(storedUser));
 
-        // Agendar logout automático no vencimento
         if (expiry) {
           const delay = expiry - Date.now();
-          const timer = setTimeout(() => logout(), delay);
+          const timer = setTimeout(() => {
+            logout();
+            window.location.href = "/#/login";
+          }, delay);
+          setLoadingUser(false); // ← garantir aqui também
           return () => clearTimeout(timer);
         }
       }
     }
 
-    setLoadingUser(false);
-    }, []);
+    setLoadingUser(false); // ← sempre cai aqui nos demais casos
+  }, []);
 
   const login = async ({ email, senha, UserType }) => {
     try {
