@@ -1,48 +1,74 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import { API_URL } from "../services/apiConfig";
 
 const AuthContext = createContext();
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000; // 30 min fallback
 
-function getTokenExpiry(token) {
+async function fetchTimeoutMs() {
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.exp ? payload.exp * 1000 : null; // converter para ms
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_URL}/configuracoes`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) return DEFAULT_TIMEOUT_MS;
+    const configs = await res.json();
+    const entry = configs.find((c) => c.chave === "timeout_sessao");
+    const minutes = entry ? parseInt(entry.valor, 10) : 30;
+    return (isNaN(minutes) || minutes <= 0 ? 30 : minutes) * 60 * 1000;
   } catch {
-    return null;
+    return DEFAULT_TIMEOUT_MS;
   }
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const timerRef = useRef(null);
+  const timeoutMsRef = useRef(DEFAULT_TIMEOUT_MS);
+
+  const doLogout = useCallback(() => {
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("tipo");
+    window.location.href = "/#/login";
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(doLogout, timeoutMsRef.current);
+  }, [doLogout]);
+
+  // Iniciar/parar listeners de atividade
+  useEffect(() => {
+    if (!user) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      return;
+    }
+
+    const events = ["mousemove", "keydown", "mousedown", "touchstart", "scroll"];
+    events.forEach((e) => window.addEventListener(e, resetTimer));
+    resetTimer(); // iniciar timer ao logar
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetTimer));
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [user, resetTimer]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const storedToken = localStorage.getItem("token");
 
     if (storedUser && storedToken) {
-      const expiry = getTokenExpiry(storedToken);
-      if (expiry && Date.now() >= expiry) {
-        // Token expirado — limpar e deixar ir para login
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        localStorage.removeItem("tipo");
-      } else {
-        setUser(JSON.parse(storedUser));
-
-        if (expiry) {
-          const delay = expiry - Date.now();
-          const timer = setTimeout(() => {
-            logout();
-            window.location.href = "/#/login";
-          }, delay);
-          setLoadingUser(false); // ← garantir aqui também
-          return () => clearTimeout(timer);
-        }
-      }
+      setUser(JSON.parse(storedUser));
+      // Buscar timeout configurado
+      fetchTimeoutMs().then((ms) => {
+        timeoutMsRef.current = ms;
+      });
     }
 
-    setLoadingUser(false); // ← sempre cai aqui nos demais casos
+    setLoadingUser(false);
   }, []);
 
   const login = async ({ email, senha, UserType }) => {
@@ -80,6 +106,11 @@ export function AuthProvider({ children }) {
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("tipo", data.tipo);
 
+      // Atualizar timeout configurado
+      fetchTimeoutMs().then((ms) => {
+        timeoutMsRef.current = ms;
+      });
+
       return {
         ok: true,
         access_token: data.access_token,
@@ -96,13 +127,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    localStorage.removeItem("tipo");
-  };
+  const logout = doLogout;
 
   const signup = async (form) => {
     try {
