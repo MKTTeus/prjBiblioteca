@@ -3,6 +3,15 @@ import { API_URL } from "../services/apiConfig";
 
 const AuthContext = createContext();
 
+function getTokenExpiry(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp ? payload.exp * 1000 : null; // converter para ms
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
@@ -12,11 +21,26 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem("token");
 
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
+      const expiry = getTokenExpiry(storedToken);
+      if (expiry && Date.now() >= expiry) {
+        // Token já expirado — limpar tudo
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        localStorage.removeItem("tipo");
+      } else {
+        setUser(JSON.parse(storedUser));
+
+        // Agendar logout automático no vencimento
+        if (expiry) {
+          const delay = expiry - Date.now();
+          const timer = setTimeout(() => logout(), delay);
+          return () => clearTimeout(timer);
+        }
+      }
     }
 
     setLoadingUser(false);
-  }, []);
+    }, []);
 
   const login = async ({ email, senha, UserType }) => {
     try {

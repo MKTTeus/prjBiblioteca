@@ -26,6 +26,14 @@ async function apiFetch(endpoint, options = {}) {
   });
 
   if (!res.ok) {
+
+    if (res.status === 401) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("tipo");
+      window.location.href = "/#/login";
+      throw new Error("Sessão expirada");
+    }
     const text = await res.text();
     const err = new Error(text || "Erro na requisição");
     err.status = res.status;

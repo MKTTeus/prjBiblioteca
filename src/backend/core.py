@@ -16,6 +16,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "segredo")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 6
 
+def get_session_timeout_minutes() -> int:
+    try:
+        resp = supabase.table("Configuracoes").select("valor").eq("chave", "timeout_sessao").limit(1).execute()
+        if resp.data:
+            return int(resp.data[0]["valor"])
+    except Exception:
+        pass
+    return ACCESS_TOKEN_EXPIRE_HOURS * 60  # fallback: 360 min
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -42,8 +51,9 @@ def normalize_email(email: Optional[str]) -> Optional[str]:
     return email.strip().lower()
 
 
-def create_token(data: dict, expires_hours: int = ACCESS_TOKEN_EXPIRE_HOURS) -> str:
-    expire = datetime.utcnow() + timedelta(hours=expires_hours)
+def create_token(data: dict) -> str:
+    minutes = get_session_timeout_minutes()
+    expire = datetime.utcnow() + timedelta(minutes=minutes)
     data.update({"exp": expire})
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
