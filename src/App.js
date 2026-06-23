@@ -21,7 +21,7 @@ import Sistema from "./pages/Admin/Configuracoes/components/Sistema/Sistema";
 import Email from "./pages/Admin/Configuracoes/components/Email/Email";
 import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
 import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
-import Backups from "./pages/Admin/Backups/Backups";
+import Backups from "./pages/Admin/Backup/Backups";
 import UserDashboard from "./pages/user/UserDashboard";
 
 function RoleHomeRedirect() {
