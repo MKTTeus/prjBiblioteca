@@ -1,0 +1,392 @@
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.backups-page {
+  width: 100%;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  box-sizing: border-box;
+  position: relative;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.backups-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--text-on-primary);
+  padding: 28px 32px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.backups-header-text h1 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backups-header-text h1 .header-icon {
+  opacity: 0.85;
+}
+
+.backups-header-text p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.88;
+  max-width: 560px;
+  line-height: 1.55;
+}
+
+.backups-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #fff;
+  color: var(--primary);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover:not(:disabled),
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Info banner ─────────────────────────────────────────────────────────── */
+.backups-info-banner {
+  background: var(--bg-card, #f9fafb);
+  border: 1px solid var(--border, #e5e7eb);
+  border-left: 4px solid var(--primary);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13.5px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.55;
+}
+
+.backups-info-banner .info-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.backups-info-banner code {
+  background: var(--bg-hover, #f3f4f6);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  color: var(--text-primary, #111827);
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.backups-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #dc2626;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.backups-error button {
+  margin-left: auto;
+  background: none;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ── Table wrapper ───────────────────────────────────────────────────────── */
+.backups-table-wrapper {
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+/* ── Loading / Empty ─────────────────────────────────────────────────────── */
+.backups-loading,
+.backups-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--text-secondary, #9ca3af);
+}
+
+.backups-loading {
+  flex-direction: row;
+  font-size: 15px;
+}
+
+.backups-empty p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #374151);
+}
+
+.backups-empty span {
+  font-size: 13.5px;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────── */
+.backups-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.backups-table thead tr {
+  background: var(--bg-card, #f9fafb);
+  border-bottom: 2px solid var(--border, #e5e7eb);
+}
+
+.backups-table th {
+  padding: 14px 18px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #6b7280);
+}
+
+.backups-table tbody tr {
+  border-bottom: 1px solid var(--border, #f3f4f6);
+  transition: background 0.1s;
+}
+
+.backups-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.backups-table tbody tr:hover {
+  background: var(--bg-hover, #f9fafb);
+}
+
+.backups-table td {
+  padding: 14px 18px;
+  color: var(--text-primary, #374151);
+}
+
+.col-nome {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.col-nome .file-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.col-tamanho {
+  white-space: nowrap;
+  color: var(--text-secondary, #6b7280);
+}
+
+.col-data {
+  white-space: nowrap;
+}
+
+.col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── Action buttons ──────────────────────────────────────────────────────── */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.action-btn.download {
+  background: var(--primary-light, #eff6ff);
+  color: var(--primary);
+  border-color: var(--primary-border, #bfdbfe);
+  margin-right: 6px;
+}
+
+.action-btn.download:hover:not(:disabled) {
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+.action-btn.download:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.action-btn.delete {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.action-btn.delete:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* ── Confirm modal ───────────────────────────────────────────────────────── */
+.backups-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.backups-modal {
+  background: var(--bg-card, #fff);
+  border-radius: 16px;
+  padding: 36px 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.backups-modal .modal-icon-delete {
+  color: #ef4444;
+  margin-bottom: 12px;
+}
+
+.backups-modal h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #111827);
+}
+
+.backups-modal p {
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--text-secondary, #6b7280);
+  line-height: 1.55;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-actions .btn-secondary {
+  background: var(--bg-card, #f3f4f6);
+  color: var(--text-primary, #374151);
+  border-color: var(--border, #e5e7eb);
+}
+
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+.backups-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  animation: slideIn 0.25s ease;
+}
+
+.backups-toast--success {
+  background: #111827;
+  color: #fff;
+}
+
+.backups-toast--error {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Spin animation ──────────────────────────────────────────────────────── */
+.spin {
+  animation: rotate 0.9s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
