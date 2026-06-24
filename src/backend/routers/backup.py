@@ -213,16 +213,12 @@ TABELAS_PK = {
     "LivroAutor":           "idLivroAutor",
     "LivroCategoria":       "idLivroCategoria",
     "LivroGenero":          "idLivroGenero",
-    "Movimentacao":         "idMovimentacao",
-    "MovimentacaoExemplar": "idMovimentacao,idExemplar",  # PK composta
+    "Movimentacao":         None,  # GENERATED ALWAYS AS IDENTITY → via RPC
+    "MovimentacaoExemplar": None,  # depende de Movimentacao → via RPC
     "Configuracoes":        "chave",
 }
 
-# Tabelas com GENERATED ALWAYS AS IDENTITY: não aceitam upsert com valor explícito.
-# Estratégia: delete (ordem inversa para respeitar FK) + insert.
-TABELAS_DELETE_INSERT = {"Movimentacao", "MovimentacaoExemplar"}
-
-# Ordem de deleção invertida em relação à dependência (filho antes do pai)
+# Ordem de deleção invertida (filho antes do pai) para respeitar FK
 ORDEM_DELETE = ["MovimentacaoExemplar", "Movimentacao"]
 
 
@@ -256,9 +252,9 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
     erros = []
     restauradas = {}
 
-    # 3. Limpar tabelas com GENERATED ALWAYS AS IDENTITY na ordem inversa (respeita FK)
+    # 3. Limpar tabelas de movimentação na ordem inversa (respeita FK)
     for tabela in ORDEM_DELETE:
-        pk_col = TABELAS_PK[tabela].split(",")[0]
+        pk_col = "idMovimentacao"
         try:
             supabase.table(tabela).delete().neq(pk_col, -1).execute()
         except Exception as e:
@@ -271,9 +267,12 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
             restauradas[tabela] = 0
             continue
         try:
-            if tabela in TABELAS_DELETE_INSERT:
-                # Já foram limpas no passo 3; apenas insere
-                supabase.table(tabela).insert(registros).execute()
+            if tabela == "Movimentacao":
+                # GENERATED ALWAYS AS IDENTITY: usa RPC com OVERRIDING SYSTEM VALUE
+                supabase.rpc("restaurar_movimentacao", {"registros": registros}).execute()
+            elif tabela == "MovimentacaoExemplar":
+                # Depende de Movimentacao já inserida; usa RPC para consistência
+                supabase.rpc("restaurar_movimentacao_exemplar", {"registros": registros}).execute()
             else:
                 supabase.table(tabela).upsert(registros, on_conflict=pk).execute()
             restauradas[tabela] = len(registros)
