@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import Select from "react-select";
 import {
   FiDownload, FiTrash2, FiRefreshCw, FiSave,
   FiDatabase, FiFileText, FiAlertCircle,
@@ -6,9 +7,16 @@ import {
 } from "react-icons/fi";
 import {
   listarBackups, salvarBackup, getBackupDownloadUrl,
-  excluirBackup, restaurarBackup,
+  excluirBackup, restaurarBackup, getConfiguracoes, updateConfiguracao,
 } from "../../../services/api";
+import { getConfigValue } from "../Configuracoes/utils/configUtils";
 import "./Backups.css";
+
+const backupOptions = [
+  { value: "diario", label: "Diário" },
+  { value: "semanal", label: "Semanal" },
+  { value: "mensal", label: "Mensal" },
+];
 
 function formatBytes(bytes) {
   if (!bytes && bytes !== 0) return "—";
@@ -38,11 +46,13 @@ export default function Backups() {
   const [backups, setBackups]           = useState([]);
   const [loading, setLoading]           = useState(true);
   const [salvando, setSalvando]         = useState(false);
+  const [salvandoFreq, setSalvandoFreq] = useState(false);
   const [erro, setErro]                 = useState(null);
   const [toast, setToast]               = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   const [expandedRow, setExpandedRow]   = useState(null);
+  const [frequenciaBackup, setFrequenciaBackup] = useState("diario");
 
   // Restore modal state
   const [confirmRestore, setConfirmRestore] = useState(null); // nome do arquivo
@@ -68,7 +78,16 @@ export default function Backups() {
     }
   }, []);
 
-  useEffect(() => { carregar(); }, [carregar]);
+  useEffect(() => { carregar(); loadConfiguracoes(); }, [carregar]);
+
+  const loadConfiguracoes = async () => {
+    try {
+      const configs = await getConfiguracoes();
+      setFrequenciaBackup(getConfigValue(configs, "frequencia_backup", "diario"));
+    } catch {
+      showToast("Erro ao carregar configuração de frequência de backup.", "error");
+    }
+  };
 
   const handleSalvar = async () => {
     setSalvando(true);
@@ -106,6 +125,18 @@ export default function Backups() {
       await carregar();
     } catch {
       showToast("Erro ao excluir backup.", "error");
+    }
+  };
+
+  const handleSalvarFrequencia = async () => {
+    setSalvandoFreq(true);
+    try {
+      await updateConfiguracao({ chave: "frequencia_backup", valor: frequenciaBackup });
+      showToast("Frequência de backup atualizada com sucesso.");
+    } catch {
+      showToast("Erro ao salvar frequência de backup.", "error");
+    } finally {
+      setSalvandoFreq(false);
     }
   };
 
@@ -170,6 +201,22 @@ export default function Backups() {
           </button>
           <button className="bk-btn bk-btn--primary" onClick={handleSalvar} disabled={salvando}>
             <FiSave /> {salvando ? "Gerando…" : "Gerar Backup"}
+          </button>
+        </div>
+      </div>
+
+      <div className="bk-config-card">
+        <div className="bk-config-row">
+          <div className="form-group">
+            <label>Frequência de Backup</label>
+            <Select
+              options={backupOptions}
+              value={backupOptions.find((option) => option.value === frequenciaBackup)}
+              onChange={(option) => setFrequenciaBackup(option?.value || "diario")}
+            />
+          </div>
+          <button className="bk-btn bk-btn--outline" onClick={handleSalvarFrequencia} disabled={salvandoFreq}>
+            {salvandoFreq ? "Salvando…" : "Salvar Frequência"}
           </button>
         </div>
       </div>

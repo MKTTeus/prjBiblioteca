@@ -14,7 +14,6 @@ export default function Configuracoes() {
     { id: "geral", label: "Geral" },
     { id: "notificacoes", label: "Notificações" },
     { id: "seguranca", label: "Segurança" },
-    { id: "sistema", label: "Sistema" },
     { id: "email", label: "E-mail" },
     { id: "backups", label: "Backups" },
     { id: "avancado", label: "Avançado" },

@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
+import Select from "react-select";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { getConfigValue, configToNumber } from "../../utils/configUtils";
+import { applyTheme, getSavedTheme } from "../../../../../utils/theme";
+import { getReactSelectStyles } from "../../../../../utils/reactSelectStyles";
 import "./Geral.css";
+
+const temaOptions = [
+  { value: "Claro", label: "Claro" },
+  { value: "Escuro", label: "Escuro" },
+];
 
 export default function Geral() {
   const { addToast } = useToast();
@@ -10,7 +18,9 @@ export default function Geral() {
   const [dias, setDias] = useState(14);
   const [renovacoes, setRenovacoes] = useState(2);
   const [livrosPorAluno, setLivrosPorAluno] = useState(3);
+  const [tema, setTema] = useState(getSavedTheme());
   const [isSaving, setIsSaving] = useState(false);
+  const selectStyles = getReactSelectStyles();
 
   useEffect(() => {
     async function load() {
@@ -24,7 +34,7 @@ export default function Geral() {
         setDias(configToNumber(configs, "dias_emprestimo", 14));
         setRenovacoes(configToNumber(configs, "maximo_renovacoes", 2));
         setLivrosPorAluno(configToNumber(configs, "livros_por_aluno", 3));
-
+        setTema(getConfigValue(configs, "tema", getSavedTheme()));
       } catch (error) {
         addToast("Erro ao carregar configurações gerais", "error");
       }
@@ -41,10 +51,16 @@ export default function Geral() {
         updateConfiguracao({ chave: "dias_emprestimo", valor: String(dias) }),
         updateConfiguracao({ chave: "maximo_renovacoes", valor: String(renovacoes) }),
         updateConfiguracao({ chave: "livros_por_aluno", valor: String(livrosPorAluno) }),
+        updateConfiguracao({ chave: "tema", valor: tema }),
       ]);
 
       localStorage.setItem("nomeBiblioteca", nome);
       window.dispatchEvent(new Event("nomeBibliotecaAtualizado"));
+      try {
+        applyTheme(tema);
+      } catch (e) {
+        console.error("Erro ao aplicar tema após salvar", e);
+      }
 
       addToast("Configurações gerais salvas com sucesso", "success");
     } catch (error) {
@@ -64,6 +80,16 @@ export default function Geral() {
         <div className="form-group full">
           <label>Nome da Biblioteca</label>
           <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
+        </div>
+
+        <div className="form-group">
+          <label>Tema</label>
+          <Select
+            options={temaOptions}
+            value={temaOptions.find((option) => option.value === tema)}
+            onChange={(option) => setTema(option?.value || "Claro")}
+            styles={selectStyles}
+          />
         </div>
 
         <div className="form-group">

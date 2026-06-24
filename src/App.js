@@ -17,7 +17,6 @@ import Configuracoes from "./pages/Admin/Configuracoes/Configuracoes";
 import Geral from "./pages/Admin/Configuracoes/components/Geral/Geral";
 import Notificacoes from "./pages/Admin/Configuracoes/components/Notificacoes/Notificacoes";
 import Seguranca from "./pages/Admin/Configuracoes/components/Seguranca/Seguranca";
-import Sistema from "./pages/Admin/Configuracoes/components/Sistema/Sistema";
 import Email from "./pages/Admin/Configuracoes/components/Email/Email";
 import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
 import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
@@ -108,7 +107,6 @@ function App() {
           <Route path="geral" element={<Geral />} />
           <Route path="notificacoes" element={<Notificacoes />} />
           <Route path="seguranca" element={<Seguranca />} />
-          <Route path="sistema" element={<Sistema />} />
           <Route path="email" element={<Email />} />
           <Route path="avancado" element={<Avancado />} />
           <Route path="backups" element={<Backups />} />
