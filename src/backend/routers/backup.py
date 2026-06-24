@@ -200,7 +200,7 @@ class RestaurarRequest(BaseModel):
     senha: str
 
 
-# Tabelas e suas PKs para upsert
+# Tabelas e suas PKs para upsert (na ordem correta de dependência)
 TABELAS_PK = {
     "Usuario":              "idUsuario",
     "Administrador":        "idAdmin",
@@ -214,15 +214,23 @@ TABELAS_PK = {
     "LivroCategoria":       "idLivroCategoria",
     "LivroGenero":          "idLivroGenero",
     "Movimentacao":         "idMovimentacao",
-    "MovimentacaoExemplar": "idMovExemplar",
+    "MovimentacaoExemplar": "idMovimentacao,idExemplar",  # PK composta
     "Configuracoes":        "chave",
 }
+
+# Tabelas com GENERATED ALWAYS AS IDENTITY: não aceitam upsert com valor explícito.
+# Estratégia: delete (ordem inversa para respeitar FK) + insert.
+TABELAS_DELETE_INSERT = {"Movimentacao", "MovimentacaoExemplar"}
+
+# Ordem de deleção invertida em relação à dependência (filho antes do pai)
+ORDEM_DELETE = ["MovimentacaoExemplar", "Movimentacao"]
 
 
 @router.post("/backup/restaurar")
 def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
     """Restaura todos os dados do sistema a partir de um arquivo de backup.
     Exige confirmação com a senha do administrador autenticado."""
+
     # 1. Verificar senha do admin
     email = admin.get("sub")
     adm_db = (
@@ -248,14 +256,26 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
     erros = []
     restauradas = {}
 
-    # 3. Restaurar tabela a tabela via upsert
+    # 3. Limpar tabelas com GENERATED ALWAYS AS IDENTITY na ordem inversa (respeita FK)
+    for tabela in ORDEM_DELETE:
+        pk_col = TABELAS_PK[tabela].split(",")[0]
+        try:
+            supabase.table(tabela).delete().neq(pk_col, -1).execute()
+        except Exception as e:
+            erros.append({"tabela": tabela, "erro": f"Erro ao limpar antes de inserir: {str(e)}"})
+
+    # 4. Restaurar tabela a tabela
     for tabela, pk in TABELAS_PK.items():
         registros = dados.get(tabela)
         if not isinstance(registros, list) or not registros:
             restauradas[tabela] = 0
             continue
         try:
-            supabase.table(tabela).upsert(registros, on_conflict=pk).execute()
+            if tabela in TABELAS_DELETE_INSERT:
+                # Já foram limpas no passo 3; apenas insere
+                supabase.table(tabela).insert(registros).execute()
+            else:
+                supabase.table(tabela).upsert(registros, on_conflict=pk).execute()
             restauradas[tabela] = len(registros)
         except Exception as e:
             erros.append({"tabela": tabela, "erro": str(e)})
