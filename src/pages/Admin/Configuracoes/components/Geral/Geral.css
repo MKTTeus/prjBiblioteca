@@ -51,6 +51,7 @@
 
 .form-group input[type="number"] {
   -moz-appearance: textfield;
+  appearance: none;
 }
 
 .form-group input[type="number"]::-webkit-inner-spin-button,
