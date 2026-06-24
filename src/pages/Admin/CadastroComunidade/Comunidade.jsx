@@ -315,7 +315,7 @@ useEffect(() => {
         </div>
 
         <div className="titulo-acoes">
-          <button className="btn-novo-aluno" onClick={abrirCriacao}>
+          <button className="btn-novo-comunidade" onClick={abrirCriacao}>
             + Novo Membro
           </button>
           <button className="btn-importar" onClick={() => setModalImportar(true)}>
@@ -432,7 +432,7 @@ useEffect(() => {
                 <td>{membro.nome}</td>
                 <td>{membro.cpf}</td>
                 <td>{membro.email}</td>
-                <td>{membro.telefone}</td>
+                <td className="col-telefone-cell">{membro.telefone}</td>
                 <td className="col-livros">{membro.livros}</td>
                 <td>
                   <span className={membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>

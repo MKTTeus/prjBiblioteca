@@ -177,6 +177,7 @@
 .comunidade-page .col-cpf { width: 13%; }
 .comunidade-page .col-email { width: 23%; }
 .comunidade-page .col-telefone { width: 14%; }
+.comunidade-page td.col-telefone-cell { white-space: nowrap; word-break: normal; overflow-wrap: normal; }
 .comunidade-page .col-livros-table { width: 7%; }
 .comunidade-page .col-status { width: 10%; }
 .comunidade-page .col-acoes { width: 132px; }
