@@ -125,7 +125,7 @@ export default function Backups() {
       <div className="backups-header">
         <div className="backups-header-text">
           <h1>
-            <FiDatabase className="header-icon" />
+            <FiDatabase />
             Backups do Sistema
           </h1>
           <p>
@@ -154,17 +154,6 @@ export default function Backups() {
             {salvando ? "Gerando…" : "Gerar Backup Agora"}
           </button>
         </div>
-      </div>
-
-      {/* Info banner */}
-      <div className="backups-info-banner">
-        <FiClock className="info-icon" />
-        <span>
-          <strong>Agendamento automático:</strong> Vercel Cron dispara
-          diariamente às <strong>16:00 (UTC)</strong> → chama{" "}
-          <code>/api/cron/backup-diario</code> → gera JSON completo → salva no
-          bucket <code>backups</code> do Supabase Storage.
-        </span>
       </div>
 
       {/* Error */}
