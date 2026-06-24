@@ -214,6 +214,12 @@ export const getBackupDownloadUrl = (nomeArquivo) =>
 export const excluirBackup = (nomeArquivo) =>
   apiFetch(`/backup/${encodeURIComponent(nomeArquivo)}`, { method: "DELETE" });
 
+export const restaurarBackup = (nomeArquivo, senha) =>
+  apiFetch("/backup/restaurar", {
+    method: "POST",
+    body: JSON.stringify({ nome_arquivo: nomeArquivo, senha }),
+  });
+
 // ========================
 // ALUNOS
 // ========================
@@ -385,25 +391,3 @@ export const getExemplaresDisponiveis = () =>
   apiFetch("/exemplares/disponiveis");
 export const getExemplares = () =>
   apiFetch("/exemplares");
-
-// ========================
-// BACKUPS
-// ========================
-
-export const salvarBackup = () =>
-  apiFetch("/backup/salvar", { method: "POST" });
-
-export const listarBackups = () =>
-  apiFetch("/backup/listar");
-
-export const getBackupDownloadUrl = (nomeArquivo) =>
-  apiFetch(`/backup/download/${encodeURIComponent(nomeArquivo)}`);
-
-export const excluirBackup = (nomeArquivo) =>
-  apiFetch(`/backup/${encodeURIComponent(nomeArquivo)}`, { method: "DELETE" });
-
-export const restaurarBackup = (nomeArquivo, senha) =>
-  apiFetch("/backup/restaurar", {
-    method: "POST",
-    body: JSON.stringify({ nome_arquivo: nomeArquivo, senha }),
-  });

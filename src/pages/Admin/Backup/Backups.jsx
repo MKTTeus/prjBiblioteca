@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   FiDownload, FiTrash2, FiRefreshCw, FiSave,
-  FiDatabase, FiClock, FiFileText, FiAlertCircle,
+  FiDatabase, FiFileText, FiAlertCircle,
   FiRotateCcw, FiChevronDown, FiChevronUp, FiLock,
 } from "react-icons/fi";
 import {

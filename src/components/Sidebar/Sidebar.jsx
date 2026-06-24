@@ -9,7 +9,6 @@ import {
   FiChevronDown,
   FiBookmark,
   FiBell,
-  FiDatabase,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
