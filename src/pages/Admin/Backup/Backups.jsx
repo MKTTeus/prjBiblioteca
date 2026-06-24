@@ -7,7 +7,7 @@ import {
 import {
   listarBackups, salvarBackup, getBackupDownloadUrl,
   excluirBackup, restaurarBackup,
-} from "../../../../services/api";
+} from "../../../services/api";
 import "./Backups.css";
 
 function formatBytes(bytes) {
