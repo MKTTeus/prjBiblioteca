@@ -78,8 +78,6 @@ export default function Backups() {
     }
   }, []);
 
-  useEffect(() => { carregar(); loadConfiguracoes(); }, [carregar]);
-
   const loadConfiguracoes = async () => {
     try {
       const configs = await getConfiguracoes();
@@ -88,6 +86,8 @@ export default function Backups() {
       showToast("Erro ao carregar configuração de frequência de backup.", "error");
     }
   };
+
+  useEffect(() => { carregar(); loadConfiguracoes(); }, [carregar]);
 
   const handleSalvar = async () => {
     setSalvando(true);
