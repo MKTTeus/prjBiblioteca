@@ -96,6 +96,7 @@ export default function Geral() {
             onChange={(option) => setTema(option?.value || "Claro")}
             styles={selectStyles}
           />
+          <span className="field-hint">Tema do sistema</span>
         </div>
 
         <div className="form-group">
