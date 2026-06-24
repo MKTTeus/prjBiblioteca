@@ -77,9 +77,15 @@ export default function Geral() {
       </div>
 
       <div className="form-grid">
+        {/* Linha 1: nome da biblioteca (ocupa as 2 colunas) */}
         <div className="form-group full">
           <label>Nome da Biblioteca</label>
-          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <input
+            type="text"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Ex: Biblioteca Municipal"
+          />
         </div>
 
         <div className="form-group">
@@ -100,8 +106,10 @@ export default function Geral() {
             min={1}
             onChange={(e) => setDias(Number(e.target.value) || 1)}
           />
+          <span className="field-hint">Prazo padrão para devolução de livros</span>
         </div>
 
+        {/* Linha 3: renovações + livros por aluno */}
         <div className="form-group">
           <label>Máximo de Renovações</label>
           <input
@@ -110,9 +118,10 @@ export default function Geral() {
             min={0}
             onChange={(e) => setRenovacoes(Number(e.target.value) || 0)}
           />
+          <span className="field-hint">Renovações permitidas por empréstimo</span>
         </div>
 
-        <div className="form-group full">
+        <div className="form-group">
           <label>Livros por Aluno</label>
           <input
             type="number"
@@ -120,6 +129,7 @@ export default function Geral() {
             min={1}
             onChange={(e) => setLivrosPorAluno(Number(e.target.value) || 1)}
           />
+          <span className="field-hint">Quantidade máxima simultânea</span>
         </div>
       </div>
 

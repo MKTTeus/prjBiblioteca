@@ -8,8 +8,8 @@ import {
 import {
   listarBackups, salvarBackup, getBackupDownloadUrl,
   excluirBackup, restaurarBackup, getConfiguracoes, updateConfiguracao,
-} from "../../../services/api";
-import { getConfigValue } from "../Configuracoes/utils/configUtils";
+} from "../../../../../services/api";
+import { getConfigValue } from "../../utils/configUtils";
 import "./Backups.css";
 
 const backupOptions = [

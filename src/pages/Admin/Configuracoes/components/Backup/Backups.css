@@ -430,3 +430,49 @@
   .bk-header { flex-direction: column; }
   .bk-header-actions { width: 100%; justify-content: flex-end; }
 }
+/* ── Config card (frequência de backup) ─────────────────────────────────── */
+.bk-config-card {
+  background: var(--surface-bg, #fff);
+  border: 1px solid var(--surface-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+.bk-config-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.bk-config-row .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+  flex: 1;
+}
+
+.bk-config-row .form-group label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-label, #6b7280);
+}
+
+.bk-config-row .bk-btn {
+  flex-shrink: 0;
+  height: 38px;
+}
+
+@media (max-width: 480px) {
+  .bk-config-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .bk-config-row .bk-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
