@@ -60,10 +60,10 @@ export default function Backups() {
   const [restoreErro, setRestoreErro]       = useState("");
   const [restaurando, setRestaurando]       = useState(false);
 
-  const showToast = (msg, tipo = "success") => {
+  const showToast = useCallback((msg, tipo = "success") => {
     setToast({ msg, tipo });
     setTimeout(() => setToast(null), 4000);
-  };
+  }, []);
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -78,16 +78,16 @@ export default function Backups() {
     }
   }, []);
 
-  const loadConfiguracoes = async () => {
+  const loadConfiguracoes = useCallback(async () => {
     try {
       const configs = await getConfiguracoes();
       setFrequenciaBackup(getConfigValue(configs, "frequencia_backup", "diario"));
     } catch {
       showToast("Erro ao carregar configuração de frequência de backup.", "error");
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => { carregar(); loadConfiguracoes(); }, [carregar]);
+  useEffect(() => { carregar(); loadConfiguracoes(); }, [carregar, loadConfiguracoes]);
 
   const handleSalvar = async () => {
     setSalvando(true);
