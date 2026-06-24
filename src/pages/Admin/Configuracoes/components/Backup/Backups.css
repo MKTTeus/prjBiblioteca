@@ -177,19 +177,6 @@
 .bk-col-size  { white-space: nowrap; color: var(--text-label); }
 .bk-col-date  { white-space: nowrap; }
 
-/* ── Largura das colunas ─────────────────────────────────────────────────── */
-.bk-table th:nth-child(1),
-.bk-table td:nth-child(1) { width: 35%; max-width: 280px; }
-
-.bk-table th:nth-child(2),
-.bk-table td:nth-child(2) { width: 90px; }
-
-.bk-table th:nth-child(3),
-.bk-table td:nth-child(3) { width: 120px; }
-
-.bk-table th:nth-child(4),
-.bk-table td:nth-child(4) { width: 160px; }
-
 .bk-col-nome span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -482,7 +469,8 @@
 
 .bk-config-row .bk-btn {
   flex-shrink: 0;
-  margin-bottom: 1px; /* alinha com o Select */
+  height: 38px;
+  margin-bottom: 1px;
 }
 
 @media (max-width: 480px) {
@@ -494,4 +482,20 @@
     width: 100%;
     justify-content: center;
   }
+}
+
+/* ── Largura das colunas ─────────────────────────────────────────────────── */
+.bk-table colgroup col:nth-child(1) { width: auto; }
+.bk-table th:nth-child(2),
+.bk-table td:nth-child(2) { width: 90px; }
+.bk-table th:nth-child(3),
+.bk-table td:nth-child(3) { width: 130px; }
+.bk-table th:nth-child(4),
+.bk-table td:nth-child(4) { width: 170px; }
+
+.bk-col-nome span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }

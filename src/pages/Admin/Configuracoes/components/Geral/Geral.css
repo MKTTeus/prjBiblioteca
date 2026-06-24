@@ -33,7 +33,7 @@
   font-weight: 500;
 }
 
-.form-group input,select {
+.form-group input {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--input-border);
@@ -63,5 +63,39 @@
 .field-hint {
   margin-top: 4px;
   font-size: 12px;
+  color: var(--text-label);
+}
+
+/* Tema Select igual aos inputs */
+.form-group .react-select__control {
+  padding: 2px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  box-shadow: none;
+  font-size: 14px;
+  background: var(--surface-bg);
+  color: var(--text-default);
+  transition: all 0.2s ease;
+  min-height: unset;
+}
+
+.form-group .react-select__control--is-focused {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+.form-group .react-select__value-container {
+  padding: 0 8px;
+}
+
+.form-group .react-select__single-value {
+  color: var(--text-default);
+  font-size: 14px;
+}
+
+.form-group .react-select__indicator-separator { display: none; }
+
+.form-group .react-select__dropdown-indicator {
+  padding: 0 8px;
   color: var(--text-label);
 }

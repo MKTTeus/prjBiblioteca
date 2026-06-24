@@ -213,6 +213,11 @@ export default function Backups() {
               options={backupOptions}
               value={backupOptions.find((option) => option.value === frequenciaBackup)}
               onChange={(option) => setFrequenciaBackup(option?.value || "diario")}
+              styles={{
+                control: (base) => ({ ...base, minHeight: 38, height: 38, fontSize: "13.5px" }),
+                valueContainer: (base) => ({ ...base, padding: "0 10px" }),
+                indicatorsContainer: (base) => ({ ...base, height: 38 }),
+              }}
             />
           </div>
           <button className="bk-btn bk-btn--outline" onClick={handleSalvarFrequencia} disabled={salvandoFreq}>
