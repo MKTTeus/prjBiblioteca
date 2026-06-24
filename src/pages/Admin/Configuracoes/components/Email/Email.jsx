@@ -48,7 +48,7 @@ export default function Email() {
   };
 
   return (
-    <div className="card">
+    <div className="card email-settings">
       <div className="email-header">
         <FiMail className="email-icon" />
         <h3>Configurações de E-mail</h3>
