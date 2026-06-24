@@ -102,7 +102,6 @@ function App() {
         <Route path="emprestimos/solicitacoes" element={<SolicitacoesEmprestimo />} />
         <Route path="notificacoes" element={<AdminNotificacoes />} />
         <Route path="admins" element={<Admin />} />
-        <Route path="backups" element={<Backups />} />
         <Route path="biblioteca" element={<Biblioteca />} />
         <Route path="configuracoes" element={<Configuracoes />}>
           <Route index element={<Navigate to="geral" replace />} />
@@ -112,6 +111,7 @@ function App() {
           <Route path="sistema" element={<Sistema />} />
           <Route path="email" element={<Email />} />
           <Route path="avancado" element={<Avancado />} />
+          <Route path="backups" element={<Backups />} />
         </Route>
       </Route>
 

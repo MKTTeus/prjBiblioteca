@@ -4,8 +4,9 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
-from core import get_admin
+from core import get_admin, verify_password
 from database import supabase
 
 router = APIRouter()
@@ -114,11 +115,29 @@ def backup_listar(admin=Depends(get_admin)):
             nome = arq.get("name", "")
             if not nome or nome.startswith("."):
                 continue
+
+            # Tenta ler o JSON para contar registros por tabela
+            total_registros = None
+            contagem_tabelas = None
+            try:
+                conteudo = supabase.storage.from_(BACKUP_BUCKET).download(nome)
+                dados = json.loads(conteudo)
+                tabelas_dados = dados.get("dados", {})
+                contagem_tabelas = {
+                    t: len(v) if isinstance(v, list) else 0
+                    for t, v in tabelas_dados.items()
+                }
+                total_registros = sum(contagem_tabelas.values())
+            except Exception:
+                pass
+
             resultado.append({
                 "nome": nome,
                 "tamanho": arq.get("metadata", {}).get("size"),
                 "criado_em": arq.get("created_at"),
                 "atualizado_em": arq.get("updated_at"),
+                "total_registros": total_registros,
+                "contagem_tabelas": contagem_tabelas,
             })
         return {"backups": resultado}
     except Exception as e:
@@ -172,3 +191,80 @@ def backup_completo(admin=Depends(get_admin)):
             )
         },
     )
+
+
+# ── Admin: restaurar backup ───────────────────────────────────────────────────
+
+class RestaurarRequest(BaseModel):
+    nome_arquivo: str
+    senha: str
+
+
+# Tabelas e suas PKs para upsert
+TABELAS_PK = {
+    "Usuario":              "idUsuario",
+    "Administrador":        "idAdmin",
+    "Livro":                "idLivro",
+    "Exemplar":             "idExemplar",
+    "Autor":                "idAutor",
+    "Editora":              "idEditora",
+    "Categoria":            "idCategoria",
+    "Genero":               "idGenero",
+    "LivroAutor":           "idLivroAutor",
+    "LivroCategoria":       "idLivroCategoria",
+    "LivroGenero":          "idLivroGenero",
+    "Movimentacao":         "idMovimentacao",
+    "MovimentacaoExemplar": "idMovExemplar",
+    "Configuracoes":        "chave",
+}
+
+
+@router.post("/backup/restaurar")
+def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
+    """Restaura todos os dados do sistema a partir de um arquivo de backup.
+    Exige confirmação com a senha do administrador autenticado."""
+    # 1. Verificar senha do admin
+    email = admin.get("sub")
+    adm_db = (
+        supabase.table("Administrador")
+        .select("admSenha")
+        .eq("admEmail", email)
+        .limit(1)
+        .execute()
+    )
+    if not adm_db.data:
+        raise HTTPException(status_code=403, detail="Administrador não encontrado")
+    if not verify_password(body.senha, adm_db.data[0]["admSenha"]):
+        raise HTTPException(status_code=401, detail="Senha incorreta")
+
+    # 2. Baixar o arquivo do Storage
+    try:
+        conteudo = supabase.storage.from_(BACKUP_BUCKET).download(body.nome_arquivo)
+        payload = json.loads(conteudo)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {e}")
+
+    dados = payload.get("dados", {})
+    erros = []
+    restauradas = {}
+
+    # 3. Restaurar tabela a tabela via upsert
+    for tabela, pk in TABELAS_PK.items():
+        registros = dados.get(tabela)
+        if not isinstance(registros, list) or not registros:
+            restauradas[tabela] = 0
+            continue
+        try:
+            supabase.table(tabela).upsert(registros, on_conflict=pk).execute()
+            restauradas[tabela] = len(registros)
+        except Exception as e:
+            erros.append({"tabela": tabela, "erro": str(e)})
+            restauradas[tabela] = 0
+
+    return {
+        "ok": len(erros) == 0,
+        "arquivo": body.nome_arquivo,
+        "restauradas": restauradas,
+        "erros": erros,
+        "gerado_em": payload.get("gerado_em"),
+    }

@@ -180,16 +180,6 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             <ul>
               <li>
                 <NavLink
-                  to="/admin/backups"
-                  className={({ isActive }) => (isActive ? "active" : undefined)}
-                  onClick={close}
-                >
-                  <FiDatabase />
-                  <span>Backups</span>
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
                   to="/admin/configuracoes"
                   className={({ isActive }) => (isActive ? "active" : undefined)}
                   onClick={close}

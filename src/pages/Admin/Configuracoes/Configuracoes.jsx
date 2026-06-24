@@ -17,6 +17,7 @@ export default function Configuracoes() {
     { id: "sistema", label: "Sistema" },
     { id: "email", label: "E-mail" },
     { id: "avancado", label: "Avançado" },
+    { id: "backups", label: "Backups" },
   ];
 
   return (
