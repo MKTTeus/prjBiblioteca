@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import BookCard from "../../../components/BookCard/BookCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import { useToast } from "../../../contexts/ToastContext";
-import { getBooks, solicitarEmprestimo, getExemplaresDisponiveis } from "../../../services/api";
+import { getBooks, solicitarEmprestimo, getExemplaresDisponiveis, getEmprestimos } from "../../../services/api";
 import "../UserArea.css";
 import "./Biblioteca.css";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -19,15 +19,37 @@ export default function Biblioteca() {
   const isAluno = user?.tipo?.toLowerCase() === "aluno";
   const cooldownRef = useRef({});
 
+  // Carrega empréstimos pendentes/ativos para pré-popular solicitados
+  useEffect(() => {
+    if (!isAluno) return;
+    async function carregarSolicitados() {
+      try {
+        const emprestimos = await getEmprestimos();
+        const pendentesOuAtivos = emprestimos.filter(
+          (e) => ["pendente", "ativo"].includes((e.movStatus || e.status || "").toLowerCase())
+        );
+        const mapa = {};
+        for (const emp of pendentesOuAtivos) {
+          const titulo = emp.titulo || emp.empLiv_Titulo;
+          if (titulo) mapa[titulo] = true;
+        }
+        setSolicitados(mapa);
+      } catch {
+        // silencioso — não bloqueia a página
+      }
+    }
+    carregarSolicitados();
+  }, [isAluno]);
+
   const handleRequestLoan = async (book) => {
-    const id = book.idLivro ?? book.id;
+    const titulo = book.livTitulo ?? book.titulo;
 
-    if (solicitados[id] || solicitando[id]) return;
-    if (cooldownRef.current[id]) return;
-    cooldownRef.current[id] = true;
-    setTimeout(() => { delete cooldownRef.current[id]; }, 2000);
+    if (solicitados[titulo] || solicitando[titulo]) return;
+    if (cooldownRef.current[titulo]) return;
+    cooldownRef.current[titulo] = true;
+    setTimeout(() => { delete cooldownRef.current[titulo]; }, 2000);
 
-    setSolicitando((prev) => ({ ...prev, [id]: true }));
+    setSolicitando((prev) => ({ ...prev, [titulo]: true }));
     try {
       const exemplares = await getExemplaresDisponiveis();
       const exemplarDisponivel = exemplares.find(
@@ -40,7 +62,7 @@ export default function Biblioteca() {
       }
 
       await solicitarEmprestimo({ idExemplar: exemplarDisponivel.id });
-      setSolicitados((prev) => ({ ...prev, [id]: true }));
+      setSolicitados((prev) => ({ ...prev, [titulo]: true }));
       addToast("Solicitação enviada! Aguarde aprovação do administrador.", "success");
     } catch (err) {
       const detail = err.data?.detail;
@@ -52,7 +74,7 @@ export default function Biblioteca() {
           : err.message || "Erro ao solicitar empréstimo";
       addToast(mensagem, "error");
     } finally {
-      setSolicitando((prev) => ({ ...prev, [id]: false }));
+      setSolicitando((prev) => ({ ...prev, [titulo]: false }));
     }
   };
 
@@ -102,6 +124,7 @@ export default function Biblioteca() {
           <div className="shared-book-grid">
             {books.map((book) => {
               const id = book.idLivro ?? book.id;
+              const titulo = book.livTitulo ?? book.titulo;
               return (
                 <BookCard
                   key={id}
@@ -109,8 +132,8 @@ export default function Biblioteca() {
                   categoryName={book.livCategoria || book.categoria}
                   genreName={book.livGenero || book.genero}
                   onRequestLoan={isAluno ? handleRequestLoan : undefined}
-                  jasolicitado={solicitados[id]}
-                  solicitando={solicitando[id]}
+                  jasolicitado={!!solicitados[titulo]}
+                  solicitando={!!solicitando[titulo]}
                   isComunidade={!isAluno}
                 />
               );
