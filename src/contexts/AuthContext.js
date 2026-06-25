@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { API_URL } from "../services/apiConfig";
 
 const AuthContext = createContext();
-const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000; // 30 min fallback
+const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
 
 async function fetchTimeoutMs() {
   try {
@@ -39,7 +39,6 @@ export function AuthProvider({ children }) {
     timerRef.current = setTimeout(doLogout, timeoutMsRef.current);
   }, [doLogout]);
 
-  // Iniciar/parar listeners de atividade
   useEffect(() => {
     if (!user) {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -48,7 +47,7 @@ export function AuthProvider({ children }) {
 
     const events = ["mousemove", "keydown", "mousedown", "touchstart", "scroll"];
     events.forEach((e) => window.addEventListener(e, resetTimer));
-    resetTimer(); // iniciar timer ao logar
+    resetTimer();
 
     return () => {
       events.forEach((e) => window.removeEventListener(e, resetTimer));
@@ -62,14 +61,15 @@ export function AuthProvider({ children }) {
 
     if (storedUser && storedToken) {
       setUser(JSON.parse(storedUser));
-      // Buscar timeout configurado
       fetchTimeoutMs().then((ms) => {
         timeoutMsRef.current = ms;
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(doLogout, ms);
       });
     }
 
     setLoadingUser(false);
-  }, []);
+  }, [doLogout]);
 
   const login = async ({ email, senha, UserType }) => {
     try {
@@ -77,10 +77,8 @@ export function AuthProvider({ children }) {
 
       const response = await fetch(`${API_URL}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: normalizedEmail, senha ,UserType}),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, senha, UserType }),
       });
 
       const data = await response.json();
@@ -101,14 +99,14 @@ export function AuthProvider({ children }) {
       };
 
       setUser(newUser);
-
       localStorage.setItem("user", JSON.stringify(newUser));
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("tipo", data.tipo);
 
-      // Atualizar timeout configurado
       fetchTimeoutMs().then((ms) => {
         timeoutMsRef.current = ms;
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(doLogout, ms);
       });
 
       return {
@@ -119,11 +117,7 @@ export function AuthProvider({ children }) {
       };
     } catch (error) {
       console.error("Erro no login:", error);
-
-      return {
-        ok: false,
-        message: "Erro de conexão com o servidor",
-      };
+      return { ok: false, message: "Erro de conexão com o servidor" };
     }
   };
 
@@ -138,9 +132,7 @@ export function AuthProvider({ children }) {
 
       const response = await fetch(`${API_URL}/signup`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(normalizedForm),
       });
 
@@ -150,21 +142,13 @@ export function AuthProvider({ children }) {
         return { ok: false, message: data.detail || "Erro ao criar conta" };
       }
 
-      return {
-        ok: true,
-        message: data.message || "Conta criada com sucesso",
-      };
+      return { ok: true, message: data.message || "Conta criada com sucesso" };
     } catch (error) {
-      return {
-        ok: false,
-        message: "Erro de conexão com o servidor",
-      };
+      return { ok: false, message: "Erro de conexão com o servidor" };
     }
   };
 
-  const getToken = () => {
-    return user?.token || localStorage.getItem("token");
-  };
+  const getToken = () => user?.token || localStorage.getItem("token");
 
   return (
     <AuthContext.Provider
