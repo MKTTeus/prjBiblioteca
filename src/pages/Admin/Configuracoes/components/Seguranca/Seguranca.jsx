@@ -58,7 +58,7 @@ export default function Seguranca() {
   };
 
   return (
-    <div className="card">
+    <div className="card seguranca-settings">
       <div className="seguranca-header">
         <FiShield className="shield-icon" />
         <h3>Configurações de Segurança</h3>

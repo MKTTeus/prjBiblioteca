@@ -1,24 +1,24 @@
 /* HEADER */
-.seguranca-header {
+.seguranca-settings .seguranca-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 15px;
 }
 
-.seguranca-header h3 {
+.seguranca-settings .seguranca-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
 }
 
-.shield-icon {
+.seguranca-settings .shield-icon {
   font-size: 18px;
   color: var(--text-default);
 }
 
 /* ALERT */
-.alert-box {
+.seguranca-settings .alert-box {
   background-color: var(--danger);
   border: 1px solid var(--surface-border);
   padding: 12px 14px;
@@ -29,21 +29,21 @@
 }
 
 /* GRID */
-.grid-2 {
+.seguranca-settings .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.form-group label {
+.seguranca-settings .form-group label {
   font-size: 14px;
   font-weight: 500;
   display: block;
   margin-bottom: 6px;
 }
 
-.form-group input {
+.seguranca-settings .form-group input {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--surface-border);
@@ -52,33 +52,33 @@
 }
 
 /* SWITCH ROW */
-.switch-row {
+.seguranca-settings .switch-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 18px;
 }
 
-.switch-row p {
+.seguranca-settings .switch-row p {
   margin: 3px 0 0 0;
   font-size: 13px;
   color: var(--text-subtle);
 }
 
-.switch-title {
+.seguranca-settings .switch-title {
   font-weight: 500;
   display: block;
 }
 
 /* AÇÕES */
-.card-actions {
+.seguranca-settings .card-actions {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
   margin-top: 15px;
 }
 
-.btn-secondary {
+.seguranca-settings .btn-secondary {
   background: var(--surface-bg);
   border: 1px solid var(--input-border);
   padding: 8px 14px;

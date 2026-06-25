@@ -1,24 +1,24 @@
 /* HEADER */
-.email-header {
+.email-settings .email-header {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 25px;
 }
 
-.email-header h3 {
+.email-settings .email-header h3 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
 }
 
-.email-icon {
+.email-settings .email-icon {
   font-size: 18px;
   color: var(--text-default);
 }
 
 /* GRID */
-.grid-2 {
+.email-settings .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 28px; /* AUMENTEI ESPAÇAMENTO */
@@ -26,11 +26,11 @@
 }
 
 /* FORM */
-.form-group {
+.email-settings .form-group {
   margin-bottom: 8px;
 }
 
-.form-group label {
+.email-settings .form-group label {
   font-size: 14px;
   font-weight: 500;
   display: block;
@@ -38,7 +38,7 @@
 }
 
 /* INPUTS MELHORADOS */
-.form-group input {
+.email-settings .form-group input {
   width: 100%;
   padding: 10px 12px;
   border: 1.5px solid var(--surface-border);
@@ -49,7 +49,7 @@
 }
 
 /* ANIMAÇÃO DE FOCO */
-.form-group input:focus {
+.email-settings .form-group input:focus {
   outline: none;
   border-color: var(--text-default);
   background-color: var(--surface-bg);
@@ -57,17 +57,17 @@
 }
 
 /* PASSWORD */
-.password-wrapper {
+.email-settings .password-wrapper {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.password-wrapper input {
+.email-settings .password-wrapper input {
   padding-right: 40px;
 }
 
-.toggle-password {
+.email-settings .toggle-password {
   position: absolute;
   right: 10px;
   background: none;
@@ -79,18 +79,18 @@
   justify-content: center;
 }
 
-.toggle-password:hover {
+.email-settings .toggle-password:hover {
   color: var(--text-default);
 }
 
 /* BOTÕES TESTE */
-.email-test-buttons {
+.email-settings .email-test-buttons {
   display: flex;
   gap: 14px;
   margin-bottom: 24px;
 }
 
-.btn-outline {
+.email-settings .btn-outline {
   background: var(--surface-bg);
   border: 1px solid var(--input-border);
   padding: 9px 16px;
@@ -99,18 +99,18 @@
   transition: all 0.2s ease;
 }
 
-.btn-outline:hover {
+.email-settings .btn-outline:hover {
   background-color: var(--main-bg);
 }
 
 /* AÇÕES */
-.card-actions {
+.email-settings .card-actions {
   display: flex;
   justify-content: flex-end;
   gap: 14px;
 }
 
-.btn-secondary {
+.email-settings .btn-secondary {
   background: var(--surface-bg);
   border: 1px solid var(--input-border);
   padding: 9px 16px;
