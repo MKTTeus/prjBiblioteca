@@ -9,25 +9,13 @@
     }
   },
   "rewrites": [
-    {
-      "source": "/api",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api",        "destination": "/api/index.py" },
+    { "source": "/api/:path*", "destination": "/api/index.py" },
+    { "source": "/(.*)",       "destination": "/index.html"   }
   ],
   "crons": [
     { "path": "/api/cron/lembretes-atraso",    "schedule": "0 11 * * *" },
     { "path": "/api/cron/lembretes-devolucao", "schedule": "0 11 * * *" },
     { "path": "/api/cron/backup-diario",       "schedule": "0 16 * * *" }
-  ],
-  "env": {
-    "CRON_SECRET": "@cron_secret"
-  }
+  ]
 }
