@@ -13,8 +13,8 @@ export default function Biblioteca() {
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [solicitados, setSolicitados] = useState({}); // { [idLivro]: true }
-  const [solicitando, setSolicitando] = useState({}); // { [idLivro]: true }
+  const [solicitados, setSolicitados] = useState({});
+  const [solicitando, setSolicitando] = useState({});
   const { user } = useAuth();
   const isAluno = user?.tipo === "aluno";
   const cooldownRef = useRef({});
@@ -22,10 +22,7 @@ export default function Biblioteca() {
   const handleRequestLoan = async (book) => {
     const id = book.idLivro ?? book.id;
 
-    // Bloqueia se já solicitado ou em cooldown
     if (solicitados[id] || solicitando[id]) return;
-
-    // Cooldown de 2s para evitar cliques múltiplos
     if (cooldownRef.current[id]) return;
     cooldownRef.current[id] = true;
     setTimeout(() => { delete cooldownRef.current[id]; }, 2000);
@@ -114,6 +111,7 @@ export default function Biblioteca() {
                   onRequestLoan={isAluno ? handleRequestLoan : undefined}
                   jasolicitado={solicitados[id]}
                   solicitando={solicitando[id]}
+                  isComunidade={!isAluno}
                 />
               );
             })}

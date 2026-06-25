@@ -16,26 +16,11 @@ function getBookStatus(book) {
   const reservados = Number(book?.reservados ?? 0);
   const statusTexto = String(book?.status || "").toLowerCase();
 
-  if (statusTexto.includes("reserv")) {
-    return { label: "Reservado", className: "reservado" };
-  }
-
-  if (statusTexto.includes("emprest")) {
-    return { label: "Emprestado", className: "emprestado" };
-  }
-
-  if (reservados > 0 && disponiveis === 0) {
-    return { label: "Reservado", className: "reservado" };
-  }
-
-  if (disponiveis > 0) {
-    return { label: "Disponível", className: "disponivel" };
-  }
-
-  if (emprestados > 0) {
-    return { label: "Emprestado", className: "emprestado" };
-  }
-
+  if (statusTexto.includes("reserv")) return { label: "Reservado", className: "reservado" };
+  if (statusTexto.includes("emprest")) return { label: "Emprestado", className: "emprestado" };
+  if (reservados > 0 && disponiveis === 0) return { label: "Reservado", className: "reservado" };
+  if (disponiveis > 0) return { label: "Disponível", className: "disponivel" };
+  if (emprestados > 0) return { label: "Emprestado", className: "emprestado" };
   return { label: "Indisponível", className: "indisponivel" };
 }
 
@@ -50,14 +35,12 @@ function getLocationText(book) {
     book?.estante ? `Estante ${book.estante}` : null,
     book?.prateleira ? `Prateleira ${book.prateleira}` : null,
   ];
-
   return locationCandidates.find(Boolean) || "Localização não informada";
 }
 
 function getBookCode(book) {
   if (book?.tombo) return book.tombo;
   if (book?.codigo) return book.codigo;
-
   const numericId = book?.idLivro ?? book?.id ?? 0;
   return `L${String(numericId).padStart(4, "0")}`;
 }
@@ -72,12 +55,12 @@ export default function BookCard({
   onRequestLoan,
   jasolicitado = false,
   solicitando = false,
+  isComunidade = false,
 }) {
   const titulo = book?.livTitulo ?? book?.titulo ?? "Sem título";
   const autor = book?.livAutor ?? book?.autor ?? "Autor desconhecido";
   const capa = book?.livCapaURL || book?.capa || "/placeholder.png";
-  const descricao =
-    book?.livDescricao || book?.descricao || "Descrição não informada para este livro.";
+  const descricao = book?.livDescricao || book?.descricao || "Descrição não informada para este livro.";
   const ano = book?.livAnoPublicacao ?? book?.anoPublicacao ?? "Ano não informado";
   const paginas = book?.livPaginas ?? book?.paginas ?? null;
   const totalExemplares = Number(book?.total_exemplares ?? book?.totalExemplares ?? 0);
@@ -96,13 +79,10 @@ export default function BookCard({
           <span className="shared-book-card__code">{tombo}</span>
           <span className={`shared-book-card__status ${status.className}`}>{status.label}</span>
         </div>
-
         <img
           src={capa}
           alt={titulo}
-          onError={(e) => {
-            e.target.src = "/placeholder.png";
-          }}
+          onError={(e) => { e.target.src = "/placeholder.png"; }}
         />
       </div>
 
@@ -113,10 +93,7 @@ export default function BookCard({
             <p className="shared-book-card__author">{autor}</p>
             <p className="shared-book-card__meta">
               <HiOutlineCalendar />
-              <span>
-                {ano}
-                {paginas ? ` - ${paginas} págs.` : ""}
-              </span>
+              <span>{ano}{paginas ? ` - ${paginas} págs.` : ""}</span>
             </p>
           </div>
 
@@ -124,9 +101,7 @@ export default function BookCard({
 
           {tags.length > 0 && (
             <div className="shared-book-card__tags">
-              {tags.map((tag) => (
-                <span key={tag}>{tag}</span>
-              ))}
+              {tags.map((tag) => <span key={tag}>{tag}</span>)}
             </div>
           )}
 
@@ -135,19 +110,14 @@ export default function BookCard({
               <HiOutlineCheckCircle />
               <span>{status.label}</span>
             </p>
-
             <p className="shared-book-card__detail">
               <HiOutlineLocationMarker />
               <span>{locationText}</span>
             </p>
-
             <p className="shared-book-card__detail availability-line">
               <HiOutlineBookOpen />
-              <span>
-                {disponiveis}/{totalExemplares} disponíveis
-              </span>
+              <span>{disponiveis}/{totalExemplares} disponíveis</span>
             </p>
-
             {(emprestados > 0 || reservados > 0) && (
               <p className="shared-book-card__detail loan-line">
                 <HiOutlineClock />
@@ -160,7 +130,7 @@ export default function BookCard({
           </div>
         </div>
 
-        {(isAdmin || onRequestLoan) && (
+        {(isAdmin || onRequestLoan || isComunidade) && (
           <div className="shared-book-card__actions">
             {onRequestLoan && (
               <button
@@ -181,7 +151,7 @@ export default function BookCard({
               </button>
             )}
 
-            {!onRequestLoan && !isAdmin && (
+            {isComunidade && (
               <p className="shared-book-card__community-hint">
                 Para solicitar este livro, entre em contato com a biblioteca.
               </p>
@@ -197,7 +167,6 @@ export default function BookCard({
                   <HiOutlinePencil />
                   <span>Editar</span>
                 </button>
-
                 <button
                   type="button"
                   className="shared-book-card__button shared-book-card__button--delete"
