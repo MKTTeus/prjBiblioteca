@@ -16,7 +16,7 @@ export default function Biblioteca() {
   const [solicitados, setSolicitados] = useState({});
   const [solicitando, setSolicitando] = useState({});
   const { user } = useAuth();
-  const isAluno = user?.tipo === "aluno";
+  const isAluno = user?.tipo?.toLowerCase() === "aluno";
   const cooldownRef = useRef({});
 
   const handleRequestLoan = async (book) => {
