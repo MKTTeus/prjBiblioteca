@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import BookCard from "../../../components/BookCard/BookCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import { useToast } from "../../../contexts/ToastContext";
@@ -12,33 +12,47 @@ export default function Biblioteca() {
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [solicitados, setSolicitados] = useState({}); // { [idLivro]: true }
+  const [solicitando, setSolicitando] = useState({}); // { [idLivro]: true }
+  const cooldownRef = useRef({});
 
   const handleRequestLoan = async (book) => {
+    const id = book.idLivro ?? book.id;
+
+    // Bloqueia se já solicitado ou em cooldown
+    if (solicitados[id] || solicitando[id]) return;
+
+    // Cooldown de 2s para evitar cliques múltiplos
+    if (cooldownRef.current[id]) return;
+    cooldownRef.current[id] = true;
+    setTimeout(() => { delete cooldownRef.current[id]; }, 2000);
+
+    setSolicitando((prev) => ({ ...prev, [id]: true }));
     try {
-      // Buscar exemplares disponíveis
       const exemplares = await getExemplaresDisponiveis();
-      
-      // Encontrar um exemplar deste livro
-      const exemplarDisponivel = exemplares.find(ex => ex.nome === book.livTitulo || ex.nome === book.titulo);
-      
+      const exemplarDisponivel = exemplares.find(
+        (ex) => ex.nome === book.livTitulo || ex.nome === book.titulo
+      );
+
       if (!exemplarDisponivel) {
         addToast("Nenhum exemplar disponível para este livro no momento", "error");
         return;
       }
 
-      await solicitarEmprestimo({
-        idExemplar: exemplarDisponivel.id,
-      });
-      addToast("Solicitação de empréstimo enviada com sucesso! Aguarde aprovação do administrador.", "success");
+      await solicitarEmprestimo({ idExemplar: exemplarDisponivel.id });
+      setSolicitados((prev) => ({ ...prev, [id]: true }));
+      addToast("Solicitação enviada! Aguarde aprovação do administrador.", "success");
     } catch (err) {
-      console.error(err);
       const detail = err.data?.detail;
-      const mensagem = typeof detail === "string"
-        ? detail
-        : Array.isArray(detail)
-        ? detail.map(d => d.msg).join(", ")
-        : err.message || "Erro ao solicitar empréstimo";
+      const mensagem =
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((d) => d.msg).join(", ")
+          : err.message || "Erro ao solicitar empréstimo";
       addToast(mensagem, "error");
+    } finally {
+      setSolicitando((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -49,7 +63,6 @@ export default function Biblioteca() {
       try {
         const params = {};
         if (search.trim()) params.q = search.trim();
-
         const data = await getBooks(params);
         setBooks(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -60,7 +73,6 @@ export default function Biblioteca() {
         setIsLoading(false);
       }
     }
-
     fetchBooks();
   }, [search]);
 
@@ -88,15 +100,20 @@ export default function Biblioteca() {
       ) : books.length > 0 ? (
         <section className="user-library-results">
           <div className="shared-book-grid">
-            {books.map((book) => (
-              <BookCard
-                key={book.idLivro ?? book.id}
-                book={book}
-                categoryName={book.livCategoria || book.categoria}
-                genreName={book.livGenero || book.genero}
-                onRequestLoan={handleRequestLoan}
-              />
-            ))}
+            {books.map((book) => {
+              const id = book.idLivro ?? book.id;
+              return (
+                <BookCard
+                  key={id}
+                  book={book}
+                  categoryName={book.livCategoria || book.categoria}
+                  genreName={book.livGenero || book.genero}
+                  onRequestLoan={handleRequestLoan}
+                  jasolicitado={solicitados[id]}
+                  solicitando={solicitando[id]}
+                />
+              );
+            })}
           </div>
         </section>
       ) : (

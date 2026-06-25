@@ -70,6 +70,8 @@ export default function BookCard({
   onEdit,
   onDelete,
   onRequestLoan,
+  jasolicitado = false,
+  solicitando = false,
 }) {
   const titulo = book?.livTitulo ?? book?.titulo ?? "Sem título";
   const autor = book?.livAutor ?? book?.autor ?? "Autor desconhecido";
@@ -163,12 +165,19 @@ export default function BookCard({
             {onRequestLoan && (
               <button
                 type="button"
-                className="shared-book-card__button shared-book-card__button--request"
-                onClick={() => onRequestLoan(book)}
+                className={`shared-book-card__button ${
+                  jasolicitado
+                    ? "shared-book-card__button--requested"
+                    : "shared-book-card__button--request"
+                }`}
+                onClick={() => !jasolicitado && !solicitando && onRequestLoan(book)}
+                disabled={jasolicitado || solicitando}
                 aria-label={`Solicitar empréstimo de ${titulo}`}
               >
                 <HiOutlineBookOpen />
-                <span>Solicitar Empréstimo</span>
+                <span>
+                  {jasolicitado ? "Já Solicitado" : solicitando ? "Enviando…" : "Solicitar Empréstimo"}
+                </span>
               </button>
             )}
 

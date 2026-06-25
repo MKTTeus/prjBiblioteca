@@ -295,3 +295,10 @@
     height: 280px;
   }
 }
+.shared-book-card__button--requested {
+  background: var(--surface-bg, #f3f4f6);
+  color: var(--text-label, #6b7280);
+  border: 1px solid var(--surface-border, #e5e7eb);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
