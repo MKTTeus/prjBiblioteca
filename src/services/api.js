@@ -208,9 +208,6 @@ export const salvarBackup = () =>
 export const listarBackups = () =>
   apiFetch("/backup/listar");
 
-export const getBackupDownloadUrl = (nomeArquivo) =>
-  apiFetch(`/backup/download/${encodeURIComponent(nomeArquivo)}`);
-
 export const excluirBackup = (nomeArquivo) =>
   apiFetch(`/backup/${encodeURIComponent(nomeArquivo)}`, { method: "DELETE" });
 

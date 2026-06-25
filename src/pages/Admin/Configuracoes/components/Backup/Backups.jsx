@@ -6,8 +6,9 @@ import {
   FiRotateCcw, FiChevronDown, FiChevronUp, FiLock,
 } from "react-icons/fi";
 import {
-  listarBackups, salvarBackup, getBackupDownloadUrl,
-  excluirBackup, restaurarBackup, getConfiguracoes, updateConfiguracao,
+  listarBackups, salvarBackup, 
+  excluirBackup, restaurarBackup, 
+  getConfiguracoes, updateConfiguracao,
 } from "../../../../../services/api";
 import { getConfigValue } from "../../utils/configUtils";
 import "./Backups.css";
