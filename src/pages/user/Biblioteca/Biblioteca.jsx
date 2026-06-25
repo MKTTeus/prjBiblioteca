@@ -5,6 +5,7 @@ import { useToast } from "../../../contexts/ToastContext";
 import { getBooks, solicitarEmprestimo, getExemplaresDisponiveis } from "../../../services/api";
 import "../UserArea.css";
 import "./Biblioteca.css";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function Biblioteca() {
   const { addToast } = useToast();
@@ -14,6 +15,8 @@ export default function Biblioteca() {
   const [error, setError] = useState(null);
   const [solicitados, setSolicitados] = useState({}); // { [idLivro]: true }
   const [solicitando, setSolicitando] = useState({}); // { [idLivro]: true }
+  const { user } = useAuth();
+  const isAluno = user?.tipo === "aluno";
   const cooldownRef = useRef({});
 
   const handleRequestLoan = async (book) => {
@@ -108,7 +111,12 @@ export default function Biblioteca() {
                   book={book}
                   categoryName={book.livCategoria || book.categoria}
                   genreName={book.livGenero || book.genero}
-                  onRequestLoan={handleRequestLoan}
+                  onRequestLoan={isAluno ? handleRequestLoan : undefined}
+                  {!onRequestLoan && !isAdmin && (
+                    <p className="shared-book-card__community-hint">
+                      Para solicitar este livro, entre em contato com a biblioteca.
+                    </p>
+                  )}
                   jasolicitado={solicitados[id]}
                   solicitando={solicitando[id]}
                 />
