@@ -22,8 +22,14 @@ TABELAS = [
 ]
 
 
-def verificar_cron(authorization: str = Header(None)):
-    if not CRON_SECRET or authorization != f"Bearer {CRON_SECRET}":
+def verificar_cron(
+    authorization: str = Header(None),
+    x_vercel_cron_signature: str = Header(None),
+):
+    vercel_ok = CRON_SECRET and x_vercel_cron_signature == CRON_SECRET
+    manual_ok = CRON_SECRET and authorization == f"Bearer {CRON_SECRET}"
+
+    if not vercel_ok and not manual_ok:
         raise HTTPException(status_code=401, detail="Acesso não autorizado")
 
 

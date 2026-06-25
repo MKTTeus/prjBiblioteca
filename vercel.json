@@ -26,5 +26,8 @@
     { "path": "/api/cron/lembretes-atraso",    "schedule": "0 11 * * *" },
     { "path": "/api/cron/lembretes-devolucao", "schedule": "0 11 * * *" },
     { "path": "/api/cron/backup-diario",       "schedule": "0 16 * * *" }
-  ]
+  ],
+  "env": {
+    "CRON_SECRET": "@cron_secret"
+  }
 }

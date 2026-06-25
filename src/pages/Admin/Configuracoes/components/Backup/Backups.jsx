@@ -11,6 +11,8 @@ import {
 } from "../../../../../services/api";
 import { getConfigValue } from "../../utils/configUtils";
 import "./Backups.css";
+import { API_URL } from "../../../../../services/apiConfig";
+import { getToken } from "../../../../../services/api";
 
 const backupOptions = [
   { value: "diario", label: "Diário" },
@@ -105,13 +107,20 @@ export default function Backups() {
   const handleDownload = async (nome) => {
     setDownloadingId(nome);
     try {
-      const res = await getBackupDownloadUrl(nome);
+      const token = getToken();
+      const res = await fetch(`${API_URL}/backup/download/${encodeURIComponent(nome)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Erro no download");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = res.url;
+      a.href = url;
       a.download = nome;
       a.click();
+      URL.revokeObjectURL(url);
     } catch {
-      showToast("Erro ao obter link de download.", "error");
+      showToast("Erro ao baixar o backup.", "error");
     } finally {
       setDownloadingId(null);
     }
