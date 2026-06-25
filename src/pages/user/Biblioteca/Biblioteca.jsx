@@ -112,11 +112,6 @@ export default function Biblioteca() {
                   categoryName={book.livCategoria || book.categoria}
                   genreName={book.livGenero || book.genero}
                   onRequestLoan={isAluno ? handleRequestLoan : undefined}
-                  {!onRequestLoan && !isAdmin && (
-                    <p className="shared-book-card__community-hint">
-                      Para solicitar este livro, entre em contato com a biblioteca.
-                    </p>
-                  )}
                   jasolicitado={solicitados[id]}
                   solicitando={solicitando[id]}
                 />

@@ -181,6 +181,12 @@ export default function BookCard({
               </button>
             )}
 
+            {!onRequestLoan && !isAdmin && (
+              <p className="shared-book-card__community-hint">
+                Para solicitar este livro, entre em contato com a biblioteca.
+              </p>
+            )}
+
             {isAdmin && (
               <>
                 <button
