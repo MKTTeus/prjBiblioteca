@@ -39,6 +39,7 @@ export default function Emprestimos() {
       setError(null);
       try {
         const data = await getEmprestimos();
+        console.log("LOANS RAW:", JSON.stringify(data, null, 2));
         setLoans(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao carregar empréstimos:", err);
