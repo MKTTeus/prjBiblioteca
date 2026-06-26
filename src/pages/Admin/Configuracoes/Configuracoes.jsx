@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfigSaveProvider, useConfigSave } from "./contexts/ConfigSaveContext";
+import ExportModal from "./components/ExportModal/ExportModal";
 import "./Configuracoes.css";
 
 const abas = [
@@ -14,40 +15,29 @@ const abas = [
   { id: "avancado",     label: "Avançado" },
 ];
 
-/** Inner component so it can consume ConfigSaveContext */
 function ConfiguracoesInner() {
   const location = useLocation();
   const { addToast } = useToast();
   const { saveAll } = useConfigSave();
   const [savingAll, setSavingAll] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   const handleSaveAll = async () => {
     setSavingAll(true);
     try {
       const results = await saveAll();
-
       const failures = results.filter((r) => !r.success);
       const successes = results.filter((r) => r.success);
 
       if (failures.length === 0) {
-        addToast(
-          `Todas as ${successes.length} abas salvas com sucesso.`,
-          "success"
-        );
+        addToast(`Todas as ${successes.length} abas salvas com sucesso.`, "success");
       } else if (successes.length === 0) {
-        addToast(
-          "Erro ao salvar todas as configurações. Verifique cada aba.",
-          "error"
-        );
+        addToast("Erro ao salvar todas as configurações. Verifique cada aba.", "error");
       } else {
-        // Partial failure — report which tabs failed
         const failedLabels = failures
           .map((f) => abas.find((a) => a.id === f.abaId)?.label ?? f.abaId)
           .join(", ");
-        addToast(
-          `${successes.length} aba(s) salvas. Falha em: ${failedLabels}.`,
-          "error"
-        );
+        addToast(`${successes.length} aba(s) salvas. Falha em: ${failedLabels}.`, "error");
       }
     } catch (err) {
       addToast("Erro inesperado ao salvar configurações.", "error");
@@ -66,7 +56,12 @@ function ConfiguracoesInner() {
         </div>
 
         <div className="top-actions">
-          <button className="btn-outline config-export-btn">Exportar</button>
+          <button
+            className="btn-outline config-export-btn"
+            onClick={() => setShowExport(true)}
+          >
+            Exportar
+          </button>
           <button
             className="btn-success"
             disabled={savingAll}
@@ -100,6 +95,8 @@ function ConfiguracoesInner() {
           <Outlet />
         </motion.div>
       </AnimatePresence>
+
+      {showExport && <ExportModal onClose={() => setShowExport(false)} />}
     </div>
   );
 }
