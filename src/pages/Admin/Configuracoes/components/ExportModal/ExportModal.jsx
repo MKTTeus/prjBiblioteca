@@ -132,7 +132,7 @@ function exportPDF(configs, nomeBiblioteca) {
   </header>
   ${sectionsHTML}
   <footer>Documento gerado automaticamente pelo sistema de gerenciamento da biblioteca.</footer>
-  <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }<\/script>
+  <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }</script>
 </body>
 </html>`;
 
