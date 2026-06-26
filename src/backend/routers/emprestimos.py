@@ -96,6 +96,93 @@ def atualizar_configuracao(config: Configuracao, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail="Erro ao atualizar configuração")
 
 
+@router.get("/emprestimos/solicitacoes")
+def listar_solicitacoes(admin=Depends(get_admin)):
+    """Retorna apenas movimentações do tipo SOLICITACAO (pendentes, aprovadas ou negadas)."""
+    try:
+        movimentacoes = (
+            supabase.table("Movimentacao")
+            .select("*")
+            .eq("movTipo", "SOLICITACAO")
+            .execute()
+            .data or []
+        )
+
+        movimentacao_ids = [m["idMovimentacao"] for m in movimentacoes if m.get("idMovimentacao")]
+        mov_ex_map = {}
+        exemplar_ids = []
+        if movimentacao_ids:
+            movimentacao_exemplares = (
+                supabase.table("MovimentacaoExemplar")
+                .select("*")
+                .in_("idMovimentacao", movimentacao_ids)
+                .execute()
+                .data or []
+            )
+            for me in movimentacao_exemplares:
+                mov_ex_map.setdefault(me["idMovimentacao"], []).append(me)
+                if me.get("idExemplar"):
+                    exemplar_ids.append(me["idExemplar"])
+
+        exemplar_map = {}
+        livro_map = {}
+        if exemplar_ids:
+            exemplares = (
+                supabase.table("Exemplar")
+                .select("idExemplar, exeLivTombo, idLivro")
+                .in_("idExemplar", list(set(exemplar_ids)))
+                .execute()
+                .data or []
+            )
+            exemplar_map = {e["idExemplar"]: e for e in exemplares}
+            livro_ids = list({e.get("idLivro") for e in exemplares if e.get("idLivro")})
+            if livro_ids:
+                livros = (
+                    supabase.table("Livro")
+                    .select("idLivro, livTitulo")
+                    .in_("idLivro", livro_ids)
+                    .execute()
+                    .data or []
+                )
+                livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
+
+        usuario_ids = list({m.get("idUsuario") for m in movimentacoes if m.get("idUsuario")})
+        usuario_map = {}
+        if usuario_ids:
+            usuarios = (
+                supabase.table("Usuario")
+                .select("idUsuario, usuNome, usuTipo")
+                .in_("idUsuario", usuario_ids)
+                .execute()
+                .data or []
+            )
+            usuario_map = {u["idUsuario"]: u for u in usuarios}
+
+        for mov in movimentacoes:
+            me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
+            exemplar = me_list[0] if me_list else None
+
+            u = usuario_map.get(mov.get("idUsuario"), {})
+            mov["usuario"] = u.get("usuNome", "Usuário não informado")
+            mov["usuarioTipo"] = u.get("usuTipo", "-")
+
+            if exemplar:
+                ex = exemplar_map.get(exemplar.get("idExemplar"))
+                if ex:
+                    mov["codigo"] = ex.get("exeLivTombo")
+                    mov["titulo"] = livro_map.get(ex.get("idLivro"), "Livro não informado")
+                    mov["empLiv_Tombo"] = ex.get("exeLivTombo")
+                    mov["empLiv_Titulo"] = mov.get("titulo")
+
+            mov["idEmprestimo"] = mov.get("idMovimentacao")
+            mov["status"] = (mov.get("movStatus") or "").lower()
+
+        return movimentacoes
+    except Exception as e:
+        print("Erro listar_solicitacoes:", e)
+        return []
+
+
 @router.get("/emprestimos")
 def listar_emprestimos(user=Depends(get_optional_user)):
     try:

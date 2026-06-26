@@ -6,7 +6,7 @@ import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
 import { 
-  getEmprestimos,
+  getSolicitacoesEmprestimo,
   aprovarSolicitacaoEmprestimo,
   rejeitarSolicitacaoEmprestimo
 } from "../../../services/api";
@@ -17,10 +17,11 @@ import { useToast } from "../../../contexts/ToastContext";
 const statusLabel = {
   ativo: "Aceita",
   aceito: "Aceito",
+  aprovado: "Aprovado",
   pendente: "Pendente",
   cancelado: "Cancelada",
   negado: "Negado",
-  devolvido: "Negado",
+  rejeitado: "Rejeitado",
 };
 
 function filtrarSolicitacoes(solicitacoes, busca) {
@@ -66,7 +67,7 @@ export default function SolicitacoesEmprestimo() {
     async function carregarDados() {
       setCarregando(true);
       try {
-        const data = await getEmprestimos();
+        const data = await getSolicitacoesEmprestimo();
         const arr = Array.isArray(data) ? data : [];
         setSolicitacoes(arr);
       } catch (error) {
@@ -87,8 +88,7 @@ export default function SolicitacoesEmprestimo() {
       return s === "ativo" || s === "aceito" || s === "aceita" || s === "aprovado";
     }).length;
     const negados = solicitacoes.filter((item) => {
-      let s = String(item.status || item.movStatus || "").toLowerCase();
-      if (s === "devolvido") s = "negado";
+      const s = String(item.status || item.movStatus || "").toLowerCase();
       return s === "negado" || s === "cancelado" || s === "rejeitado";
     }).length;
 
@@ -127,8 +127,7 @@ export default function SolicitacoesEmprestimo() {
 
     if (filtroStatus && filtroStatus !== "todos") {
       list = list.filter((item) => {
-        let status = String(item.status || item.movStatus || "").toLowerCase();
-        if (status === "devolvido") status = "negado";
+        const status = String(item.status || item.movStatus || "").toLowerCase();
         if (filtroStatus === "aprovados") return status === "ativo" || status === "aceita" || status === "aceito" || status === "aprovado";
         if (filtroStatus === "negados") return status === "cancelado" || status === "negado" || status === "rejeitado";
         return true;
@@ -254,7 +253,6 @@ export default function SolicitacoesEmprestimo() {
             ) : (
               solicitacoesFiltradas.map((item) => {
                 let status = String(item.status || item.movStatus || "").toLowerCase();
-                if (status === "devolvido") status = "negado";
                 const usuario = item.usuario || item.nome || item.usuNome || "Usuário não informado";
                 const titulo = item.titulo || item.empLiv_Titulo || "Livro não informado";
                 const tombo = item.codigo || item.empLiv_Tombo || item.exemplar?.exeLivTombo || "-";

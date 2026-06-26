@@ -346,6 +346,9 @@ export async function buscarLivroISBN(isbn) {
 export const getEmprestimos = () =>
   apiFetch("/emprestimos");
 
+export const getSolicitacoesEmprestimo = () =>
+  apiFetch("/emprestimos/solicitacoes");
+
 export const getAdminLoanNotifications = () =>
   apiFetch("/emprestimos/notificacoes-admin");
 
