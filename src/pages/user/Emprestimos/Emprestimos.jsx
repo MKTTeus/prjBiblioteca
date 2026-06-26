@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getEmprestimos } from "../../../services/api";
+import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import "../UserArea.css";
 import "./Emprestimos.css";
 
@@ -19,7 +20,6 @@ export default function Emprestimos() {
     async function fetchLoans() {
       setIsLoading(true);
       setError(null);
-
       try {
         const data = await getEmprestimos();
         setLoans(Array.isArray(data) ? data : []);
@@ -35,21 +35,14 @@ export default function Emprestimos() {
     fetchLoans();
   }, []);
 
+  const pendentes = loans.filter((loan) => loan.status === "pendente");
+  const ativos    = loans.filter((loan) => loan.status === "ativo");
   const atrasados = loans.filter((loan) => loan.status === "atrasado");
-  const ativos = loans.filter((loan) => loan.status === "ativo");
 
   const renderLoanList = (items, emptyMessage) => {
-    if (isLoading) {
-      return <div className="user-empty-state">Carregando empréstimos...</div>;
-    }
-
-    if (error) {
-      return <div className="user-empty-state">{error}</div>;
-    }
-
-    if (items.length === 0) {
-      return <div className="user-empty-state">{emptyMessage}</div>;
-    }
+    if (isLoading) return <div className="user-empty-state">Carregando empréstimos...</div>;
+    if (error)     return <div className="user-empty-state">{error}</div>;
+    if (items.length === 0) return <div className="user-empty-state">{emptyMessage}</div>;
 
     return (
       <div className="user-loans-list">
@@ -60,12 +53,10 @@ export default function Emprestimos() {
                 <h4>{loan.titulo || "Livro desconhecido"}</h4>
                 <small>{loan.codigo || "Sem código"}</small>
               </div>
-
               <span className={`status-badge ${loan.status}`}>
                 {statusLabelMap[loan.status] || loan.status}
               </span>
             </div>
-
             <p>Data do registro: {loan.dataEmprestimo || "Não disponível"}</p>
             <p>Prazo: {loan.dataDevolucao || "Não disponível"}</p>
             <p>Renovações: {loan.renovacoes ?? 0}</p>
@@ -80,25 +71,55 @@ export default function Emprestimos() {
       <section className="user-page__hero">
         <div className="user-page__hero-content">
           <h2>Meus empréstimos</h2>
-          <p>Acompanhe reservas pendentes e empréstimos ativos com dados reais do banco.</p>
+          <p>Acompanhe solicitações pendentes e empréstimos ativos.</p>
         </div>
       </section>
 
-      <section className="user-loans-grid">
-        <div className="user-section-card user-loans-column">
-          <div className="user-section-card__header">
-            <h3>Atrasados</h3>
-          </div>
+      {/* Banner informativo quando há pendentes */}
+      {!isLoading && !error && pendentes.length > 0 && (
+        <div className="user-loans-pending-banner">
+          <FiClock className="user-loans-pending-banner__icon" />
+          <span>
+            Você tem <strong>{pendentes.length}</strong> solicitação{pendentes.length > 1 ? "ões" : ""} aguardando aprovação da biblioteca.
+          </span>
+        </div>
+      )}
 
-          {renderLoanList(atrasados, "Você não possui empréstimos atrasados no momento.")}
+      <section className="user-loans-grid">
+        {/* Coluna Pendentes */}
+        <div className="user-section-card user-loans-column">
+          <div className="user-section-card__header user-section-card__header--pendente">
+            <FiClock className="user-section-card__header-icon" />
+            <h3>Pendentes</h3>
+            {!isLoading && pendentes.length > 0 && (
+              <span className="user-section-count user-section-count--pendente">{pendentes.length}</span>
+            )}
+          </div>
+          {renderLoanList(pendentes, "Nenhuma solicitação pendente no momento.")}
         </div>
 
+        {/* Coluna Ativos */}
         <div className="user-section-card user-loans-column">
-          <div className="user-section-card__header">
+          <div className="user-section-card__header user-section-card__header--ativo">
+            <FiCheckCircle className="user-section-card__header-icon" />
             <h3>Ativos</h3>
+            {!isLoading && ativos.length > 0 && (
+              <span className="user-section-count user-section-count--ativo">{ativos.length}</span>
+            )}
           </div>
-
           {renderLoanList(ativos, "Você não possui empréstimos ativos no momento.")}
+        </div>
+
+        {/* Coluna Atrasados */}
+        <div className="user-section-card user-loans-column">
+          <div className="user-section-card__header user-section-card__header--atrasado">
+            <FiAlertCircle className="user-section-card__header-icon" />
+            <h3>Atrasados</h3>
+            {!isLoading && atrasados.length > 0 && (
+              <span className="user-section-count user-section-count--atrasado">{atrasados.length}</span>
+            )}
+          </div>
+          {renderLoanList(atrasados, "Você não possui empréstimos atrasados.")}
         </div>
       </section>
     </div>
