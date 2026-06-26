@@ -11,6 +11,7 @@ import {
   getConfiguracoes, updateConfiguracao,
 } from "../../../../../services/api";
 import { getConfigValue } from "../../utils/configUtils";
+import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Backups.css";
 import { API_URL } from "../../../../../services/apiConfig";
 import { getToken } from "../../../../../services/api";
@@ -149,6 +150,12 @@ export default function Backups() {
       setSalvandoFreq(false);
     }
   };
+
+  // Register frequency save as this tab's save handler.
+  // We re-throw on error so saveAll() can detect failure.
+  useRegisterSave("backups", async () => {
+    await updateConfiguracao({ chave: "frequencia_backup", valor: frequenciaBackup });
+  });
 
   const abrirRestore = (nome) => {
     setConfirmRestore(nome);

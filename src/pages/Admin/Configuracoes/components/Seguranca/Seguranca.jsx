@@ -4,6 +4,7 @@ import { FiShield } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { configToBool, configToNumber } from "../../utils/configUtils";
+import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Seguranca.css";
 
 export default function Seguranca() {
@@ -42,10 +43,13 @@ export default function Seguranca() {
       addToast("Configurações de segurança salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações de segurança", "error");
+      throw error;
     } finally {
       setIsSaving(false);
     }
   };
+
+  useRegisterSave("seguranca", handleSave);
 
   const switchStyle = {
     offColor: "#e5e7eb",
@@ -95,7 +99,6 @@ export default function Seguranca() {
           <span className="switch-title">Exigir Senha Forte</span>
           <p>Senhas devem conter letras, números e símbolos</p>
         </div>
-
         <Switch checked={senhaForte} onChange={() => setSenhaForte(!senhaForte)} {...switchStyle} />
       </div>
 
@@ -104,12 +107,16 @@ export default function Seguranca() {
           <span className="switch-title">Autenticação de Dois Fatores</span>
           <p>Adicionar camada extra de segurança</p>
         </div>
-
         <Switch checked={doisFatores} onChange={() => setDoisFatores(!doisFatores)} {...switchStyle} />
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+        <button
+          className="btn-secondary"
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
           {isSaving ? "Salvando..." : "Salvar Configurações"}
         </button>
       </div>

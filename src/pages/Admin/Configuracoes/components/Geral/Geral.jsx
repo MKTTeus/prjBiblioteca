@@ -5,6 +5,7 @@ import { getConfiguracoes, updateConfiguracao } from "../../../../../services/ap
 import { getConfigValue, configToNumber } from "../../utils/configUtils";
 import { applyTheme, getSavedTheme } from "../../../../../utils/theme";
 import { getReactSelectStyles } from "../../../../../utils/reactSelectStyles";
+import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Geral.css";
 
 const temaOptions = [
@@ -27,7 +28,11 @@ export default function Geral() {
       try {
         const configs = await getConfiguracoes();
 
-        const nomeAtual = getConfigValue(configs, "nome_biblioteca", "Biblioteca - Escola 9 de Julho de Taquaritinga");
+        const nomeAtual = getConfigValue(
+          configs,
+          "nome_biblioteca",
+          "Biblioteca - Escola 9 de Julho de Taquaritinga"
+        );
         setNome(nomeAtual);
         localStorage.setItem("nomeBiblioteca", nomeAtual);
 
@@ -65,10 +70,14 @@ export default function Geral() {
       addToast("Configurações gerais salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações gerais", "error");
+      throw error; // re-throw so saveAll() can detect failure
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Register this tab's save handler in the shared context
+  useRegisterSave("geral", handleSave);
 
   return (
     <div className="card">
@@ -77,7 +86,6 @@ export default function Geral() {
       </div>
 
       <div className="form-grid">
-        {/* Linha 1: nome da biblioteca (ocupa as 2 colunas) */}
         <div className="form-group full">
           <label>Nome da Biblioteca</label>
           <input
@@ -110,7 +118,6 @@ export default function Geral() {
           <span className="field-hint">Prazo padrão para devolução de livros</span>
         </div>
 
-        {/* Linha 3: renovações + livros por aluno */}
         <div className="form-group">
           <label>Máximo de Renovações</label>
           <input
@@ -135,7 +142,12 @@ export default function Geral() {
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+        <button
+          className="btn-secondary"
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
           {isSaving ? "Salvando..." : "Salvar Configurações"}
         </button>
       </div>

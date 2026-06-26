@@ -4,6 +4,7 @@ import { FiBell } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { configToBool, configToNumber } from "../../utils/configUtils";
+import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Notificacoes.css";
 
 export default function Notificacoes() {
@@ -45,10 +46,13 @@ export default function Notificacoes() {
       addToast("Configurações de notificações salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações de notificações", "error");
+      throw error;
     } finally {
       setIsSaving(false);
     }
   };
+
+  useRegisterSave("notificacoes", handleSave);
 
   const switchStyle = {
     offColor: "#cbd5e1",
@@ -109,11 +113,21 @@ export default function Notificacoes() {
 
       <div className="form-group full">
         <label>Dias de Antecedência para Lembrete</label>
-        <input type="number" value={dias} min={0} onChange={(e) => setDias(Number(e.target.value) || 0)} />
+        <input
+          type="number"
+          value={dias}
+          min={0}
+          onChange={(e) => setDias(Number(e.target.value) || 0)}
+        />
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+        <button
+          className="btn-secondary"
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
           {isSaving ? "Salvando..." : "Salvar Configurações"}
         </button>
       </div>

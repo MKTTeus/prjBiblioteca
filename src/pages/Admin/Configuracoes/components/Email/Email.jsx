@@ -3,6 +3,7 @@ import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { getConfigValue } from "../../utils/configUtils";
+import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Email.css";
 
 export default function Email() {
@@ -42,10 +43,13 @@ export default function Email() {
       addToast("Configurações de e-mail salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações de e-mail", "error");
+      throw error;
     } finally {
       setIsSaving(false);
     }
   };
+
+  useRegisterSave("email", handleSave);
 
   return (
     <div className="card email-settings">
@@ -62,7 +66,12 @@ export default function Email() {
 
         <div className="form-group">
           <label>Porta SMTP</label>
-          <input type="number" value={porta} min={1} onChange={(e) => setPorta(Number(e.target.value) || 1)} />
+          <input
+            type="number"
+            value={porta}
+            min={1}
+            onChange={(e) => setPorta(Number(e.target.value) || 1)}
+          />
         </div>
       </div>
 
@@ -97,7 +106,12 @@ export default function Email() {
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+        <button
+          className="btn-secondary"
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
           {isSaving ? "Salvando..." : "Salvar Configurações"}
         </button>
       </div>

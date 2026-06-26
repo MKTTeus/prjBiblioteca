@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { TbAdjustmentsAlt } from "react-icons/tb";
 import { useToast } from "../../../../../contexts/ToastContext";
-import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
+import { getConfiguracoes, updateConfiguracao, baixarBackup } from "../../../../../services/api";
 import { configToBool } from "../../utils/configUtils";
+import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Avancado.css";
-import { baixarBackup } from "../../../../../services/api";
 
 export default function Avancado() {
   const { addToast } = useToast();
@@ -41,10 +41,13 @@ export default function Avancado() {
       addToast("Configurações avançadas salvas com sucesso", "success");
     } catch (error) {
       addToast("Erro ao salvar configurações avançadas", "error");
+      throw error;
     } finally {
       setIsSaving(false);
     }
   };
+
+  useRegisterSave("avancado", handleSave);
 
   async function handleBackupCompleto() {
     setFazendoBackup(true);
@@ -84,7 +87,6 @@ export default function Avancado() {
           <span className="switch-title">Modo de Debug</span>
           <p>Ativar logs detalhados para depuração</p>
         </div>
-
         <Switch checked={debug} onChange={() => setDebug(!debug)} {...switchStyle} />
       </div>
 
@@ -93,7 +95,6 @@ export default function Avancado() {
           <span className="switch-title">Modo de Manutenção</span>
           <p>Bloquear acesso temporariamente</p>
         </div>
-
         <Switch checked={maintenance} onChange={() => setMaintenance(!maintenance)} {...switchStyle} />
       </div>
 
@@ -102,7 +103,6 @@ export default function Avancado() {
           <span className="switch-title">Log da API</span>
           <p>Registrar todas as chamadas da API</p>
         </div>
-
         <Switch checked={logApi} onChange={() => setLogApi(!logApi)} {...switchStyle} />
       </div>
 
@@ -126,7 +126,12 @@ export default function Avancado() {
       </div>
 
       <div className="card-actions">
-        <button className="btn-secondary" type="button" onClick={handleSave} disabled={isSaving}>
+        <button
+          className="btn-secondary"
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+        >
           {isSaving ? "Salvando..." : "Salvar Configurações"}
         </button>
       </div>

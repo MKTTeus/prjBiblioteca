@@ -1,23 +1,61 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "../../../contexts/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { ConfigSaveProvider, useConfigSave } from "./contexts/ConfigSaveContext";
 import "./Configuracoes.css";
 
-export default function Configuracoes() {
+const abas = [
+  { id: "geral",        label: "Geral" },
+  { id: "notificacoes", label: "Notificações" },
+  { id: "seguranca",    label: "Segurança" },
+  { id: "email",        label: "E-mail" },
+  { id: "backups",      label: "Backups" },
+  { id: "avancado",     label: "Avançado" },
+];
+
+/** Inner component so it can consume ConfigSaveContext */
+function ConfiguracoesInner() {
   const location = useLocation();
   const { addToast } = useToast();
-  const navigate = useNavigate();
+  const { saveAll } = useConfigSave();
   const [savingAll, setSavingAll] = useState(false);
 
-  const abas = [
-    { id: "geral", label: "Geral" },
-    { id: "notificacoes", label: "Notificações" },
-    { id: "seguranca", label: "Segurança" },
-    { id: "email", label: "E-mail" },
-    { id: "backups", label: "Backups" },
-    { id: "avancado", label: "Avançado" },
-  ];
+  const handleSaveAll = async () => {
+    setSavingAll(true);
+    try {
+      const results = await saveAll();
+
+      const failures = results.filter((r) => !r.success);
+      const successes = results.filter((r) => r.success);
+
+      if (failures.length === 0) {
+        addToast(
+          `Todas as ${successes.length} abas salvas com sucesso.`,
+          "success"
+        );
+      } else if (successes.length === 0) {
+        addToast(
+          "Erro ao salvar todas as configurações. Verifique cada aba.",
+          "error"
+        );
+      } else {
+        // Partial failure — report which tabs failed
+        const failedLabels = failures
+          .map((f) => abas.find((a) => a.id === f.abaId)?.label ?? f.abaId)
+          .join(", ");
+        addToast(
+          `${successes.length} aba(s) salvas. Falha em: ${failedLabels}.`,
+          "error"
+        );
+      }
+    } catch (err) {
+      addToast("Erro inesperado ao salvar configurações.", "error");
+      console.error("handleSaveAll error:", err);
+    } finally {
+      setSavingAll(false);
+    }
+  };
 
   return (
     <div className="config-container page-shell">
@@ -32,34 +70,9 @@ export default function Configuracoes() {
           <button
             className="btn-success"
             disabled={savingAll}
-            onClick={async () => {
-              // Sequentially navigate to each tab and trigger its salvar button (works with current per-tab save handlers)
-              setSavingAll(true);
-              addToast("Iniciando salvamento de todas as abas...", "info");
-              const originalPath = location.pathname;
-              for (const aba of abas) {
-                try {
-                  navigate(aba.id, { replace: false });
-                  // wait for route + component mount
-                  await new Promise((r) => setTimeout(r, 700));
-                  // attempt to find save button in mounted tab and click it
-                  const saveBtn = document.querySelector('.page-shell .card .btn-secondary');
-                  if (saveBtn) {
-                    saveBtn.click();
-                    // wait briefly for save to complete
-                    await new Promise((r) => setTimeout(r, 1100));
-                  }
-                } catch (e) {
-                  console.error('Erro ao salvar aba', aba.id, e);
-                }
-              }
-              // return to original
-              navigate(originalPath, { replace: false });
-              setSavingAll(false);
-              addToast('Salvar Tudo concluído (verifique mensagens por aba).', 'success');
-            }}
+            onClick={handleSaveAll}
           >
-            {savingAll ? 'Salvando...' : 'Salvar Tudo'}
+            {savingAll ? "Salvando…" : "Salvar Tudo"}
           </button>
         </div>
       </div>
@@ -88,5 +101,13 @@ export default function Configuracoes() {
         </motion.div>
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function Configuracoes() {
+  return (
+    <ConfigSaveProvider>
+      <ConfiguracoesInner />
+    </ConfigSaveProvider>
   );
 }
