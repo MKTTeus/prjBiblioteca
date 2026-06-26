@@ -11,6 +11,23 @@ const statusLabelMap = {
   devolvido: "Devolvido",
 };
 
+function normalizarLoans(loans) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  return loans.map((loan) => {
+    // Fallback: se o backend não detectou o atraso mas a data já venceu, corrige no cliente
+    if (loan.status === "ativo" && loan.dataDevolucao) {
+      try {
+        const prazo = new Date(loan.dataDevolucao);
+        prazo.setHours(0, 0, 0, 0);
+        if (prazo < hoje) return { ...loan, status: "atrasado" };
+      } catch {}
+    }
+    return loan;
+  });
+}
+
 export default function Emprestimos() {
   const [loans, setLoans] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,9 +52,10 @@ export default function Emprestimos() {
     fetchLoans();
   }, []);
 
-  const pendentes = loans.filter((loan) => loan.status === "pendente");
-  const ativos    = loans.filter((loan) => loan.status === "ativo");
-  const atrasados = loans.filter((loan) => loan.status === "atrasado");
+  const normalized = normalizarLoans(loans);
+  const pendentes  = normalized.filter((l) => l.status === "pendente");
+  const ativos     = normalized.filter((l) => l.status === "ativo");
+  const atrasados  = normalized.filter((l) => l.status === "atrasado");
 
   const renderLoanList = (items, emptyMessage) => {
     if (isLoading) return <div className="user-empty-state">Carregando empréstimos...</div>;
@@ -75,7 +93,6 @@ export default function Emprestimos() {
         </div>
       </section>
 
-      {/* Banner informativo quando há pendentes */}
       {!isLoading && !error && pendentes.length > 0 && (
         <div className="user-loans-pending-banner">
           <FiClock className="user-loans-pending-banner__icon" />
@@ -86,7 +103,6 @@ export default function Emprestimos() {
       )}
 
       <section className="user-loans-grid">
-        {/* Coluna Pendentes */}
         <div className="user-section-card user-loans-column">
           <div className="user-section-card__header user-section-card__header--pendente">
             <FiClock className="user-section-card__header-icon" />
@@ -98,7 +114,6 @@ export default function Emprestimos() {
           {renderLoanList(pendentes, "Nenhuma solicitação pendente no momento.")}
         </div>
 
-        {/* Coluna Ativos */}
         <div className="user-section-card user-loans-column">
           <div className="user-section-card__header user-section-card__header--ativo">
             <FiCheckCircle className="user-section-card__header-icon" />
@@ -110,7 +125,6 @@ export default function Emprestimos() {
           {renderLoanList(ativos, "Você não possui empréstimos ativos no momento.")}
         </div>
 
-        {/* Coluna Atrasados */}
         <div className="user-section-card user-loans-column">
           <div className="user-section-card__header user-section-card__header--atrasado">
             <FiAlertCircle className="user-section-card__header-icon" />

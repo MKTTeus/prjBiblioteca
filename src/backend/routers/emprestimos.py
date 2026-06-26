@@ -247,25 +247,30 @@ def listar_emprestimos(user=Depends(get_optional_user)):
             data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
 
             # Checagem de atraso só para exemplares marcados como ativos (case-insensitive)
-            if (exemplar and (exemplar.get("itemStatus") or "").lower() == "ativo" and data_prev):
+            item_status_lower = (exemplar.get("itemStatus") or "").lower() if exemplar else ""
+            mov_status_lower  = (mov.get("movStatus") or "").lower()
+
+            if exemplar:
+                mov["dataDevolucao"] = exemplar.get("dataDevolucao") or exemplar.get("dataPrevistaDevolucao")
+                mov["renovacoes"]    = exemplar.get("renovacoes", 0)
+            else:
+                mov["dataDevolucao"] = None
+                mov["renovacoes"]    = 0
+
+            # Checar atraso para qualquer empréstimo ativo (pelo item ou pela movimentação)
+            is_ativo = item_status_lower == "ativo" or (not exemplar and mov_status_lower == "ativo")
+            if is_ativo and data_prev:
                 try:
                     data_prevista = datetime.fromisoformat(data_prev).date()
                     if data_prevista < hoje:
                         mov["itemStatus"] = "Atrasado"
-                        mov["status"] = "atrasado"
+                        mov["status"]     = "atrasado"
                     else:
-                        mov["status"] = (mov.get("movStatus") or "").lower()
-                except:
-                    mov["status"] = (mov.get("movStatus") or "").lower()
-
-                # Preferir dataDevolucao real; caso não exista, usar a data prevista (prazo)
-                mov["dataDevolucao"] = exemplar.get("dataDevolucao") or exemplar.get("dataPrevistaDevolucao")
-                mov["renovacoes"] = exemplar.get("renovacoes", 0)
+                        mov["status"] = mov_status_lower
+                except Exception:
+                    mov["status"] = mov_status_lower
             else:
-                # Sem exemplar ativo ou sem prazo
-                mov["dataDevolucao"] = exemplar.get("dataDevolucao") if exemplar else None
-                mov["renovacoes"] = exemplar.get("renovacoes", 0) if exemplar else 0
-                mov["status"] = (mov.get("movStatus") or "").lower()
+                mov["status"] = mov_status_lower
 
             mov["dataEmprestimo"] = mov.get("movDataEmprestimo")
 
