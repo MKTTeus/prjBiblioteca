@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from database import supabase
-from core import get_admin, hash_password, normalize_email, parse_status
+from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 import io
 import openpyxl
 import csv
+from pydantic import BaseModel
+from typing import Optional as Opt
 
 router = APIRouter()
 
@@ -361,3 +363,89 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
     supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
     return {"message": "Membro da comunidade excluído com sucesso"}
+
+
+# ── PERFIL DO PRÓPRIO USUÁRIO ─────────────────────────────────────
+class PerfilUpdate(BaseModel):
+    telefone:             Opt[str] = None
+    telefoneResponsavel:  Opt[str] = None
+    endereco:             Opt[str] = None
+    senhaAtual:           Opt[str] = None
+    novaSenha:            Opt[str] = None
+    tema:                 Opt[str] = None
+
+@router.get("/usuario/me")
+def get_perfil(user=Depends(get_optional_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Não autenticado")
+    resp = supabase.table("Usuario").select("*").eq("usuEmail", user["sub"]).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    u = resp.data[0]
+    return {
+        "idUsuario":            u.get("idUsuario"),
+        "nome":                 u.get("usuNome"),
+        "email":                u.get("usuEmail"),
+        "ra":                   u.get("usuRA"),
+        "cpf":                  u.get("usuCPF"),
+        "dataNascimento":       u.get("usuDataNascimento"),
+        "endereco":             u.get("usuEndereco"),
+        "telefone":             u.get("usuTelefone"),
+        "telefoneResponsavel":  u.get("usuTelefoneResponsavel"),
+        "tipo":                 u.get("usuTipo"),
+        "tema":                 u.get("usuTema", "Claro"),
+    }
+
+@router.patch("/usuario/me")
+def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Não autenticado")
+
+    resp = supabase.table("Usuario").select("*").eq("usuEmail", user["sub"]).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    u = resp.data[0]
+
+    payload = {}
+
+    # Contato
+    if data.telefone is not None:
+        payload["usuTelefone"] = data.telefone
+    if data.telefoneResponsavel is not None:
+        payload["usuTelefoneResponsavel"] = data.telefoneResponsavel
+    if data.endereco is not None:
+        payload["usuEndereco"] = data.endereco
+
+    # Tema
+    if data.tema is not None:
+        payload["usuTema"] = data.tema
+
+    # Senha: exige senha atual correta
+    if data.novaSenha:
+        if not data.senhaAtual:
+            raise HTTPException(status_code=400, detail="Informe a senha atual para trocar a senha")
+        if not verify_password(data.senhaAtual, u.get("usuSenha", "")):
+            raise HTTPException(status_code=400, detail="Senha atual incorreta")
+        payload["usuSenha"] = hash_password(data.novaSenha)
+
+    if not payload:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    atual = supabase.table("Usuario").update(payload).eq("idUsuario", u["idUsuario"]).execute()
+    if not atual.data:
+        raise HTTPException(status_code=500, detail="Falha ao atualizar perfil")
+
+    updated = atual.data[0]
+    return {
+        "idUsuario":            updated.get("idUsuario"),
+        "nome":                 updated.get("usuNome"),
+        "email":                updated.get("usuEmail"),
+        "ra":                   updated.get("usuRA"),
+        "cpf":                  updated.get("usuCPF"),
+        "dataNascimento":       updated.get("usuDataNascimento"),
+        "endereco":             updated.get("usuEndereco"),
+        "telefone":             updated.get("usuTelefone"),
+        "telefoneResponsavel":  updated.get("usuTelefoneResponsavel"),
+        "tipo":                 updated.get("usuTipo"),
+        "tema":                 updated.get("usuTema", "Claro"),
+    }

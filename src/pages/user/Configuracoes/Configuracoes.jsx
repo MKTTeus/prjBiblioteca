@@ -1,64 +1,172 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { FiLock, FiUser, FiPhone, FiInfo, FiEye, FiEyeOff } from "react-icons/fi";
+import Switch from "react-switch";
+import { useToast } from "../../../contexts/ToastContext";
+import { getMeuPerfil, atualizarMeuPerfil } from "../../../services/api";
+import { applyTheme } from "../../../utils/theme";
 import "../UserArea.css";
 import "./Configuracoes.css";
 
 export default function ConfiguracoesUser() {
-  // mock data
-  const mock = {
-    nome: "João da Silva",
-    email: "joao.silva@escola.edu",
-    ra: "202312345",
-    cpf: "",
-    dataNascimento: "2005-04-13",
-    endereco: "Rua das Flores, 123, Bairro Jardim",
-    telefone: "(11) 98765-4321",
-    telefoneResponsavel: "(11) 91234-5678",
-    tema: "dark",
-  };
+  const { addToast } = useToast();
 
-  const [endereco, setEndereco] = useState(mock.endereco);
-  const [telefone, setTelefone] = useState(mock.telefone);
-  const [telefoneResp, setTelefoneResp] = useState(mock.telefoneResponsavel);
-  const [temaLocal, setTemaLocal] = useState(mock.tema === "dark");
+  // Perfil carregado da API
+  const [perfil, setPerfil] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Campos editáveis — contato
+  const [telefone, setTelefone] = useState("");
+  const [telefoneResp, setTelefoneResp] = useState("");
+  const [endereco, setEndereco] = useState("");
+  const [savingContato, setSavingContato] = useState(false);
+
+  // Campos editáveis — senha
+  const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmSenha, setConfirmSenha] = useState("");
+  const [showSenhaAtual, setShowSenhaAtual] = useState(false);
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [savingSenha, setSavingSenha] = useState(false);
+
+  // Tema
+  const [temaDark, setTemaDark] = useState(false);
+  const [savingTema, setSavingTema] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getMeuPerfil();
+        setPerfil(data);
+        setTelefone(data.telefone || "");
+        setTelefoneResp(data.telefoneResponsavel || "");
+        setEndereco(data.endereco || "");
+        setTemaDark((data.tema || "Claro").toLowerCase() === "escuro");
+      } catch {
+        addToast("Erro ao carregar perfil", "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [addToast]);
+
+  async function handleSalvarContato() {
+    setSavingContato(true);
+    try {
+      await atualizarMeuPerfil({ telefone, telefoneResponsavel: telefoneResp, endereco });
+      addToast("Informações de contato atualizadas", "success");
+    } catch (e) {
+      addToast(e?.message || "Erro ao salvar contato", "error");
+    } finally {
+      setSavingContato(false);
+    }
+  }
+
+  async function handleSalvarSenha() {
+    if (!senhaAtual) { addToast("Informe a senha atual", "error"); return; }
+    if (!novaSenha)  { addToast("Informe a nova senha", "error"); return; }
+    if (novaSenha !== confirmSenha) { addToast("As senhas não coincidem", "error"); return; }
+    if (novaSenha.length < 6) { addToast("A nova senha deve ter ao menos 6 caracteres", "error"); return; }
+
+    setSavingSenha(true);
+    try {
+      await atualizarMeuPerfil({ senhaAtual, novaSenha });
+      addToast("Senha alterada com sucesso", "success");
+      setSenhaAtual(""); setNovaSenha(""); setConfirmSenha("");
+    } catch (e) {
+      addToast(e?.message || "Erro ao alterar senha", "error");
+    } finally {
+      setSavingSenha(false);
+    }
+  }
+
+  async function handleToggleTema(checked) {
+    const novoTema = checked ? "Escuro" : "Claro";
+    setTemaDark(checked);
+    setSavingTema(true);
+    try {
+      await atualizarMeuPerfil({ tema: novoTema });
+      applyTheme(novoTema);
+      addToast(`Tema ${novoTema.toLowerCase()} aplicado`, "success");
+    } catch {
+      addToast("Erro ao salvar tema", "error");
+      setTemaDark(!checked); // reverte
+    } finally {
+      setSavingTema(false);
+    }
+  }
+
+  const documento = perfil?.ra
+    ? `RA: ${perfil.ra}`
+    : perfil?.cpf
+    ? `CPF: ${perfil.cpf}`
+    : "—";
+
+  if (loading) {
+    return (
+      <div className="user-page page-shell">
+        <div className="user-config-loading">Carregando perfil...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="user-page page-shell user-config-page">
       <div className="top-bar">
         <div>
           <h1>Configurações</h1>
-          <p>Gerencie suas informações pessoais, aparência e segurança.</p>
+          <p>Gerencie suas informações de contato, aparência e segurança.</p>
         </div>
       </div>
 
       <div className="user-config-cards">
+        {/* ── Coluna esquerda ── */}
         <div className="left-col">
+
+          {/* Dados Pessoais — somente leitura */}
           <div className="card">
             <div className="geral-header">
+              <FiUser className="card-section-icon" />
               <h3>Dados Pessoais</h3>
+            </div>
+
+            <div className="user-config-readonly-notice">
+              <FiInfo className="notice-icon" />
+              <span>Para atualizar esses dados, entre em contato com o bibliotecário responsável.</span>
             </div>
 
             <div className="form-grid three-col">
               <div className="form-group">
                 <label>Nome</label>
-                <input value={mock.nome} disabled aria-disabled="true" />
+                <input value={perfil?.nome || "—"} disabled aria-disabled="true" />
               </div>
-
               <div className="form-group">
-                <label>RA / CPF</label>
-                <input value={mock.ra || mock.cpf} disabled aria-disabled="true" />
+                <label>Identificação</label>
+                <input value={documento} disabled aria-disabled="true" />
               </div>
-
               <div className="form-group">
-                <label>Data de nascimento</label>
-                <input value={mock.dataNascimento} disabled aria-disabled="true" />
+                <label>Data de Nascimento</label>
+                <input
+                  value={
+                    perfil?.dataNascimento
+                      ? new Date(perfil.dataNascimento + "T00:00:00").toLocaleDateString("pt-BR")
+                      : "—"
+                  }
+                  disabled
+                  aria-disabled="true"
+                />
+              </div>
+              <div className="form-group full">
+                <label>E-mail</label>
+                <input value={perfil?.email || "—"} disabled aria-disabled="true" />
               </div>
             </div>
           </div>
 
+          {/* Informações de contato — editável */}
           <div className="card">
             <div className="geral-header">
+              <FiPhone className="card-section-icon" />
               <h3>Informações de Contato</h3>
             </div>
 
@@ -67,76 +175,133 @@ export default function ConfiguracoesUser() {
                 <label>Endereço</label>
                 <input value={endereco} onChange={(e) => setEndereco(e.target.value)} />
               </div>
-
               <div className="form-group">
                 <label>Telefone</label>
                 <input value={telefone} onChange={(e) => setTelefone(e.target.value)} />
               </div>
-
-              {mock.telefoneResponsavel ? (
+              {perfil?.tipo === "Aluno" && (
                 <div className="form-group">
                   <label>Telefone do Responsável</label>
                   <input value={telefoneResp} onChange={(e) => setTelefoneResp(e.target.value)} />
                 </div>
-              ) : null}
+              )}
+            </div>
+
+            <div className="card-actions">
+              <button
+                className="btn-secondary"
+                onClick={handleSalvarContato}
+                disabled={savingContato}
+              >
+                {savingContato ? "Salvando..." : "Salvar Contato"}
+              </button>
             </div>
           </div>
         </div>
 
+        {/* ── Coluna direita ── */}
         <div className="right-col">
+
+          {/* Aparência */}
           <div className="card">
             <div className="geral-header">
               <h3>Aparência</h3>
             </div>
-
             <div className="form-grid">
               <div className="form-group switch-section full">
                 <label className="section-label">Tema</label>
-
                 <div className="control-row">
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={temaLocal}
-                      onChange={(e) => setTemaLocal(e.target.checked)}
-                      aria-label="Alternar tema"
-                    />
-                    <span className="toggle-track">
-                      <span className="toggle-knob" />
-                    </span>
-                  </label>
-
-                  <span className="toggle-text" aria-hidden>
-                    {temaLocal ? "Escuro" : "Claro"}
-                  </span>
+                  <Switch
+                    checked={temaDark}
+                    onChange={handleToggleTema}
+                    disabled={savingTema}
+                    offColor="#cbd5e1"
+                    onColor="#111827"
+                    uncheckedIcon={false}
+                    checkedIcon={false}
+                    height={26}
+                    width={52}
+                    handleDiameter={22}
+                  />
+                  <span className="toggle-text">{temaDark ? "Escuro" : "Claro"}</span>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Segurança */}
           <div className="card">
             <div className="geral-header">
+              <FiLock className="card-section-icon" />
               <h3>Segurança</h3>
             </div>
 
             <div className="form-grid">
-              <div className="form-group full">
+              <div className="form-group full password-group">
+                <label>Senha atual</label>
+                <div className="password-wrapper">
+                  <input
+                    type={showSenhaAtual ? "text" : "password"}
+                    value={senhaAtual}
+                    onChange={(e) => setSenhaAtual(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowSenhaAtual(!showSenhaAtual)}
+                    aria-label="Mostrar senha"
+                  >
+                    {showSenhaAtual ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group full password-group">
                 <label>Nova senha</label>
-                <input type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} />
+                <div className="password-wrapper">
+                  <input
+                    type={showNovaSenha ? "text" : "password"}
+                    value={novaSenha}
+                    onChange={(e) => setNovaSenha(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowNovaSenha(!showNovaSenha)}
+                    aria-label="Mostrar nova senha"
+                  >
+                    {showNovaSenha ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
               </div>
 
               <div className="form-group full">
                 <label>Confirmar nova senha</label>
-                <input type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} />
+                <input
+                  type="password"
+                  value={confirmSenha}
+                  onChange={(e) => setConfirmSenha(e.target.value)}
+                  placeholder="Repita a nova senha"
+                  autoComplete="new-password"
+                />
               </div>
+            </div>
+
+            <div className="card-actions">
+              <button
+                className="btn-secondary"
+                onClick={handleSalvarSenha}
+                disabled={savingSenha}
+              >
+                {savingSenha ? "Salvando..." : "Alterar Senha"}
+              </button>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="card-actions">
-        <button className="btn-secondary">Cancelar</button>
-        <button className="btn-primary">Salvar Alterações</button>
       </div>
     </div>
   );

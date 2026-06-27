@@ -391,3 +391,14 @@ export const getExemplaresDisponiveis = () =>
   apiFetch("/exemplares/disponiveis");
 export const getExemplares = () =>
   apiFetch("/exemplares");
+
+// ── Perfil do usuário logado ──────────────────────────────────────
+export const getMeuPerfil = () =>
+  apiFetch("/usuario/me");
+
+export const atualizarMeuPerfil = (payload) =>
+  apiFetch("/usuario/me", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
