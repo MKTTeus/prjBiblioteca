@@ -3,7 +3,7 @@ import { FiLock, FiUser, FiPhone, FiInfo, FiEye, FiEyeOff } from "react-icons/fi
 import Switch from "react-switch";
 import { useToast } from "../../../contexts/ToastContext";
 import { getMeuPerfil, atualizarMeuPerfil } from "../../../services/api";
-import { applyTheme } from "../../../utils/theme";
+import { applyTheme, getSavedTheme } from "../../../utils/theme";
 import "../UserArea.css";
 import "./Configuracoes.css";
 
@@ -30,8 +30,6 @@ export default function ConfiguracoesUser() {
 
   // Tema
   const [temaDark, setTemaDark] = useState(false);
-  const [savingTema, setSavingTema] = useState(false);
-
   useEffect(() => {
     async function load() {
       try {
@@ -40,7 +38,7 @@ export default function ConfiguracoesUser() {
         setTelefone(data.telefone || "");
         setTelefoneResp(data.telefoneResponsavel || "");
         setEndereco(data.endereco || "");
-        setTemaDark((data.tema || "Claro").toLowerCase() === "escuro");
+        setTemaDark(getSavedTheme().toLowerCase() === "escuro");
       } catch {
         addToast("Erro ao carregar perfil", "error");
       } finally {
@@ -80,20 +78,11 @@ export default function ConfiguracoesUser() {
     }
   }
 
-  async function handleToggleTema(checked) {
+  function handleToggleTema(checked) {
     const novoTema = checked ? "Escuro" : "Claro";
     setTemaDark(checked);
-    setSavingTema(true);
-    try {
-      await atualizarMeuPerfil({ tema: novoTema });
-      applyTheme(novoTema);
-      addToast(`Tema ${novoTema.toLowerCase()} aplicado`, "success");
-    } catch {
-      addToast("Erro ao salvar tema", "error");
-      setTemaDark(!checked); // reverte
-    } finally {
-      setSavingTema(false);
-    }
+    applyTheme(novoTema);
+    addToast(`Tema ${novoTema.toLowerCase()} aplicado`, "success");
   }
 
   const documento = perfil?.ra
@@ -214,7 +203,6 @@ export default function ConfiguracoesUser() {
                   <Switch
                     checked={temaDark}
                     onChange={handleToggleTema}
-                    disabled={savingTema}
                     offColor="#cbd5e1"
                     onColor="#111827"
                     uncheckedIcon={false}
