@@ -94,10 +94,33 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
           : 0;
 
         const loanItems = Array.isArray(loans) ? loans : [];
-        const allNotifications = loanItems
-          .filter((loan) => loan.titulo && loan.dataDevolucao)
+
+        // Mesma lógica do Emprestimos.jsx — ignora movStatus e recalcula pela data
+        const resolverStatus = (loan) => {
+          if (loan.empLiv_Status === "Devolvido") return "devolvido";
+          if (loan.movStatus === "Pendente" || loan.movTipo === "SOLICITACAO" || loan.status === "pendente") return "pendente";
+          if (loan.empLiv_DataPrevistaDevolucao) {
+            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+            const prevista = new Date(loan.empLiv_DataPrevistaDevolucao); prevista.setHours(0, 0, 0, 0);
+            if (prevista < hoje) return "atrasado";
+          }
+          return loan.status || "ativo";
+        };
+
+        const loanItemsComStatus = loanItems.map((loan) => ({
+          ...loan,
+          _status: resolverStatus(loan),
+        }));
+
+        // Contar apenas empréstimos realmente ativos (ativo + atrasado)
+        const emprestimosAtivos = loanItemsComStatus.filter(
+          (l) => l._status === "ativo" || l._status === "atrasado"
+        );
+
+        const allNotifications = loanItemsComStatus
+          .filter((loan) => loan.titulo && (loan._status === "ativo" || loan._status === "atrasado" || loan._status === "pendente"))
           .map((loan) => {
-            const status = String(loan.status || "").toLowerCase();
+            const status = loan._status;
             const tone = status === "atrasado" ? "warning" : status === "ativo" ? "success" : "info";
             const label = status === "pendente" ? "Reserva pendente" : status === "atrasado" ? "Atrasado" : "Empréstimo ativo";
             return {
@@ -105,11 +128,11 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
               titulo: loan.titulo,
               descricao:
                 status === "pendente"
-                  ? `Sua reserva de ${loan.titulo} está aguardando retirada.`
+                  ? `Sua reserva de "${loan.titulo}" está aguardando aprovação.`
                   : status === "atrasado"
-                  ? `O prazo para devolver ${loan.titulo} já passou.`
-                  : `Seu empréstimo de ${loan.titulo} vence em ${loan.dataDevolucao}.`,
-              data: loan.dataDevolucao || loan.dataEmprestimo || "Sem data",
+                  ? `O prazo para devolver "${loan.titulo}" já passou.`
+                  : `Seu empréstimo de "${loan.titulo}" vence em ${loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "data não informada"}.`,
+              data: loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || loan.dataEmprestimo || "Sem data",
               tipo: tone,
               label,
             };
@@ -120,7 +143,7 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
         setStats({
           totalLivros: Array.isArray(books) ? books.length : 0,
           livrosDisponiveis: availableBooks,
-          meusEmprestimos: loanItems.length,
+          meusEmprestimos: emprestimosAtivos.length,
         });
         setLatestNotifications(unreadNotifications.slice(0, 5));
         setNotificationCount(unreadNotifications.length);
