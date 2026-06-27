@@ -26,6 +26,7 @@ import {
   filtrarUsuarios,
   formatarUsuarios,
 } from "./utils";
+import { formatarCPF } from "../../../utils/masks";
 
 export default function Emprestimos() {
   const [emprestimos, setEmprestimos] = useState([]);
@@ -102,7 +103,13 @@ export default function Emprestimos() {
   const resumoUsuario = usuarioSelecionado
     ? `${usuarioSelecionado.nome || "Usuário selecionado"} (${
         usuarioSelecionado.tipo === "Aluno" ? "RA" : "CPF"
-      }: ${usuarioSelecionado.documento || "-"})`
+      }: ${
+        usuarioSelecionado.documento
+          ? usuarioSelecionado.tipo === "Aluno"
+            ? usuarioSelecionado.documento
+            : formatarCPF(usuarioSelecionado.documento)
+          : "-"
+      })`
     : "Nenhum usuário selecionado";
 
   const resumoExemplar = exemplarSelecionado

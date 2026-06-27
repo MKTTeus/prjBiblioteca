@@ -7,10 +7,18 @@ import {
   FaChevronUp,
 } from "react-icons/fa";
 import { getAdminNotifications } from "../../../services/api";
+import { formatarCPF, formatarTelefone } from "../../../utils/masks";
 import "../../user/UserArea.css";
 import "./Notificacoes.css";
 
 function renderLoanItem(item, badgeLabel, variant) {
+  const documento =
+    item.userType === "Comunidade" && item.userDocument
+      ? formatarCPF(item.userDocument)
+      : item.userDocument;
+  const telefone = item.telefone && item.telefone !== "-"
+    ? formatarTelefone(item.telefone)
+    : item.telefone;
   return (
     <article
       className={`user-notification-item admin-notification-card user-notification-item--${variant}`}
@@ -33,8 +41,8 @@ function renderLoanItem(item, badgeLabel, variant) {
           <p className="admin-notification-card__book">{item.bookTitle}</p>
 
           <div className="admin-notification-card__details">
-            <span>{item.userDocument}</span>
-            <span>{item.telefone}</span>
+            <span>{documento}</span>
+            <span>{telefone}</span>
             <span>Tombo: {item.tombo}</span>
           </div>
         </div>

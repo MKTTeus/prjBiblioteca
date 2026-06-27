@@ -17,8 +17,7 @@ import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
-
-const maxCPFLength = 11;
+import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
 
 const EMPTY_MEMBRO = {
   nome: "",
@@ -92,6 +91,11 @@ useEffect(() => {
     if (isProcessing) return;
     if (modoEdicao && !isDirty) return;
     if (!novoMembro.nome || !novoMembro.email || !novoMembro.telefone || !novoMembro.endereco) return;
+
+    if (!validarCPF(novoMembro.cpf)) {
+      addToast("O CPF informado é inválido", "error");
+      return;
+    }
 
     setIsProcessing(true);
 
@@ -430,9 +434,9 @@ useEffect(() => {
                   />
                 </td>
                 <td>{membro.nome}</td>
-                <td>{membro.cpf}</td>
+                <td>{formatarCPF(membro.cpf)}</td>
                 <td>{membro.email}</td>
-                <td className="col-telefone-cell">{membro.telefone}</td>
+                <td className="col-telefone-cell">{formatarTelefone(membro.telefone)}</td>
                 <td className="col-livros">{membro.livros}</td>
                 <td>
                   <span className={membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
@@ -471,7 +475,6 @@ useEffect(() => {
         membro={novoMembro}
         isProcessing={isProcessing}
         isDirty={isDirty}
-        maxCPFLength={maxCPFLength}
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from database import supabase
-from core import hash_password, normalize_email, parse_status, verify_password, create_token
+from core import hash_password, normalize_email, parse_status, verify_password, create_token, validar_cpf
 from schemas import Login, Signup
 
 router = APIRouter()
@@ -86,6 +86,9 @@ def login(data: Login):
 def signup(data: Signup):
     if data.tipo not in ["Aluno", "Comunidade"]:
         raise HTTPException(status_code=400, detail="Tipo inválido")
+
+    if data.tipo == "Comunidade" and not validar_cpf(data.cpf):
+        raise HTTPException(status_code=400, detail="CPF inválido")
 
     email = normalize_email(data.email)
 

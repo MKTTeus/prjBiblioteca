@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { FiLock, FiUser, FiPhone, FiInfo, FiEye, FiEyeOff } from "react-icons/fi";
+import { IMaskInput } from "react-imask";
 import Switch from "react-switch";
 import { useToast } from "../../../contexts/ToastContext";
 import { getMeuPerfil, atualizarMeuPerfil } from "../../../services/api";
 import { applyTheme, getSavedTheme } from "../../../utils/theme";
+import { formatarCPF, MASK_TELEFONE } from "../../../utils/masks";
 import "../UserArea.css";
 import "./Configuracoes.css";
 
@@ -88,7 +90,7 @@ export default function ConfiguracoesUser() {
   const documento = perfil?.ra
     ? `RA: ${perfil.ra}`
     : perfil?.cpf
-    ? `CPF: ${perfil.cpf}`
+    ? `CPF: ${formatarCPF(perfil.cpf)}`
     : "—";
 
   if (loading) {
@@ -166,12 +168,22 @@ export default function ConfiguracoesUser() {
               </div>
               <div className="form-group">
                 <label>Telefone</label>
-                <input value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+                <IMaskInput
+                  mask={MASK_TELEFONE}
+                  value={telefone}
+                  onAccept={(value) => setTelefone(value.replace(/\D/g, ""))}
+                  placeholder="(00) 00000-0000"
+                />
               </div>
               {perfil?.tipo === "Aluno" && (
                 <div className="form-group">
                   <label>Telefone do Responsável</label>
-                  <input value={telefoneResp} onChange={(e) => setTelefoneResp(e.target.value)} />
+                  <IMaskInput
+                    mask={MASK_TELEFONE}
+                    value={telefoneResp}
+                    onAccept={(value) => setTelefoneResp(value.replace(/\D/g, ""))}
+                    placeholder="(00) 00000-0000"
+                  />
                 </div>
               )}
             </div>

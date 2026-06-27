@@ -51,6 +51,28 @@ def normalize_email(email: Optional[str]) -> Optional[str]:
     return email.strip().lower()
 
 
+def validar_cpf(cpf: Optional[str]) -> bool:
+    """Valida um CPF conferindo os dígitos verificadores.
+
+    Aceita CPF formatado ou apenas dígitos. Retorna True se for válido.
+    """
+    if not cpf:
+        return False
+
+    numeros = "".join(filter(str.isdigit, str(cpf)))
+
+    # Deve ter 11 dígitos e não pode ser uma sequência repetida (ex.: 11111111111)
+    if len(numeros) != 11 or numeros == numeros[0] * 11:
+        return False
+
+    def calcular_digito(qtd: int) -> int:
+        soma = sum(int(numeros[i]) * (qtd + 1 - i) for i in range(qtd))
+        resto = (soma * 10) % 11
+        return 0 if resto == 10 else resto
+
+    return calcular_digito(9) == int(numeros[9]) and calcular_digito(10) == int(numeros[10])
+
+
 def create_token(data: dict) -> str:
     minutes = get_session_timeout_minutes()
     expire = datetime.utcnow() + timedelta(minutes=minutes)

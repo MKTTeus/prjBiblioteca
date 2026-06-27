@@ -13,6 +13,7 @@ import {
 import "./Emprestimos.css";
 import LoadingButton from "../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../contexts/ToastContext";
+import { formatarData } from "../../../utils/masks";
 
 const statusLabel = {
   ativo: "Aceita",
@@ -274,7 +275,7 @@ export default function SolicitacoesEmprestimo() {
                     </td>
 
                     <td>{item.usuarioTipo || item.tipo || "-"}</td>
-                    <td>{item.movDataSolicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo || "-"}</td>
+                    <td>{formatarData(item.movDataSolicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</td>
 
                     <td>
                       <span className={`emp-status ${status}`}>

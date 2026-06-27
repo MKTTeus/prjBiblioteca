@@ -1,6 +1,8 @@
 import React from "react";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
+import { IMaskInput } from "react-imask";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import { MASK_TELEFONE } from "../../../../utils/masks";
 
 export default function AlunoModal({
   aberto,
@@ -106,21 +108,27 @@ export default function AlunoModal({
                 <div className="editor-field-grid basic-column-grid">
                   <label className="editor-field">
                     <span>Telefone</span>
-                    <input
+                    <IMaskInput
+                      mask={MASK_TELEFONE}
                       name="telefone"
-                      value={aluno.telefone}
-                      onChange={onChange}
+                      value={aluno.telefone || ""}
+                      onAccept={(value) =>
+                        onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })
+                      }
                       placeholder="(00) 00000-0000"
                     />
                   </label>
 
                   <label className="editor-field">
                     <span>Telefone 2</span>
-                    <input
+                    <IMaskInput
+                      mask={MASK_TELEFONE}
                       name="telefone2"
-                      value={aluno.telefone2}
-                      onChange={onChange}
-                      placeholder="Contato do responsável"
+                      value={aluno.telefone2 || ""}
+                      onAccept={(value) =>
+                        onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })
+                      }
+                      placeholder="(00) 00000-0000"
                     />
                   </label>
 

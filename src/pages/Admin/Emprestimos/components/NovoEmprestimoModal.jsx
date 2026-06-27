@@ -1,6 +1,7 @@
 import { CiSearch } from "react-icons/ci";
 import { HiOutlineX } from "react-icons/hi";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import { formatarCPF } from "../../../../utils/masks";
 
 export default function NovoEmprestimoModal({
   aberto,
@@ -69,7 +70,7 @@ export default function NovoEmprestimoModal({
                         <small>
                           {usuario.tipo === "Aluno"
                             ? `RA: ${usuario.documento || "-"}`
-                            : `CPF: ${usuario.documento || "-"}`}
+                            : `CPF: ${usuario.documento ? formatarCPF(usuario.documento) : "-"}`}
                         </small>
                       </div>
                     </button>

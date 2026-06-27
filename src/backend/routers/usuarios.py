@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from database import supabase
-from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password
+from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password, validar_cpf
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 import io
 import openpyxl
@@ -211,6 +211,9 @@ def listar_comunidade(admin=Depends(get_admin)):
 
 @router.post("/comunidade")
 def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
+    if not validar_cpf(data.cpf):
+        raise HTTPException(status_code=400, detail="CPF inválido")
+
     email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", data.email).execute()
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
@@ -242,6 +245,9 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
 
 @router.post("/comunidade/reativar")
 def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
+    if not validar_cpf(data.cpf):
+        raise HTTPException(status_code=400, detail="CPF inválido")
+
     email = normalize_email(data.email)
     exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
     if not exist.data:
@@ -278,6 +284,11 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
 
         if not nome or not email:
             resultados["erros"].append(f"Linha {i}: nome e email são obrigatórios")
+            resultados["ignorados"] += 1
+            continue
+
+        if cpf and not validar_cpf(cpf):
+            resultados["erros"].append(f"Linha {i}: CPF '{cpf}' inválido")
             resultados["ignorados"] += 1
             continue
 

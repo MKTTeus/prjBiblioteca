@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getEmprestimos } from "../../../services/api";
+import { formatarData } from "../../../utils/masks";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import "../UserArea.css";
 import "./Emprestimos.css";
@@ -90,8 +91,8 @@ export default function Emprestimos() {
                 {statusLabelMap[loan._statusResolvido] || loan._statusResolvido}
               </span>
             </div>
-            <p>Data do registro: {loan.dataEmprestimo || "Não disponível"}</p>
-            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "Não disponível"}</p>
+            <p>Data do registro: {loan.dataEmprestimo ? formatarData(loan.dataEmprestimo) : "Não disponível"}</p>
+            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao ? formatarData(loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao) : "Não disponível"}</p>
             <p>Renovações: {loan.renovacoes ?? 0}</p>
           </article>
         ))}

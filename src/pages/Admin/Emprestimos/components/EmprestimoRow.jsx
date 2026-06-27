@@ -1,10 +1,17 @@
 import { formatarData, getStatusEmprestimo, getStatusVisual } from "../utils";
+import { formatarCPF } from "../../../../utils/masks";
 
 export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolver, onRenovar }) {
   const statusVisual = getStatusVisual(emprestimo);
   const nome = exemplar?.nome || emprestimo.titulo || "-";
   const tombo = exemplar?.tombo || emprestimo.codigo || "-";
   const isbn = exemplar?.isbn || exemplar?.exeLivISBN || emprestimo.isbn || "-";
+  const isAluno = usuario?.tipo === "Aluno";
+  const documento = usuario?.documento
+    ? isAluno
+      ? usuario.documento
+      : formatarCPF(usuario.documento)
+    : "-";
 
   return (
     <tr>
@@ -12,7 +19,7 @@ export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolve
 
       <td className="emp-main-cell">
         <strong>{usuario?.nome || "-"}</strong>
-        <small>{usuario?.tipo === "Aluno" ? "RA" : "CPF"}: {usuario?.documento || "-"}</small>
+        <small>{isAluno ? "RA" : "CPF"}: {documento}</small>
       </td>
 
       <td className="emp-main-cell">

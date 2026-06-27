@@ -1,6 +1,8 @@
 import React from "react";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
+import { IMaskInput } from "react-imask";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import { MASK_CPF, MASK_TELEFONE } from "../../../../utils/masks";
 
 export default function ComunidadeModal({
   aberto,
@@ -8,7 +10,6 @@ export default function ComunidadeModal({
   membro,
   isProcessing,
   isDirty,
-  maxCPFLength,
   onChange,
   onClose,
   onSave,
@@ -79,13 +80,14 @@ export default function ComunidadeModal({
 
                   <label className="editor-field">
                     <span>CPF *</span>
-                    <input
+                    <IMaskInput
+                      mask={MASK_CPF}
                       name="cpf"
-                      value={membro.cpf}
-                      onChange={onChange}
-                      placeholder="Informe o CPF"
-                      minLength={11}
-                      maxLength={maxCPFLength}
+                      value={membro.cpf || ""}
+                      onAccept={(value) =>
+                        onChange({ target: { name: "cpf", value: value.replace(/\D/g, "") } })
+                      }
+                      placeholder="000.000.000-00"
                     />
                   </label>
 
@@ -109,21 +111,27 @@ export default function ComunidadeModal({
                 <div className="editor-field-grid basic-column-grid">
                   <label className="editor-field">
                     <span>Telefone</span>
-                    <input
+                    <IMaskInput
+                      mask={MASK_TELEFONE}
                       name="telefone"
-                      value={membro.telefone}
-                      onChange={onChange}
+                      value={membro.telefone || ""}
+                      onAccept={(value) =>
+                        onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })
+                      }
                       placeholder="(00) 00000-0000"
                     />
                   </label>
 
                   <label className="editor-field">
                     <span>Telefone 2</span>
-                    <input
+                    <IMaskInput
+                      mask={MASK_TELEFONE}
                       name="telefone2"
-                      value={membro.telefone2}
-                      onChange={onChange}
-                      placeholder="Contato alternativo"
+                      value={membro.telefone2 || ""}
+                      onAccept={(value) =>
+                        onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })
+                      }
+                      placeholder="(00) 00000-0000"
                     />
                   </label>
 

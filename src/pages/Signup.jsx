@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { IMaskInput } from "react-imask";
 import { FiUser, FiUsers, FiArrowLeft } from "react-icons/fi";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
+import { validarCPF } from "../utils/masks";
 import "../styles/Signup.css";
 
 export default function Signup() {
@@ -28,6 +29,7 @@ export default function Signup() {
     if (!endereco.trim()) return "O endereço é obrigatório.";
     if (!isCommunity && !ra.trim()) return "O RA é obrigatório.";
     if (isCommunity && !cpf.trim()) return "O CPF é obrigatório.";
+    if (isCommunity && !validarCPF(cpf)) return "O CPF informado é inválido.";
     if (!telefone.trim()) return "O telefone é obrigatório.";
     if (telefone.length < 11) return "O telefone deve conter 11 números.";
     if (!senha || senha.length < 6) {

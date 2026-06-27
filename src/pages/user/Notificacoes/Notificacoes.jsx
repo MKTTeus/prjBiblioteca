@@ -5,6 +5,7 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 import { getEmprestimos } from "../../../services/api";
+import { formatarData } from "../../../utils/masks";
 import "../UserArea.css";
 import "./Notificacoes.css";
 
@@ -44,13 +45,13 @@ export default function Notificacoes() {
               ? `Sua reserva de ${loan.titulo || "um livro"} está aguardando retirada.`
               : status === "atrasado"
               ? `O prazo para devolver ${loan.titulo || "um livro"} já passou.`
-              : `Seu empréstimo de ${loan.titulo || "um livro"} vence em ${loan.dataDevolucao || "breve"}.`;
+              : `Seu empréstimo de ${loan.titulo || "um livro"} vence em ${loan.dataDevolucao ? formatarData(loan.dataDevolucao) : "breve"}.`;
 
           return {
             id: loan.idEmprestimo ?? loan.id,
             titulo: loan.titulo || "Livro desconhecido",
             descricao,
-            data: loan.dataDevolucao || loan.dataEmprestimo || "Sem data",
+            data: loan.dataDevolucao || loan.dataEmprestimo ? formatarData(loan.dataDevolucao || loan.dataEmprestimo) : "Sem data",
             tipo,
           };
         });
