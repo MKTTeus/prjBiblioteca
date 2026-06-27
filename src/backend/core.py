@@ -51,6 +51,14 @@ def normalize_email(email: Optional[str]) -> Optional[str]:
     return email.strip().lower()
 
 
+def normalize_cpf(cpf: Optional[str]) -> Optional[str]:
+    """Retorna apenas os dígitos do CPF (ou None se vazio)."""
+    if cpf is None:
+        return None
+    digitos = "".join(filter(str.isdigit, str(cpf)))
+    return digitos or None
+
+
 def validar_cpf(cpf: Optional[str]) -> bool:
     """Valida um CPF conferindo os dígitos verificadores.
 

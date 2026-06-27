@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from database import supabase
-from core import hash_password, normalize_email, parse_status, verify_password, create_token, validar_cpf
+from core import hash_password, normalize_email, parse_status, verify_password, create_token, validar_cpf, normalize_cpf
 from schemas import Login, Signup
 
 router = APIRouter()
@@ -87,7 +87,8 @@ def signup(data: Signup):
     if data.tipo not in ["Aluno", "Comunidade"]:
         raise HTTPException(status_code=400, detail="Tipo inválido")
 
-    if data.tipo == "Comunidade" and not validar_cpf(data.cpf):
+    cpf = normalize_cpf(data.cpf)
+    if data.tipo == "Comunidade" and not validar_cpf(cpf):
         raise HTTPException(status_code=400, detail="CPF inválido")
 
     email = normalize_email(data.email)
@@ -97,6 +98,11 @@ def signup(data: Signup):
     if email_existe_admin.data or email_existe_usuario.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 
+    if cpf:
+        cpf_existe = supabase.table("Usuario").select("idUsuario").eq("usuCPF", cpf).eq("usuExcluido", False).execute()
+        if cpf_existe.data:
+            raise HTTPException(status_code=400, detail="CPF já cadastrado")
+
     novo_usuario = {
         "usuNome": data.nome,
         "usuEmail": email,
@@ -105,7 +111,7 @@ def signup(data: Signup):
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
         "usuRA": data.ra,
-        "usuCPF": data.cpf,
+        "usuCPF": cpf,
         "usuTipo": data.tipo,
         "usuStatus": True
     }

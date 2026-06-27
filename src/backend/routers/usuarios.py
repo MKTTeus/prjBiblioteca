@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from database import supabase
-from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password, validar_cpf
+from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password, validar_cpf, normalize_cpf
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 import io
 import openpyxl
@@ -211,7 +211,8 @@ def listar_comunidade(admin=Depends(get_admin)):
 
 @router.post("/comunidade")
 def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
-    if not validar_cpf(data.cpf):
+    cpf = normalize_cpf(data.cpf)
+    if not validar_cpf(cpf):
         raise HTTPException(status_code=400, detail="CPF inválido")
 
     email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", data.email).execute()
@@ -225,6 +226,10 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
             raise HTTPException(status_code=400, detail="Membro já existe")
         raise HTTPException(status_code=409, detail="USUARIO_INATIVO")
 
+    cpf_existe = supabase.table("Usuario").select("idUsuario").eq("usuCPF", cpf).eq("usuExcluido", False).execute()
+    if cpf_existe.data:
+        raise HTTPException(status_code=400, detail="CPF já cadastrado")
+
     novo = {
         "usuNome": data.nome,
         "usuEmail": data.email,
@@ -232,7 +237,7 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTelefone": data.telefone,
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
-        "usuCPF": data.cpf,
+        "usuCPF": cpf,
         "usuTipo": "Comunidade",
         "usuStatus": parse_status(data.status),
         "usuExcluido": False,
@@ -245,7 +250,8 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
 
 @router.post("/comunidade/reativar")
 def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
-    if not validar_cpf(data.cpf):
+    cpf = normalize_cpf(data.cpf)
+    if not validar_cpf(cpf):
         raise HTTPException(status_code=400, detail="CPF inválido")
 
     email = normalize_email(data.email)
@@ -254,6 +260,18 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
     usuario = exist.data[0]
+
+    cpf_existe = (
+        supabase.table("Usuario")
+        .select("idUsuario")
+        .eq("usuCPF", cpf)
+        .eq("usuExcluido", False)
+        .neq("idUsuario", usuario["idUsuario"])
+        .execute()
+    )
+    if cpf_existe.data:
+        raise HTTPException(status_code=400, detail="CPF já cadastrado")
+
     payload = {
         "usuNome": data.nome,
         "usuEmail": data.email,
@@ -261,7 +279,7 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTelefone": data.telefone,
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
-        "usuCPF": data.cpf,
+        "usuCPF": cpf,
         "usuTipo": "Comunidade",
         "usuStatus": True,
     }
@@ -276,11 +294,12 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
     contents = await file.read()
     linhas = _parse_upload(contents, file.filename)
     resultados = {"importados": 0, "ignorados": 0, "erros": []}
+    cpfs_vistos = set()
 
     for i, dados in enumerate(linhas, start=2):
         nome  = dados.get("nome", "").strip()
         email = dados.get("email", "").strip().lower()
-        cpf   = dados.get("cpf", "").strip()
+        cpf   = normalize_cpf(dados.get("cpf", ""))
 
         if not nome or not email:
             resultados["erros"].append(f"Linha {i}: nome e email são obrigatórios")
@@ -292,11 +311,23 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             resultados["ignorados"] += 1
             continue
 
+        if cpf and cpf in cpfs_vistos:
+            resultados["erros"].append(f"Linha {i}: CPF '{cpf}' duplicado no arquivo")
+            resultados["ignorados"] += 1
+            continue
+
         existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuExcluido", False).execute()
         if existe_email.data:
             resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
             resultados["ignorados"] += 1
             continue
+
+        if cpf:
+            existe_cpf = supabase.table("Usuario").select("idUsuario").eq("usuCPF", cpf).eq("usuExcluido", False).execute()
+            if existe_cpf.data:
+                resultados["erros"].append(f"Linha {i}: CPF '{cpf}' já cadastrado")
+                resultados["ignorados"] += 1
+                continue
 
         novo = {
             "usuNome": nome,
@@ -313,6 +344,8 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
         try:
             supabase.table("Usuario").insert(novo).execute()
             resultados["importados"] += 1
+            if cpf:
+                cpfs_vistos.add(cpf)
         except Exception as e:
             resultados["erros"].append(f"Linha {i}: erro ao inserir — {str(e)}")
             resultados["ignorados"] += 1

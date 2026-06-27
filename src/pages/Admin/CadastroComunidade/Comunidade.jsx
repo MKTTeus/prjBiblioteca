@@ -165,7 +165,9 @@ useEffect(() => {
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar membro:", err);
-      addToast(modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro", "error");
+      const detalhe = err?.data?.detail || err?.message;
+      const fallback = modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro";
+      addToast(detalhe && detalhe !== "USUARIO_INATIVO" ? detalhe : fallback, "error");
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
