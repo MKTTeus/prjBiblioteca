@@ -221,3 +221,105 @@
 .user-config-page .toggle-switch input:focus-visible + .toggle-track {
   box-shadow: 0 0 0 4px var(--focus-ring);
 }
+
+/* ── Notice de dados somente leitura ───────────────────────────── */
+.user-config-readonly-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--status-info-bg, #eff6ff);
+  color: var(--status-info-text, #1d4ed8);
+  border: 1px solid var(--status-info-border, #bfdbfe);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.notice-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 15px;
+}
+
+/* ── Ícone no cabeçalho dos cards ──────────────────────────────── */
+.geral-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.card-section-icon {
+  font-size: 16px;
+  color: var(--text-label);
+  flex-shrink: 0;
+}
+
+/* ── Campo senha com botão de visibilidade ─────────────────────── */
+.password-group .password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-group .password-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--text-label);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  font-size: 16px;
+  transition: color 0.15s;
+}
+
+.toggle-password:hover {
+  color: var(--text-default);
+  transform: none;
+}
+
+/* ── Loading state ─────────────────────────────────────────────── */
+.user-config-loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--text-label);
+  font-size: 14px;
+}
+
+/* ── Grid three-col com full-width suporte ─────────────────────── */
+.form-grid.three-col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid.three-col .form-group.full {
+  grid-column: 1 / -1;
+}
+
+/* ── Inputs desabilitados (dados pessoais) ─────────────────────── */
+.user-config-page input:disabled,
+.user-config-page input[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--surface-muted, #f1f5f9);
+}
+
+/* ── card-actions alinhado à direita ───────────────────────────── */
+.user-config-page .card-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-muted);
+}
