@@ -11,21 +11,32 @@ const statusLabelMap = {
   devolvido: "Devolvido",
 };
 
-function normalizarLoans(loans) {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
+/**
+ * Replica a mesma lógica do admin (utils.js > getStatusEmprestimo):
+ * ignora o movStatus do banco e recalcula pelo empLiv_DataPrevistaDevolucao.
+ */
+function resolverStatus(loan) {
+  // Devolvido é definitivo
+  if (loan.empLiv_Status === "Devolvido") return "devolvido";
 
-  return loans.map((loan) => {
-    // Fallback: se o backend não detectou o atraso mas a data já venceu, corrige no cliente
-    if (loan.status === "ativo" && loan.dataDevolucao) {
-      try {
-        const prazo = new Date(loan.dataDevolucao);
-        prazo.setHours(0, 0, 0, 0);
-        if (prazo < hoje) return { ...loan, status: "atrasado" };
-      } catch {}
-    }
-    return loan;
-  });
+  // Pendente: sem data prevista ainda
+  if (
+    loan.movStatus === "Pendente" ||
+    loan.movTipo === "SOLICITACAO" ||
+    loan.status === "pendente"
+  ) return "pendente";
+
+  // Calcular atraso pela data prevista (igual ao admin)
+  if (loan.empLiv_DataPrevistaDevolucao) {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const prevista = new Date(loan.empLiv_DataPrevistaDevolucao);
+    prevista.setHours(0, 0, 0, 0);
+    if (prevista < hoje) return "atrasado";
+  }
+
+  // Fallback: usar o status que veio do backend
+  return loan.status || "ativo";
 }
 
 export default function Emprestimos() {
@@ -39,7 +50,6 @@ export default function Emprestimos() {
       setError(null);
       try {
         const data = await getEmprestimos();
-        console.log("LOANS RAW:", JSON.stringify(data, null, 2));
         setLoans(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao carregar empréstimos:", err);
@@ -49,14 +59,18 @@ export default function Emprestimos() {
         setIsLoading(false);
       }
     }
-
     fetchLoans();
   }, []);
 
-  const normalized = normalizarLoans(loans);
-  const pendentes  = normalized.filter((l) => l.status === "pendente");
-  const ativos     = normalized.filter((l) => l.status === "ativo");
-  const atrasados  = normalized.filter((l) => l.status === "atrasado");
+  // Aplicar a mesma lógica de status que o admin usa
+  const loansComStatus = loans.map((loan) => ({
+    ...loan,
+    _statusResolvido: resolverStatus(loan),
+  }));
+
+  const pendentes = loansComStatus.filter((l) => l._statusResolvido === "pendente");
+  const ativos    = loansComStatus.filter((l) => l._statusResolvido === "ativo");
+  const atrasados = loansComStatus.filter((l) => l._statusResolvido === "atrasado");
 
   const renderLoanList = (items, emptyMessage) => {
     if (isLoading) return <div className="user-empty-state">Carregando empréstimos...</div>;
@@ -72,12 +86,12 @@ export default function Emprestimos() {
                 <h4>{loan.titulo || "Livro desconhecido"}</h4>
                 <small>{loan.codigo || "Sem código"}</small>
               </div>
-              <span className={`status-badge ${loan.status}`}>
-                {statusLabelMap[loan.status] || loan.status}
+              <span className={`status-badge ${loan._statusResolvido}`}>
+                {statusLabelMap[loan._statusResolvido] || loan._statusResolvido}
               </span>
             </div>
             <p>Data do registro: {loan.dataEmprestimo || "Não disponível"}</p>
-            <p>Prazo: {loan.dataDevolucao || "Não disponível"}</p>
+            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "Não disponível"}</p>
             <p>Renovações: {loan.renovacoes ?? 0}</p>
           </article>
         ))}
