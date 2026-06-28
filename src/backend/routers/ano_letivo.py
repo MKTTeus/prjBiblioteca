@@ -102,7 +102,8 @@ def encerrar_ano_letivo(body: EncerrarAnoLetivo, admin=Depends(get_admin)):
     if not adm_db.data:
         raise HTTPException(status_code=403, detail="Administrador não encontrado")
     if not verify_password(body.senha, adm_db.data[0]["admSenha"]):
-        raise HTTPException(status_code=401, detail="Senha incorreta")
+        # 403 (e não 401) para não disparar o logout automático do cliente
+        raise HTTPException(status_code=403, detail="Senha incorreta")
 
     # 2. Validar frase de confirmação (carrega o ano → garante idempotência)
     frase_esperada = f"ENCERRAR ANO LETIVO {ano_atual}"

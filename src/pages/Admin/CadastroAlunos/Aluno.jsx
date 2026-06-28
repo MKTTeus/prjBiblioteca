@@ -550,7 +550,7 @@ const handleSalvar = async () => {
                     {aluno.status}
                   </span>
                   {aluno.formado && (
-                    <span className="badge-formado" style={{ marginLeft: 6 }}>Formado</span>
+                    <span className="badge-formado">Formado</span>
                   )}
                 </td>
 

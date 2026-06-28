@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Calendar, Users, GraduationCap, AlertTriangle, Lock } from "lucide-react";
 import { useToast } from "../../../../../contexts/ToastContext";
 import StatsCard from "../../../../../components/StatsCard/StatsCard";
@@ -111,7 +112,7 @@ export default function AnoLetivo() {
         </button>
       </div>
 
-      {showModal && (
+      {showModal && createPortal(
         <div className="al-overlay" onClick={fecharModal}>
           <div className="al-modal" onClick={(e) => e.stopPropagation()}>
             <AlertTriangle className="al-modal-icon" size={30} />
@@ -173,7 +174,8 @@ export default function AnoLetivo() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

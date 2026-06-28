@@ -167,6 +167,17 @@
   font-size: 12px;
 }
 
+.aluno-page .badge-formado {
+  display: inline-block;
+  margin-left: 6px;
+  background: #f59e0b;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .aluno-page .acoes {
   display: flex;
   gap: 10px;
