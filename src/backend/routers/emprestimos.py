@@ -502,7 +502,7 @@ def exemplares_disponiveis():
             supabase
             .table("Exemplar")
             .select("idExemplar, exeLivTombo, idLivro")
-            .eq("exeLivStatus", "Disponível")
+            .eq("exeLivStatus", "Disponível")  # "Reservado" não entra aqui
             .execute().data or []
         )
 
@@ -638,31 +638,46 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
         if not usuario_resp.data[0].get("usuStatus"):
             raise HTTPException(status_code=400, detail="Usuário inativo não pode fazer solicitações de empréstimo")
 
-        # Validar exemplar disponível
+        # Validar exemplar disponível — só aceita "Disponível", não "Reservado" nem "Emprestado"
         exemplar_resp = supabase.table("Exemplar").select("exeLivStatus").eq("idExemplar", data.idExemplar).limit(1).execute()
         if not exemplar_resp.data:
             raise HTTPException(status_code=404, detail="Exemplar não encontrado")
 
         status = exemplar_resp.data[0].get("exeLivStatus")
         if status != "Disponível":
-            raise HTTPException(status_code=400, detail="Exemplar não está disponível")
+            raise HTTPException(status_code=400, detail="Exemplar não está disponível para solicitação")
 
         hoje = datetime.utcnow().date()
         max_por_usuario = get_max_books_per_user()
 
-        # Verificar limite de empréstimos ativos
-        movimentacoes_ativas = supabase.table("Movimentacao").select("idMovimentacao").eq("idUsuario", id_usuario).in_("movStatus", ["Ativo", "Pendente"]).execute().data or []
-        movimentacao_ids = [mov["idMovimentacao"] for mov in movimentacoes_ativas if mov.get("idMovimentacao")]
-        emprestimos_ativos = []
-        if movimentacao_ids:
-            emprestimos_ativos = supabase.table("MovimentacaoExemplar").select("idMovimentacao").in_("idMovimentacao", movimentacao_ids).eq("itemStatus", "Ativo").execute().data or []
+        # Verificar limite: contar movimentações Ativas ou Pendentes diretamente
+        # (sem filtrar por itemStatus, pois pendentes ainda não têm itemStatus = "Ativo")
+        movimentacoes_em_curso = supabase.table("Movimentacao") \
+            .select("idMovimentacao") \
+            .eq("idUsuario", id_usuario) \
+            .in_("movStatus", ["Ativo", "Pendente"]) \
+            .execute().data or []
 
-        if len(emprestimos_ativos) >= max_por_usuario:
-            raise HTTPException(status_code=400, detail=f"Você já possui {max_por_usuario} empréstimos ativos")
+        if len(movimentacoes_em_curso) >= max_por_usuario:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Você já possui {max_por_usuario} empréstimos ou solicitações em curso"
+            )
+
+        # Reservar exemplar imediatamente para evitar race condition:
+        # outro aluno não pode solicitar o mesmo exemplar enquanto esta solicitação existe
+        reserva = supabase.table("Exemplar").update({
+            "exeLivStatus": "Reservado"
+        }).eq("idExemplar", data.idExemplar).eq("exeLivStatus", "Disponível").execute()
+
+        # Se a reserva não alterou nenhuma linha, outro aluno chegou primeiro
+        if not reserva.data:
+            raise HTTPException(status_code=409, detail="Exemplar acabou de ser reservado por outro usuário. Tente novamente.")
 
         admin_placeholder = supabase.table("Administrador").select("idAdmin").limit(1).execute()
-        
         if not admin_placeholder.data:
+            # Reverter reserva antes de lançar erro
+            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", data.idExemplar).execute()
             raise HTTPException(status_code=500, detail="Nenhum administrador cadastrado no sistema")
         id_admin_placeholder = admin_placeholder.data[0]["idAdmin"]
 
@@ -672,16 +687,17 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
             "movTipo": "SOLICITACAO",
             "movStatus": "Pendente",
             "movDataSolicitacao": hoje.isoformat(),
-            "movDataEmprestimo": hoje.isoformat(),  # placeholder; sobrescrito na aprovação
+            "movDataEmprestimo": hoje.isoformat(),
         }
 
         mov_resp = supabase.table("Movimentacao").insert(nova_mov).execute()
         if not mov_resp.data:
+            # Reverter reserva se não conseguiu inserir a movimentação
+            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", data.idExemplar).execute()
             raise HTTPException(status_code=500, detail="Erro ao criar solicitação")
 
         id_mov = mov_resp.data[0].get("idMovimentacao")
 
-        # Criar MovimentacaoExemplar (sem status Ativo por enquanto)
         novo_me = {
             "idMovimentacao": id_mov,
             "idExemplar": data.idExemplar,
@@ -725,10 +741,13 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
         me = me_resp.data[0]
         idExemplar = me.get("idExemplar")
 
-        # Validar que exemplar está ainda disponível
+        # Validar que exemplar ainda está Reservado (não foi liberado ou emprestado por outra via)
         exemplar_resp = supabase.table("Exemplar").select("exeLivStatus").eq("idExemplar", idExemplar).limit(1).execute()
-        if exemplar_resp.data and exemplar_resp.data[0].get("exeLivStatus") != "Disponível":
-            raise HTTPException(status_code=400, detail="Exemplar não está mais disponível")
+        if not exemplar_resp.data:
+            raise HTTPException(status_code=404, detail="Exemplar não encontrado")
+        status_exemplar = exemplar_resp.data[0].get("exeLivStatus")
+        if status_exemplar not in ("Reservado", "Disponível"):
+            raise HTTPException(status_code=400, detail="Exemplar não está mais disponível para aprovação")
 
         id_admin = get_admin_id(admin)
 
@@ -780,10 +799,21 @@ def rejeitar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
             "movStatus": "Negado",
         }).eq("idMovimentacao", idEmprestimo).execute()
 
+        # Buscar exemplar antes de atualizar MovimentacaoExemplar
+        me_resp = supabase.table("MovimentacaoExemplar").select("idExemplar").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+
         # Atualizar MovimentacaoExemplar
         supabase.table("MovimentacaoExemplar").update({
             "itemStatus": "Negado",
         }).eq("idMovimentacao", idEmprestimo).execute()
+
+        # Liberar exemplar de volta para Disponível (desfaz a reserva)
+        if me_resp.data:
+            id_exemplar = me_resp.data[0].get("idExemplar")
+            if id_exemplar:
+                supabase.table("Exemplar").update({
+                    "exeLivStatus": "Disponível"
+                }).eq("idExemplar", id_exemplar).execute()
 
         return {"message": "Solicitação rejeitada com sucesso"}
     except HTTPException:

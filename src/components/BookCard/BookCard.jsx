@@ -13,14 +13,19 @@ import "./BookCard.css";
 function getBookStatus(book) {
   const disponiveis = Number(book?.disponiveis ?? book?.livrosDisponiveis ?? 0);
   const emprestados = Number(book?.emprestados ?? book?.livrosEmprestados ?? 0);
-  const reservados = Number(book?.reservados ?? 0);
-  const statusTexto = String(book?.status || "").toLowerCase();
+  const reservados  = Number(book?.reservados ?? 0);
 
-  if (statusTexto.includes("reserv")) return { label: "Reservado", className: "reservado" };
-  if (statusTexto.includes("emprest")) return { label: "Emprestado", className: "emprestado" };
-  if (reservados > 0 && disponiveis === 0) return { label: "Reservado", className: "reservado" };
-  if (disponiveis > 0) return { label: "Disponível", className: "disponivel" };
-  if (emprestados > 0) return { label: "Emprestado", className: "emprestado" };
+  // Priorizar campos numéricos vindos da API
+  if (disponiveis > 0) return { label: "Disponível",   className: "disponivel" };
+  if (reservados  > 0) return { label: "Reservado",    className: "reservado" };
+  if (emprestados > 0) return { label: "Emprestado",   className: "emprestado" };
+
+  // Fallback: texto do campo status (ex: vindo do exeLivStatus diretamente)
+  const s = String(book?.status || "").toLowerCase();
+  if (s.includes("disponív")) return { label: "Disponível",  className: "disponivel" };
+  if (s.includes("reserv"))   return { label: "Reservado",   className: "reservado" };
+  if (s.includes("emprest"))  return { label: "Emprestado",  className: "emprestado" };
+
   return { label: "Indisponível", className: "indisponivel" };
 }
 
