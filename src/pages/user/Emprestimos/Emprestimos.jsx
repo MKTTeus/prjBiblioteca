@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getEmprestimos } from "../../../services/api";
-import { formatarData } from "../../../utils/masks";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
-import "../UserArea.css";
+import { resolverStatus } from "../../../utils/loanStatus";
 import "./Emprestimos.css";
 
 const statusLabelMap = {
@@ -11,34 +10,6 @@ const statusLabelMap = {
   atrasado: "Atrasado",
   devolvido: "Devolvido",
 };
-
-/**
- * Replica a mesma lógica do admin (utils.js > getStatusEmprestimo):
- * ignora o movStatus do banco e recalcula pelo empLiv_DataPrevistaDevolucao.
- */
-function resolverStatus(loan) {
-  // Devolvido é definitivo
-  if (loan.empLiv_Status === "Devolvido") return "devolvido";
-
-  // Pendente: sem data prevista ainda
-  if (
-    loan.movStatus === "Pendente" ||
-    loan.movTipo === "SOLICITACAO" ||
-    loan.status === "pendente"
-  ) return "pendente";
-
-  // Calcular atraso pela data prevista (igual ao admin)
-  if (loan.empLiv_DataPrevistaDevolucao) {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const prevista = new Date(loan.empLiv_DataPrevistaDevolucao);
-    prevista.setHours(0, 0, 0, 0);
-    if (prevista < hoje) return "atrasado";
-  }
-
-  // Fallback: usar o status que veio do backend
-  return loan.status || "ativo";
-}
 
 export default function Emprestimos() {
   const [loans, setLoans] = useState([]);
@@ -91,8 +62,8 @@ export default function Emprestimos() {
                 {statusLabelMap[loan._statusResolvido] || loan._statusResolvido}
               </span>
             </div>
-            <p>Data do registro: {loan.dataEmprestimo ? formatarData(loan.dataEmprestimo) : "Não disponível"}</p>
-            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao ? formatarData(loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao) : "Não disponível"}</p>
+            <p>Data do registro: {loan.dataEmprestimo || "Não disponível"}</p>
+            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "Não disponível"}</p>
             <p>Renovações: {loan.renovacoes ?? 0}</p>
           </article>
         ))}

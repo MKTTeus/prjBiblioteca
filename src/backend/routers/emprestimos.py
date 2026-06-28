@@ -19,8 +19,9 @@ def get_config_map():
     return {}
 
 
-def get_config_int(chave: str, default: int):
-    configs = get_config_map()
+def get_config_int(chave: str, default: int, configs: dict = None):
+    if configs is None:
+        configs = get_config_map()
     valor = configs.get(chave)
     if valor is not None:
         try:
@@ -31,8 +32,9 @@ def get_config_int(chave: str, default: int):
     return int(os.getenv(env_key, default))
 
 
-def get_config_bool(chave: str, default: bool):
-    configs = get_config_map()
+def get_config_bool(chave: str, default: bool, configs: dict = None):
+    if configs is None:
+        configs = get_config_map()
     valor = configs.get(chave)
     if isinstance(valor, bool):
         return valor
@@ -41,16 +43,16 @@ def get_config_bool(chave: str, default: bool):
     return default
 
 
-def get_config_days():
-    return get_config_int("dias_emprestimo", 14)
+def get_config_days(configs: dict = None):
+    return get_config_int("dias_emprestimo", 14, configs)
 
 
-def get_max_renewals():
-    return get_config_int("maximo_renovacoes", 2)
+def get_max_renewals(configs: dict = None):
+    return get_config_int("maximo_renovacoes", 2, configs)
 
 
-def get_max_books_per_user():
-    return get_config_int("livros_por_aluno", 3)
+def get_max_books_per_user(configs: dict = None):
+    return get_config_int("livros_por_aluno", 3, configs)
 
 
 @router.get("/configuracoes")
@@ -285,8 +287,9 @@ def listar_emprestimos(user=Depends(get_optional_user)):
                 mov["empLiv_RenovacoesTotais"] = exemplar.get("renovacoes", 0) if exemplar else mov.get("renovacoes", 0)
                 if exemplar:
                     ex_obj = exemplar_map.get(exemplar.get("idExemplar"))
-                    mov["empLiv_Tombo"] = ex_obj.get("exeLivTombo") if ex_obj else None
+                    mov["empLiv_Tombo"]  = ex_obj.get("exeLivTombo") if ex_obj else None
                     mov["empLiv_Titulo"] = mov.get("titulo")
+                    mov["idLivro"]       = ex_obj.get("idLivro") if ex_obj else None
             except Exception:
                 pass
 
@@ -441,8 +444,9 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
 
         hoje = datetime.utcnow().date()
 
-        dias = get_config_days()
-        max_por_usuario = get_max_books_per_user()
+        configs = get_config_map()
+        dias = get_config_days(configs)
+        max_por_usuario = get_max_books_per_user(configs)
 
         # verificar limite de empréstimos ativos por usuário
         movimentacoes_ativas = supabase.table("Movimentacao").select("idMovimentacao").eq("idUsuario", data.idUsuario).eq("movStatus", "Ativo").execute().data or []
@@ -514,6 +518,7 @@ def exemplares_disponiveis():
                 "id": ex["idExemplar"],
                 "tombo": ex["exeLivTombo"],
                 "nome": mapa_livros.get(ex["idLivro"], "Livro"),
+                "idLivro": ex["idLivro"],
             }
             for ex in exemplares
         ]
@@ -589,8 +594,9 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 
         me = me_resp.data[0]
 
-        dias = get_config_days()
-        max_renovacoes = get_max_renewals()
+        configs = get_config_map()
+        dias = get_config_days(configs)
+        max_renovacoes = get_max_renewals(configs)
         renovacoes_atuais = me.get("renovacoes") or 0
         if renovacoes_atuais >= max_renovacoes:
             raise HTTPException(status_code=400, detail=f"Máximo de {max_renovacoes} renovações atingido")
@@ -648,7 +654,8 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
             raise HTTPException(status_code=400, detail="Exemplar não está disponível para solicitação")
 
         hoje = datetime.utcnow().date()
-        max_por_usuario = get_max_books_per_user()
+        configs = get_config_map()
+        max_por_usuario = get_max_books_per_user(configs)
 
         # Verificar limite: contar movimentações Ativas ou Pendentes diretamente
         # (sem filtrar por itemStatus, pois pendentes ainda não têm itemStatus = "Ativo")
@@ -722,7 +729,8 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
     """
     try:
         hoje = datetime.utcnow().date()
-        dias = get_config_days()
+        configs = get_config_map()
+        dias = get_config_days(configs)
 
         # Buscar movimentação
         mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()

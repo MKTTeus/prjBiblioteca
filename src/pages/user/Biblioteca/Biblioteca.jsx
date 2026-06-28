@@ -30,8 +30,8 @@ export default function Biblioteca() {
         );
         const mapa = {};
         for (const emp of pendentesOuAtivos) {
-          const titulo = emp.titulo || emp.empLiv_Titulo;
-          if (titulo) mapa[titulo] = true;
+          const idLivro = emp.idLivro;
+          if (idLivro) mapa[idLivro] = true;
         }
         setSolicitados(mapa);
       } catch {
@@ -42,19 +42,17 @@ export default function Biblioteca() {
   }, [isAluno]);
 
   const handleRequestLoan = async (book) => {
-    const titulo = book.livTitulo ?? book.titulo;
+    const idLivro = book.idLivro ?? book.id;
 
-    if (solicitados[titulo] || solicitando[titulo]) return;
-    if (cooldownRef.current[titulo]) return;
-    cooldownRef.current[titulo] = true;
-    setTimeout(() => { delete cooldownRef.current[titulo]; }, 2000);
+    if (solicitados[idLivro] || solicitando[idLivro]) return;
+    if (cooldownRef.current[idLivro]) return;
+    cooldownRef.current[idLivro] = true;
+    setTimeout(() => { delete cooldownRef.current[idLivro]; }, 2000);
 
-    setSolicitando((prev) => ({ ...prev, [titulo]: true }));
+    setSolicitando((prev) => ({ ...prev, [idLivro]: true }));
     try {
       const exemplares = await getExemplaresDisponiveis();
-      const exemplarDisponivel = exemplares.find(
-        (ex) => ex.nome === book.livTitulo || ex.nome === book.titulo
-      );
+      const exemplarDisponivel = exemplares.find((ex) => ex.idLivro === idLivro);
 
       if (!exemplarDisponivel) {
         addToast("Nenhum exemplar disponível para este livro no momento", "error");
@@ -62,7 +60,7 @@ export default function Biblioteca() {
       }
 
       await solicitarEmprestimo({ idExemplar: exemplarDisponivel.id });
-      setSolicitados((prev) => ({ ...prev, [titulo]: true }));
+      setSolicitados((prev) => ({ ...prev, [idLivro]: true }));
       addToast("Solicitação enviada! Aguarde aprovação do administrador.", "success");
     } catch (err) {
       const detail = err.data?.detail;
@@ -74,7 +72,7 @@ export default function Biblioteca() {
           : err.message || "Erro ao solicitar empréstimo";
       addToast(mensagem, "error");
     } finally {
-      setSolicitando((prev) => ({ ...prev, [titulo]: false }));
+      setSolicitando((prev) => ({ ...prev, [idLivro]: false }));
     }
   };
 
@@ -124,7 +122,6 @@ export default function Biblioteca() {
           <div className="shared-book-grid">
             {books.map((book) => {
               const id = book.idLivro ?? book.id;
-              const titulo = book.livTitulo ?? book.titulo;
               return (
                 <BookCard
                   key={id}
@@ -132,8 +129,8 @@ export default function Biblioteca() {
                   categoryName={book.livCategoria || book.categoria}
                   genreName={book.livGenero || book.genero}
                   onRequestLoan={isAluno ? handleRequestLoan : undefined}
-                  jasolicitado={!!solicitados[titulo]}
-                  solicitando={!!solicitando[titulo]}
+                  jasolicitado={!!solicitados[id]}
+                  solicitando={!!solicitando[id]}
                   isComunidade={!isAluno}
                 />
               );

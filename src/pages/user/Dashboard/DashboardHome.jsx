@@ -9,8 +9,8 @@ import {
   FaExclamationTriangle,
 } from "react-icons/fa";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import { resolverStatus } from "../../../utils/loanStatus";
 import { getBooks, getEmprestimos } from "../../../services/api";
-import { formatarData } from "../../../utils/masks";
 import "../UserArea.css";
 import "./DashboardHome.css";
 
@@ -96,18 +96,6 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
 
         const loanItems = Array.isArray(loans) ? loans : [];
 
-        // Mesma lógica do Emprestimos.jsx — ignora movStatus e recalcula pela data
-        const resolverStatus = (loan) => {
-          if (loan.empLiv_Status === "Devolvido") return "devolvido";
-          if (loan.movStatus === "Pendente" || loan.movTipo === "SOLICITACAO" || loan.status === "pendente") return "pendente";
-          if (loan.empLiv_DataPrevistaDevolucao) {
-            const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-            const prevista = new Date(loan.empLiv_DataPrevistaDevolucao); prevista.setHours(0, 0, 0, 0);
-            if (prevista < hoje) return "atrasado";
-          }
-          return loan.status || "ativo";
-        };
-
         const loanItemsComStatus = loanItems.map((loan) => ({
           ...loan,
           _status: resolverStatus(loan),
@@ -132,15 +120,8 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
                   ? `Sua reserva de "${loan.titulo}" está aguardando aprovação.`
                   : status === "atrasado"
                   ? `O prazo para devolver "${loan.titulo}" já passou.`
-                  : `Seu empréstimo de "${loan.titulo}" vence em ${
-                      loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao
-                        ? formatarData(loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao)
-                        : "data não informada"
-                    }.`,
-              data:
-                loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || loan.dataEmprestimo
-                  ? formatarData(loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || loan.dataEmprestimo)
-                  : "Sem data",
+                  : `Seu empréstimo de "${loan.titulo}" vence em ${loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "data não informada"}.`,
+              data: loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || loan.dataEmprestimo || "Sem data",
               tipo: tone,
               label,
             };
