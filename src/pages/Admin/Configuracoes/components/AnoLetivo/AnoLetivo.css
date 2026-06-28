@@ -1,0 +1,185 @@
+.ano-letivo-header {
+  margin-bottom: 1.25rem;
+}
+
+.ano-letivo-header h3 {
+  margin: 0 0 0.25rem;
+}
+
+.ano-letivo-header p {
+  margin: 0;
+  color: var(--text-muted, #6b7280);
+  font-size: 0.9rem;
+}
+
+.ano-letivo-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ano-letivo-acao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  padding-top: 1.25rem;
+}
+
+.ano-letivo-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #b45309;
+  font-size: 0.85rem;
+}
+
+.btn-encerrar {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  padding: 0.65rem 1.1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-encerrar:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btn-encerrar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Modal ─────────────────────────────────────────────── */
+
+.al-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.al-modal {
+  background: var(--card-bg, #fff);
+  color: var(--text-color, #111827);
+  border-radius: 14px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  text-align: left;
+}
+
+.al-modal-icon {
+  color: #dc2626;
+  display: block;
+  margin: 0 auto 0.5rem;
+}
+
+.al-modal h3 {
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+.al-resumo {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.al-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #dc2626;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.al-field {
+  margin-bottom: 1rem;
+}
+
+.al-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.al-field code {
+  background: var(--code-bg, #f3f4f6);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.al-field input {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 8px;
+  background: var(--input-bg, #fff);
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.al-input-wrap {
+  position: relative;
+}
+
+.al-input-wrap .al-input-icon {
+  position: absolute;
+  left: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.al-input-wrap input {
+  padding-left: 2rem;
+}
+
+.al-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.al-btn {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.al-btn--ghost {
+  background: transparent;
+  border-color: var(--border-color, #d1d5db);
+  color: inherit;
+}
+
+.al-btn--danger {
+  background: #dc2626;
+  color: #fff;
+}
+
+.al-btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

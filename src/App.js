@@ -21,6 +21,7 @@ import Email from "./pages/Admin/Configuracoes/components/Email/Email";
 import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
 import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
 import Backups from "./pages/Admin/Configuracoes/components/Backup/Backups";
+import AnoLetivo from "./pages/Admin/Configuracoes/components/AnoLetivo/AnoLetivo";
 import UserDashboard from "./pages/user/UserDashboard";
 
 function RoleHomeRedirect() {
@@ -108,6 +109,7 @@ function App() {
           <Route path="notificacoes" element={<Notificacoes />} />
           <Route path="seguranca" element={<Seguranca />} />
           <Route path="email" element={<Email />} />
+          <Route path="ano-letivo" element={<AnoLetivo />} />
           <Route path="avancado" element={<Avancado />} />
           <Route path="backups" element={<Backups />} />
         </Route>

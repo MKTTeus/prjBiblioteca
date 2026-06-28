@@ -13,6 +13,7 @@ from routers.emprestimos import router as emprestimos_router
 from routers.dashboard import router as dashboard_router
 from routers.emails import router as emails_router
 from routers.backup import router as backup_router
+from routers.ano_letivo import router as ano_letivo_router
 
 
 def _split_env_list(value: str) -> list[str]:
@@ -51,6 +52,7 @@ ROUTERS = [
     dashboard_router,
     emails_router,
     backup_router,
+    ano_letivo_router,
 ]
 
 

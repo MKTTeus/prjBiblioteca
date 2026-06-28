@@ -138,6 +138,19 @@ export const updateConfiguracao = (payload) =>
   });
 
 // ========================
+// ANO LETIVO
+// ========================
+
+export const getAnoLetivo = () =>
+  apiFetch("/ano-letivo");
+
+export const encerrarAnoLetivo = (payload) =>
+  apiFetch("/ano-letivo/encerrar", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+// ========================
 // DASHBOARD
 // ========================
 

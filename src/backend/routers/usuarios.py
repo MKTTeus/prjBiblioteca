@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from database import supabase
 from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password, validar_cpf, normalize_cpf
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
+from routers.ano_letivo import get_ano_letivo_atual
 import io
 import openpyxl
 import csv
@@ -62,6 +63,10 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
         "usuRA": data.ra,
+        "usuSerie": data.serie,
+        "usuTurma": data.turma,
+        "usuAnoLetivo": get_ano_letivo_atual(),
+        "usuFormado": False,
         "usuTipo": "Aluno",
         "usuStatus": parse_status(data.status),
         "usuExcluido": False,
@@ -87,6 +92,10 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
         "usuRA": data.ra,
+        "usuSerie": data.serie,
+        "usuTurma": data.turma,
+        "usuAnoLetivo": get_ano_letivo_atual(),
+        "usuFormado": False,
         "usuStatus": True,
     }
     reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
@@ -100,11 +109,14 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
     contents = await file.read()
     linhas = _parse_upload(contents, file.filename)
     resultados = {"importados": 0, "ignorados": 0, "erros": []}
+    ano_letivo = get_ano_letivo_atual()
 
     for i, dados in enumerate(linhas, start=2):
         nome  = dados.get("nome", "").strip()
         email = dados.get("email", "").strip().lower()
         ra    = dados.get("ra", "").strip()
+        serie = dados.get("serie", "").strip()
+        turma = dados.get("turma", "").strip()
 
         if not nome or not email:
             resultados["erros"].append(f"Linha {i}: nome e email são obrigatórios")
@@ -132,6 +144,10 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             "usuTelefoneResponsavel": dados.get("telefone_responsavel", ""),
             "usuEndereco": dados.get("endereco", ""),
             "usuRA": ra,
+            "usuSerie": serie or None,
+            "usuTurma": turma or None,
+            "usuAnoLetivo": ano_letivo,
+            "usuFormado": False,
             "usuTipo": "Aluno",
             "usuStatus": True,
             "usuExcluido": False,
@@ -184,6 +200,10 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
         payload["usuEndereco"] = data.endereco
     if data.ra is not None:
         payload["usuRA"] = data.ra
+    if data.serie is not None:
+        payload["usuSerie"] = data.serie
+    if data.turma is not None:
+        payload["usuTurma"] = data.turma
     if data.status is not None:
         payload["usuStatus"] = parse_status(data.status)
 
@@ -282,6 +302,11 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuCPF": cpf,
         "usuTipo": "Comunidade",
         "usuStatus": True,
+        # Ex-aluno retornando como comunidade: limpa os dados acadêmicos
+        "usuSerie": None,
+        "usuTurma": None,
+        "usuAnoLetivo": None,
+        "usuFormado": False,
     }
     reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
     if not reativado.data:

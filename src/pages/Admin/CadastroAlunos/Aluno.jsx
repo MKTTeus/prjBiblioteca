@@ -19,6 +19,8 @@ const EMPTY_ALUNO = {
   telefone: "",
   telefone2: "",
   endereco: "",
+  serie: "",
+  turma: "",
   senha: "",
   status: "Ativo",
 };
@@ -52,6 +54,9 @@ const fetchAlunos = async () => {
         telefone: u.usuTelefone || "",
         telefone2: u.usuTelefoneResponsavel || "",
         endereco: u.usuEndereco || "",
+        serie: u.usuSerie || "",
+        turma: u.usuTurma || "",
+        formado: u.usuFormado === true,
         livros: 0,
         status: u.usuStatus === true ? "Ativo" : "Inativo",
       }))
@@ -109,6 +114,8 @@ const handleSalvar = async () => {
         telefoneResponsavel: novoAluno.telefone2,
         endereco: novoAluno.endereco,
         ra: novoAluno.ra,
+        serie: novoAluno.serie,
+        turma: novoAluno.turma,
         status: novoAluno.status === "Ativo",
       };
 
@@ -125,6 +132,9 @@ const handleSalvar = async () => {
                 telefone: updated.usuTelefone || "",
                 telefone2: updated.usuTelefoneResponsavel || "",
                 endereco: updated.usuEndereco || "",
+                serie: updated.usuSerie || "",
+                turma: updated.usuTurma || "",
+                formado: updated.usuFormado === true,
                 status:
                   updated.usuStatus === true
                     ? "Ativo"
@@ -156,6 +166,8 @@ const handleSalvar = async () => {
           telefoneResponsavel: novoAluno.telefone2,
           endereco: novoAluno.endereco,
           ra: novoAluno.ra,
+          serie: novoAluno.serie,
+          turma: novoAluno.turma,
           tipo: "Aluno",
           status: novoAluno.status === "Ativo",
         });
@@ -170,6 +182,9 @@ const handleSalvar = async () => {
             telefone: created.usuTelefone || "",
             telefone2: created.usuTelefoneResponsavel || "",
             endereco: created.usuEndereco || "",
+            serie: created.usuSerie || "",
+            turma: created.usuTurma || "",
+            formado: created.usuFormado === true,
             livros: 0,
             status: novoAluno.status || "Ativo",
           },
@@ -228,6 +243,8 @@ const handleSalvar = async () => {
       telefone: aluno.telefone || "",
       telefone2: aluno.telefone2 || "",
       endereco: aluno.endereco || "",
+      serie: aluno.serie || "",
+      turma: aluno.turma || "",
       senha: "",
       status: aluno.status || "Ativo",
     });
@@ -311,6 +328,8 @@ const handleSalvar = async () => {
         telefoneResponsavel: pendingReativar.telefone2,
         endereco: pendingReativar.endereco,
         ra: pendingReativar.ra,
+        serie: pendingReativar.serie,
+        turma: pendingReativar.turma,
       });
 
       setAlunos((prev) => [
@@ -323,6 +342,9 @@ const handleSalvar = async () => {
           telefone: reativado.usuTelefone || "",
           telefone2: reativado.usuTelefoneResponsavel || "",
           endereco: reativado.usuEndereco || "",
+          serie: reativado.usuSerie || "",
+          turma: reativado.usuTurma || "",
+          formado: reativado.usuFormado === true,
           livros: 0,
           status: "Ativo",
         },
@@ -527,6 +549,9 @@ const handleSalvar = async () => {
                   <span className={aluno.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {aluno.status}
                   </span>
+                  {aluno.formado && (
+                    <span className="badge-formado" style={{ marginLeft: 6 }}>Formado</span>
+                  )}
                 </td>
 
                 <td className="acoes">

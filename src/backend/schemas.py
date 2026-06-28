@@ -79,6 +79,8 @@ class UsuarioCreate(BaseModel):
     endereco: Optional[str] = None
     ra: Optional[str] = None
     cpf: Optional[str] = None
+    serie: Optional[str] = None
+    turma: Optional[str] = None
     tipo: Optional[str] = "Aluno"
     status: Optional[Union[bool, str]] = "Ativo"
 
@@ -92,7 +94,14 @@ class UsuarioUpdate(BaseModel):
     endereco: Optional[str] = None
     ra: Optional[str] = None
     cpf: Optional[str] = None
+    serie: Optional[str] = None
+    turma: Optional[str] = None
     status: Optional[Union[bool, str]] = None
+
+
+class EncerrarAnoLetivo(BaseModel):
+    senha: str
+    confirmacao: str
 
 
 class BatchIds(BaseModel):

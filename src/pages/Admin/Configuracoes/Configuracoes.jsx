@@ -11,6 +11,7 @@ const abas = [
   { id: "notificacoes", label: "Notificações" },
   { id: "seguranca",    label: "Segurança" },
   { id: "email",        label: "E-mail" },
+  { id: "ano-letivo",   label: "Ano Letivo" },
   { id: "backups",      label: "Backups" },
   { id: "avancado",     label: "Avançado" },
 ];

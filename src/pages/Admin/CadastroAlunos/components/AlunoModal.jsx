@@ -3,6 +3,7 @@ import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
 import { IMaskInput } from "react-imask";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
 import { MASK_TELEFONE } from "../../../../utils/masks";
+import { SERIES } from "../../../../utils/series";
 
 export default function AlunoModal({
   aberto,
@@ -164,6 +165,26 @@ export default function AlunoModal({
                       value={aluno.endereco}
                       onChange={onChange}
                       placeholder="Rua, número e complemento"
+                    />
+                  </label>
+
+                  <label className="editor-field">
+                    <span>Série</span>
+                    <select name="serie" value={aluno.serie || ""} onChange={onChange}>
+                      <option value="">Selecione a série</option>
+                      {SERIES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="editor-field">
+                    <span>Turma</span>
+                    <input
+                      name="turma"
+                      value={aluno.turma || ""}
+                      onChange={onChange}
+                      placeholder="Ex: A, B, Única"
                     />
                   </label>
 
