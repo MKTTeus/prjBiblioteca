@@ -197,6 +197,9 @@ def listar_emprestimos(user=Depends(get_optional_user)):
                 raise HTTPException(status_code=404, detail="Usuário não encontrado")
             id_usuario = usuario_resp.data[0]["idUsuario"]
             query = query.eq("idUsuario", id_usuario)
+        else:
+            # Admin vê só empréstimos reais, não solicitações (que ficam em /solicitacoes)
+            query = query.eq("movTipo", "EMPRESTIMO")
 
         emprestimos = query.execute().data or []
 
@@ -304,10 +307,23 @@ def notificacoes_admin(admin=Depends(get_admin)):
     try:
         agora = datetime.utcnow()
         hoje = agora.date()
-        limite_24h = agora - timedelta(hours=24)
-        # fetch movimentacoes and associated exemplar entries
-        movimentacoes = supabase.table("Movimentacao").select("*").execute().data or []
-        movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").execute().data or []
+        limite_24h = (agora - timedelta(hours=24)).isoformat()
+
+        # Só buscar movimentações ativas ou devolvidas recentemente — sem SELECT * total
+        movimentacoes = supabase.table("Movimentacao") \
+            .select("idMovimentacao, idUsuario, movDataEmprestimo, movStatus") \
+            .in_("movStatus", ["Ativo", "Devolvido"]) \
+            .execute().data or []
+
+        mov_ids = [m["idMovimentacao"] for m in movimentacoes]
+        if not mov_ids:
+            return {"atrasados_alunos": [], "atrasados_comunidade": [], "recentes": [], "devolucoes_recentes": []}
+
+        # Só buscar exemplares com status relevante ou data próxima
+        movimentacao_exemplares = supabase.table("MovimentacaoExemplar") \
+            .select("idMovimentacao, idExemplar, dataPrevistaDevolucao, dataDevolucao, itemStatus") \
+            .in_("idMovimentacao", mov_ids) \
+            .execute().data or []
 
         # build joined loan entries (one per movimentacao_exemplar)
         movimentacao_map = {m["idMovimentacao"]: m for m in movimentacoes}
@@ -401,10 +417,10 @@ def notificacoes_admin(admin=Depends(get_admin)):
                 else:
                     atrasados_alunos.append(entry)
 
-            if data_emprestimo and data_emprestimo >= limite_24h and not data_devolucao:
+            if data_emprestimo and data_emprestimo >= datetime.fromisoformat(limite_24h) and not data_devolucao:
                 recentes.append(build_entry(emp))
 
-            if data_devolucao and data_devolucao >= limite_24h:
+            if data_devolucao and data_devolucao >= datetime.fromisoformat(limite_24h):
                 devolucoes_recentes.append(build_entry(emp))
 
         recentes.sort(
@@ -604,12 +620,15 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
         if me.get("dataPrevistaDevolucao"):
             try:
                 data_prevista = datetime.fromisoformat(me["dataPrevistaDevolucao"]).date()
-            except:
+            except Exception:
                 data_prevista = datetime.utcnow().date()
         else:
             data_prevista = datetime.utcnow().date()
 
-        nova_data = data_prevista + timedelta(days=dias)
+        hoje_date = datetime.utcnow().date()
+        # Se o empréstimo está atrasado, renovar a partir de hoje — não da data vencida
+        base = hoje_date if data_prevista < hoje_date else data_prevista
+        nova_data = base + timedelta(days=dias)
 
         # Atualizar movimentacao_exemplar
         resultado = supabase.table("MovimentacaoExemplar").update({

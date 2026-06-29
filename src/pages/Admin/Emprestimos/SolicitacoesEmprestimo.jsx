@@ -13,7 +13,6 @@ import {
 import "./Emprestimos.css";
 import LoadingButton from "../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../contexts/ToastContext";
-import { formatarData } from "../../../utils/masks";
 
 const statusLabel = {
   ativo: "Aceita",
@@ -84,6 +83,10 @@ export default function SolicitacoesEmprestimo() {
 
   const metricas = useMemo(() => {
     const total = solicitacoes.length;
+    const pendentes = solicitacoes.filter((item) => {
+      const s = String(item.status || item.movStatus || "").toLowerCase();
+      return s === "pendente";
+    }).length;
     const aceitas = solicitacoes.filter((item) => {
       const s = String(item.status || item.movStatus || "").toLowerCase();
       return s === "ativo" || s === "aceito" || s === "aceita" || s === "aprovado";
@@ -93,7 +96,7 @@ export default function SolicitacoesEmprestimo() {
       return s === "negado" || s === "cancelado" || s === "rejeitado";
     }).length;
 
-    return { total, negados, aceitas };
+    return { total, pendentes, negados, aceitas };
   }, [solicitacoes]);
 
   const cardsResumo = useMemo(
@@ -106,18 +109,25 @@ export default function SolicitacoesEmprestimo() {
         icone: <FiList size={18} />,
       },
       {
-        chave: "negados",
-        titulo: "Solicitações Negadas",
-        valor: metricas.negados,
+        chave: "pendentes",
+        titulo: "Aguardando Resposta",
+        valor: metricas.pendentes,
         cor: "orange",
         icone: <FiClock size={18} />,
       },
       {
         chave: "aceitas",
-        titulo: "Solicitações Aceitas",
+        titulo: "Aprovadas",
         valor: metricas.aceitas,
         cor: "green",
         icone: <FiCheckCircle size={18} />,
+      },
+      {
+        chave: "negados",
+        titulo: "Negadas",
+        valor: metricas.negados,
+        cor: "red",
+        icone: <FiClock size={18} />,
       },
     ],
     [metricas]
@@ -275,7 +285,7 @@ export default function SolicitacoesEmprestimo() {
                     </td>
 
                     <td>{item.usuarioTipo || item.tipo || "-"}</td>
-                    <td>{formatarData(item.movDataSolicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</td>
+                    <td>{item.movDataSolicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo || "-"}</td>
 
                     <td>
                       <span className={`emp-status ${status}`}>
