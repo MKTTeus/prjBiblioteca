@@ -269,7 +269,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
-  function renderActiveSection() {
+  function handleISBNAutoFill(dados) {
+    setForm((prev) => ({ ...prev, ...dados }));
+  }
+
+    function renderActiveSection() {
     if (activeTab === "publication") {
       return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} />;
     }
@@ -294,6 +298,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         generos={generos}
         onFieldChange={handleFieldChange}
         onUpload={handleUpload}
+        onISBNAutoFill={handleISBNAutoFill}
       />
     );
   }

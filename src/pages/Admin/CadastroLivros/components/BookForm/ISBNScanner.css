@@ -1,0 +1,124 @@
+.isbn-scanner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.isbn-scanner-box {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 24px;
+  width: min(440px, 94vw);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+}
+
+.isbn-scanner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.isbn-scanner-header span {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-default);
+}
+
+.isbn-scanner-close {
+  background: var(--surface-muted);
+  border: none;
+  border-radius: 8px;
+  color: var(--text-default);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 10px;
+  line-height: 1.6;
+  transition: background 0.15s;
+}
+.isbn-scanner-close:hover { background: var(--surface-border); }
+
+.isbn-scanner-viewport {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 4/3;
+}
+
+.isbn-scanner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Mira no centro */
+.isbn-scanner-reticle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.isbn-scanner-reticle::before {
+  content: "";
+  display: block;
+  width: 78%;
+  height: 30%;
+  border: 2.5px solid rgba(255,255,255,0.55);
+  border-radius: 6px;
+  box-shadow: 0 0 0 2000px rgba(0,0,0,0.35);
+}
+/* Cantos coloridos */
+.isbn-scanner-reticle span {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #60a5fa;
+  border-style: solid;
+  border-width: 0;
+}
+.isbn-scanner-reticle span:nth-child(1) { top: 35%; left: 11%; border-top-width: 3px; border-left-width: 3px; border-radius: 4px 0 0 0; }
+.isbn-scanner-reticle span:nth-child(2) { top: 35%; right: 11%; border-top-width: 3px; border-right-width: 3px; border-radius: 0 4px 0 0; }
+.isbn-scanner-reticle span:nth-child(3) { bottom: 35%; left: 11%; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 4px; }
+.isbn-scanner-reticle span:nth-child(4) { bottom: 35%; right: 11%; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 4px 0; }
+
+.isbn-scanner-switch {
+  background: var(--surface-muted);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  color: var(--text-default);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: background 0.15s;
+}
+.isbn-scanner-switch:hover { background: var(--surface-border); }
+
+.isbn-scanner-hint {
+  text-align: center;
+  color: var(--tabs-text);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.isbn-scanner-error {
+  background: var(--surface-muted);
+  border-radius: 10px;
+  color: var(--text-default);
+  font-size: 0.9rem;
+  padding: 20px;
+  text-align: center;
+}

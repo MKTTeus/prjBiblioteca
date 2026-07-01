@@ -560,3 +560,63 @@
     flex-direction: column;
   }
 }
+
+/* ── ISBN field with scanner/search actions ── */
+.isbn-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.isbn-input-row input {
+  flex: 1;
+  min-width: 0;
+}
+.isbn-action-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--input-border);
+  background: var(--surface-muted);
+  color: var(--text-default);
+  cursor: pointer;
+  font-size: 1.15rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.isbn-action-btn:hover {
+  background: var(--surface-border);
+  border-color: var(--border-strong);
+}
+.isbn-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.isbn-scan-btn  { color: #60a5fa; }
+.isbn-search-btn { color: #34d399; }
+.isbn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--surface-border);
+  border-top-color: #34d399;
+  border-radius: 50%;
+  animation: isbn-spin 0.7s linear infinite;
+}
+@keyframes isbn-spin { to { transform: rotate(360deg); } }
+.isbn-error-msg {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #f87171;
+  margin-top: 2px;
+}
+.isbn-hint-msg {
+  font-size: 0.76rem;
+  color: var(--tabs-text);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
