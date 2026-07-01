@@ -5,6 +5,8 @@ import {
   getBook,
   getCategorias,
   getGeneros,
+  getAutores,
+  getEditoras,
   updateBook,
   updateExemplar,
   uploadCover,
@@ -50,6 +52,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const { addToast } = useToast();
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
+  const [autores, setAutores] = useState([]);
+  const [editoras, setEditoras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
@@ -115,12 +119,16 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   const carregarMetadados = useCallback(async () => {
     try {
-      const [cats, gens] = await Promise.all([getCategorias(), getGeneros()]);
+      const [cats, gens, auts, eds] = await Promise.all([
+        getCategorias(), getGeneros(), getAutores(), getEditoras()
+      ]);
       setCategorias(cats || []);
       setGeneros(gens || []);
+      setAutores(auts || []);
+      setEditoras(eds || []);
     } catch (err) {
       console.error(err);
-      addToast("Falha ao carregar categorias e gêneros", "error");
+      addToast("Falha ao carregar metadados do formulário", "error");
     }
   }, [addToast]);
 
@@ -269,13 +277,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
-  function handleISBNAutoFill(dados) {
-    setForm((prev) => ({ ...prev, ...dados }));
-  }
-
-    function renderActiveSection() {
+  function renderActiveSection() {
     if (activeTab === "publication") {
-      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} />;
+      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} editoras={editoras} />;
     }
 
     if (activeTab === "copies") {
@@ -296,9 +300,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         form={form}
         categorias={categorias}
         generos={generos}
+        autores={autores}
+        editoras={editoras}
         onFieldChange={handleFieldChange}
         onUpload={handleUpload}
-        onISBNAutoFill={handleISBNAutoFill}
       />
     );
   }

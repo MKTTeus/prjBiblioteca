@@ -1,7 +1,7 @@
 import React from "react";
 import { HiOutlineBookOpen, HiOutlineOfficeBuilding } from "react-icons/hi";
 
-export default function PublicationInfoSection({ form, onFieldChange }) {
+export default function PublicationInfoSection({ form, onFieldChange, editoras = [] }) {
   return (
     <div className="editor-section-grid publication-grid">
       <div className="editor-form-panel publication-panel">
@@ -12,8 +12,15 @@ export default function PublicationInfoSection({ form, onFieldChange }) {
               name="livEditora"
               value={form.livEditora}
               onChange={(e) => onFieldChange("livEditora", e.target.value)}
-              placeholder="Nome da editora"
+              placeholder="Nome da editora (existente ou nova)"
+              list="editoras-list"
+              autoComplete="off"
             />
+            <datalist id="editoras-list">
+              {editoras.map((e) => (
+                <option key={e.idEditora} value={e.ediNome} />
+              ))}
+            </datalist>
           </label>
 
           <label className="editor-field">

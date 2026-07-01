@@ -128,6 +128,12 @@ export const getCategorias = () =>
 export const getGeneros = () =>
   apiFetch("/generos");
 
+export const getAutores = () =>
+  apiFetch("/autores");
+
+export const getEditoras = () =>
+  apiFetch("/editoras");
+
 export const getConfiguracoes = () =>
   apiFetch("/configuracoes");
 
@@ -136,8 +142,7 @@ export const updateConfiguracao = (payload) =>
     method: "PUT",
     body: JSON.stringify(payload),
   });
-
-// ========================
+  
 // ANO LETIVO
 // ========================
 
