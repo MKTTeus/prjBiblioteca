@@ -620,3 +620,68 @@
   align-items: center;
   gap: 3px;
 }
+
+.inline-select-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inline-select-row select,
+.inline-select-row input {
+  flex: 1;
+}
+
+.inline-create-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border, #e5e7eb);
+  background: var(--surface-bg);
+  color: var(--text-label);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.inline-create-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.inline-create-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.inline-create-row input {
+  flex: 1;
+}
+
+.inline-create-confirm {
+  padding: 6px 12px;
+  border-radius: 7px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inline-create-cancel {
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-label);
+  border: 1px solid var(--surface-border);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}

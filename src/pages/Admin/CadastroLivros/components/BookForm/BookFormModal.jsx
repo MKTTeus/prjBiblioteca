@@ -10,6 +10,8 @@ import {
   updateBook,
   updateExemplar,
   uploadCover,
+  createCategoria,
+  createGenero,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
@@ -276,6 +278,30 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setLoading(false);
     }
   }
+  
+  async function handleCriarCategoria(nome) {
+    try {
+      const nova = await createCategoria({ catNome: nome });
+      setCategorias((prev) => [...prev, nova]);
+      addToast(`Categoria "${nome}" criada com sucesso`, "success");
+      return nova;
+    } catch {
+      addToast("Erro ao criar categoria", "error");
+      return null;
+    }
+  }
+
+  async function handleCriarGenero(nome) {
+    try {
+      const novo = await createGenero({ genNome: nome });
+      setGeneros((prev) => [...prev, novo]);
+      addToast(`Gênero "${nome}" criado com sucesso`, "success");
+      return novo;
+    } catch {
+      addToast("Erro ao criar gênero", "error");
+      return null;
+    }
+  }
 
   function renderActiveSection() {
     if (activeTab === "publication") {
@@ -300,14 +326,37 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         form={form}
         categorias={categorias}
         generos={generos}
-        autores={autores}
-        editoras={editoras}
         onFieldChange={handleFieldChange}
         onUpload={handleUpload}
+        onCriarCategoria={handleCriarCategoria}
+        onCriarGenero={handleCriarGenero}
       />
     );
   }
 
+  async function handleCriarCategoria(nome) {
+  try {
+    const nova = await createCategoria({ catNome: nome });
+    setCategorias((prev) => [...prev, nova]);
+    addToast(`Categoria "${nome}" criada com sucesso`, "success");
+    return nova;
+  } catch {
+    addToast("Erro ao criar categoria", "error");
+    return null;
+  }
+}
+
+async function handleCriarGenero(nome) {
+  try {
+    const novo = await createGenero({ genNome: nome });
+    setGeneros((prev) => [...prev, novo]);
+    addToast(`Gênero "${nome}" criado com sucesso`, "success");
+    return novo;
+  } catch {
+    addToast("Erro ao criar gênero", "error");
+    return null;
+  }
+}
   return (
     <div className="modal-overlay">
       <div className="editor-modal-container">

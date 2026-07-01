@@ -1,15 +1,52 @@
-import React from "react";
-import { HiOutlinePhotograph, HiOutlineUpload } from "react-icons/hi";
+import React, { useState } from "react";
+import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
 
 export default function BasicInfoSection({
   form,
   categorias,
   generos,
-  autores,
-  editoras,
   onFieldChange,
   onUpload,
+  onCriarCategoria,
+  onCriarGenero,
 }) {
+  const [novaCategoria, setNovaCategoria] = useState("");
+  const [novoGenero, setNovoGenero] = useState("");
+  const [novoAutor, setNovoAutor] = useState("");
+  const [criandoCategoria, setCriandoCategoria] = useState(false);
+  const [criandoGenero, setCriandoGenero] = useState(false);
+  const [criandoAutor, setCriandoAutor] = useState(false);
+
+  async function handleCriarCategoria() {
+    const nome = novaCategoria.trim();
+    if (!nome) return;
+    const criada = await onCriarCategoria(nome);
+    if (criada) {
+      onFieldChange("idCategoria", criada.idCategoria);
+      setNovaCategoria("");
+      setCriandoCategoria(false);
+    }
+  }
+
+  async function handleCriarGenero() {
+    const nome = novoGenero.trim();
+    if (!nome) return;
+    const criado = await onCriarGenero(nome);
+    if (criado) {
+      onFieldChange("idGenero", criado.idGenero);
+      setNovoGenero("");
+      setCriandoGenero(false);
+    }
+  }
+
+  function handleConfirmarAutor() {
+    const nome = novoAutor.trim();
+    if (!nome) return;
+    onFieldChange("livAutor", nome);
+    setNovoAutor("");
+    setCriandoAutor(false);
+  }
+
   return (
     <div className="editor-section-grid basic-grid">
       <div className="editor-form-panel basic-column">
@@ -19,7 +56,7 @@ export default function BasicInfoSection({
 
         <div className="editor-field-grid basic-column-grid">
           <label className="editor-field">
-            <span>Título *</span>
+            <span>Título</span>
             <input
               name="livTitulo"
               value={form.livTitulo}
@@ -29,23 +66,44 @@ export default function BasicInfoSection({
             />
           </label>
 
-          {/* Autor com autocomplete dos já cadastrados */}
-          <label className="editor-field">
+          {/* AUTOR */}
+          <div className="editor-field">
             <span>Autor</span>
-            <input
-              name="livAutor"
-              value={form.livAutor}
-              onChange={(e) => onFieldChange("livAutor", e.target.value)}
-              placeholder="Nome do autor (existente ou novo)"
-              list="autores-list"
-              autoComplete="off"
-            />
-            <datalist id="autores-list">
-              {autores.map((a) => (
-                <option key={a.idAutor} value={a.autNome} />
-              ))}
-            </datalist>
-          </label>
+            {criandoAutor ? (
+              <div className="inline-create-row">
+                <input
+                  autoFocus
+                  value={novoAutor}
+                  onChange={(e) => setNovoAutor(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleConfirmarAutor()}
+                  placeholder="Nome do novo autor"
+                />
+                <button type="button" className="inline-create-confirm" onClick={handleConfirmarAutor}>
+                  Confirmar
+                </button>
+                <button type="button" className="inline-create-cancel" onClick={() => setCriandoAutor(false)}>
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div className="inline-select-row">
+                <input
+                  name="livAutor"
+                  value={form.livAutor}
+                  onChange={(e) => onFieldChange("livAutor", e.target.value)}
+                  placeholder="Nome do autor"
+                />
+                <button
+                  type="button"
+                  className="inline-create-btn"
+                  title="Digitar novo autor"
+                  onClick={() => { setNovoAutor(""); setCriandoAutor(true); }}
+                >
+                  <HiOutlinePlus />
+                </button>
+              </div>
+            )}
+          </div>
 
           <label className="editor-field">
             <span>ISBN</span>
@@ -57,21 +115,49 @@ export default function BasicInfoSection({
             />
           </label>
 
-          <label className="editor-field">
+          {/* GÊNERO */}
+          <div className="editor-field">
             <span>Gênero</span>
-            <select
-              name="idGenero"
-              value={form.idGenero || ""}
-              onChange={(e) => onFieldChange("idGenero", e.target.value)}
-            >
-              <option value="">— selecione —</option>
-              {generos.map((gen) => (
-                <option key={gen.idGenero} value={gen.idGenero}>
-                  {gen.genNome}
-                </option>
-              ))}
-            </select>
-          </label>
+            {criandoGenero ? (
+              <div className="inline-create-row">
+                <input
+                  autoFocus
+                  value={novoGenero}
+                  onChange={(e) => setNovoGenero(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCriarGenero()}
+                  placeholder="Nome do novo gênero"
+                />
+                <button type="button" className="inline-create-confirm" onClick={handleCriarGenero}>
+                  Confirmar
+                </button>
+                <button type="button" className="inline-create-cancel" onClick={() => setCriandoGenero(false)}>
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div className="inline-select-row">
+                <select
+                  name="idGenero"
+                  value={form.idGenero}
+                  onChange={(e) => onFieldChange("idGenero", e.target.value)}
+                >
+                  {generos.map((gen) => (
+                    <option key={gen.idGenero} value={gen.idGenero}>
+                      {gen.genNome}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  className="inline-create-btn"
+                  title="Criar novo gênero"
+                  onClick={() => { setNovoGenero(""); setCriandoGenero(true); }}
+                >
+                  <HiOutlinePlus />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -80,23 +166,51 @@ export default function BasicInfoSection({
           <span>Classificação e resumo</span>
         </div>
 
-        <label className="editor-field">
+        {/* CATEGORIA */}
+        <div className="editor-field">
           <span>Categoria</span>
-          <select
-            name="idCategoria"
-            value={form.idCategoria || ""}
-            onChange={(e) => onFieldChange("idCategoria", e.target.value)}
-          >
-            <option value="">— selecione —</option>
-            {categorias.map((cat) => (
-              <option key={cat.idCategoria} value={cat.idCategoria}>
-                {cat.catNome}
-              </option>
-            ))}
-          </select>
-        </label>
+          {criandoCategoria ? (
+            <div className="inline-create-row">
+              <input
+                autoFocus
+                value={novaCategoria}
+                onChange={(e) => setNovaCategoria(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCriarCategoria()}
+                placeholder="Nome da nova categoria"
+              />
+              <button type="button" className="inline-create-confirm" onClick={handleCriarCategoria}>
+                Confirmar
+              </button>
+              <button type="button" className="inline-create-cancel" onClick={() => setCriandoCategoria(false)}>
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <div className="inline-select-row">
+              <select
+                name="idCategoria"
+                value={form.idCategoria}
+                onChange={(e) => onFieldChange("idCategoria", e.target.value)}
+              >
+                {categorias.map((cat) => (
+                  <option key={cat.idCategoria} value={cat.idCategoria}>
+                    {cat.catNome}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="inline-create-btn"
+                title="Criar nova categoria"
+                onClick={() => { setNovaCategoria(""); setCriandoCategoria(true); }}
+              >
+                <HiOutlinePlus />
+              </button>
+            </div>
+          )}
+        </div>
 
-        <label className="editor-field" style={{ marginTop: "12px" }}>
+        <label className="editor-field">
           <span>Descrição</span>
           <textarea
             name="livDescricao"

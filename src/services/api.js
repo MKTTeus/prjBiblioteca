@@ -91,6 +91,18 @@ export const updateExemplar = (idExemplar, payload) =>
     body: JSON.stringify(payload)
   });
 
+export const createCategoria = (payload) =>
+  apiFetch("/categorias", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const createGenero = (payload) =>
+  apiFetch("/generos", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
 // ========================
 // CAPA
 // ========================
