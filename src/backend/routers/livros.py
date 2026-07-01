@@ -176,11 +176,22 @@ def detalhes_livro(idLivro: int):
 def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
     try:
         payload = data.livro.model_dump()
-        isbn_padrao = (payload.pop("exemplarISBN", None) or "").strip() or None
 
-        # idCategoria e idGenero não são colunas de Livro — vão para tabelas de relacionamento
-        id_categoria = payload.pop("idCategoria", None)
-        id_genero    = payload.pop("idGenero", None)
+        # Extrair todos os campos que NÃO são colunas de Livro
+        payload.pop("exemplarISBN", None)
+        id_categoria  = payload.pop("idCategoria", None)
+        id_genero     = payload.pop("idGenero", None)
+        nome_autor    = (payload.pop("livAutor", None) or "").strip() or None
+        nome_editora  = (payload.pop("livEditora", None) or "").strip() or None
+
+        # Resolver idEditora via tabela Editora (FK em Livro)
+        if nome_editora:
+            ed = supabase.table("Editora").select("idEditora").eq("ediNome", nome_editora).limit(1).execute()
+            if ed.data:
+                payload["idEditora"] = ed.data[0]["idEditora"]
+            else:
+                nova_ed = supabase.table("Editora").insert({"ediNome": nome_editora}).execute()
+                payload["idEditora"] = nova_ed.data[0]["idEditora"]
 
         livro_resp = supabase.table("Livro").insert(payload).execute()
         if not livro_resp.data:
@@ -188,26 +199,30 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
 
         id_livro = livro_resp.data[0]["idLivro"]
 
-        # Inserir relacionamentos de categoria e gênero
+        # Inserir autor em Autor + LivroAutor
+        if nome_autor:
+            au = supabase.table("Autor").select("idAutor").eq("autNome", nome_autor).limit(1).execute()
+            if au.data:
+                id_autor = au.data[0]["idAutor"]
+            else:
+                novo_au = supabase.table("Autor").insert({"autNome": nome_autor}).execute()
+                id_autor = novo_au.data[0]["idAutor"]
+            supabase.table("LivroAutor").insert({"idLivro": id_livro, "idAutor": id_autor}).execute()
+
+        # Inserir categoria e gênero nas tabelas de junção
         if id_categoria:
-            supabase.table("LivroCategoria").insert({
-                "idLivro": id_livro, "idCategoria": id_categoria
-            }).execute()
+            supabase.table("LivroCategoria").insert({"idLivro": id_livro, "idCategoria": id_categoria}).execute()
         if id_genero:
-            supabase.table("LivroGenero").insert({
-                "idLivro": id_livro, "idGenero": id_genero
-            }).execute()
+            supabase.table("LivroGenero").insert({"idLivro": id_livro, "idGenero": id_genero}).execute()
 
         tombos = gerar_tombos(data.quantidade_exemplares, data.prefixo_tombo)
         exemplares = []
-
         for t in tombos:
-            ex_data = {
+            ex = supabase.table("Exemplar").insert({
                 "idLivro": id_livro,
                 "exeLivTombo": t,
                 "exeLivStatus": "Disponível"
-            }
-            ex = supabase.table("Exemplar").insert(ex_data).execute()
+            }).execute()
             exemplares.append(ex.data[0])
 
         return {"livro": livro_resp.data[0], "exemplares": exemplares}
@@ -222,29 +237,45 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
 def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
     try:
         payload = livro.model_dump()
-        payload.pop("exemplarISBN", None)
 
-        # Remover relacionamentos do payload principal
-        id_categoria = payload.pop("idCategoria", None)
-        id_genero    = payload.pop("idGenero", None)
+        # Extrair todos os campos que NÃO são colunas de Livro
+        payload.pop("exemplarISBN", None)
+        id_categoria  = payload.pop("idCategoria", None)
+        id_genero     = payload.pop("idGenero", None)
+        nome_autor    = (payload.pop("livAutor", None) or "").strip() or None
+        nome_editora  = (payload.pop("livEditora", None) or "").strip() or None
+
+        # Resolver idEditora
+        if nome_editora:
+            ed = supabase.table("Editora").select("idEditora").eq("ediNome", nome_editora).limit(1).execute()
+            if ed.data:
+                payload["idEditora"] = ed.data[0]["idEditora"]
+            else:
+                nova_ed = supabase.table("Editora").insert({"ediNome": nome_editora}).execute()
+                payload["idEditora"] = nova_ed.data[0]["idEditora"]
 
         resp = supabase.table("Livro").update(payload).eq("idLivro", idLivro).execute()
         if not resp.data:
             raise HTTPException(status_code=404, detail="Livro não encontrado")
 
-        # Atualizar categoria: apaga o existente e insere o novo
+        # Atualizar autor
+        if nome_autor:
+            au = supabase.table("Autor").select("idAutor").eq("autNome", nome_autor).limit(1).execute()
+            if au.data:
+                id_autor = au.data[0]["idAutor"]
+            else:
+                novo_au = supabase.table("Autor").insert({"autNome": nome_autor}).execute()
+                id_autor = novo_au.data[0]["idAutor"]
+            supabase.table("LivroAutor").delete().eq("idLivro", idLivro).execute()
+            supabase.table("LivroAutor").insert({"idLivro": idLivro, "idAutor": id_autor}).execute()
+
+        # Atualizar categoria e gênero
         if id_categoria is not None:
             supabase.table("LivroCategoria").delete().eq("idLivro", idLivro).execute()
-            supabase.table("LivroCategoria").insert({
-                "idLivro": idLivro, "idCategoria": id_categoria
-            }).execute()
-
-        # Atualizar gênero: idem
+            supabase.table("LivroCategoria").insert({"idLivro": idLivro, "idCategoria": id_categoria}).execute()
         if id_genero is not None:
             supabase.table("LivroGenero").delete().eq("idLivro", idLivro).execute()
-            supabase.table("LivroGenero").insert({
-                "idLivro": idLivro, "idGenero": id_genero
-            }).execute()
+            supabase.table("LivroGenero").insert({"idLivro": idLivro, "idGenero": id_genero}).execute()
 
         return resp.data[0]
     except HTTPException:

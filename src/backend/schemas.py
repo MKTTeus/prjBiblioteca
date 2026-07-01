@@ -23,15 +23,17 @@ class Signup(BaseModel):
 
 class Livro(BaseModel):
     livTitulo: str
-    livAutor: str
     livDescricao: Optional[str] = None
-    livEditora: Optional[str] = None
-    livAnoPublicacao: Optional[str] = None
+    livAnoPublicacao: Optional[int] = None
     livPaginas: Optional[int] = None
     livCapaURL: Optional[str] = None
-    exemplarISBN: Optional[str] = None
-    idCategoria: int = 1
-    idGenero: int = 1
+    livISBN: Optional[str] = None
+    # Campos relacionais — não são colunas de Livro, tratados no router
+    livAutor: Optional[str] = None       # → tabela Autor + LivroAutor
+    livEditora: Optional[str] = None     # → tabela Editora (FK idEditora)
+    idCategoria: Optional[int] = None   # → tabela LivroCategoria
+    idGenero: Optional[int] = None      # → tabela LivroGenero
+    exemplarISBN: Optional[str] = None  # → Exemplar (não em Livro)
 
 
 class LivroCreate(BaseModel):
