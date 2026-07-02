@@ -131,6 +131,14 @@ export default function BasicInfoSection({
             autores,
             isbn: isbnLimpo,
           });
+        } catch (err) {
+          console.error("Erro ao buscar no Open Library:", err);
+          dados = null;
+        }
+
+        if (!dados) {
+          setErroISBN("ISBN não encontrado. Tente novamente.");
+          return;
         }
 
         let autorNome = dados.autorNome || "";
@@ -187,13 +195,14 @@ export default function BasicInfoSection({
           idCategoria: categoriaId,
           idGenero: generoId,
         });
-      } catch {
+      } catch (err) {
+        console.error("Erro ao processar ISBN:", err);
         setErroISBN("Erro ao consultar os dados do ISBN. Tente novamente.");
       } finally {
         setBuscandoISBN(false);
       }
     },
-    [autores, categorias, generos, onCriarAutor, onCriarCategoria, onCriarGenero, onISBNAutoFill, onFieldChange]
+    [autores, categorias, generos, onCriarAutor, onCriarCategoria, onCriarGenero, onISBNAutoFill]
   );
 
   const handleISBNDetectado = useCallback(
