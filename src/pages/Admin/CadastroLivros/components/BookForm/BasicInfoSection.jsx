@@ -145,52 +145,7 @@ export default function BasicInfoSection({
               />
             </label>
 
-            {/* AUTOR */}
-            <div className="editor-field">
-              <span>Autor</span>
-              {criandoAutor ? (
-                <div className="inline-create-row">
-                  <input
-                    autoFocus
-                    value={novoAutor}
-                    onChange={(e) => setNovoAutor(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCriarAutor()}
-                    placeholder="Nome do novo autor"
-                  />
-                  <button type="button" className="inline-create-confirm" onClick={handleCriarAutor}>
-                    Confirmar
-                  </button>
-                  <button type="button" className="inline-create-cancel" onClick={() => setCriandoAutor(false)}>
-                    Cancelar
-                  </button>
-                </div>
-              ) : (
-                <div className="inline-select-row">
-                  <select
-                    name="livAutor"
-                    value={form.livAutor}
-                    onChange={(e) => onFieldChange("livAutor", e.target.value)}
-                  >
-                    <option value="">Selecione um autor</option>
-                    {autores.map((aut) => (
-                      <option key={aut.idAutor} value={aut.autNome}>
-                        {aut.autNome}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    className="inline-create-btn"
-                    title="Criar novo autor"
-                    onClick={() => { setNovoAutor(""); setCriandoAutor(true); }}
-                  >
-                    <HiOutlinePlus />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* ISBN com scanner e busca — restaurado do commit 4f3dc7a */}
+             {/* ISBN com scanner e busca */}
             <div className="editor-field">
               <span>ISBN</span>
               <div className="isbn-input-row">
@@ -239,6 +194,51 @@ export default function BasicInfoSection({
               </span>
             </div>
 
+            {/* AUTOR */}
+            <div className="editor-field">
+              <span>Autor</span>
+              {criandoAutor ? (
+                <div className="inline-create-row">
+                  <input
+                    autoFocus
+                    value={novoAutor}
+                    onChange={(e) => setNovoAutor(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCriarAutor()}
+                    placeholder="Nome do novo autor"
+                  />
+                  <button type="button" className="inline-create-confirm" onClick={handleCriarAutor}>
+                    Confirmar
+                  </button>
+                  <button type="button" className="inline-create-cancel" onClick={() => setCriandoAutor(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <div className="inline-select-row">
+                  <select
+                    name="livAutor"
+                    value={form.livAutor}
+                    onChange={(e) => onFieldChange("livAutor", e.target.value)}
+                  >
+                    <option value="">Selecione um autor</option>
+                    {autores.map((aut) => (
+                      <option key={aut.idAutor} value={aut.autNome}>
+                        {aut.autNome}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="inline-create-btn"
+                    title="Criar novo autor"
+                    onClick={() => { setNovoAutor(""); setCriandoAutor(true); }}
+                  >
+                    <HiOutlinePlus />
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* GÊNERO */}
             <div className="editor-field">
               <span>Gênero</span>
@@ -265,6 +265,7 @@ export default function BasicInfoSection({
                     value={form.idGenero}
                     onChange={(e) => onFieldChange("idGenero", e.target.value)}
                   >
+                    <option value="">Selecione um gênero</option>
                     {generos.map((gen) => (
                       <option key={gen.idGenero} value={gen.idGenero}>
                         {gen.genNome}
@@ -316,6 +317,7 @@ export default function BasicInfoSection({
                   value={form.idCategoria}
                   onChange={(e) => onFieldChange("idCategoria", e.target.value)}
                 >
+                  <option value="">Selecione uma categoria</option>
                   {categorias.map((cat) => (
                     <option key={cat.idCategoria} value={cat.idCategoria}>
                       {cat.catNome}
