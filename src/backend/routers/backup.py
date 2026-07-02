@@ -206,7 +206,9 @@ class RestaurarRequest(BaseModel):
     senha: str
 
 
-# Tabelas e suas PKs para upsert (na ordem correta de dependência)
+# Tabelas e suas PKs para upsert (na ordem correta de dependência).
+# LivroAutor/LivroCategoria/LivroGenero têm chave composta (sem coluna de
+# identidade própria) — on_conflict precisa listar as duas colunas da PK.
 TABELAS_PK = {
     "Usuario":              "idUsuario",
     "Administrador":        "idAdmin",
@@ -216,12 +218,27 @@ TABELAS_PK = {
     "Editora":              "idEditora",
     "Categoria":            "idCategoria",
     "Genero":               "idGenero",
-    "LivroAutor":           "idLivroAutor",
-    "LivroCategoria":       "idLivroCategoria",
-    "LivroGenero":          "idLivroGenero",
+    "LivroAutor":           "idLivro,idAutor",
+    "LivroCategoria":       "idCategoria,idLivro",
+    "LivroGenero":          "idGenero,idLivro",
     "Movimentacao":         None,  # GENERATED ALWAYS AS IDENTITY → via RPC
     "MovimentacaoExemplar": None,  # depende de Movimentacao → via RPC
     "Configuracoes":        "chave",
+}
+
+# Tabelas com coluna de identidade própria (GENERATED ALWAYS AS IDENTITY)
+# cuja sequência precisa ser reajustada depois do upsert com ID explícito.
+# Movimentacao/MovimentacaoExemplar já fazem isso dentro das próprias RPCs;
+# Configuracoes e as tabelas de junção (chave composta) não têm sequência.
+TABELAS_RESYNC = {
+    "Usuario":       "idUsuario",
+    "Administrador": "idAdmin",
+    "Livro":         "idLivro",
+    "Exemplar":      "idExemplar",
+    "Autor":         "idAutor",
+    "Editora":       "idEditora",
+    "Categoria":     "idCategoria",
+    "Genero":        "idGenero",
 }
 
 # Ordem de deleção invertida (filho antes do pai) para respeitar FK
@@ -281,6 +298,14 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
                 supabase.rpc("restaurar_movimentacao_exemplar", {"registros": registros}).execute()
             else:
                 supabase.table(tabela).upsert(registros, on_conflict=pk).execute()
+                if tabela in TABELAS_RESYNC:
+                    try:
+                        supabase.rpc(
+                            "resync_identity_sequence",
+                            {"nome_tabela": tabela, "nome_coluna": TABELAS_RESYNC[tabela]},
+                        ).execute()
+                    except Exception as e:
+                        erros.append({"tabela": tabela, "erro": f"upsert ok, falha ao reajustar sequência: {str(e)}"})
             restauradas[tabela] = len(registros)
         except Exception as e:
             erros.append({"tabela": tabela, "erro": str(e)})
