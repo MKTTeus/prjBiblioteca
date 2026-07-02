@@ -21,6 +21,14 @@ import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
 import "./BookFormModal.css";
 
+function normalizeText(value = "") {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
 const TAB_ITEMS = [
   { id: "basic", label: "Informações Básicas" },
   { id: "publication", label: "Informações de Publicação" },
@@ -314,9 +322,13 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           const catsAtualizadas = await getCategorias();
           setCategorias(catsAtualizadas || []);
           const existente = (catsAtualizadas || []).find(
-            (item) => (item.catNome || "").trim().toLowerCase() === nome.trim().toLowerCase()
+            (item) => normalizeText(item.catNome) === normalizeText(nome)
           );
           if (existente) return existente;
+          console.warn(
+            "Categoria reportada como duplicada pelo backend, mas não encontrada na lista atualizada.",
+            { nomeBuscado: nome, categoriasCarregadas: (catsAtualizadas || []).map((c) => c.catNome) }
+          );
         } catch (refreshErr) {
           console.error("Erro ao recarregar categorias:", refreshErr);
         }
@@ -339,9 +351,13 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           const gensAtualizados = await getGeneros();
           setGeneros(gensAtualizados || []);
           const existente = (gensAtualizados || []).find(
-            (item) => (item.genNome || "").trim().toLowerCase() === nome.trim().toLowerCase()
+            (item) => normalizeText(item.genNome) === normalizeText(nome)
           );
           if (existente) return existente;
+          console.warn(
+            "Gênero reportado como duplicado pelo backend, mas não encontrado na lista atualizada.",
+            { nomeBuscado: nome, generosCarregados: (gensAtualizados || []).map((g) => g.genNome) }
+          );
         } catch (refreshErr) {
           console.error("Erro ao recarregar gêneros:", refreshErr);
         }
@@ -364,7 +380,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           const autsAtualizados = await getAutores();
           setAutores(autsAtualizados || []);
           const existente = (autsAtualizados || []).find(
-            (item) => (item.autNome || "").trim().toLowerCase() === nome.trim().toLowerCase()
+            (item) => normalizeText(item.autNome) === normalizeText(nome)
           );
           if (existente) return existente;
         } catch (refreshErr) {
