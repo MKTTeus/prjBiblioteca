@@ -54,7 +54,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const { addToast } = useToast();
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
-  const [autores, setAutores] = useState([]);
   const [editoras, setEditoras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -334,29 +333,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     );
   }
 
-  async function handleCriarCategoria(nome) {
-  try {
-    const nova = await createCategoria({ catNome: nome });
-    setCategorias((prev) => [...prev, nova]);
-    addToast(`Categoria "${nome}" criada com sucesso`, "success");
-    return nova;
-  } catch {
-    addToast("Erro ao criar categoria", "error");
-    return null;
-  }
-}
-
-async function handleCriarGenero(nome) {
-  try {
-    const novo = await createGenero({ genNome: nome });
-    setGeneros((prev) => [...prev, novo]);
-    addToast(`Gênero "${nome}" criado com sucesso`, "success");
-    return novo;
-  } catch {
-    addToast("Erro ao criar gênero", "error");
-    return null;
-  }
-}
   return (
     <div className="modal-overlay">
       <div className="editor-modal-container">
