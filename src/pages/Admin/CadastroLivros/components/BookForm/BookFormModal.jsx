@@ -35,8 +35,8 @@ const DEFAULT_FORM = {
   livAnoPublicacao: "",
   livPaginas: "",
   livCapaURL: "",
-  idCategoria: 1,
-  idGenero: 1,
+  idCategoria: "",
+  idGenero: "",
   exemplarISBN: "",
 };
 
