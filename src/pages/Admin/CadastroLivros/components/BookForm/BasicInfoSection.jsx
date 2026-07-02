@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
-import { HiOutlineQrCode, HiOutlineMagnifyingGlass } from "react-icons/hi2";
+import { HiOutlineQrCode, HiOutlineMagnifyingGlass, HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
+import { completarLivroComIA } from "../../../../../services/api";
 
 function normalizeText(value = "") {
   return String(value ?? "")
@@ -99,6 +100,59 @@ export default function BasicInfoSection({
   const [buscandoISBN, setBuscandoISBN] = useState(false);
   const [erroISBN, setErroISBN] = useState(null);
 
+  const [iaCarregando, setIaCarregando] = useState(false);
+  const [iaErro, setIaErro] = useState(null);
+  const [iaSugestao, setIaSugestao] = useState(null);
+  const [iaCamposMarcados, setIaCamposMarcados] = useState({});
+
+  // Encontra uma categoria/gênero já cadastrado pelo nome ou cria um novo.
+  // Compartilhado entre a busca por ISBN e a sugestão da IA para não duplicar a lógica.
+  const resolverCategoria = useCallback(
+    async (nomeCategoria) => {
+      if (!nomeCategoria || !nomeCategoria.trim()) return "";
+      const existente = categorias.find(
+        (item) => normalizeText(item.catNome) === normalizeText(nomeCategoria)
+      );
+      if (existente) return existente.idCategoria;
+      try {
+        const criada = await onCriarCategoria(nomeCategoria);
+        return criada?.idCategoria ?? "";
+      } catch (err) {
+        if (err.status === 409) {
+          const achada = categorias.find(
+            (item) => normalizeText(item.catNome) === normalizeText(nomeCategoria)
+          );
+          if (achada) return achada.idCategoria;
+        }
+        return "";
+      }
+    },
+    [categorias, onCriarCategoria]
+  );
+
+  const resolverGenero = useCallback(
+    async (nomeGenero) => {
+      if (!nomeGenero || !nomeGenero.trim()) return "";
+      const existente = generos.find(
+        (item) => normalizeText(item.genNome) === normalizeText(nomeGenero)
+      );
+      if (existente) return existente.idGenero;
+      try {
+        const criado = await onCriarGenero(nomeGenero);
+        return criado?.idGenero ?? "";
+      } catch (err) {
+        if (err.status === 409) {
+          const achado = generos.find(
+            (item) => normalizeText(item.genNome) === normalizeText(nomeGenero)
+          );
+          if (achado) return achado.idGenero;
+        }
+        return "";
+      }
+    },
+    [generos, onCriarGenero]
+  );
+
   const buscarPorISBN = useCallback(
     async (isbn) => {
       const isbnLimpo = isbn.replace(/[^0-9X]/gi, "");
@@ -126,8 +180,6 @@ export default function BasicInfoSection({
 
           dados = buildISBNAutoFillData({
             livro,
-            categorias,
-            generos,
             autores,
             isbn: isbnLimpo,
           });
@@ -142,8 +194,6 @@ export default function BasicInfoSection({
         }
 
         let autorNome = dados.autorNome || "";
-        let categoriaId = dados.idCategoria || "";
-        let generoId = dados.idGenero || "";
 
         if (autorNome) {
           const autorExistente = autores.find((item) => normalizeText(item.autNome) === normalizeText(autorNome));
@@ -157,59 +207,8 @@ export default function BasicInfoSection({
           }
         }
 
-        if (dados.categoriaNome) {
-          const categoriaExistente = categorias.find(
-            (item) => normalizeText(item.catNome) === normalizeText(dados.categoriaNome)
-          );
-          if (categoriaExistente) {
-            categoriaId = categoriaExistente.idCategoria;
-          } else if (dados.categoriaNome.trim()) {
-            setNovaCategoria(dados.categoriaNome);
-            try {
-              const criada = await onCriarCategoria(dados.categoriaNome);
-              if (criada?.idCategoria) {
-                categoriaId = criada.idCategoria;
-              }
-            } catch (err) {
-              if (err.status === 409) {
-                const categoriaExistente = categorias.find(
-                  (item) => normalizeText(item.catNome) === normalizeText(dados.categoriaNome)
-                );
-                if (categoriaExistente) {
-                  categoriaId = categoriaExistente.idCategoria;
-                }
-              }
-            }
-            setNovaCategoria("");
-          }
-        }
-
-        if (dados.generoNome) {
-          const generoExistente = generos.find(
-            (item) => normalizeText(item.genNome) === normalizeText(dados.generoNome)
-          );
-          if (generoExistente) {
-            generoId = generoExistente.idGenero;
-          } else if (dados.generoNome.trim()) {
-            setNovoGenero(dados.generoNome);
-            try {
-              const criado = await onCriarGenero(dados.generoNome);
-              if (criado?.idGenero) {
-                generoId = criado.idGenero;
-              }
-            } catch (err) {
-              if (err.status === 409) {
-                const generoExistente = generos.find(
-                  (item) => normalizeText(item.genNome) === normalizeText(dados.generoNome)
-                );
-                if (generoExistente) {
-                  generoId = generoExistente.idGenero;
-                }
-              }
-            }
-            setNovoGenero("");
-          }
-        }
+        const categoriaId = await resolverCategoria(dados.categoriaNome);
+        const generoId = await resolverGenero(dados.generoNome);
 
         onISBNAutoFill({
           ...dados,
@@ -224,7 +223,7 @@ export default function BasicInfoSection({
         setBuscandoISBN(false);
       }
     },
-    [autores, categorias, generos, onCriarAutor, onCriarCategoria, onCriarGenero, onISBNAutoFill]
+    [autores, onCriarAutor, onISBNAutoFill, resolverCategoria, resolverGenero]
   );
 
   const handleISBNDetectado = useCallback(
@@ -300,6 +299,85 @@ export default function BasicInfoSection({
       setCriandoAutor(false);
     }
   }
+
+  const handleCompletarComIA = useCallback(async () => {
+    setIaErro(null);
+    setIaSugestao(null);
+
+    if (!form.exemplarISBN && !form.livTitulo && !form.livAutor) {
+      setIaErro("Informe pelo menos o ISBN, título ou autor antes de pedir ajuda da IA.");
+      return;
+    }
+
+    const categoriaAtual = categorias.find((c) => String(c.idCategoria) === String(form.idCategoria));
+    const generoAtual = generos.find((g) => String(g.idGenero) === String(form.idGenero));
+
+    setIaCarregando(true);
+    try {
+      const sugestao = await completarLivroComIA({
+        isbn: form.exemplarISBN || undefined,
+        livTitulo: form.livTitulo || undefined,
+        livAutor: form.livAutor || undefined,
+        livEditora: form.livEditora || undefined,
+        livAnoPublicacao: form.livAnoPublicacao ? Number(form.livAnoPublicacao) : undefined,
+        livPaginas: form.livPaginas ? Number(form.livPaginas) : undefined,
+        livDescricao: form.livDescricao || undefined,
+        categoriaNome: categoriaAtual?.catNome,
+        generoNome: generoAtual?.genNome,
+        categorias_existentes: categorias.map((c) => c.catNome),
+        generos_existentes: generos.map((g) => g.genNome),
+      });
+
+      const incertos = new Set(sugestao.campos_incertos || []);
+      const marcarPorPadrao = (campo) => !incertos.has(campo);
+
+      setIaSugestao(sugestao);
+      setIaCamposMarcados({
+        titulo: marcarPorPadrao("titulo"),
+        autor_principal: marcarPorPadrao("autor_principal"),
+        editora: marcarPorPadrao("editora"),
+        ano_publicacao: marcarPorPadrao("ano_publicacao"),
+        paginas: marcarPorPadrao("paginas"),
+        descricao: marcarPorPadrao("descricao"),
+        categoria_sugerida: marcarPorPadrao("categoria_sugerida"),
+        genero_sugerido: marcarPorPadrao("genero_sugerido"),
+      });
+    } catch (err) {
+      console.error("Erro ao completar com IA:", err);
+      setIaErro(err?.data?.detail || "Não foi possível consultar a IA agora. Tente novamente.");
+    } finally {
+      setIaCarregando(false);
+    }
+  }, [form, categorias, generos]);
+
+  const handleToggleCampoIA = (campo) => {
+    setIaCamposMarcados((prev) => ({ ...prev, [campo]: !prev[campo] }));
+  };
+
+  const handleAplicarSugestoesIA = useCallback(async () => {
+    if (!iaSugestao) return;
+    const marcados = iaCamposMarcados;
+    const atualizacoes = {};
+
+    if (marcados.titulo && iaSugestao.titulo) atualizacoes.livTitulo = iaSugestao.titulo;
+    if (marcados.autor_principal && iaSugestao.autor_principal) atualizacoes.livAutor = iaSugestao.autor_principal;
+    if (marcados.editora && iaSugestao.editora) atualizacoes.livEditora = iaSugestao.editora;
+    if (marcados.ano_publicacao && iaSugestao.ano_publicacao) atualizacoes.livAnoPublicacao = String(iaSugestao.ano_publicacao);
+    if (marcados.paginas && iaSugestao.paginas) atualizacoes.livPaginas = String(iaSugestao.paginas);
+    if (marcados.descricao && iaSugestao.descricao) atualizacoes.livDescricao = iaSugestao.descricao;
+
+    if (marcados.categoria_sugerida && iaSugestao.categoria_sugerida) {
+      atualizacoes.idCategoria = await resolverCategoria(iaSugestao.categoria_sugerida);
+    }
+    if (marcados.genero_sugerido && iaSugestao.genero_sugerido) {
+      atualizacoes.idGenero = await resolverGenero(iaSugestao.genero_sugerido);
+    }
+
+    Object.entries(atualizacoes).forEach(([campo, valor]) => onFieldChange(campo, valor));
+
+    setIaSugestao(null);
+    setIaCamposMarcados({});
+  }, [iaSugestao, iaCamposMarcados, resolverCategoria, resolverGenero, onFieldChange]);
 
   return (
     <>
@@ -529,6 +607,25 @@ export default function BasicInfoSection({
               rows={5}
             />
           </label>
+
+          <button
+            type="button"
+            className="ia-completar-btn"
+            onClick={handleCompletarComIA}
+            disabled={iaCarregando}
+            style={{ marginTop: "12px" }}
+          >
+            {iaCarregando ? (
+              <span className="isbn-spinner" />
+            ) : (
+              <HiOutlineSparkles />
+            )}
+            <span>{iaCarregando ? "Consultando IA..." : "Completar com IA"}</span>
+          </button>
+          {iaErro && <span className="isbn-error-msg">{iaErro}</span>}
+          <span className="isbn-hint-msg">
+            A IA sugere os campos que faltam com base no que já foi preenchido. Você revisa antes de aplicar.
+          </span>
         </div>
 
         <div className="editor-side-panel basic-cover-column">
@@ -569,6 +666,73 @@ export default function BasicInfoSection({
           </div>
         </div>
       </div>
+
+      {iaSugestao && (
+        <div className="ia-review-panel">
+          <div className="ia-review-header">
+            <span className="ia-review-title">
+              <HiOutlineSparkles /> Sugestões da IA
+            </span>
+            <span className={`ia-confianca-badge ia-confianca-${iaSugestao.confianca_geral}`}>
+              Confiança {iaSugestao.confianca_geral}
+            </span>
+          </div>
+          <p className="ia-review-hint">
+            Marque os campos que quer aplicar ao cadastro. Campos com confiança baixa vêm desmarcados por padrão.
+          </p>
+
+          <div className="ia-review-fields">
+            {[
+              { campo: "titulo", label: "Título", valor: iaSugestao.titulo },
+              { campo: "autor_principal", label: "Autor", valor: iaSugestao.autor_principal },
+              { campo: "editora", label: "Editora", valor: iaSugestao.editora },
+              { campo: "ano_publicacao", label: "Ano", valor: iaSugestao.ano_publicacao },
+              { campo: "paginas", label: "Páginas", valor: iaSugestao.paginas },
+              { campo: "categoria_sugerida", label: "Categoria", valor: iaSugestao.categoria_sugerida },
+              { campo: "genero_sugerido", label: "Gênero", valor: iaSugestao.genero_sugerido },
+              { campo: "descricao", label: "Descrição", valor: iaSugestao.descricao },
+            ]
+              .filter((item) => item.valor)
+              .map((item) => (
+                <label key={item.campo} className="ia-review-field">
+                  <input
+                    type="checkbox"
+                    checked={!!iaCamposMarcados[item.campo]}
+                    onChange={() => handleToggleCampoIA(item.campo)}
+                  />
+                  <span className="ia-review-field-label">{item.label}</span>
+                  <span className="ia-review-field-valor">{item.valor}</span>
+                </label>
+              ))}
+
+            {(iaSugestao.palavras_chave?.length > 0 || iaSugestao.faixa_etaria || iaSugestao.idioma) && (
+              <div className="ia-review-extra">
+                {iaSugestao.idioma && <span><strong>Idioma:</strong> {iaSugestao.idioma}</span>}
+                {iaSugestao.faixa_etaria && <span><strong>Faixa etária:</strong> {iaSugestao.faixa_etaria}</span>}
+                {iaSugestao.palavras_chave?.length > 0 && (
+                  <span><strong>Palavras-chave:</strong> {iaSugestao.palavras_chave.join(", ")}</span>
+                )}
+                <span className="ia-review-extra-note">
+                  (esses campos ainda não têm um lugar no cadastro — serão usados na classificação automática)
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="ia-review-actions">
+            <button type="button" className="ia-review-aplicar" onClick={handleAplicarSugestoesIA}>
+              <HiOutlineCheck /> Aplicar selecionados
+            </button>
+            <button
+              type="button"
+              className="ia-review-descartar"
+              onClick={() => { setIaSugestao(null); setIaCamposMarcados({}); }}
+            >
+              <HiOutlineXMark /> Descartar
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

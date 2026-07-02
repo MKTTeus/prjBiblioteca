@@ -11,4 +11,5 @@ cryptography
 pydantic
 supabase
 httpx
+google-genai
 openpyxl

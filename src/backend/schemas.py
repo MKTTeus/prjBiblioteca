@@ -45,6 +45,19 @@ class LivroCreate(BaseModel):
     prefixo_tombo: str = "T"
 
 
+class CompletarIARequest(BaseModel):
+    isbn: Optional[str] = None
+    livTitulo: Optional[str] = None
+    livAutor: Optional[str] = None
+    livEditora: Optional[str] = None
+    livAnoPublicacao: Optional[int] = None
+    livPaginas: Optional[int] = None
+    livDescricao: Optional[str] = None
+    categoriaNome: Optional[str] = None
+    generoNome: Optional[str] = None
+    categorias_existentes: Optional[list[str]] = None
+    generos_existentes: Optional[list[str]] = None
+
 class EmprestimoSolicitacao(BaseModel):
     idExemplar: int
 

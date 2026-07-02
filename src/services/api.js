@@ -85,6 +85,12 @@ export const addExemplares = (idLivro, quantidade, prefixo) =>
     method: "POST"
   });
 
+export const completarLivroComIA = (payload) =>
+  apiFetch("/livros/completar-com-ia", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
 export const updateExemplar = (idExemplar, payload) =>
   apiFetch(`/exemplares/${idExemplar}`, {
     method: "PUT",
