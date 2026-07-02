@@ -165,9 +165,20 @@ export default function BasicInfoSection({
             categoriaId = categoriaExistente.idCategoria;
           } else if (dados.categoriaNome.trim()) {
             setNovaCategoria(dados.categoriaNome);
-            const criada = await onCriarCategoria(dados.categoriaNome);
-            if (criada?.idCategoria) {
-              categoriaId = criada.idCategoria;
+            try {
+              const criada = await onCriarCategoria(dados.categoriaNome);
+              if (criada?.idCategoria) {
+                categoriaId = criada.idCategoria;
+              }
+            } catch (err) {
+              if (err.status === 409) {
+                const categoriaExistente = categorias.find(
+                  (item) => normalizeText(item.catNome) === normalizeText(dados.categoriaNome)
+                );
+                if (categoriaExistente) {
+                  categoriaId = categoriaExistente.idCategoria;
+                }
+              }
             }
             setNovaCategoria("");
           }
@@ -181,9 +192,20 @@ export default function BasicInfoSection({
             generoId = generoExistente.idGenero;
           } else if (dados.generoNome.trim()) {
             setNovoGenero(dados.generoNome);
-            const criado = await onCriarGenero(dados.generoNome);
-            if (criado?.idGenero) {
-              generoId = criado.idGenero;
+            try {
+              const criado = await onCriarGenero(dados.generoNome);
+              if (criado?.idGenero) {
+                generoId = criado.idGenero;
+              }
+            } catch (err) {
+              if (err.status === 409) {
+                const generoExistente = generos.find(
+                  (item) => normalizeText(item.genNome) === normalizeText(dados.generoNome)
+                );
+                if (generoExistente) {
+                  generoId = generoExistente.idGenero;
+                }
+              }
             }
             setNovoGenero("");
           }
@@ -217,22 +239,54 @@ export default function BasicInfoSection({
   async function handleCriarCategoria() {
     const nome = novaCategoria.trim();
     if (!nome) return;
-    const criada = await onCriarCategoria(nome);
-    if (criada) {
-      onFieldChange("idCategoria", criada.idCategoria);
-      setNovaCategoria("");
-      setCriandoCategoria(false);
+    
+    try {
+      const criada = await onCriarCategoria(nome);
+      if (criada) {
+        onFieldChange("idCategoria", criada.idCategoria);
+        setNovaCategoria("");
+        setCriandoCategoria(false);
+      }
+    } catch (err) {
+      if (err.status === 409) {
+        const categoriaExistente = categorias.find(
+          (item) => normalizeText(item.catNome) === normalizeText(nome)
+        );
+        if (categoriaExistente) {
+          onFieldChange("idCategoria", categoriaExistente.idCategoria);
+          setNovaCategoria("");
+          setCriandoCategoria(false);
+        }
+      } else {
+        console.error("Erro ao criar categoria:", err);
+      }
     }
   }
 
   async function handleCriarGenero() {
     const nome = novoGenero.trim();
     if (!nome) return;
-    const criado = await onCriarGenero(nome);
-    if (criado) {
-      onFieldChange("idGenero", criado.idGenero);
-      setNovoGenero("");
-      setCriandoGenero(false);
+    
+    try {
+      const criado = await onCriarGenero(nome);
+      if (criado) {
+        onFieldChange("idGenero", criado.idGenero);
+        setNovoGenero("");
+        setCriandoGenero(false);
+      }
+    } catch (err) {
+      if (err.status === 409) {
+        const generoExistente = generos.find(
+          (item) => normalizeText(item.genNome) === normalizeText(nome)
+        );
+        if (generoExistente) {
+          onFieldChange("idGenero", generoExistente.idGenero);
+          setNovoGenero("");
+          setCriandoGenero(false);
+        }
+      } else {
+        console.error("Erro ao criar gênero:", err);
+      }
     }
   }
 
