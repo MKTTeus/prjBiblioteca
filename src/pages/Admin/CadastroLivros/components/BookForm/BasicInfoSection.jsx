@@ -2,7 +2,7 @@ import React, { useState, useCallback } from "react";
 import { HiOutlinePhotograph, HiOutlineUpload } from "react-icons/hi";
 import { HiOutlineQrCode, HiOutlineMagnifyingGlass } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
-import SelectOuCriar from "../../../../../components/SelectOuCriar/SelectOuCriar";
+import SelectOuCriar from "../SelectOuCriar/SelectOuCriar";
 
 export default function BasicInfoSection({
   form,
