@@ -158,6 +158,21 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }));
   }
 
+  function handlePreencherISBN(dados) {
+    setForm((prev) => ({
+      ...prev,
+      livTitulo:        dados.livTitulo        || prev.livTitulo,
+      livAutor:         dados.livAutor         || prev.livAutor,
+      livEditora:       dados.livEditora        || prev.livEditora,
+      livAnoPublicacao: dados.livAnoPublicacao  || prev.livAnoPublicacao,
+      livPaginas:       dados.livPaginas        || prev.livPaginas,
+      livCapaURL:       dados.livCapaURL        || prev.livCapaURL,
+      livDescricao:     dados.livDescricao      || prev.livDescricao,
+      exemplarISBN:     dados.exemplarISBN      || prev.exemplarISBN,
+    }));
+    addToast("Dados preenchidos a partir do ISBN!", "success");
+  }
+
   async function handleUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -326,6 +341,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         autores={autores}
         onFieldChange={handleFieldChange}
         onUpload={handleUpload}
+        onISBNAutoFill={handlePreencherISBN}
         onCriarCategoria={handleCriarCategoria}
         onCriarGenero={handleCriarGenero}
         onCriarAutor={handleCriarAutor}

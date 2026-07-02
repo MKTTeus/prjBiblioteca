@@ -1,0 +1,51 @@
+.soc-criar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.soc-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.soc-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1.5px solid var(--surface-muted);
+  background: var(--surface-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  padding: 0;
+  font-size: 15px;
+}
+
+.soc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.soc-btn-confirm {
+  color: var(--success, #16a34a);
+  border-color: var(--success, #16a34a);
+}
+
+.soc-btn-confirm:hover:not(:disabled) {
+  background: var(--status-success-bg);
+  transform: none;
+}
+
+.soc-btn-cancel {
+  color: var(--danger, #dc2626);
+  border-color: var(--danger, #dc2626);
+}
+
+.soc-btn-cancel:hover:not(:disabled) {
+  background: var(--status-danger-bg);
+  transform: none;
+}
