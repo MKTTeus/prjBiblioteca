@@ -163,10 +163,10 @@ export default function BasicInfoSection({
           );
           if (categoriaExistente) {
             categoriaId = categoriaExistente.idCategoria;
-          } else {
+          } else if (dados.categoriaNome.trim()) {
             setNovaCategoria(dados.categoriaNome);
             const criada = await onCriarCategoria(dados.categoriaNome);
-            if (criada) {
+            if (criada?.idCategoria) {
               categoriaId = criada.idCategoria;
             }
             setNovaCategoria("");
@@ -179,10 +179,10 @@ export default function BasicInfoSection({
           );
           if (generoExistente) {
             generoId = generoExistente.idGenero;
-          } else {
+          } else if (dados.generoNome.trim()) {
             setNovoGenero(dados.generoNome);
             const criado = await onCriarGenero(dados.generoNome);
-            if (criado) {
+            if (criado?.idGenero) {
               generoId = criado.idGenero;
             }
             setNovoGenero("");
