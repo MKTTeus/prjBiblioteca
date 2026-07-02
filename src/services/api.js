@@ -103,6 +103,13 @@ export const createGenero = (payload) =>
     body: JSON.stringify(payload),
   });
 
+export const getAutores = () => apiFetch("/autores");
+export const createAutor = (payload) =>
+  apiFetch("/autores", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
 // ========================
 // CAPA
 // ========================
@@ -139,9 +146,6 @@ export const getCategorias = () =>
 
 export const getGeneros = () =>
   apiFetch("/generos");
-
-export const getAutores = () =>
-  apiFetch("/autores");
 
 export const getEditoras = () =>
   apiFetch("/editoras");

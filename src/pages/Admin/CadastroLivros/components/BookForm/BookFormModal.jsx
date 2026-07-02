@@ -5,11 +5,13 @@ import {
   getBook,
   getCategorias,
   getGeneros,
+  getAutores,
   updateBook,
   updateExemplar,
   uploadCover,
   createCategoria,
   createGenero,
+  createAutor,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
@@ -52,7 +54,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const { addToast } = useToast();
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
-  const [editoras, setEditoras] = useState([]);
+  const [autores, setAutores] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
@@ -118,13 +120,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   const carregarMetadados = useCallback(async () => {
     try {
-      const [cats, gens, auts, eds] = await Promise.all([
-        getCategorias(), getGeneros(), getAutores(), getEditoras()
-      ]);
+      const [cats, gens, auts] = await Promise.all([getCategorias(), getGeneros(), getAutores()]);
       setCategorias(cats || []);
       setGeneros(gens || []);
       setAutores(auts || []);
-      setEditoras(eds || []);
     } catch (err) {
       console.error(err);
       addToast("Falha ao carregar metadados do formulário", "error");
@@ -162,7 +161,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   async function handleUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       setLoading(true);
       const res = await uploadCover(file);
@@ -177,7 +175,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   async function handleSave() {
     setLoading(true);
-
     try {
       if (bookToEdit) {
         const normalizedForm = normalizeBookForm(form);
@@ -191,7 +188,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           const initialExemplar = normalizedInitialExemplares.find(
             (item) => item.idExemplar === exemplar.idExemplar
           );
-
           return JSON.stringify(exemplar) !== JSON.stringify(initialExemplar);
         });
 
@@ -221,11 +217,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
               })
             )
           );
-
           exemplarResults.forEach((result, index) => {
             if (result.status === "rejected") {
               const exemplar = changedExemplares[index];
-              console.error(`Erro ao salvar exemplar ${exemplar.exeLivTombo}:`, result.reason);
               saveErrors.push(
                 `Tombo ${exemplar.exeLivTombo || exemplar.idExemplar}: ${getErrorMessage(result.reason)}`
               );
@@ -241,13 +235,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
               addConfig.prefixo || "T"
             );
           } catch (err) {
-            console.error("Erro ao adicionar novos tombos:", err);
             saveErrors.push(`Novos tombos: ${getErrorMessage(err)}`);
           }
         }
 
         if (saveErrors.length > 0) {
-          addToast(bookToEdit ? "Falha ao atualizar o livro" : "Falha ao cadastrar o livro", "error");
+          addToast("Falha ao atualizar o livro", "error");
           return;
         }
       } else {
@@ -256,11 +249,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           setLoading(false);
           return;
         }
-
         await createBook({
-          livro: {
-            ...normalizeBookForm(form),
-          },
+          livro: { ...normalizeBookForm(form) },
           quantidade_exemplares: Number(addConfig.quantidade),
           prefixo_tombo: addConfig.prefixo || "T",
         });
@@ -275,7 +265,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setLoading(false);
     }
   }
-  
+
   async function handleCriarCategoria(nome) {
     try {
       const nova = await createCategoria({ catNome: nome });
@@ -300,11 +290,22 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
+  async function handleCriarAutor(nome) {
+  try {
+    const novo = await createAutor({ autNome: nome });
+    setAutores((prev) => [...prev, novo]);
+    addToast(`Autor "${nome}" criado com sucesso`, "success");
+    return novo;
+  } catch {
+    addToast("Erro ao criar autor", "error");
+    return null;
+  }
+}
+
   function renderActiveSection() {
     if (activeTab === "publication") {
-      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} editoras={editoras} />;
+      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} />;
     }
-
     if (activeTab === "copies") {
       return (
         <TombosSection
@@ -317,16 +318,17 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         />
       );
     }
-
     return (
       <BasicInfoSection
         form={form}
         categorias={categorias}
         generos={generos}
+        autores={autores}
         onFieldChange={handleFieldChange}
         onUpload={handleUpload}
         onCriarCategoria={handleCriarCategoria}
         onCriarGenero={handleCriarGenero}
+        onCriarAutor={handleCriarAutor}
       />
     );
   }
@@ -340,7 +342,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
               <h2>{bookToEdit ? "Editar Livro" : "Novo Livro"}</h2>
               <p>Edite as informações do livro selecionado.</p>
             </div>
-
             <div className="editor-top-actions">
               <LoadingButton
                 type="button"
@@ -352,7 +353,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                 <HiOutlineSave />
                 <span>Salvar Atualizações</span>
               </LoadingButton>
-
               <button
                 type="button"
                 className="editor-close-button"
@@ -424,12 +424,6 @@ function normalizeAddConfig(addConfig) {
 
 function getErrorMessage(err) {
   const message = String(err?.message || "").trim();
-
-  if (!message) {
-    return "Erro ao salvar alterações.";
-  }
-
-  return message.startsWith("Erro")
-    ? message
-    : `Erro ao salvar alterações: ${message}`;
+  if (!message) return "Erro ao salvar alterações.";
+  return message.startsWith("Erro") ? message : `Erro ao salvar alterações: ${message}`;
 }

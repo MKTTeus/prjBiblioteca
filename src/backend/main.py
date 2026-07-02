@@ -14,7 +14,7 @@ from routers.dashboard import router as dashboard_router
 from routers.emails import router as emails_router
 from routers.backup import router as backup_router
 from routers.ano_letivo import router as ano_letivo_router
-
+from routers.autores import router as autores_router
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -46,6 +46,7 @@ ROUTERS = [
     livros_router,
     categorias_router,
     generos_router,
+    autores_router,
     admins_router,
     usuarios_router,
     emprestimos_router,

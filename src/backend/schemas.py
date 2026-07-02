@@ -35,6 +35,9 @@ class Livro(BaseModel):
     idGenero: Optional[int] = None      # → tabela LivroGenero
     exemplarISBN: Optional[str] = None  # → Exemplar (não em Livro)
 
+class Autor(BaseModel):
+    autNome: str
+    autABNT: Optional[str] = None
 
 class LivroCreate(BaseModel):
     livro: Livro

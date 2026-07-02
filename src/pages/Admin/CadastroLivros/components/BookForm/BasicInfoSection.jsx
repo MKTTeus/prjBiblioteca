@@ -5,10 +5,12 @@ export default function BasicInfoSection({
   form,
   categorias,
   generos,
+  autores,          // novo
   onFieldChange,
   onUpload,
   onCriarCategoria,
   onCriarGenero,
+  onCriarAutor,     // novo
 }) {
   const [novaCategoria, setNovaCategoria] = useState("");
   const [novoGenero, setNovoGenero] = useState("");
@@ -39,12 +41,15 @@ export default function BasicInfoSection({
     }
   }
 
-  function handleConfirmarAutor() {
+  async function handleCriarAutor() {
     const nome = novoAutor.trim();
     if (!nome) return;
-    onFieldChange("livAutor", nome);
-    setNovoAutor("");
-    setCriandoAutor(false);
+    const criado = await onCriarAutor(nome);
+    if (criado) {
+      onFieldChange("livAutor", criado.autNome);
+      setNovoAutor("");
+      setCriandoAutor(false);
+    }
   }
 
   return (
@@ -66,7 +71,7 @@ export default function BasicInfoSection({
             />
           </label>
 
-          {/* AUTOR */}
+         {/* AUTOR */}
           <div className="editor-field">
             <span>Autor</span>
             {criandoAutor ? (
@@ -75,10 +80,10 @@ export default function BasicInfoSection({
                   autoFocus
                   value={novoAutor}
                   onChange={(e) => setNovoAutor(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleConfirmarAutor()}
+                  onKeyDown={(e) => e.key === "Enter" && handleCriarAutor()}
                   placeholder="Nome do novo autor"
                 />
-                <button type="button" className="inline-create-confirm" onClick={handleConfirmarAutor}>
+                <button type="button" className="inline-create-confirm" onClick={handleCriarAutor}>
                   Confirmar
                 </button>
                 <button type="button" className="inline-create-cancel" onClick={() => setCriandoAutor(false)}>
@@ -87,16 +92,22 @@ export default function BasicInfoSection({
               </div>
             ) : (
               <div className="inline-select-row">
-                <input
+                <select
                   name="livAutor"
                   value={form.livAutor}
                   onChange={(e) => onFieldChange("livAutor", e.target.value)}
-                  placeholder="Nome do autor"
-                />
+                >
+                  <option value="">Selecione um autor</option>
+                  {autores.map((aut) => (
+                    <option key={aut.idAutor} value={aut.autNome}>
+                      {aut.autNome}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   className="inline-create-btn"
-                  title="Digitar novo autor"
+                  title="Criar novo autor"
                   onClick={() => { setNovoAutor(""); setCriandoAutor(true); }}
                 >
                   <HiOutlinePlus />
