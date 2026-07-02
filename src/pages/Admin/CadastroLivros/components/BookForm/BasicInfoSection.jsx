@@ -3,6 +3,71 @@ import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons
 import { HiOutlineQrCode, HiOutlineMagnifyingGlass } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
 
+function normalizeText(value = "") {
+  return String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function findMatchingOption(options = [], value, key) {
+  const search = normalizeText(value);
+  if (!search) return null;
+  return options.find((item) => normalizeText(item?.[key]) === search) || null;
+}
+
+export function buildISBNAutoFillData({ livro, categorias = [], generos = [], autores = [], isbn = "" }) {
+  const authors = Array.isArray(livro?.authors)
+    ? livro.authors
+        .map((author) => (typeof author === "string" ? author : author?.name))
+        .filter(Boolean)
+    : [];
+  const categories = Array.isArray(livro?.categories) ? livro.categories.filter(Boolean) : [];
+  const subjects = Array.isArray(livro?.subjects) ? livro.subjects.filter(Boolean) : [];
+  const publisher = Array.isArray(livro?.publishers)
+    ? livro.publishers[0]?.name || livro.publishers[0]
+    : livro?.publisher || "";
+
+  const authorName = authors[0] || "";
+  const categoryName = categories[0] || subjects[0] || "";
+  const matchingAutor = findMatchingOption(autores, authorName, "autNome");
+  const matchingCategoria = findMatchingOption(categorias, categoryName, "catNome");
+  const matchingGenero = findMatchingOption(generos, categoryName, "genNome");
+
+  return {
+    livTitulo: livro?.title || livro?.livTitulo || "",
+    livAutor: matchingAutor?.autNome || authorName,
+    livEditora: publisher || "",
+    livAnoPublicacao: livro?.publish_date
+      ? String(livro.publish_date).replace(/\D/g, "").slice(0, 4)
+      : livro?.publishedDate
+        ? String(livro.publishedDate).slice(0, 4)
+        : "",
+    livPaginas: livro?.number_of_pages
+      ? String(livro.number_of_pages)
+      : livro?.pageCount
+        ? String(livro.pageCount)
+        : "",
+    livCapaURL:
+      livro?.cover?.large ||
+      livro?.cover?.medium ||
+      livro?.cover?.small ||
+      livro?.imageLinks?.extraLarge ||
+      livro?.imageLinks?.large ||
+      livro?.imageLinks?.medium ||
+      livro?.imageLinks?.small ||
+      "",
+    livDescricao: livro?.description || "",
+    idCategoria: matchingCategoria?.idCategoria ?? "",
+    idGenero: matchingGenero?.idGenero ?? "",
+    categoriaNome: categoryName,
+    generoNome: categoryName,
+    autorNome: authorName,
+    exemplarISBN: isbn,
+  };
+}
+
 export default function BasicInfoSection({
   form,
   categorias,
@@ -38,42 +103,111 @@ export default function BasicInfoSection({
       setErroISBN(null);
 
       try {
-        const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbnLimpo}&format=json&jscmd=data`;
-        const res = await fetch(url);
-        const json = await res.json();
-        const chave = `ISBN:${isbnLimpo}`;
-        const livro = json[chave];
+        let dados = null;
 
-        if (!livro) {
-          setErroISBN("ISBN não encontrado na Open Library.");
-          return;
+        try {
+          const googleUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbnLimpo}&maxResults=1`;
+          const googleRes = await fetch(googleUrl);
+          const googleJson = await googleRes.json();
+          const googleLivro = googleJson.items?.[0]?.volumeInfo;
+
+          if (googleLivro) {
+            dados = buildISBNAutoFillData({
+              livro: {
+                ...googleLivro,
+                authors: googleLivro.authors || [],
+                categories: googleLivro.categories || [],
+                subjects: googleLivro.categories || [],
+                imageLinks: googleLivro.imageLinks || {},
+              },
+              categorias,
+              generos,
+              autores,
+              isbn: isbnLimpo,
+            });
+          }
+        } catch {
+          dados = null;
         }
 
-        const dados = {
-          livTitulo: livro.title || "",
-          livAutor: livro.authors?.map((a) => a.name).join(", ") || "",
-          livEditora: livro.publishers?.[0]?.name || "",
-          livAnoPublicacao: livro.publish_date
-            ? livro.publish_date.replace(/\D/g, "").slice(0, 4)
-            : "",
-          livPaginas: livro.number_of_pages ? String(livro.number_of_pages) : "",
-          livCapaURL:
-            livro.cover?.large ||
-            livro.cover?.medium ||
-            livro.cover?.small ||
-            "",
-          livDescricao: "",
-          exemplarISBN: isbnLimpo,
-        };
+        if (!dados) {
+          const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbnLimpo}&format=json&jscmd=data`;
+          const res = await fetch(url);
+          const json = await res.json();
+          const chave = `ISBN:${isbnLimpo}`;
+          const livro = json[chave];
 
-        onISBNAutoFill(dados);
+          if (!livro) {
+            setErroISBN("ISBN não encontrado.");
+            return;
+          }
+
+          dados = buildISBNAutoFillData({
+            livro,
+            categorias,
+            generos,
+            autores,
+            isbn: isbnLimpo,
+          });
+        }
+
+        let autorNome = dados.autorNome || "";
+        let categoriaId = dados.idCategoria || "";
+        let generoId = dados.idGenero || "";
+
+        if (autorNome) {
+          const autorExistente = autores.find((item) => normalizeText(item.autNome) === normalizeText(autorNome));
+          if (autorExistente) {
+            autorNome = autorExistente.autNome;
+          } else {
+            const criado = await onCriarAutor(autorNome);
+            if (criado) {
+              autorNome = criado.autNome;
+            }
+          }
+        }
+
+        if (dados.categoriaNome) {
+          const categoriaExistente = categorias.find(
+            (item) => normalizeText(item.catNome) === normalizeText(dados.categoriaNome)
+          );
+          if (categoriaExistente) {
+            categoriaId = categoriaExistente.idCategoria;
+          } else {
+            const criada = await onCriarCategoria(dados.categoriaNome);
+            if (criada) {
+              categoriaId = criada.idCategoria;
+            }
+          }
+        }
+
+        if (dados.generoNome) {
+          const generoExistente = generos.find(
+            (item) => normalizeText(item.genNome) === normalizeText(dados.generoNome)
+          );
+          if (generoExistente) {
+            generoId = generoExistente.idGenero;
+          } else {
+            const criado = await onCriarGenero(dados.generoNome);
+            if (criado) {
+              generoId = criado.idGenero;
+            }
+          }
+        }
+
+        onISBNAutoFill({
+          ...dados,
+          livAutor: autorNome,
+          idCategoria: categoriaId,
+          idGenero: generoId,
+        });
       } catch {
-        setErroISBN("Erro ao consultar a Open Library. Tente novamente.");
+        setErroISBN("Erro ao consultar os dados do ISBN. Tente novamente.");
       } finally {
         setBuscandoISBN(false);
       }
     },
-    [onISBNAutoFill]
+    [autores, categorias, generos, onCriarAutor, onCriarCategoria, onCriarGenero, onISBNAutoFill]
   );
 
   const handleISBNDetectado = useCallback(

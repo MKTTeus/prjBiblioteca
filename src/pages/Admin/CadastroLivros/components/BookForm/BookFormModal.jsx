@@ -163,12 +163,14 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       ...prev,
       livTitulo:        dados.livTitulo        || prev.livTitulo,
       livAutor:         dados.livAutor         || prev.livAutor,
-      livEditora:       dados.livEditora        || prev.livEditora,
-      livAnoPublicacao: dados.livAnoPublicacao  || prev.livAnoPublicacao,
-      livPaginas:       dados.livPaginas        || prev.livPaginas,
-      livCapaURL:       dados.livCapaURL        || prev.livCapaURL,
-      livDescricao:     dados.livDescricao      || prev.livDescricao,
-      exemplarISBN:     dados.exemplarISBN      || prev.exemplarISBN,
+      livEditora:       dados.livEditora       || prev.livEditora,
+      livAnoPublicacao: dados.livAnoPublicacao || prev.livAnoPublicacao,
+      livPaginas:       dados.livPaginas       || prev.livPaginas,
+      livCapaURL:       dados.livCapaURL       || prev.livCapaURL,
+      livDescricao:     dados.livDescricao     || prev.livDescricao,
+      idCategoria:      dados.idCategoria ?? prev.idCategoria,
+      idGenero:         dados.idGenero ?? prev.idGenero,
+      exemplarISBN:     dados.exemplarISBN     || prev.exemplarISBN,
     }));
     addToast("Dados preenchidos a partir do ISBN!", "success");
   }
@@ -408,16 +410,18 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   );
 }
 
-function normalizeBookForm(form) {
+export function normalizeBookForm(form = {}) {
   return {
     ...form,
+    idCategoria: form.idCategoria !== "" && form.idCategoria != null ? Number(form.idCategoria) : null,
+    idGenero: form.idGenero !== "" && form.idGenero != null ? Number(form.idGenero) : null,
     livPaginas: form.livPaginas ? Number(form.livPaginas) : null,
+    livAnoPublicacao: form.livAnoPublicacao ? Number(form.livAnoPublicacao) : null,
     exemplarISBN: (form.exemplarISBN || "").trim(),
     livTitulo: (form.livTitulo || "").trim(),
     livAutor: (form.livAutor || "").trim(),
     livDescricao: form.livDescricao || "",
     livEditora: form.livEditora || "",
-    livAnoPublicacao: form.livAnoPublicacao || "",
     livCapaURL: form.livCapaURL || "",
   };
 }
