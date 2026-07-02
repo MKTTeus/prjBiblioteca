@@ -576,14 +576,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 46px;
+  height: 46px;
   border-radius: 10px;
   border: 1px solid var(--input-border);
   background: var(--surface-muted);
   color: var(--text-default);
   cursor: pointer;
-  font-size: 1.15rem;
+  font-size: 1.5rem;
   transition: background 0.15s, border-color 0.15s;
 }
 .isbn-action-btn:hover {
@@ -598,8 +598,8 @@
 .isbn-search-btn { color: #34d399; }
 .isbn-spinner {
   display: inline-block;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border: 2px solid var(--surface-border);
   border-top-color: #34d399;
   border-radius: 50%;
@@ -637,13 +637,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   border-radius: 8px;
   border: 1px solid var(--surface-border, #e5e7eb);
   background: var(--surface-bg);
   color: var(--text-label);
   cursor: pointer;
+  font-size: 1.4rem;
   transition: all 0.15s;
 }
 
