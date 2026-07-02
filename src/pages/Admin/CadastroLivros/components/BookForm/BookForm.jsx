@@ -92,7 +92,13 @@ const BookList = () => {
         <div className="book-grid">
           {books.map((book) => (
             <div className="book-card" key={book.idLivro}>
-              <img src={book.livCapaURL || "/placeholder.png"} alt={book.livTitulo} />
+              <img
+                src={book.livCapaURL}
+                alt={book.livTitulo}
+                onError={(e) => {
+                  e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='300' viewBox='0 0 200 300'%3E%3Crect fill='%23e0e0e0' width='200' height='300'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='14' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E";
+                }}
+              />
               <h3>{book.livTitulo}</h3>
               <p>{book.livAutor}</p>
               <p><strong>Categoria:</strong> {book.idCategoria}</p>

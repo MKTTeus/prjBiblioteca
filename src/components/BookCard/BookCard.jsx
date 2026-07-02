@@ -70,7 +70,7 @@ export default function BookCard({
 }) {
   const titulo = book?.livTitulo ?? book?.titulo ?? "Sem título";
   const autor = book?.livAutor ?? book?.autor ?? "Autor desconhecido";
-  const capa = book?.livCapaURL || book?.capa || "/placeholder.png";
+  const capa = book?.livCapaURL || book?.capa || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='240' viewBox='0 0 160 240'%3E%3Crect fill='%23e0e0e0' width='160' height='240'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E";
   const descricao = book?.livDescricao || book?.descricao || "Descrição não informada para este livro.";
   const ano = book?.livAnoPublicacao ?? book?.anoPublicacao ?? "Ano não informado";
   const paginas = book?.livPaginas ?? book?.paginas ?? null;

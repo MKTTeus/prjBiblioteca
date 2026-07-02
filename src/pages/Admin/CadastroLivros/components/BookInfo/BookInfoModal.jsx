@@ -22,7 +22,10 @@ export default function BookInfoModal({ book, onClose }) {
 
           <div className="info-capa">
             <img
-              src={book.livCapaURL || "https://via.placeholder.com/150x220"}
+              src={book.livCapaURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='220' viewBox='0 0 150 220'%3E%3Crect fill='%23e0e0e0' width='150' height='220'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E"}
+              onError={(e) => {
+                e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='220' viewBox='0 0 150 220'%3E%3Crect fill='%23e0e0e0' width='150' height='220'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E";
+              }}
               alt={book.livTitulo}
             />
           </div>
