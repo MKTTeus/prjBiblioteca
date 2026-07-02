@@ -286,6 +286,12 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
         raise
     except Exception as e:
         print("Erro ao criar livro:", e)
+        error_msg = str(e)
+        if "null value in column" in error_msg or "23502" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail="Preencha todos os campos obrigatórios do livro (título e número de páginas).",
+            )
         raise HTTPException(status_code=500, detail=f"Erro ao criar livro: {str(e)}")
 
 
@@ -334,6 +340,12 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         raise
     except Exception as e:
         print("Erro ao atualizar livro:", e)
+        error_msg = str(e)
+        if "null value in column" in error_msg or "23502" in error_msg:
+            raise HTTPException(
+                status_code=400,
+                detail="Preencha todos os campos obrigatórios do livro (título e número de páginas).",
+            )
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar livro: {str(e)}")
 
 

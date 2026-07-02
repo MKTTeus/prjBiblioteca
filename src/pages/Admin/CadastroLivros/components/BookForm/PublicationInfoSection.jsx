@@ -34,14 +34,15 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
           </label>
 
           <label className="editor-field">
-            <span>Páginas</span>
+            <span>Páginas *</span>
             <input
               name="livPaginas"
               value={form.livPaginas}
               onChange={(e) => onFieldChange("livPaginas", e.target.value)}
               placeholder="Quantidade de páginas"
               type="number"
-              min="0"
+              min="1"
+              required
             />
           </label>
         </div>

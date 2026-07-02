@@ -190,7 +190,26 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
+  function validarFormulario() {
+    const erros = [];
+    if (!form.livTitulo || !form.livTitulo.trim()) {
+      erros.push("Informe o título do livro.");
+    }
+    if (form.livPaginas === "" || form.livPaginas === null || form.livPaginas === undefined) {
+      erros.push("Informe o número de páginas (a busca por ISBN nem sempre traz esse dado).");
+    } else if (Number(form.livPaginas) <= 0) {
+      erros.push("O número de páginas deve ser maior que zero.");
+    }
+    return erros;
+  }
+
   async function handleSave() {
+    const errosValidacao = validarFormulario();
+    if (errosValidacao.length > 0) {
+      errosValidacao.forEach((msg) => addToast(msg, "error"));
+      return;
+    }
+
     setLoading(true);
     try {
       if (bookToEdit) {
