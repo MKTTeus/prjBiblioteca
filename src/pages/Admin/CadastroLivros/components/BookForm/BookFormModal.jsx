@@ -5,8 +5,6 @@ import {
   getBook,
   getCategorias,
   getGeneros,
-  getAutores,
-  getEditoras,
   updateBook,
   updateExemplar,
   uploadCover,
