@@ -168,8 +168,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       livPaginas:       dados.livPaginas       || prev.livPaginas,
       livCapaURL:       dados.livCapaURL       || prev.livCapaURL,
       livDescricao:     dados.livDescricao     || prev.livDescricao,
-      idCategoria:      dados.idCategoria ?? prev.idCategoria,
-      idGenero:         dados.idGenero ?? prev.idGenero,
+      idCategoria:      dados.idCategoria ? Number(dados.idCategoria) : prev.idCategoria,
+      idGenero:         dados.idGenero ? Number(dados.idGenero) : prev.idGenero,
       exemplarISBN:     dados.exemplarISBN     || prev.exemplarISBN,
     }));
     addToast("Dados preenchidos a partir do ISBN!", "success");
