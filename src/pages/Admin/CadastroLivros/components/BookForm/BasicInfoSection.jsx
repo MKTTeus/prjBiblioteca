@@ -23,8 +23,16 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
         .map((author) => (typeof author === "string" ? author : author?.name))
         .filter(Boolean)
     : [];
-  const categories = Array.isArray(livro?.categories) ? livro.categories.filter(Boolean) : [];
-  const subjects = Array.isArray(livro?.subjects) ? livro.subjects.filter(Boolean) : [];
+  const categories = Array.isArray(livro?.categories)
+    ? livro.categories
+        .map((cat) => (typeof cat === "string" ? cat : cat?.name))
+        .filter(Boolean)
+    : [];
+  const subjects = Array.isArray(livro?.subjects)
+    ? livro.subjects
+        .map((subj) => (typeof subj === "string" ? subj : subj?.name))
+        .filter(Boolean)
+    : [];
   const publisher = Array.isArray(livro?.publishers)
     ? livro.publishers[0]?.name || livro.publishers[0]
     : livro?.publisher || "";
@@ -104,33 +112,7 @@ export default function BasicInfoSection({
 
       try {
         let dados = null;
-
         try {
-          const googleUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbnLimpo}&maxResults=1`;
-          const googleRes = await fetch(googleUrl);
-          const googleJson = await googleRes.json();
-          const googleLivro = googleJson.items?.[0]?.volumeInfo;
-
-          if (googleLivro) {
-            dados = buildISBNAutoFillData({
-              livro: {
-                ...googleLivro,
-                authors: googleLivro.authors || [],
-                categories: googleLivro.categories || [],
-                subjects: googleLivro.categories || [],
-                imageLinks: googleLivro.imageLinks || {},
-              },
-              categorias,
-              generos,
-              autores,
-              isbn: isbnLimpo,
-            });
-          }
-        } catch {
-          dados = null;
-        }
-
-        if (!dados) {
           const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbnLimpo}&format=json&jscmd=data`;
           const res = await fetch(url);
           const json = await res.json();
@@ -211,7 +193,7 @@ export default function BasicInfoSection({
         setBuscandoISBN(false);
       }
     },
-    [autores, categorias, generos, onCriarAutor, onCriarCategoria, onCriarGenero, onISBNAutoFill]
+    [autores, categorias, generos, onCriarAutor, onCriarCategoria, onCriarGenero, onISBNAutoFill, onFieldChange]
   );
 
   const handleISBNDetectado = useCallback(
