@@ -289,7 +289,20 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setCategorias((prev) => [...prev, nova]);
       addToast(`Categoria "${nome}" criada com sucesso`, "success");
       return nova;
-    } catch {
+    } catch (err) {
+      if (err?.status === 409) {
+        try {
+          const catsAtualizadas = await getCategorias();
+          setCategorias(catsAtualizadas || []);
+          const existente = (catsAtualizadas || []).find(
+            (item) => (item.catNome || "").trim().toLowerCase() === nome.trim().toLowerCase()
+          );
+          if (existente) return existente;
+        } catch (refreshErr) {
+          console.error("Erro ao recarregar categorias:", refreshErr);
+        }
+      }
+      console.error("Erro ao criar categoria:", err);
       addToast("Erro ao criar categoria", "error");
       return null;
     }
@@ -301,23 +314,49 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setGeneros((prev) => [...prev, novo]);
       addToast(`Gênero "${nome}" criado com sucesso`, "success");
       return novo;
-    } catch {
+    } catch (err) {
+      if (err?.status === 409) {
+        try {
+          const gensAtualizados = await getGeneros();
+          setGeneros(gensAtualizados || []);
+          const existente = (gensAtualizados || []).find(
+            (item) => (item.genNome || "").trim().toLowerCase() === nome.trim().toLowerCase()
+          );
+          if (existente) return existente;
+        } catch (refreshErr) {
+          console.error("Erro ao recarregar gêneros:", refreshErr);
+        }
+      }
+      console.error("Erro ao criar gênero:", err);
       addToast("Erro ao criar gênero", "error");
       return null;
     }
   }
 
   async function handleCriarAutor(nome) {
-  try {
-    const novo = await createAutor({ autNome: nome });
-    setAutores((prev) => [...prev, novo]);
-    addToast(`Autor "${nome}" criado com sucesso`, "success");
-    return novo;
-  } catch {
-    addToast("Erro ao criar autor", "error");
-    return null;
+    try {
+      const novo = await createAutor({ autNome: nome });
+      setAutores((prev) => [...prev, novo]);
+      addToast(`Autor "${nome}" criado com sucesso`, "success");
+      return novo;
+    } catch (err) {
+      if (err?.status === 409) {
+        try {
+          const autsAtualizados = await getAutores();
+          setAutores(autsAtualizados || []);
+          const existente = (autsAtualizados || []).find(
+            (item) => (item.autNome || "").trim().toLowerCase() === nome.trim().toLowerCase()
+          );
+          if (existente) return existente;
+        } catch (refreshErr) {
+          console.error("Erro ao recarregar autores:", refreshErr);
+        }
+      }
+      console.error("Erro ao criar autor:", err);
+      addToast("Erro ao criar autor", "error");
+      return null;
+    }
   }
-}
 
   function renderActiveSection() {
     if (activeTab === "publication") {
