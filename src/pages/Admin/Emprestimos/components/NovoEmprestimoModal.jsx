@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import { HiOutlineX } from "react-icons/hi";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
 import { formatarCPF } from "../../../../utils/masks";
 
 export default function NovoEmprestimoModal({
@@ -21,14 +23,31 @@ export default function NovoEmprestimoModal({
   onSalvar,
   salvando = false,
 }) {
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false);
+
   if (!aberto) return null;
 
+  const isDirty = Boolean(selecionado.idUsuario || selecionado.idExemplar);
+
+  function handleRequestClose() {
+    if (isDirty) {
+      setConfirmandoSaida(true);
+    } else {
+      onFechar();
+    }
+  }
+
+  function confirmarSaida() {
+    setConfirmandoSaida(false);
+    onFechar();
+  }
+
   return (
-    <div className="emp-modal-overlay" onClick={onFechar}>
+    <div className="emp-modal-overlay" onClick={handleRequestClose}>
       <div className="emp-modal emp-modal-sequencial" onClick={(event) => event.stopPropagation()}>
         <div className="emp-modal-topbar">
           <h2>Novo Empréstimo</h2>
-          <button className="emp-modal-close" onClick={onFechar} aria-label="Fechar">
+          <button className="emp-modal-close" onClick={handleRequestClose} aria-label="Fechar">
             <HiOutlineX />
           </button>
         </div>
@@ -144,7 +163,7 @@ export default function NovoEmprestimoModal({
         </section>
 
         <div className="emp-modal-actions">
-          <button onClick={onFechar}>Cancelar</button>
+          <button onClick={handleRequestClose}>Cancelar</button>
           <LoadingButton
             isLoading={salvando}
             loadingText="Salvando..."
@@ -156,6 +175,13 @@ export default function NovoEmprestimoModal({
           </LoadingButton>
         </div>
       </div>
+
+      <ConfirmExitModal
+        show={confirmandoSaida}
+        onConfirm={confirmarSaida}
+        onCancel={() => setConfirmandoSaida(false)}
+        message="Você já selecionou usuário e/ou exemplar para este empréstimo. Se sair agora, a seleção será perdida."
+      />
     </div>
   );
 }

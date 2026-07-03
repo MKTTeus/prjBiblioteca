@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
 import { IMaskInput } from "react-imask";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
 import { MASK_TELEFONE } from "../../../../utils/masks";
 import { SERIES } from "../../../../utils/series";
 
@@ -15,7 +16,22 @@ export default function AlunoModal({
   onClose,
   onSave,
 }) {
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false);
+
   if (!aberto) return null;
+
+  function handleRequestClose() {
+    if (isDirty) {
+      setConfirmandoSaida(true);
+    } else {
+      onClose();
+    }
+  }
+
+  function confirmarSaida() {
+    setConfirmandoSaida(false);
+    onClose();
+  }
 
   return (
     <div className="modal-overlay">
@@ -51,7 +67,7 @@ export default function AlunoModal({
               <button
                 type="button"
                 className="editor-close-button"
-                onClick={onClose}
+                onClick={handleRequestClose}
                 aria-label="Fechar"
               >
                 <HiOutlineX />
@@ -212,6 +228,12 @@ export default function AlunoModal({
           </div>
         </div>
       </div>
+
+      <ConfirmExitModal
+        show={confirmandoSaida}
+        onConfirm={confirmarSaida}
+        onCancel={() => setConfirmandoSaida(false)}
+      />
     </div>
   );
 }

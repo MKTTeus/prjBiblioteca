@@ -18,6 +18,7 @@ import { useToast } from "../../../../../contexts/ToastContext";
 import BasicInfoSection from "./BasicInfoSection";
 import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
+import ConfirmExitModal from "../../../../../components/ConfirmExitModal/ConfirmExitModal";
 import "./BookFormModal.css";
 
 function normalizeText(value = "") {
@@ -91,6 +92,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [initialExemplares, setInitialExemplares] = useState([]);
   const [addConfig, setAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
   const [initialAddConfig, setInitialAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false);
 
   const carregarLivroEmEdicao = useCallback(async () => {
     setActiveTab("basic");
@@ -303,6 +305,46 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
 
     return resolvido;
+  }
+
+  // Mesma lógica usada para decidir se há algo a persistir ao editar um
+  // livro (handleSave), reaproveitada aqui para saber se vale a pena avisar
+  // o usuário antes de fechar o formulário sem salvar.
+  function formTemAlteracoes() {
+    const normalizedForm = normalizeBookForm(form);
+    const normalizedInitialForm = normalizeBookForm(initialForm);
+    if (JSON.stringify(normalizedForm) !== JSON.stringify(normalizedInitialForm)) {
+      return true;
+    }
+
+    const normalizedExemplares = normalizeExemplares(exemplares);
+    const normalizedInitialExemplares = normalizeExemplares(initialExemplares);
+    if (JSON.stringify(normalizedExemplares) !== JSON.stringify(normalizedInitialExemplares)) {
+      return true;
+    }
+
+    if (
+      Number(addConfig.quantidade || 0) > 0 &&
+      JSON.stringify(normalizeAddConfig(addConfig)) !==
+        JSON.stringify(normalizeAddConfig(initialAddConfig))
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function handleRequestClose() {
+    if (formTemAlteracoes()) {
+      setConfirmandoSaida(true);
+    } else {
+      onClose();
+    }
+  }
+
+  function confirmarSaida() {
+    setConfirmandoSaida(false);
+    onClose();
   }
 
   async function handleSave() {
@@ -526,7 +568,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
               <button
                 type="button"
                 className="editor-close-button"
-                onClick={onClose}
+                onClick={handleRequestClose}
                 aria-label="Fechar"
               >
                 <HiOutlineX />
@@ -558,6 +600,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           </div>
         </div>
       </div>
+
+      <ConfirmExitModal
+        show={confirmandoSaida}
+        onConfirm={confirmarSaida}
+        onCancel={() => setConfirmandoSaida(false)}
+      />
     </div>
   );
 }
