@@ -172,6 +172,8 @@
     z-index: 90;
     top: 0;
     height: 100vh;
+
+     padding-top: 28px;
   }
 
   .sidebar.open {
