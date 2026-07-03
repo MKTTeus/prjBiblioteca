@@ -136,8 +136,20 @@ export async function uploadCover(file) {
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("tipo");
+      window.location.href = "/#/login";
+      throw new Error("Sessão expirada");
+    }
     const text = await res.text();
-    throw new Error(text || "Erro ao enviar capa");
+    let mensagem = text || "Erro ao enviar capa";
+    try {
+      const data = JSON.parse(text);
+      mensagem = data.detail || data.message || mensagem;
+    } catch (_) {}
+    throw new Error(mensagem);
   }
 
   return res.json();

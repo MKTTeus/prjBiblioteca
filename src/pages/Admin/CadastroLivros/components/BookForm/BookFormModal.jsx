@@ -223,9 +223,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setForm((prev) => ({ ...prev, livCapaURL: res.url }));
     } catch (err) {
       console.error(err);
-      addToast("Falha ao enviar a capa", "error");
+      addToast(err?.message || "Falha ao enviar a capa", "error");
     } finally {
       setLoading(false);
+      e.target.value = "";
     }
   }
 

@@ -16,6 +16,7 @@ from routers.backup import router as backup_router
 from routers.ano_letivo import router as ano_letivo_router
 from routers.autores import router as autores_router
 from routers.ia import router as ia_router
+from routers.capas import router as capas_router
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -56,6 +57,7 @@ ROUTERS = [
     backup_router,
     ano_letivo_router,
     ia_router,
+    capas_router,
 ]
 
 
