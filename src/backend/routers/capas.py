@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -8,9 +9,13 @@ from database import supabase
 router = APIRouter()
 
 # Bucket público no Supabase Storage. Precisa existir e estar marcado como
-# "Public bucket" (mesma ideia do bucket "backups", só que esse pode ser
-# lido publicamente para exibir a capa no site).
+# "Public bucket" (Storage → capas → Edit bucket → Public bucket). Sem isso,
+# o upload funciona normalmente (o backend usa a service role, que ignora
+# RLS), mas o navegador não consegue carregar a URL pública da imagem —
+# o arquivo fica salvo no bucket, mas a capa nunca aparece no sistema.
 CAPA_BUCKET = "capas"
+
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 
 EXTENSOES_PERMITIDAS = {"jpg", "jpeg", "png", "webp", "gif"}
 TAMANHO_MAXIMO_MB = 5
@@ -23,13 +28,11 @@ def _extensao_valida(nome_arquivo: str) -> str | None:
     return ext if ext in EXTENSOES_PERMITIDAS else None
 
 
-def _extrair_public_url(resp) -> str | None:
-    """Extrai a URL pública compatível com supabase-py v1 e v2."""
-    if isinstance(resp, str):
-        return resp
-    if isinstance(resp, dict):
-        return resp.get("publicURL") or resp.get("publicUrl") or resp.get("public_url")
-    return getattr(resp, "public_url", None) or getattr(resp, "publicURL", None)
+def _montar_public_url(path: str) -> str:
+    """Monta a URL pública manualmente a partir de SUPABASE_URL, em vez de
+    confiar no retorno de get_public_url (que muda de formato entre
+    supabase-py v1/v2 e já foi motivo de URL inválida sem erro nenhum)."""
+    return f"{SUPABASE_URL}/storage/v1/object/public/{CAPA_BUCKET}/{path}"
 
 
 @router.post("/upload-capa")
@@ -54,6 +57,12 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
             detail=f"A imagem deve ter no máximo {TAMANHO_MAXIMO_MB}MB.",
         )
 
+    if not SUPABASE_URL:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_URL não configurada no backend — não é possível montar a URL pública da capa.",
+        )
+
     nome_arquivo = f"{uuid.uuid4().hex}.{ext}"
     content_type = file.content_type or "application/octet-stream"
 
@@ -66,17 +75,4 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Falha ao enviar a capa: {e}")
 
-    url = _extrair_public_url(
-        supabase.storage.from_(CAPA_BUCKET).get_public_url(nome_arquivo)
-    )
-    if not url:
-        raise HTTPException(
-            status_code=500,
-            detail=(
-                "Capa enviada, mas não foi possível gerar a URL pública. "
-                f"Verifique se o bucket '{CAPA_BUCKET}' existe e está "
-                "configurado como público no Supabase Storage."
-            ),
-        )
-
-    return {"url": url}
+    return {"url": _montar_public_url(nome_arquivo)}
