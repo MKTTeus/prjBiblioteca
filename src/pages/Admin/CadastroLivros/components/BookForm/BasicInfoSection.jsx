@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
 import { HiOutlineQrCode, HiOutlineMagnifyingGlass, HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
@@ -46,6 +46,7 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
 
   return {
     livTitulo: livro?.title || livro?.livTitulo || "",
+    livSubtitulo: livro?.subtitle || livro?.livSubtitulo || "",
     livAutor: matchingAutor?.autNome || authorName,
     livEditora: publisher || "",
     livAnoPublicacao: livro?.publish_date
@@ -109,6 +110,15 @@ export default function BasicInfoSection({
   const [iaErro, setIaErro] = useState(null);
   const [iaSugestao, setIaSugestao] = useState(null);
   const [iaCamposMarcados, setIaCamposMarcados] = useState({});
+  const iaReviewPanelRef = useRef(null);
+
+  // Rola até o painel de sugestões assim que ele aparece, para o admin não
+  // precisar procurar as sugestões geradas mais abaixo na tela.
+  useEffect(() => {
+    if (iaSugestao && iaReviewPanelRef.current) {
+      iaReviewPanelRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [iaSugestao]);
 
   // Encontra uma categoria/gênero já cadastrado pelo nome ou cria um novo.
   // Compartilhado entre a busca por ISBN e a sugestão da IA para não duplicar a lógica.
@@ -225,17 +235,14 @@ export default function BasicInfoSection({
           isbn: isbnLimpo,
         });
 
+        // Não cria o autor aqui — só reaproveita a grafia já cadastrada, se
+        // houver. O backend resolve (busca ou cria) o autor pelo nome
+        // automaticamente ao salvar o livro.
         let autorNome = dados.autorNome || "";
-
         if (autorNome) {
           const autorExistente = autores.find((item) => normalizeText(item.autNome) === normalizeText(autorNome));
           if (autorExistente) {
             autorNome = autorExistente.autNome;
-          } else {
-            const criado = await onCriarAutor(autorNome);
-            if (criado) {
-              autorNome = criado.autNome;
-            }
           }
         }
 
@@ -255,7 +262,7 @@ export default function BasicInfoSection({
         setBuscandoISBN(false);
       }
     },
-    [autores, onCriarAutor, onISBNAutoFill, resolverCategoria, resolverGenero]
+    [autores, onISBNAutoFill, resolverCategoria, resolverGenero]
   );
 
   const handleISBNDetectado = useCallback(
@@ -267,57 +274,28 @@ export default function BasicInfoSection({
     [buscarPorISBN, onFieldChange]
   );
 
+  // onCriarCategoria/onCriarGenero/onCriarAutor agora só enfileiram o item
+  // localmente (ver BookFormModal) — nunca chamam a API nem lançam 409, então
+  // não há mais nada para tratar aqui além de aplicar o resultado ao form.
   async function handleCriarCategoria() {
     const nome = novaCategoria.trim();
     if (!nome) return;
-    
-    try {
-      const criada = await onCriarCategoria(nome);
-      if (criada) {
-        onFieldChange("idCategoria", criada.idCategoria);
-        setNovaCategoria("");
-        setCriandoCategoria(false);
-      }
-    } catch (err) {
-      if (err.status === 409) {
-        const categoriaExistente = categorias.find(
-          (item) => normalizeText(item.catNome) === normalizeText(nome)
-        );
-        if (categoriaExistente) {
-          onFieldChange("idCategoria", categoriaExistente.idCategoria);
-          setNovaCategoria("");
-          setCriandoCategoria(false);
-        }
-      } else {
-        console.error("Erro ao criar categoria:", err);
-      }
+    const criada = await onCriarCategoria(nome);
+    if (criada) {
+      onFieldChange("idCategoria", criada.idCategoria);
+      setNovaCategoria("");
+      setCriandoCategoria(false);
     }
   }
 
   async function handleCriarGenero() {
     const nome = novoGenero.trim();
     if (!nome) return;
-    
-    try {
-      const criado = await onCriarGenero(nome);
-      if (criado) {
-        onFieldChange("idGenero", criado.idGenero);
-        setNovoGenero("");
-        setCriandoGenero(false);
-      }
-    } catch (err) {
-      if (err.status === 409) {
-        const generoExistente = generos.find(
-          (item) => normalizeText(item.genNome) === normalizeText(nome)
-        );
-        if (generoExistente) {
-          onFieldChange("idGenero", generoExistente.idGenero);
-          setNovoGenero("");
-          setCriandoGenero(false);
-        }
-      } else {
-        console.error("Erro ao criar gênero:", err);
-      }
+    const criado = await onCriarGenero(nome);
+    if (criado) {
+      onFieldChange("idGenero", criado.idGenero);
+      setNovoGenero("");
+      setCriandoGenero(false);
     }
   }
 
@@ -366,13 +344,17 @@ export default function BasicInfoSection({
       setIaSugestao(sugestao);
       setIaCamposMarcados({
         titulo: marcarPorPadrao("titulo"),
+        subtitulo: marcarPorPadrao("subtitulo"),
         autor_principal: marcarPorPadrao("autor_principal"),
         editora: marcarPorPadrao("editora"),
         ano_publicacao: marcarPorPadrao("ano_publicacao"),
         paginas: marcarPorPadrao("paginas"),
+        idioma: marcarPorPadrao("idioma"),
         descricao: marcarPorPadrao("descricao"),
         categoria_sugerida: marcarPorPadrao("categoria_sugerida"),
         genero_sugerido: marcarPorPadrao("genero_sugerido"),
+        faixa_etaria: marcarPorPadrao("faixa_etaria"),
+        palavras_chave: marcarPorPadrao("palavras_chave"),
       });
     } catch (err) {
       console.error("Erro ao completar com IA:", err);
@@ -392,11 +374,17 @@ export default function BasicInfoSection({
     const atualizacoes = {};
 
     if (marcados.titulo && iaSugestao.titulo) atualizacoes.livTitulo = iaSugestao.titulo;
+    if (marcados.subtitulo && iaSugestao.subtitulo) atualizacoes.livSubtitulo = iaSugestao.subtitulo;
     if (marcados.autor_principal && iaSugestao.autor_principal) atualizacoes.livAutor = iaSugestao.autor_principal;
     if (marcados.editora && iaSugestao.editora) atualizacoes.livEditora = iaSugestao.editora;
     if (marcados.ano_publicacao && iaSugestao.ano_publicacao) atualizacoes.livAnoPublicacao = String(iaSugestao.ano_publicacao);
     if (marcados.paginas && iaSugestao.paginas) atualizacoes.livPaginas = String(iaSugestao.paginas);
+    if (marcados.idioma && iaSugestao.idioma) atualizacoes.livIdioma = iaSugestao.idioma;
     if (marcados.descricao && iaSugestao.descricao) atualizacoes.livDescricao = iaSugestao.descricao;
+    if (marcados.faixa_etaria && iaSugestao.faixa_etaria) atualizacoes.livFaixaEtaria = iaSugestao.faixa_etaria;
+    if (marcados.palavras_chave && iaSugestao.palavras_chave?.length > 0) {
+      atualizacoes.livPalavrasChave = iaSugestao.palavras_chave.join(", ");
+    }
 
     if (marcados.categoria_sugerida && iaSugestao.categoria_sugerida) {
       atualizacoes.idCategoria = await resolverCategoria(iaSugestao.categoria_sugerida);
@@ -505,6 +493,7 @@ export default function BasicInfoSection({
                   <button type="button" className="inline-create-cancel" onClick={() => setCriandoAutor(false)}>
                     Cancelar
                   </button>
+                  <span className="inline-create-hint">Autor será salvo junto com o livro ao finalizar.</span>
                 </div>
               ) : (
                 <div className="inline-select-row">
@@ -550,6 +539,7 @@ export default function BasicInfoSection({
                   <button type="button" className="inline-create-cancel" onClick={() => setCriandoGenero(false)}>
                     Cancelar
                   </button>
+                  <span className="inline-create-hint">Só é criado de fato ao finalizar o cadastro do livro.</span>
                 </div>
               ) : (
                 <div className="inline-select-row">
@@ -561,7 +551,7 @@ export default function BasicInfoSection({
                     <option value="">Selecione um gênero</option>
                     {generos.map((gen) => (
                       <option key={gen.idGenero} value={gen.idGenero}>
-                        {gen.genNome}
+                        {gen.genNome}{gen.pendente ? " (novo — será salvo ao finalizar)" : ""}
                       </option>
                     ))}
                   </select>
@@ -602,6 +592,7 @@ export default function BasicInfoSection({
                 <button type="button" className="inline-create-cancel" onClick={() => setCriandoCategoria(false)}>
                   Cancelar
                 </button>
+                <span className="inline-create-hint">Só é criada de fato ao finalizar o cadastro do livro.</span>
               </div>
             ) : (
               <div className="inline-select-row">
@@ -613,7 +604,7 @@ export default function BasicInfoSection({
                   <option value="">Selecione uma categoria</option>
                   {categorias.map((cat) => (
                     <option key={cat.idCategoria} value={cat.idCategoria}>
-                      {cat.catNome}
+                      {cat.catNome}{cat.pendente ? " (novo — será salvo ao finalizar)" : ""}
                     </option>
                   ))}
                 </select>
@@ -656,7 +647,7 @@ export default function BasicInfoSection({
           </button>
           {iaErro && <span className="isbn-error-msg">{iaErro}</span>}
           <span className="isbn-hint-msg">
-            A IA sugere os campos que faltam com base no que já foi preenchido. Você revisa antes de aplicar.
+            A IA sugere os campos que faltam com base no que já foi preenchido. Sempre revise antes de aplicar.
           </span>
         </div>
 
@@ -700,7 +691,7 @@ export default function BasicInfoSection({
       </div>
 
       {iaSugestao && (
-        <div className="ia-review-panel">
+        <div className="ia-review-panel" ref={iaReviewPanelRef}>
           <div className="ia-review-header">
             <span className="ia-review-title">
               <HiOutlineSparkles /> Sugestões da IA
@@ -716,12 +707,20 @@ export default function BasicInfoSection({
           <div className="ia-review-fields">
             {[
               { campo: "titulo", label: "Título", valor: iaSugestao.titulo },
+              { campo: "subtitulo", label: "Subtítulo", valor: iaSugestao.subtitulo },
               { campo: "autor_principal", label: "Autor", valor: iaSugestao.autor_principal },
               { campo: "editora", label: "Editora", valor: iaSugestao.editora },
               { campo: "ano_publicacao", label: "Ano", valor: iaSugestao.ano_publicacao },
               { campo: "paginas", label: "Páginas", valor: iaSugestao.paginas },
+              { campo: "idioma", label: "Idioma", valor: iaSugestao.idioma },
               { campo: "categoria_sugerida", label: "Categoria", valor: iaSugestao.categoria_sugerida },
               { campo: "genero_sugerido", label: "Gênero", valor: iaSugestao.genero_sugerido },
+              { campo: "faixa_etaria", label: "Faixa etária", valor: iaSugestao.faixa_etaria },
+              {
+                campo: "palavras_chave",
+                label: "Palavras-chave",
+                valor: iaSugestao.palavras_chave?.length > 0 ? iaSugestao.palavras_chave.join(", ") : "",
+              },
               { campo: "descricao", label: "Descrição", valor: iaSugestao.descricao },
             ]
               .filter((item) => item.valor)
@@ -736,19 +735,6 @@ export default function BasicInfoSection({
                   <span className="ia-review-field-valor">{item.valor}</span>
                 </label>
               ))}
-
-            {(iaSugestao.palavras_chave?.length > 0 || iaSugestao.faixa_etaria || iaSugestao.idioma) && (
-              <div className="ia-review-extra">
-                {iaSugestao.idioma && <span><strong>Idioma:</strong> {iaSugestao.idioma}</span>}
-                {iaSugestao.faixa_etaria && <span><strong>Faixa etária:</strong> {iaSugestao.faixa_etaria}</span>}
-                {iaSugestao.palavras_chave?.length > 0 && (
-                  <span><strong>Palavras-chave:</strong> {iaSugestao.palavras_chave.join(", ")}</span>
-                )}
-                <span className="ia-review-extra-note">
-                  (esses campos ainda não têm um lugar no cadastro — serão usados na classificação automática)
-                </span>
-              </div>
-            )}
           </div>
 
           <div className="ia-review-actions">

@@ -712,24 +712,6 @@
   font-size: 0.88rem;
 }
 
-.ia-review-extra {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px;
-  border-radius: 8px;
-  background: var(--canvas-bg);
-  border: 1px dashed var(--surface-border);
-  font-size: 0.82rem;
-  color: var(--text-label);
-  margin-top: 4px;
-}
-.ia-review-extra-note {
-  font-size: 0.72rem;
-  color: var(--tabs-text);
-  font-style: italic;
-}
-
 .ia-review-actions {
   display: flex;
   gap: 10px;
@@ -795,12 +777,20 @@
 
 .inline-create-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
 }
 
 .inline-create-row input {
   flex: 1;
+}
+
+.inline-create-hint {
+  flex-basis: 100%;
+  font-size: 0.74rem;
+  color: var(--tabs-text);
+  font-style: italic;
 }
 
 .inline-create-confirm {

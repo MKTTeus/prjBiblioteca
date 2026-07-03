@@ -1,6 +1,9 @@
 import React from "react";
 import { HiOutlineBookOpen, HiOutlineOfficeBuilding } from "react-icons/hi";
 
+const IDIOMAS_COMUNS = ["Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano", "Mandarim", "Japonês", "Russo", "Árabe", "Hindi", "Bengali", "Coreano", "Turco", "Vietnamita"];
+const FAIXAS_ETARIAS = ["Infantil", "Juvenil", "Adulto", "Livre"];
+
 export default function PublicationInfoSection({ form, onFieldChange, editoras = [] }) {
   return (
     <div className="editor-section-grid publication-grid">
@@ -43,6 +46,57 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               type="number"
               min="1"
               required
+            />
+          </label>
+
+          <label className="editor-field">
+            <span>Subtítulo</span>
+            <input
+              name="livSubtitulo"
+              value={form.livSubtitulo || ""}
+              onChange={(e) => onFieldChange("livSubtitulo", e.target.value)}
+              placeholder="Subtítulo do livro, se houver"
+            />
+          </label>
+
+          <label className="editor-field">
+            <span>Idioma</span>
+            <input
+              name="livIdioma"
+              value={form.livIdioma || ""}
+              onChange={(e) => onFieldChange("livIdioma", e.target.value)}
+              placeholder="Ex.: Português"
+              list="idiomas-list"
+              autoComplete="off"
+            />
+            <datalist id="idiomas-list">
+              {IDIOMAS_COMUNS.map((idioma) => (
+                <option key={idioma} value={idioma} />
+              ))}
+            </datalist>
+          </label>
+
+          <label className="editor-field">
+            <span>Faixa etária</span>
+            <select
+              name="livFaixaEtaria"
+              value={form.livFaixaEtaria || ""}
+              onChange={(e) => onFieldChange("livFaixaEtaria", e.target.value)}
+            >
+              <option value="">Não informada</option>
+              {FAIXAS_ETARIAS.map((faixa) => (
+                <option key={faixa} value={faixa}>{faixa}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="editor-field" style={{ gridColumn: "1 / -1" }}>
+            <span>Palavras-chave</span>
+            <input
+              name="livPalavrasChave"
+              value={form.livPalavrasChave || ""}
+              onChange={(e) => onFieldChange("livPalavrasChave", e.target.value)}
+              placeholder="Separe por vírgula — usadas na catalogação e busca"
             />
           </label>
         </div>

@@ -11,7 +11,6 @@ import {
   uploadCover,
   createCategoria,
   createGenero,
-  createAutor,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
@@ -37,16 +36,36 @@ const TAB_ITEMS = [
 
 const DEFAULT_FORM = {
   livTitulo: "",
+  livSubtitulo: "",
   livAutor: "",
   livDescricao: "",
   livEditora: "",
   livAnoPublicacao: "",
   livPaginas: "",
   livCapaURL: "",
+  livIdioma: "",
+  livFaixaEtaria: "",
+  livPalavrasChave: "",
   idCategoria: "",
   idGenero: "",
   exemplarISBN: "",
 };
+
+// Prefixo usado para identificar, dentro do próprio form, uma categoria/gênero
+// que ainda não existe no banco — só é persistido de fato ao salvar o livro.
+const PENDING_PREFIX = "novo:";
+
+function isPendingId(value) {
+  return typeof value === "string" && value.startsWith(PENDING_PREFIX);
+}
+
+function pendingIdFor(nome) {
+  return `${PENDING_PREFIX}${nome}`;
+}
+
+function pendingNomeFrom(pendingId) {
+  return pendingId.slice(PENDING_PREFIX.length);
+}
 
 const DEFAULT_CREATE_ADD_CONFIG = {
   prefixo: "T",
@@ -101,12 +120,16 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
       const nextForm = {
         livTitulo: livro.livTitulo || "",
+        livSubtitulo: livro.livSubtitulo || "",
         livAutor: livro.livAutor || "",
         livDescricao: livro.livDescricao || "",
         livEditora: livro.livEditora || "",
         livAnoPublicacao: livro.livAnoPublicacao || "",
         livPaginas: livro.livPaginas || "",
         livCapaURL: livro.livCapaURL || "",
+        livIdioma: livro.livIdioma || "",
+        livFaixaEtaria: livro.livFaixaEtaria || "",
+        livPalavrasChave: livro.livPalavrasChave || "",
         idCategoria: livro.idCategoria || 1,
         idGenero: livro.idGenero || 1,
         exemplarISBN: livro.exemplarISBN || livro.exeLivISBN || "",
@@ -170,6 +193,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     setForm((prev) => ({
       ...prev,
       livTitulo:        dados.livTitulo        || prev.livTitulo,
+      livSubtitulo:     dados.livSubtitulo     || prev.livSubtitulo,
       livAutor:         dados.livAutor         || prev.livAutor,
       livEditora:       dados.livEditora       || prev.livEditora,
       livAnoPublicacao: dados.livAnoPublicacao || prev.livAnoPublicacao,
@@ -211,6 +235,71 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     return erros;
   }
 
+  // Persiste de fato, no backend, qualquer categoria/gênero que ainda esteja
+  // pendente (id no formato "novo:Nome"), e devolve o form já com os ids
+  // reais. É só aqui — no momento de salvar o livro — que esses registros
+  // passam a existir no banco; se o usuário cancelar antes disso, nada foi
+  // gravado por causa de um nome digitado errado.
+  async function resolverPendencias(formAtual) {
+    const resolvido = { ...formAtual };
+
+    if (isPendingId(resolvido.idCategoria)) {
+      const nome = pendingNomeFrom(resolvido.idCategoria);
+      try {
+        const criada = await createCategoria({ catNome: nome });
+        setCategorias((prev) => [
+          ...prev.filter((item) => item.idCategoria !== resolvido.idCategoria),
+          criada,
+        ]);
+        resolvido.idCategoria = criada.idCategoria;
+      } catch (err) {
+        if (err?.status === 409) {
+          const catsAtualizadas = await getCategorias();
+          setCategorias(catsAtualizadas || []);
+          const existente = (catsAtualizadas || []).find(
+            (item) => normalizeText(item.catNome) === normalizeText(nome)
+          );
+          if (existente) {
+            resolvido.idCategoria = existente.idCategoria;
+          } else {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    if (isPendingId(resolvido.idGenero)) {
+      const nome = pendingNomeFrom(resolvido.idGenero);
+      try {
+        const criado = await createGenero({ genNome: nome });
+        setGeneros((prev) => [
+          ...prev.filter((item) => item.idGenero !== resolvido.idGenero),
+          criado,
+        ]);
+        resolvido.idGenero = criado.idGenero;
+      } catch (err) {
+        if (err?.status === 409) {
+          const gensAtualizados = await getGeneros();
+          setGeneros(gensAtualizados || []);
+          const existente = (gensAtualizados || []).find(
+            (item) => normalizeText(item.genNome) === normalizeText(nome)
+          );
+          if (existente) {
+            resolvido.idGenero = existente.idGenero;
+          } else {
+            throw err;
+          }
+        } else {
+          throw err;
+        }
+      }
+    }
+
+    return resolvido;
+  }
+
   async function handleSave() {
     const errosValidacao = validarFormulario();
     if (errosValidacao.length > 0) {
@@ -220,8 +309,20 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
     setLoading(true);
     try {
+      let formResolvido;
+      try {
+        formResolvido = await resolverPendencias(form);
+      } catch (err) {
+        console.error("Erro ao criar categoria/gênero pendente:", err);
+        addToast("Falha ao criar categoria/gênero pendente. Tente novamente.", "error");
+        return;
+      }
+      if (formResolvido !== form) {
+        setForm(formResolvido);
+      }
+
       if (bookToEdit) {
-        const normalizedForm = normalizeBookForm(form);
+        const normalizedForm = normalizeBookForm(formResolvido);
         const normalizedInitialForm = normalizeBookForm(initialForm);
         const formChanged =
           JSON.stringify(normalizedForm) !== JSON.stringify(normalizedInitialForm);
@@ -294,7 +395,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           return;
         }
         await createBook({
-          livro: { ...normalizeBookForm(form) },
+          livro: { ...normalizeBookForm(formResolvido) },
           quantidade_exemplares: Number(addConfig.quantidade),
           prefixo_tombo: addConfig.prefixo || "T",
         });
@@ -310,87 +411,54 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
+  // Não cria nada no backend ainda — apenas registra a categoria como
+  // "pendente" localmente, com um id temporário. Ela só é persistida de
+  // verdade em resolverPendencias(), disparado ao clicar em Salvar/Finalizar.
   async function handleCriarCategoria(nome) {
-    try {
-      const nova = await createCategoria({ catNome: nome });
-      setCategorias((prev) => [...prev, nova]);
-      addToast(`Categoria "${nome}" criada com sucesso`, "success");
-      return nova;
-    } catch (err) {
-      if (err?.status === 409) {
-        try {
-          const catsAtualizadas = await getCategorias();
-          setCategorias(catsAtualizadas || []);
-          const existente = (catsAtualizadas || []).find(
-            (item) => normalizeText(item.catNome) === normalizeText(nome)
-          );
-          if (existente) return existente;
-          console.warn(
-            "Categoria reportada como duplicada pelo backend, mas não encontrada na lista atualizada.",
-            { nomeBuscado: nome, categoriasCarregadas: (catsAtualizadas || []).map((c) => c.catNome) }
-          );
-        } catch (refreshErr) {
-          console.error("Erro ao recarregar categorias:", refreshErr);
-        }
-      }
-      console.error("Erro ao criar categoria:", err);
-      addToast("Erro ao criar categoria", "error");
-      return null;
-    }
+    const nomeLimpo = nome.trim();
+    const existente = categorias.find(
+      (item) => normalizeText(item.catNome) === normalizeText(nomeLimpo)
+    );
+    if (existente) return existente;
+
+    const idCategoria = pendingIdFor(nomeLimpo);
+    const jaPendente = categorias.find((item) => item.idCategoria === idCategoria);
+    if (jaPendente) return jaPendente;
+
+    const pendente = { idCategoria, catNome: nomeLimpo, pendente: true };
+    setCategorias((prev) => [...prev, pendente]);
+    addToast(`Categoria "${nomeLimpo}" será criada ao salvar o cadastro`, "success");
+    return pendente;
   }
 
+  // Mesma lógica de pendência local da categoria, aplicada ao gênero.
   async function handleCriarGenero(nome) {
-    try {
-      const novo = await createGenero({ genNome: nome });
-      setGeneros((prev) => [...prev, novo]);
-      addToast(`Gênero "${nome}" criado com sucesso`, "success");
-      return novo;
-    } catch (err) {
-      if (err?.status === 409) {
-        try {
-          const gensAtualizados = await getGeneros();
-          setGeneros(gensAtualizados || []);
-          const existente = (gensAtualizados || []).find(
-            (item) => normalizeText(item.genNome) === normalizeText(nome)
-          );
-          if (existente) return existente;
-          console.warn(
-            "Gênero reportado como duplicado pelo backend, mas não encontrado na lista atualizada.",
-            { nomeBuscado: nome, generosCarregados: (gensAtualizados || []).map((g) => g.genNome) }
-          );
-        } catch (refreshErr) {
-          console.error("Erro ao recarregar gêneros:", refreshErr);
-        }
-      }
-      console.error("Erro ao criar gênero:", err);
-      addToast("Erro ao criar gênero", "error");
-      return null;
-    }
+    const nomeLimpo = nome.trim();
+    const existente = generos.find(
+      (item) => normalizeText(item.genNome) === normalizeText(nomeLimpo)
+    );
+    if (existente) return existente;
+
+    const idGenero = pendingIdFor(nomeLimpo);
+    const jaPendente = generos.find((item) => item.idGenero === idGenero);
+    if (jaPendente) return jaPendente;
+
+    const pendente = { idGenero, genNome: nomeLimpo, pendente: true };
+    setGeneros((prev) => [...prev, pendente]);
+    addToast(`Gênero "${nomeLimpo}" será criado ao salvar o cadastro`, "success");
+    return pendente;
   }
 
+  // O backend resolve/cria o autor pelo nome automaticamente ao salvar o
+  // livro (resolver_autor em livros.py), então não existe chamada de API
+  // aqui — só reaproveitamos a grafia já cadastrada quando bate (case
+  // insensitive) para evitar duplicar "machado de assis" x "Machado de Assis".
   async function handleCriarAutor(nome) {
-    try {
-      const novo = await createAutor({ autNome: nome });
-      setAutores((prev) => [...prev, novo]);
-      addToast(`Autor "${nome}" criado com sucesso`, "success");
-      return novo;
-    } catch (err) {
-      if (err?.status === 409) {
-        try {
-          const autsAtualizados = await getAutores();
-          setAutores(autsAtualizados || []);
-          const existente = (autsAtualizados || []).find(
-            (item) => normalizeText(item.autNome) === normalizeText(nome)
-          );
-          if (existente) return existente;
-        } catch (refreshErr) {
-          console.error("Erro ao recarregar autores:", refreshErr);
-        }
-      }
-      console.error("Erro ao criar autor:", err);
-      addToast("Erro ao criar autor", "error");
-      return null;
-    }
+    const nomeLimpo = nome.trim();
+    const existente = autores.find(
+      (item) => normalizeText(item.autNome) === normalizeText(nomeLimpo)
+    );
+    return existente || { autNome: nomeLimpo };
   }
 
   function renderActiveSection() {
@@ -493,10 +561,14 @@ export function normalizeBookForm(form = {}) {
     livAnoPublicacao: form.livAnoPublicacao ? Number(form.livAnoPublicacao) : null,
     exemplarISBN: (form.exemplarISBN || "").trim(),
     livTitulo: (form.livTitulo || "").trim(),
+    livSubtitulo: (form.livSubtitulo || "").trim(),
     livAutor: (form.livAutor || "").trim(),
     livDescricao: form.livDescricao || "",
     livEditora: form.livEditora || "",
     livCapaURL: form.livCapaURL || "",
+    livIdioma: (form.livIdioma || "").trim(),
+    livFaixaEtaria: (form.livFaixaEtaria || "").trim(),
+    livPalavrasChave: (form.livPalavrasChave || "").trim(),
   };
 }
 

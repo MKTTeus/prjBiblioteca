@@ -28,6 +28,11 @@ class Livro(BaseModel):
     livPaginas: Optional[int] = None
     livCapaURL: Optional[str] = None
     livISBN: Optional[str] = None
+    # Campos sugeridos pela IA de catalogação (colunas simples de Livro)
+    livSubtitulo: Optional[str] = None
+    livIdioma: Optional[str] = None
+    livFaixaEtaria: Optional[str] = None
+    livPalavrasChave: Optional[str] = None
     # Campos relacionais — não são colunas de Livro, tratados no router
     livAutor: Optional[str] = None       # → tabela Autor + LivroAutor
     livEditora: Optional[str] = None     # → tabela Editora (FK idEditora)
