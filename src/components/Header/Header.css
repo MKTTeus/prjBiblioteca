@@ -121,3 +121,9 @@
     max-width: 140px;
   }
 }
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+    margin-top: 8px;
+  }
+}
