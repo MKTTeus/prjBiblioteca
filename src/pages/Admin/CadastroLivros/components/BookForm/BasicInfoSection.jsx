@@ -52,12 +52,16 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
       ? String(livro.publish_date).replace(/\D/g, "").slice(0, 4)
       : livro?.publishedDate
         ? String(livro.publishedDate).slice(0, 4)
-        : "",
+        : livro?.year
+          ? String(livro.year).slice(0, 4)
+          : "",
     livPaginas: livro?.number_of_pages
       ? String(livro.number_of_pages)
       : livro?.pageCount
         ? String(livro.pageCount)
-        : "",
+        : livro?.page_count
+          ? String(livro.page_count)
+          : "",
     livCapaURL:
       livro?.cover?.large ||
       livro?.cover?.medium ||
@@ -66,8 +70,9 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
       livro?.imageLinks?.large ||
       livro?.imageLinks?.medium ||
       livro?.imageLinks?.small ||
+      livro?.cover_url ||
       "",
-    livDescricao: livro?.description || "",
+    livDescricao: livro?.description || livro?.synopsis || "",
     idCategoria: matchingCategoria?.idCategoria ?? "",
     idGenero: matchingGenero?.idGenero ?? "",
     categoriaNome: categoryName,
@@ -165,33 +170,60 @@ export default function BasicInfoSection({
       setErroISBN(null);
 
       try {
-        let dados = null;
+        let livro = null;
+
+        // 1) BrasilAPI: agrega CBL (registro oficial do ISBN no Brasil), Mercado
+        // Editorial e Open Library. É a fonte mais precisa para edições nacionais.
         try {
-          const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbnLimpo}&format=json&jscmd=data`;
+          const url = `https://brasilapi.com.br/api/isbn/v1/${isbnLimpo}`;
           const res = await fetch(url);
-          const json = await res.json();
-          const chave = `ISBN:${isbnLimpo}`;
-          const livro = json[chave];
-
-          if (!livro) {
-            setErroISBN("ISBN não encontrado.");
-            return;
+          if (res.ok) {
+            livro = await res.json();
           }
-
-          dados = buildISBNAutoFillData({
-            livro,
-            autores,
-            isbn: isbnLimpo,
-          });
         } catch (err) {
-          console.error("Erro ao buscar no Open Library:", err);
-          dados = null;
+          console.error("Erro ao buscar no BrasilAPI:", err);
+          livro = null;
         }
 
-        if (!dados) {
-          setErroISBN("ISBN não encontrado. Tente novamente.");
+        // 2) Open Library: bom fallback para obras estrangeiras/gerais.
+        if (!livro) {
+          try {
+            const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${isbnLimpo}&format=json&jscmd=data`;
+            const res = await fetch(url);
+            const json = await res.json();
+            livro = json[`ISBN:${isbnLimpo}`] || null;
+          } catch (err) {
+            console.error("Erro ao buscar no Open Library:", err);
+            livro = null;
+          }
+        }
+
+        // 3) Google Books: último fallback, maior cobertura geral.
+        if (!livro) {
+          try {
+            const googleBooksKey = process.env.REACT_APP_GOOGLE_BOOKS_KEY;
+            const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbnLimpo}${
+              googleBooksKey ? `&key=${googleBooksKey}` : ""
+            }`;
+            const res = await fetch(url);
+            const json = await res.json();
+            livro = json?.items?.[0]?.volumeInfo || null;
+          } catch (err) {
+            console.error("Erro ao buscar no Google Books:", err);
+            livro = null;
+          }
+        }
+
+        if (!livro) {
+          setErroISBN("ISBN não encontrado em nenhuma fonte. Tente novamente ou preencha manualmente.");
           return;
         }
+
+        const dados = buildISBNAutoFillData({
+          livro,
+          autores,
+          isbn: isbnLimpo,
+        });
 
         let autorNome = dados.autorNome || "";
 
