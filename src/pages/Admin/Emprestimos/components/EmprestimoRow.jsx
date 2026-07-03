@@ -38,25 +38,27 @@ export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolve
         </span>
       </td>
 
-      <td className="emp-actions-cell">
-        <button 
-          type="button" 
-          className="emp-btn-light"
-          onClick={() => onRenovar(emprestimo.idEmprestimo)}
-        >
-          Renovar
-        </button>
+     <td className="emp-actions-cell">
+  <div className="emp-actions">
+    <button
+      type="button"
+      className="emp-btn-light"
+      onClick={() => onRenovar(emprestimo.idEmprestimo)}
+    >
+      Renovar
+    </button>
 
-        {getStatusEmprestimo(emprestimo) !== "devolvido" && (
-          <button
-            type="button"
-            className="emp-btn-light"
-            onClick={() => onDevolver(emprestimo.idEmprestimo)}
-          >
-            Devolver
-          </button>
-        )}
-      </td>
+    {getStatusEmprestimo(emprestimo) !== "devolvido" && (
+      <button
+        type="button"
+        className="emp-btn-light"
+        onClick={() => onDevolver(emprestimo.idEmprestimo)}
+      >
+        Devolver
+      </button>
+    )}
+  </div>
+</td>
     </tr>
   );
 }

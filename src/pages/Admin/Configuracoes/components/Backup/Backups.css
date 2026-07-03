@@ -170,7 +170,7 @@
 .bk-row:last-child td { border-bottom: none; }
 .bk-row:hover td { background: var(--main-bg, #f9fafb); }
 
-.bk-col-nome { display: flex; align-items: center; gap: 8px; min-width: 200px; }
+.bk-col-nome { align-items: center; gap: 8px; min-width: 200px; }
 .bk-file-icon { color: var(--primary); flex-shrink: 0; }
 .bk-col-nome span { word-break: break-all; }
 
