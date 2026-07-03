@@ -749,7 +749,8 @@
 }
 
 .inline-select-row select,
-.inline-select-row input {
+.inline-select-row input,
+.inline-select-row .searchable-select {
   flex: 1;
 }
 

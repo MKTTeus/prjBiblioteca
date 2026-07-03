@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
 import { HiOutlineQrCode, HiOutlineMagnifyingGlass, HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
+import SearchableSelect from "./SearchableSelect";
 import { completarLivroComIA } from "../../../../../services/api";
 
 function normalizeText(value = "") {
@@ -493,22 +494,16 @@ export default function BasicInfoSection({
                   <button type="button" className="inline-create-cancel" onClick={() => setCriandoAutor(false)}>
                     Cancelar
                   </button>
-                  <span className="inline-create-hint">Autor será salvo junto com o livro ao finalizar.</span>
                 </div>
               ) : (
                 <div className="inline-select-row">
-                  <select
+                  <SearchableSelect
                     name="livAutor"
                     value={form.livAutor}
-                    onChange={(e) => onFieldChange("livAutor", e.target.value)}
-                  >
-                    <option value="">Selecione um autor</option>
-                    {autores.map((aut) => (
-                      <option key={aut.idAutor} value={aut.autNome}>
-                        {aut.autNome}
-                      </option>
-                    ))}
-                  </select>
+                    options={autores.map((aut) => ({ value: aut.autNome, label: aut.autNome }))}
+                    onChange={(val) => onFieldChange("livAutor", val)}
+                    placeholder="Selecione um autor"
+                  />
                   <button
                     type="button"
                     className="inline-create-btn"
@@ -539,22 +534,16 @@ export default function BasicInfoSection({
                   <button type="button" className="inline-create-cancel" onClick={() => setCriandoGenero(false)}>
                     Cancelar
                   </button>
-                  <span className="inline-create-hint">Só é criado de fato ao finalizar o cadastro do livro.</span>
                 </div>
               ) : (
                 <div className="inline-select-row">
-                  <select
+                  <SearchableSelect
                     name="idGenero"
                     value={form.idGenero}
-                    onChange={(e) => onFieldChange("idGenero", e.target.value)}
-                  >
-                    <option value="">Selecione um gênero</option>
-                    {generos.map((gen) => (
-                      <option key={gen.idGenero} value={gen.idGenero}>
-                        {gen.genNome}{gen.pendente ? " (novo — será salvo ao finalizar)" : ""}
-                      </option>
-                    ))}
-                  </select>
+                    options={generos.map((gen) => ({ value: gen.idGenero, label: gen.genNome }))}
+                    onChange={(val) => onFieldChange("idGenero", val)}
+                    placeholder="Selecione um gênero"
+                  />
                   <button
                     type="button"
                     className="inline-create-btn"
@@ -592,22 +581,16 @@ export default function BasicInfoSection({
                 <button type="button" className="inline-create-cancel" onClick={() => setCriandoCategoria(false)}>
                   Cancelar
                 </button>
-                <span className="inline-create-hint">Só é criada de fato ao finalizar o cadastro do livro.</span>
               </div>
             ) : (
               <div className="inline-select-row">
-                <select
+                <SearchableSelect
                   name="idCategoria"
                   value={form.idCategoria}
-                  onChange={(e) => onFieldChange("idCategoria", e.target.value)}
-                >
-                  <option value="">Selecione uma categoria</option>
-                  {categorias.map((cat) => (
-                    <option key={cat.idCategoria} value={cat.idCategoria}>
-                      {cat.catNome}{cat.pendente ? " (novo — será salvo ao finalizar)" : ""}
-                    </option>
-                  ))}
-                </select>
+                  options={categorias.map((cat) => ({ value: cat.idCategoria, label: cat.catNome }))}
+                  onChange={(val) => onFieldChange("idCategoria", val)}
+                  placeholder="Selecione uma categoria"
+                />
                 <button
                   type="button"
                   className="inline-create-btn"

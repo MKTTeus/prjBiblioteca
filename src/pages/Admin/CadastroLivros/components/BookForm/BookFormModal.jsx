@@ -172,7 +172,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   function handleFieldChange(name, value) {
     setForm((prev) => ({
       ...prev,
-      [name]: name === "idCategoria" || name === "idGenero" ? Number(value) : value,
+      [name]:
+        (name === "idCategoria" || name === "idGenero") && !isPendingId(value)
+          ? value === "" || value === null || value === undefined
+            ? ""
+            : Number(value)
+          : value,
     }));
   }
 
@@ -427,7 +432,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
     const pendente = { idCategoria, catNome: nomeLimpo, pendente: true };
     setCategorias((prev) => [...prev, pendente]);
-    addToast(`Categoria "${nomeLimpo}" será criada ao salvar o cadastro`, "success");
+    addToast(`Categoria "${nomeLimpo}" adicionada`, "success");
     return pendente;
   }
 
@@ -445,7 +450,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
     const pendente = { idGenero, genNome: nomeLimpo, pendente: true };
     setGeneros((prev) => [...prev, pendente]);
-    addToast(`Gênero "${nomeLimpo}" será criado ao salvar o cadastro`, "success");
+    addToast(`Gênero "${nomeLimpo}" adicionado`, "success");
     return pendente;
   }
 
