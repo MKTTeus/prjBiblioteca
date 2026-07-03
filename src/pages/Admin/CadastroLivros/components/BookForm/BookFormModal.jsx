@@ -463,7 +463,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     const existente = autores.find(
       (item) => normalizeText(item.autNome) === normalizeText(nomeLimpo)
     );
-    return existente || { autNome: nomeLimpo };
+    if (existente) return existente;
+
+    const pendente = { autNome: nomeLimpo, pendente: true };
+    setAutores((prev) => [...prev, pendente]);
+    addToast(`Autor "${nomeLimpo}" adicionado`, "success");
+    return pendente;
   }
 
   function renderActiveSection() {
