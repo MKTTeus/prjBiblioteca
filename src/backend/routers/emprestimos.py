@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, get_admin_id, get_optional_user
+from core import get_admin, get_admin_id, get_optional_user, executar_em_paralelo
 from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao
 
 router = APIRouter()
@@ -111,17 +111,29 @@ def listar_solicitacoes(admin=Depends(get_admin)):
         )
 
         movimentacao_ids = [m["idMovimentacao"] for m in movimentacoes if m.get("idMovimentacao")]
+        usuario_ids = list({m.get("idUsuario") for m in movimentacoes if m.get("idUsuario")})
+
+        # Independentes entre si — rodam em paralelo.
+        consultas = []
+        if movimentacao_ids:
+            consultas.append(
+                lambda: supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", movimentacao_ids).execute()
+            )
+        else:
+            consultas.append(lambda: None)
+        if usuario_ids:
+            consultas.append(
+                lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo").in_("idUsuario", usuario_ids).execute()
+            )
+        else:
+            consultas.append(lambda: None)
+
+        resp_mov_ex, resp_usuarios = executar_em_paralelo(*consultas)
+
         mov_ex_map = {}
         exemplar_ids = []
-        if movimentacao_ids:
-            movimentacao_exemplares = (
-                supabase.table("MovimentacaoExemplar")
-                .select("*")
-                .in_("idMovimentacao", movimentacao_ids)
-                .execute()
-                .data or []
-            )
-            for me in movimentacao_exemplares:
+        if resp_mov_ex:
+            for me in (resp_mov_ex.data or []):
                 mov_ex_map.setdefault(me["idMovimentacao"], []).append(me)
                 if me.get("idExemplar"):
                     exemplar_ids.append(me["idExemplar"])
@@ -148,17 +160,7 @@ def listar_solicitacoes(admin=Depends(get_admin)):
                 )
                 livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
 
-        usuario_ids = list({m.get("idUsuario") for m in movimentacoes if m.get("idUsuario")})
-        usuario_map = {}
-        if usuario_ids:
-            usuarios = (
-                supabase.table("Usuario")
-                .select("idUsuario, usuNome, usuTipo")
-                .in_("idUsuario", usuario_ids)
-                .execute()
-                .data or []
-            )
-            usuario_map = {u["idUsuario"]: u for u in usuarios}
+        usuario_map = {u["idUsuario"]: u for u in (resp_usuarios.data or [])} if resp_usuarios else {}
 
         for mov in movimentacoes:
             me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
@@ -204,9 +206,29 @@ def listar_emprestimos(user=Depends(get_optional_user)):
         emprestimos = query.execute().data or []
 
         movimentacao_ids = [m["idMovimentacao"] for m in emprestimos if m.get("idMovimentacao")]
-        movimentacao_exemplares = []
+        usuario_ids = list({m.get("idUsuario") for m in emprestimos if m.get("idUsuario")})
+
+        # As duas consultas abaixo não dependem uma da outra (uma usa
+        # movimentacao_ids, a outra usuario_ids — ambos já calculados a
+        # partir de `emprestimos`), então rodam em paralelo.
+        consultas = []
         if movimentacao_ids:
-            movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", movimentacao_ids).execute().data or []
+            consultas.append(
+                lambda: supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", movimentacao_ids).execute()
+            )
+        else:
+            consultas.append(lambda: None)
+        if usuario_ids:
+            consultas.append(
+                lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo").in_("idUsuario", usuario_ids).execute()
+            )
+        else:
+            consultas.append(lambda: None)
+
+        resp_mov_ex, resp_usuarios = executar_em_paralelo(*consultas)
+
+        movimentacao_exemplares = (resp_mov_ex.data or []) if resp_mov_ex else []
+        usuario_map = {u["idUsuario"]: u for u in (resp_usuarios.data or [])} if resp_usuarios else {}
 
         mov_ex_map = {}
         exemplar_ids = []
@@ -225,13 +247,6 @@ def listar_emprestimos(user=Depends(get_optional_user)):
 
         livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
         exemplar_map = {e["idExemplar"]: e for e in exemplares}
-
-        # Buscar dados dos usuários
-        usuario_ids = list({m.get("idUsuario") for m in emprestimos if m.get("idUsuario")})
-        usuario_map = {}
-        if usuario_ids:
-            usuarios = supabase.table("Usuario").select("idUsuario, usuNome, usuTipo").in_("idUsuario", usuario_ids).execute().data or []
-            usuario_map = {u["idUsuario"]: u for u in usuarios}
 
         for mov in emprestimos:
             me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])

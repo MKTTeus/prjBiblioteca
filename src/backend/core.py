@@ -1,4 +1,5 @@
 import os
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -15,6 +16,32 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "segredo")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 6
+
+
+def executar_em_paralelo(*funcoes):
+    """Executa várias consultas independentes ao Supabase em paralelo
+    (threads), em vez de uma atrás da outra.
+
+    Cada `.execute()` do supabase-py é uma chamada de rede síncrona e
+    bloqueante à API REST (PostgREST). Quando várias consultas não dependem
+    do resultado umas das outras (ex.: buscar autores, categorias e gêneros
+    de uma lista de livros), rodá-las em série soma a latência de cada uma;
+    em paralelo, o tempo total fica próximo ao da consulta mais lenta.
+
+    Uso:
+        resp_a, resp_b = executar_em_paralelo(
+            lambda: supabase.table("A").select("*").execute(),
+            lambda: supabase.table("B").select("*").execute(),
+        )
+    """
+    if not funcoes:
+        return []
+    if len(funcoes) == 1:
+        return [funcoes[0]()]
+    with ThreadPoolExecutor(max_workers=len(funcoes)) as executor:
+        futures = [executor.submit(f) for f in funcoes]
+        return [f.result() for f in futures]
+
 
 def get_session_timeout_minutes() -> int:
     try:

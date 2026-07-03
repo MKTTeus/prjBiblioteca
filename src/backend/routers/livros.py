@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, gerar_tombos
+from core import get_admin, gerar_tombos, executar_em_paralelo
 from schemas import Livro, LivroCreate, ExemplarUpdate
 
 router = APIRouter()
@@ -20,30 +20,38 @@ def enriquecer_livros(livros: list) -> list:
         return []
 
     ids = [l["idLivro"] for l in livros]
+    ed_ids = list({l["idEditora"] for l in livros if l.get("idEditora")})
 
-    # Autores
-    la = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome)") \
-        .in_("idLivro", ids).execute().data or []
+    # As 4 consultas abaixo são independentes entre si (cada uma só depende
+    # da lista de ids de livros), então rodam em paralelo em vez de uma
+    # atrás da outra — é o principal ponto de lentidão ao carregar livros,
+    # já que esta função é chamada em toda listagem/detalhe/salvamento.
+    consultas = [
+        lambda: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome)").in_("idLivro", ids).execute(),
+        lambda: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids).execute(),
+        lambda: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids).execute(),
+    ]
+    if ed_ids:
+        consultas.append(
+            lambda: supabase.table("Editora").select("idEditora, ediNome").in_("idEditora", ed_ids).execute()
+        )
+
+    resp_autor, resp_categoria, resp_genero, *resto = executar_em_paralelo(*consultas)
+
+    la = resp_autor.data or []
     autor_map = {r["idLivro"]: r["Autor"]["autNome"] for r in la if r.get("Autor")}
 
-    # Categorias
-    lc = supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)") \
-        .in_("idLivro", ids).execute().data or []
+    lc = resp_categoria.data or []
     cat_map    = {r["idLivro"]: r["Categoria"]["catNome"]    for r in lc if r.get("Categoria")}
     cat_id_map = {r["idLivro"]: r["Categoria"]["idCategoria"] for r in lc if r.get("Categoria")}
 
-    # Gêneros
-    lg = supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)") \
-        .in_("idLivro", ids).execute().data or []
+    lg = resp_genero.data or []
     gen_map    = {r["idLivro"]: r["Genero"]["genNome"]    for r in lg if r.get("Genero")}
     gen_id_map = {r["idLivro"]: r["Genero"]["idGenero"]   for r in lg if r.get("Genero")}
 
-    # Editoras (FK direto em Livro)
-    ed_ids = list({l["idEditora"] for l in livros if l.get("idEditora")})
     ed_map = {}
-    if ed_ids:
-        eds = supabase.table("Editora").select("idEditora, ediNome") \
-            .in_("idEditora", ed_ids).execute().data or []
+    if resto:
+        eds = resto[0].data or []
         ed_map = {e["idEditora"]: e["ediNome"] for e in eds}
 
     resultado = []
@@ -139,22 +147,31 @@ def listar_livros(
 
         if q:
             q_str = f"%{q}%"
-            ids = set()
 
-            # Busca por título
-            r = supabase.table("Livro").select("idLivro").ilike("livTitulo", q_str).execute()
-            ids.update(l["idLivro"] for l in (r.data or []))
+            def buscar_por_titulo():
+                return supabase.table("Livro").select("idLivro").ilike("livTitulo", q_str).execute()
 
-            # Busca por autor (via tabela Autor + LivroAutor)
-            autores = supabase.table("Autor").select("idAutor").ilike("autNome", q_str).execute().data or []
-            if autores:
+            def buscar_por_tombo():
+                return supabase.table("Exemplar").select("idLivro").ilike("exeLivTombo", q_str).execute()
+
+            def buscar_por_autor():
+                # Passo interno em 2 etapas (autor → LivroAutor), mas essa
+                # cadeia inteira roda em paralelo com as outras duas buscas.
+                autores = supabase.table("Autor").select("idAutor").ilike("autNome", q_str).execute().data or []
+                if not autores:
+                    return []
                 autor_ids = [a["idAutor"] for a in autores]
                 la = supabase.table("LivroAutor").select("idLivro").in_("idAutor", autor_ids).execute().data or []
-                ids.update(r["idLivro"] for r in la)
+                return [r["idLivro"] for r in la]
 
-            # Busca por tombo
-            r = supabase.table("Exemplar").select("idLivro").ilike("exeLivTombo", q_str).execute()
-            ids.update(e["idLivro"] for e in (r.data or []))
+            resp_titulo, resp_tombo, ids_por_autor = executar_em_paralelo(
+                buscar_por_titulo, buscar_por_tombo, buscar_por_autor
+            )
+
+            ids = set()
+            ids.update(l["idLivro"] for l in (resp_titulo.data or []))
+            ids.update(e["idLivro"] for e in (resp_tombo.data or []))
+            ids.update(ids_por_autor)
 
             allowed_ids = ids
 
