@@ -8,10 +8,11 @@ import {
   HiOutlineCalendar,
 } from "react-icons/hi";
 
-import { getBooks, deleteBook } from "../../../services/api";
+import { getBooks, getBook, deleteBook } from "../../../services/api";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import BookList from "./components/BookList/BookList";
 import BookFormModal from "./components/BookForm/BookFormModal";
+import BookInfoModal from "./components/BookInfo/BookInfoModal";
 import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
 import { useAuth } from "../../../contexts/AuthContext";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -28,6 +29,7 @@ export default function CadastroLivros() {
   const [pendingDeleteBook, setPendingDeleteBook] = useState(null);
   const { addToast } = useToast();
   const [currentBook, setCurrentBook] = useState(null);
+  const [fichaBook, setFichaBook] = useState(null);
   const [filters, setFilters] = useState({
     q: "",
     categoria: "todas",
@@ -112,6 +114,17 @@ export default function CadastroLivros() {
     loadBooks();
   }
 
+  async function handleViewFicha(book) {
+    try {
+      const detalhes = await getBook(book.idLivro);
+      setFichaBook({ ...book, exemplares: detalhes.exemplares || [] });
+    } catch (err) {
+      console.error(err);
+      addToast("Falha ao carregar detalhes do livro", "error");
+      setFichaBook(book);
+    }
+  }
+
   return (
     <div className="cadastro page-shell">
       <div className="cadastro-header">
@@ -191,6 +204,7 @@ export default function CadastroLivros() {
           books={filteredBooks}
           onEditBook={handleEdit}
           onDeleteBook={handleDelete}
+          onViewFicha={handleViewFicha}
           isAdmin={isAdmin}
         />
       )}
@@ -200,6 +214,13 @@ export default function CadastroLivros() {
           bookToEdit={currentBook}
           onClose={() => setModalOpen(false)}
           onBookSaved={handleSaved}
+        />
+      )}
+
+      {fichaBook && (
+        <BookInfoModal
+          book={fichaBook}
+          onClose={() => setFichaBook(null)}
         />
       )}
 

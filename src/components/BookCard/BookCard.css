@@ -274,6 +274,11 @@
   color: var(--btn-primary-text);
 }
 
+.shared-book-card__button--ficha {
+  background: var(--primary);
+  color: var(--btn-primary-text);
+}
+
 @media (max-width: 1180px) {
   .shared-book-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));

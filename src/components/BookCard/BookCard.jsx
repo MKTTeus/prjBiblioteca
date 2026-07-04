@@ -7,6 +7,7 @@ import {
   HiOutlineLocationMarker,
   HiOutlinePencil,
   HiOutlineXCircle,
+  HiOutlineDocumentText,
 } from "react-icons/hi";
 import "./BookCard.css";
 
@@ -63,6 +64,7 @@ export default function BookCard({
   isAdmin = false,
   onEdit,
   onDelete,
+  onViewFicha,
   onRequestLoan,
   jasolicitado = false,
   solicitando = false,
@@ -178,6 +180,17 @@ export default function BookCard({
                   <HiOutlinePencil />
                   <span>Editar</span>
                 </button>
+                {onViewFicha && (
+                  <button
+                    type="button"
+                    className="shared-book-card__button shared-book-card__button--ficha"
+                    onClick={() => onViewFicha(book)}
+                    title="Ver ficha catalográfica"
+                  >
+                    <HiOutlineDocumentText />
+                    <span>Ficha</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   className="shared-book-card__button shared-book-card__button--delete"
