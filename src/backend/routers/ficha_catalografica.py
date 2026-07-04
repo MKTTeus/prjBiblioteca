@@ -149,24 +149,54 @@ def formatar_ficha_html(
     for i, ass in enumerate(assuntos, 1):
         assuntos_html += f"{i}. {ass}. "
     entradas_html = " ".join(entradas)
-    isbn_block = f'<div class="ficha-item" style="margin-left: 30px; margin-bottom: 12px;">{isbn}</div>' if isbn else ''
+    # Quando a entrada é pelo título (mais de 3 autores), não há linha de
+    # autor no topo da ficha.
+    autor_html = (
+        f'<div style="font-weight: bold; margin-bottom: 12px;">{autor_abnt}</div>'
+        if autor_abnt else ""
+    )
+    # ISBN e a linha de assuntos/entradas voltam para a margem da 1ª letra do
+    # sobrenome do autor (sem indentação). Só o bloco título / publicação /
+    # descrição física fica recuado, com o título iniciando abaixo da 4ª
+    # letra do sobrenome (hanging indent) — conforme a NBR 14724/2005.
+    isbn_block = f'<div class="ficha-item" style="margin-bottom: 12px;">{isbn}</div>' if isbn else ''
     html = f"""
+<style>
+  /* Tamanho padrão da ficha catalográfica impressa: 7,5 cm x 12,5 cm
+     (NBR 14724/2005), aplicado só na impressão para não prejudicar a
+     legibilidade da pré-visualização em tela. */
+  @media print {{
+    .ficha-catalografica-container {{
+      width: 12.5cm;
+      height: 7.5cm;
+      max-width: 12.5cm;
+      max-height: 7.5cm;
+      font-size: 8pt;
+      line-height: 1.3;
+      padding: 0.35cm;
+      margin: 0;
+      overflow: hidden;
+      box-shadow: none;
+      border-radius: 0;
+    }}
+  }}
+</style>
 <div class="ficha-catalografica-container" style="border: 2px solid var(--surface-border, #333); padding: 25px; font-family: 'Courier New', Courier, monospace; font-size: 13.5px; line-height: 1.6; max-width: 550px; margin: 15px auto; background-color: var(--surface-bg, #fff); color: var(--text-default, #111); border-radius: 8px; box-shadow: var(--shadow-soft, 0 4px 12px rgba(0,0,0,0.1));">
-  <div style="font-weight: bold; margin-bottom: 12px;">{autor_abnt}</div>
+  {autor_html}
   <div style="margin-left: 30px; text-indent: -15px; margin-bottom: 8px; text-align: justify;">
     {titulo}
   </div>
   <div style="margin-left: 30px; margin-bottom: 8px; text-align: justify;">
     {publicacao}
   </div>
-  <div style="margin-left: 30px; margin-bottom: 8px;">
+  <div style="margin-left: 30px; margin-bottom: 12px;">
     {descricao_fisica}
   </div>
   {isbn_block}
-  <div style="margin-left: 30px; margin-bottom: 12px; text-align: justify;">
+  <div style="margin-bottom: 12px; text-align: justify;">
     {assuntos_html} {entradas_html}
   </div>
-  <div style="text-align: right; font-weight: bold; margin-top: 15px;">
+  <div style="font-weight: bold; margin-top: 15px;">
     CDD {cdd}
   </div>
 </div>
@@ -197,7 +227,7 @@ def obter_ficha_catalografica(idLivro: int):
                 autores_list.append(r["Autor"])
     autor_principal = autores_list[0] if autores_list else None
     autor_abnt = ""
-    if autor_principal:
+    if autor_principal and len(autores_list) <= 3:
         autor_abnt = autor_principal.get("autABNT") or converter_para_abnt(autor_principal["autNome"])
     # Reconstruir fichaJson
     assuntos = []
@@ -246,13 +276,29 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
             status_code=400,
             detail="O livro precisa ter pelo menos um autor cadastrado para gerar a ficha catalográfica."
         )
-    autor_principal = autores_list[0]
-    autor_abnt = autor_principal.get("autABNT") or converter_para_abnt(autor_principal["autNome"])
-    autor_principal_nome = autor_principal["autNome"]
+    total_autores = len(autores_list)
+    nomes_autores = [a["autNome"] for a in autores_list]
+
+    # Regra dos modelos do PDF: até 3 autores, a entrada principal é pelo
+    # primeiro (os demais só aparecem como entrada secundária no corpo).
+    # Mais de 3 autores: a entrada principal passa a ser pelo título — não
+    # há linha de autor no topo, a indicação de responsabilidade cita só o
+    # primeiro nome seguido de "[et al.]", e TODOS os autores (não apenas
+    # os demais) entram como entrada secundária.
+    if total_autores > 3:
+        autor_abnt = ""
+        autores_statement = f"{nomes_autores[0]}... [et al.]"
+        nomes_entrada_secundaria = nomes_autores
+    else:
+        autor_principal = autores_list[0]
+        autor_abnt = autor_principal.get("autABNT") or converter_para_abnt(autor_principal["autNome"])
+        autores_statement = ", ".join(nomes_autores)
+        nomes_entrada_secundaria = nomes_autores[1:]
+
     titulo_cat = livro["livTitulo"]
     if livro.get("livSubtitulo"):
         titulo_cat += f" : {livro['livSubtitulo']}"
-    titulo_cat += f" / {autor_principal_nome}."
+    titulo_cat += f" / {autores_statement}."
     cidade = livro.get("ediCidade") or "[S.l.]"
     editora = livro.get("livEditora") or "[s.n.]"
     ano = str(livro.get("livAnoPublicacao")) if livro.get("livAnoPublicacao") else "[s.d.]"
@@ -288,16 +334,15 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
         cdd_origem = "ia"
         supabase.table("Livro").update({"livCDD": cdd, "livCDDSugerida": True}).eq("idLivro", idLivro).execute()
     assuntos = sugerir_assuntos_ia(livro)
-    entradas = []
-    for i in range(1, len(autores_list)):
-        entradas.append(autores_list[i]["autNome"])
+    entradas = list(nomes_entrada_secundaria)
     entradas.append("Título")
     entradas_formatadas = []
     for i, ent in enumerate(entradas, 1):
         roman = int_to_roman(i)
         entradas_formatadas.append(f"{roman}. {ent}.")
     texto_linhas = []
-    texto_linhas.append(autor_abnt)
+    if autor_abnt:
+        texto_linhas.append(autor_abnt)
     texto_linhas.append(titulo_cat)
     texto_linhas.append(publicacao)
     texto_linhas.append(desc_fisica)
@@ -365,14 +410,26 @@ def atualizar_ficha_catalografica(idLivro: int, data: FichaCatalograficaUpdate, 
     if data.ficGeradaPorIA is not None:
         payload_upd["ficGeradaPorIA"] = data.ficGeradaPorIA
     linhas = [l.strip() for l in data.ficTexto.split("\n\n") if l.strip()]
-    autor_abnt = linhas[0] if len(linhas) > 0 else ""
-    titulo_cat = linhas[1] if len(linhas) > 1 else ""
-    pub = linhas[2] if len(linhas) > 2 else ""
-    desc = linhas[3] if len(linhas) > 3 else ""
+    # Quando a entrada é pelo título (mais de 3 autores), não existe linha de
+    # autor separada — a ficha já começa pela linha "Título / Autor... [et
+    # al.].", que sempre contém " / ". Detectamos isso para não desalinhar
+    # os índices das linhas seguintes.
+    entrada_por_titulo = bool(linhas) and " / " in linhas[0]
+    if entrada_por_titulo:
+        autor_abnt = ""
+        titulo_cat = linhas[0] if len(linhas) > 0 else ""
+        pub = linhas[1] if len(linhas) > 1 else ""
+        desc = linhas[2] if len(linhas) > 2 else ""
+        restantes = linhas[3:]
+    else:
+        autor_abnt = linhas[0] if len(linhas) > 0 else ""
+        titulo_cat = linhas[1] if len(linhas) > 1 else ""
+        pub = linhas[2] if len(linhas) > 2 else ""
+        desc = linhas[3] if len(linhas) > 3 else ""
+        restantes = linhas[4:]
     isbn_text = ""
     assuntos_entradas = ""
     cdd_text = data.ficCDD or ficha["ficCDD"]
-    restantes = linhas[4:]
     for r in restantes:
         if r.startswith("ISBN"):
             isbn_text = r
@@ -384,24 +441,49 @@ def atualizar_ficha_catalografica(idLivro: int, data: FichaCatalograficaUpdate, 
             else:
                 assuntos_entradas = r
     assuntos_entradas_clean = " ".join([x.strip() for x in assuntos_entradas.split("\n") if x.strip()])
-    isbn_block = f'<div style="margin-left: 30px; margin-bottom: 12px;">{isbn_text}</div>' if isbn_text else ''
+    # Mesma regra do gerador: ISBN e assuntos/entradas voltam para a margem
+    # da 1ª letra do sobrenome (sem indentação); só título/publicação/
+    # descrição física ficam recuados. Autor só aparece quando não é uma
+    # entrada por título.
+    autor_html = (
+        f'<div style="font-weight: bold; margin-bottom: 12px;">{autor_abnt}</div>'
+        if autor_abnt else ""
+    )
+    isbn_block = f'<div style="margin-bottom: 12px;">{isbn_text}</div>' if isbn_text else ''
     ficHtml = f"""
+<style>
+  @media print {{
+    .ficha-catalografica-container {{
+      width: 12.5cm;
+      height: 7.5cm;
+      max-width: 12.5cm;
+      max-height: 7.5cm;
+      font-size: 8pt;
+      line-height: 1.3;
+      padding: 0.35cm;
+      margin: 0;
+      overflow: hidden;
+      box-shadow: none;
+      border-radius: 0;
+    }}
+  }}
+</style>
 <div class="ficha-catalografica-container" style="border: 2px solid var(--surface-border, #333); padding: 25px; font-family: 'Courier New', Courier, monospace; font-size: 13.5px; line-height: 1.6; max-width: 550px; margin: 15px auto; background-color: var(--surface-bg, #fff); color: var(--text-default, #111); border-radius: 8px; box-shadow: var(--shadow-soft, 0 4px 12px rgba(0,0,0,0.1));">
-  <div style="font-weight: bold; margin-bottom: 12px;">{autor_abnt}</div>
+  {autor_html}
   <div style="margin-left: 30px; text-indent: -15px; margin-bottom: 8px; text-align: justify;">
     {titulo_cat}
   </div>
   <div style="margin-left: 30px; margin-bottom: 8px; text-align: justify;">
     {pub}
   </div>
-  <div style="margin-left: 30px; margin-bottom: 8px;">
+  <div style="margin-left: 30px; margin-bottom: 12px;">
     {desc}
   </div>
   {isbn_block}
-  <div style="margin-left: 30px; margin-bottom: 12px; text-align: justify;">
+  <div style="margin-bottom: 12px; text-align: justify;">
     {assuntos_entradas_clean}
   </div>
-  <div style="text-align: right; font-weight: bold; margin-top: 15px;">
+  <div style="font-weight: bold; margin-top: 15px;">
     CDD {cdd_text}
   </div>
 </div>
