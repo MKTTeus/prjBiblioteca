@@ -145,7 +145,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         livPalavrasChave: livro.livPalavrasChave || "",
         idCategoria: livro.idCategoria || 1,
         idGenero: livro.idGenero || 1,
-        exemplarISBN: livro.exemplarISBN || livro.exeLivISBN || "",
+        exemplarISBN: livro.livISBN || livro.exemplarISBN || livro.exeLivISBN || "",
         livCDD: livro.livCDD || "",
         livCDDSugerida: livro.livCDDSugerida || false,
         livEdicao: livro.livEdicao || "",
@@ -228,8 +228,19 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       livPaginas:       dados.livPaginas       || prev.livPaginas,
       livCapaURL:       dados.livCapaURL       || prev.livCapaURL,
       livDescricao:     dados.livDescricao     || prev.livDescricao,
-      idCategoria:      dados.idCategoria ? Number(dados.idCategoria) : prev.idCategoria,
-      idGenero:         dados.idGenero ? Number(dados.idGenero) : prev.idGenero,
+      livIdioma:        dados.livIdioma        || prev.livIdioma,
+      idCategoria:
+        dados.idCategoria === "" || dados.idCategoria === null || dados.idCategoria === undefined
+          ? prev.idCategoria
+          : isPendingId(dados.idCategoria)
+            ? dados.idCategoria
+            : Number(dados.idCategoria),
+      idGenero:
+        dados.idGenero === "" || dados.idGenero === null || dados.idGenero === undefined
+          ? prev.idGenero
+          : isPendingId(dados.idGenero)
+            ? dados.idGenero
+            : Number(dados.idGenero),
       exemplarISBN:     dados.exemplarISBN     || prev.exemplarISBN,
     }));
     addToast("Dados preenchidos a partir do ISBN!", "success");

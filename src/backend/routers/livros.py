@@ -286,8 +286,15 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
     try:
         payload = data.livro.model_dump()
 
-        # Campos que não são colunas de Livro
-        payload.pop("exemplarISBN", None)
+        # exemplarISBN é o nome usado no formulário (o ISBN é digitado/lido
+        # junto do exemplar físico), mas na modelagem do banco o ISBN é um
+        # atributo do Livro (coluna livISBN, única) — cada exemplar (tombo)
+        # é só uma cópia física da mesma edição/ISBN.
+        isbn = (payload.pop("exemplarISBN", None) or "").strip() or None
+        if isbn:
+            payload["livISBN"] = isbn
+        else:
+            payload.pop("livISBN", None)
         id_categoria = payload.pop("idCategoria", None)
         id_genero    = payload.pop("idGenero", None)
         nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
@@ -340,6 +347,11 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
                 status_code=400,
                 detail="Preencha todos os campos obrigatórios do livro (título e número de páginas).",
             )
+        if "livISBN" in error_msg and ("duplicate key" in error_msg or "23505" in error_msg):
+            raise HTTPException(
+                status_code=409,
+                detail="Já existe um livro cadastrado com esse ISBN.",
+            )
         raise HTTPException(status_code=500, detail=f"Erro ao criar livro: {str(e)}")
 
 
@@ -349,7 +361,12 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
 def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
     try:
         payload = livro.model_dump()
-        payload.pop("exemplarISBN", None)
+        # Mesmo mapeamento de criar_livro: o ISBN do formulário (exemplarISBN)
+        # é gravado na coluna livISBN do Livro. Aqui, diferente da criação,
+        # setamos explicitamente (mesmo quando vazio) para permitir limpar
+        # um ISBN cadastrado incorretamente.
+        isbn = (payload.pop("exemplarISBN", None) or "").strip() or None
+        payload["livISBN"] = isbn
         id_categoria = payload.pop("idCategoria", None)
         id_genero    = payload.pop("idGenero", None)
         nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
@@ -397,6 +414,11 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
             raise HTTPException(
                 status_code=400,
                 detail="Preencha todos os campos obrigatórios do livro (título e número de páginas).",
+            )
+        if "livISBN" in error_msg and ("duplicate key" in error_msg or "23505" in error_msg):
+            raise HTTPException(
+                status_code=409,
+                detail="Já existe um livro cadastrado com esse ISBN.",
             )
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar livro: {str(e)}")
 
