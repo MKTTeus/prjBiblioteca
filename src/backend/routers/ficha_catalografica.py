@@ -143,7 +143,8 @@ def formatar_ficha_html(
     isbn: str,
     assuntos: List[str],
     entradas: List[str],
-    cdd: str
+    cdd: str,
+    nota_idioma: str = ""
 ) -> str:
     assuntos_html = ""
     for i, ass in enumerate(assuntos, 1):
@@ -159,6 +160,7 @@ def formatar_ficha_html(
     # sobrenome do autor (sem indentação). Só o bloco título / publicação /
     # descrição física fica recuado, com o título iniciando abaixo da 4ª
     # letra do sobrenome (hanging indent) — conforme a NBR 14724/2005.
+    nota_block = f'<div style="margin-left: 30px; margin-bottom: 12px; font-style: italic;">{nota_idioma}</div>' if nota_idioma else ''
     isbn_block = f'<div class="ficha-item" style="margin-bottom: 12px;">{isbn}</div>' if isbn else ''
     html = f"""
 <style>
@@ -192,6 +194,7 @@ def formatar_ficha_html(
   <div style="margin-left: 30px; margin-bottom: 12px;">
     {descricao_fisica}
   </div>
+  {nota_block}
   {isbn_block}
   <div style="margin-bottom: 12px; text-align: justify;">
     {assuntos_html} {entradas_html}
@@ -241,12 +244,19 @@ def obter_ficha_catalografica(idLivro: int):
     for linha in linhas:
         if "I." in linha or "II." in linha:
             entradas_secundarias.append(linha)
+    idioma_get = (livro.get("livIdioma") or "").strip()
+    nota_idioma_get = (
+        f"Texto em {idioma_get}."
+        if idioma_get and idioma_get.lower() not in ("português", "portugues", "pt", "pt-br")
+        else ""
+    )
     ficha_json = {
         "autorPrincipalABNT": autor_abnt,
         "titulo": livro["livTitulo"] + (f" : {livro['livSubtitulo']}" if livro.get("livSubtitulo") else ""),
         "publicacao": f"{livro.get('ediCidade') or '[S.l.]'} : {livro.get('livEditora') or '[s.n.]'}, {livro.get('livAnoPublicacao') or '[s.d.]'}.",
         "descricaoFisica": f"{livro.get('livPaginas')} p." + (f" : il." if livro.get("livIlustrado") else "") + (f" ; {livro.get('livAlturaCm')} cm." if livro.get("livAlturaCm") else ""),
         "isbn": f"ISBN {livro['livISBN']}" if livro.get("livISBN") else "",
+        "notaIdioma": nota_idioma_get,
         "assuntos": assuntos,
         "entradasSecundarias": entradas_secundarias,
         "cdd": ficha["ficCDD"]
@@ -285,20 +295,34 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     # há linha de autor no topo, a indicação de responsabilidade cita só o
     # primeiro nome seguido de "[et al.]", e TODOS os autores (não apenas
     # os demais) entram como entrada secundária.
+    # Entradas secundárias (2.): pela norma (AACR2), todo nome que vira
+    # entrada secundária deve estar invertido (Sobrenome, Nome) igual à
+    # entrada principal, pois serve para ordenação alfabética no catálogo.
+    # Usamos autABNT quando cadastrado, com fallback pra conversão automática.
     if total_autores > 3:
         autor_abnt = ""
         autores_statement = f"{nomes_autores[0]}... [et al.]"
-        nomes_entrada_secundaria = nomes_autores
+        autores_entrada_secundaria = autores_list
     else:
         autor_principal = autores_list[0]
         autor_abnt = autor_principal.get("autABNT") or converter_para_abnt(autor_principal["autNome"])
         autores_statement = ", ".join(nomes_autores)
-        nomes_entrada_secundaria = nomes_autores[1:]
+        autores_entrada_secundaria = autores_list[1:]
+    nomes_entrada_secundaria = [
+        a.get("autABNT") or converter_para_abnt(a["autNome"])
+        for a in autores_entrada_secundaria
+    ]
 
     titulo_cat = livro["livTitulo"]
     if livro.get("livSubtitulo"):
         titulo_cat += f" : {livro['livSubtitulo']}"
     titulo_cat += f" / {autores_statement}."
+    # Área de edição (1.): obrigatória pela ISBD/AACR2 quando não é a 1ª
+    # edição. Vem logo após o título/autoria, antes da publicação — ex.:
+    # "Título / Autor. — 2. ed."
+    livEdicao = livro.get("livEdicao")
+    if livEdicao and int(livEdicao) > 1:
+        titulo_cat += f" — {int(livEdicao)}. ed."
     cidade = livro.get("ediCidade") or "[S.l.]"
     editora = livro.get("livEditora") or "[s.n.]"
     ano = str(livro.get("livAnoPublicacao")) if livro.get("livAnoPublicacao") else "[s.d.]"
@@ -321,6 +345,12 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
                 desc_fisica += "."
         else:
             desc_fisica += f" ; {detalhes_fisicos[0]}."
+    # Nota de idioma/tradução (área de notas da ISBD): só é gerada quando o
+    # idioma do livro não é o português (idioma padrão do acervo).
+    nota_idioma = ""
+    idioma = (livro.get("livIdioma") or "").strip()
+    if idioma and idioma.lower() not in ("português", "portugues", "pt", "pt-br"):
+        nota_idioma = f"Texto em {idioma}."
     isbn = f"ISBN {livro['livISBN']}" if livro.get("livISBN") else ""
     cdd = livro.get("livCDD")
     cdd_origem = "database"
@@ -346,6 +376,8 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     texto_linhas.append(titulo_cat)
     texto_linhas.append(publicacao)
     texto_linhas.append(desc_fisica)
+    if nota_idioma:
+        texto_linhas.append(nota_idioma)
     if isbn:
         texto_linhas.append(isbn)
     assuntos_texto = "\n".join(f"{i}. {assunto}." for i, assunto in enumerate(assuntos, 1))
@@ -354,7 +386,7 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     texto_linhas.append(entradas_texto)
     texto_linhas.append(f"CDD {cdd}")
     ficTexto = "\n\n".join(texto_linhas)
-    ficHtml = formatar_ficha_html(autor_abnt, titulo_cat, publicacao, desc_fisica, isbn, assuntos, entradas_formatadas, cdd)
+    ficHtml = formatar_ficha_html(autor_abnt, titulo_cat, publicacao, desc_fisica, isbn, assuntos, entradas_formatadas, cdd, nota_idioma)
     ex_ficha = supabase.table("FichaCatalografica").select("idFicha, ficVersao").eq("idLivro", idLivro).execute()
     payload_ficha = {
         "idLivro": idLivro,
@@ -383,6 +415,7 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
             "publicacao": publicacao,
             "descricaoFisica": desc_fisica,
             "isbn": isbn,
+            "notaIdioma": nota_idioma,
             "assuntos": assuntos,
             "entradasSecundarias": entradas_formatadas,
             "cdd": cdd
