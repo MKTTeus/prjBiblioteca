@@ -13,7 +13,7 @@ def enriquecer_livros(livros: list) -> list:
     """
     Recebe uma lista de dicts de Livro e injeta:
     livAutor, livEditora, livCategoria (nome), livGenero (nome),
-    idCategoria, idGenero
+    idCategoria, idGenero, ediCidade, ediEstado, ediPais
     a partir das tabelas de relacionamento.
     """
     if not livros:
@@ -33,7 +33,7 @@ def enriquecer_livros(livros: list) -> list:
     ]
     if ed_ids:
         consultas.append(
-            lambda: supabase.table("Editora").select("idEditora, ediNome").in_("idEditora", ed_ids).execute()
+            lambda: supabase.table("Editora").select("idEditora, ediNome, ediCidade, ediEstado, ediPais").in_("idEditora", ed_ids).execute()
         )
 
     resp_autor, resp_categoria, resp_genero, *resto = executar_em_paralelo(*consultas)
@@ -50,9 +50,16 @@ def enriquecer_livros(livros: list) -> list:
     gen_id_map = {r["idLivro"]: r["Genero"]["idGenero"]   for r in lg if r.get("Genero")}
 
     ed_map = {}
+    ed_cidade_map = {}
+    ed_estado_map = {}
+    ed_pais_map = {}
+    
     if resto:
         eds = resto[0].data or []
         ed_map = {e["idEditora"]: e["ediNome"] for e in eds}
+        ed_cidade_map = {e["idEditora"]: e.get("ediCidade") or "" for e in eds}
+        ed_estado_map = {e["idEditora"]: e.get("ediEstado") or "" for e in eds}
+        ed_pais_map = {e["idEditora"]: e.get("ediPais") or "Brasil" for e in eds}
 
     resultado = []
     for l in livros:
@@ -65,6 +72,9 @@ def enriquecer_livros(livros: list) -> list:
             "livGenero":    gen_map.get(lid, ""),
             "idCategoria":  cat_id_map.get(lid),
             "idGenero":     gen_id_map.get(lid),
+            "ediCidade":   ed_cidade_map.get(l.get("idEditora"), ""),
+            "ediEstado":   ed_estado_map.get(l.get("idEditora"), ""),
+            "ediPais":     ed_pais_map.get(l.get("idEditora"), "Brasil"),
         })
 
     return resultado
@@ -81,14 +91,31 @@ def resolver_autor(nome_autor: str) -> int | None:
     return novo.data[0]["idAutor"]
 
 
-def resolver_editora(nome_editora: str) -> int | None:
-    """Busca ou cria uma Editora pelo nome, retorna idEditora."""
+def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, pais: str = None) -> int | None:
+    """Busca ou cria uma Editora pelo nome, e atualiza/informa sua localização."""
     if not nome_editora:
         return None
     ed = supabase.table("Editora").select("idEditora").eq("ediNome", nome_editora).limit(1).execute()
     if ed.data:
         return ed.data[0]["idEditora"]
     novo = supabase.table("Editora").insert({"ediNome": nome_editora}).execute()
+    id_editora = ed.data[0]["idEditora"]
+        # Se veio localização, atualiza a editora existente
+    if cidade or estado or pais:
+        upd = {}
+        if cidade is not None: upd["ediCidade"] = cidade
+        if estado is not None: upd["ediEstado"] = estado
+        if pais is not None:   upd["ediPais"] = pais
+        if upd:
+            supabase.table("Editora").update(upd).eq("idEditora", id_editora).execute()
+        return id_editora
+
+    # Insere uma nova editora
+    novo_payload = {"ediNome": nome_editora}
+    if cidade is not None: novo_payload["ediCidade"] = cidade
+    if estado is not None: novo_payload["ediEstado"] = estado
+    if pais is not None:   novo_payload["ediPais"] = pais
+    novo = supabase.table("Editora").insert(novo_payload).execute()
     return novo.data[0]["idEditora"]
 
 
@@ -265,9 +292,13 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
         id_genero    = payload.pop("idGenero", None)
         nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
         nome_editora = (payload.pop("livEditora", None) or "").strip() or None
+        edi_cidade = (payload.pop("ediCidade", None) or "").strip() or None
+        edi_estado = (payload.pop("ediEstado", None) or "").strip() or None
+        edi_pais   = (payload.pop("ediPais", None) or "").strip() or "Brasil"
+
 
         # Resolver FK de editora
-        id_editora = resolver_editora(nome_editora)
+        id_editora = resolver_editora(nome_editora, edi_cidade, edi_estado, edi_pais)
         if id_editora:
             payload["idEditora"] = id_editora
 
@@ -323,9 +354,13 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         id_genero    = payload.pop("idGenero", None)
         nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
         nome_editora = (payload.pop("livEditora", None) or "").strip() or None
+        edi_cidade = (payload.pop("ediCidade", None) or "").strip() or None
+        edi_estado = (payload.pop("ediEstado", None) or "").strip() or None
+        edi_pais   = (payload.pop("ediPais", None) or "").strip() or "Brasil"
+
 
         # Resolver FK de editora
-        id_editora = resolver_editora(nome_editora)
+        id_editora = resolver_editora(nome_editora, edi_cidade, edi_estado, edi_pais)
         if id_editora:
             payload["idEditora"] = id_editora
         else:

@@ -6,6 +6,7 @@ import {
   getCategorias,
   getGeneros,
   getAutores,
+  getEditoras,
   updateBook,
   updateExemplar,
   uploadCover,
@@ -50,6 +51,15 @@ const DEFAULT_FORM = {
   idCategoria: "",
   idGenero: "",
   exemplarISBN: "",
+  livCDD: "",
+  livCDDSugerida: false,
+  livEdicao: "",
+  livAlturaCm: "",
+  livLarguraCm: "",
+  livIlustrado: false,
+  ediCidade: "",
+  ediEstado: "",
+  ediPais: "Brasil",
 };
 
 // Prefixo usado para identificar, dentro do próprio form, uma categoria/gênero
@@ -83,6 +93,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
   const [autores, setAutores] = useState([]);
+  const [editoras, setEditoras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");
@@ -135,6 +146,15 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         idCategoria: livro.idCategoria || 1,
         idGenero: livro.idGenero || 1,
         exemplarISBN: livro.exemplarISBN || livro.exeLivISBN || "",
+        livCDD: livro.livCDD || "",
+        livCDDSugerida: livro.livCDDSugerida || false,
+        livEdicao: livro.livEdicao || "",
+        livAlturaCm: livro.livAlturaCm || "",
+        livLarguraCm: livro.livLarguraCm || "",
+        livIlustrado: livro.livIlustrado || false,
+        ediCidade: livro.ediCidade || "",
+        ediEstado: livro.ediEstado || "",
+        ediPais: livro.ediPais || "Brasil",
       };
 
       setForm(nextForm);
@@ -153,10 +173,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   const carregarMetadados = useCallback(async () => {
     try {
-      const [cats, gens, auts] = await Promise.all([getCategorias(), getGeneros(), getAutores()]);
+      const [cats, gens, auts, eds] = await Promise.all([getCategorias(), getGeneros(), getAutores(), getEditoras()]);
       setCategorias(cats || []);
       setGeneros(gens || []);
       setAutores(auts || []);
+      setEditoras(eds || []);
     } catch (err) {
       console.error(err);
       addToast("Falha ao carregar metadados do formulário", "error");
@@ -516,7 +537,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   function renderActiveSection() {
     if (activeTab === "publication") {
-      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} />;
+      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} editoras={editoras} />;
     }
     if (activeTab === "copies") {
       return (
@@ -628,6 +649,15 @@ export function normalizeBookForm(form = {}) {
     livIdioma: (form.livIdioma || "").trim(),
     livFaixaEtaria: (form.livFaixaEtaria || "").trim(),
     livPalavrasChave: (form.livPalavrasChave || "").trim(),
+    livCDD: (form.livCDD || "").trim(),
+    livCDDSugerida: Boolean(form.livCDDSugerida),
+    livEdicao: form.livEdicao !== "" && form.livEdicao != null ? Number(form.livEdicao) : null,
+    livAlturaCm: form.livAlturaCm !== "" && form.livAlturaCm != null ? Number(form.livAlturaCm) : null,
+    livLarguraCm: form.livLarguraCm !== "" && form.livLarguraCm != null ? Number(form.livLarguraCm) : null,
+    livIlustrado: Boolean(form.livIlustrado),
+    ediCidade: (form.ediCidade || "").trim(),
+    ediEstado: (form.ediEstado || "").trim(),
+    ediPais: (form.ediPais || "").trim(),
   };
 }
 

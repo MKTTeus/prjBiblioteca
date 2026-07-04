@@ -91,6 +91,20 @@ export const completarLivroComIA = (payload) =>
     body: JSON.stringify(payload),
   });
 
+export const getFichaCatalografica = (idLivro) =>
+  apiFetch(`/livros/${idLivro}/ficha-catalografica`);
+
+export const gerarFichaCatalografica = (idLivro) =>
+  apiFetch(`/livros/${idLivro}/ficha-catalografica/gerar`, {
+    method: "POST",
+  });
+
+export const updateFichaCatalografica = (idLivro, payload) =>
+  apiFetch(`/livros/${idLivro}/ficha-catalografica`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
 export const updateExemplar = (idExemplar, payload) =>
   apiFetch(`/exemplares/${idExemplar}`, {
     method: "PUT",

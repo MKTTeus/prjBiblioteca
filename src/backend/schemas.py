@@ -33,12 +33,39 @@ class Livro(BaseModel):
     livIdioma: Optional[str] = None
     livFaixaEtaria: Optional[str] = None
     livPalavrasChave: Optional[str] = None
+    # Novos campos de catalogação
+    livCDD: Optional[str] = None
+    livCDDSugerida: Optional[bool] = False
+    livEdicao: Optional[int] = None
+    livAlturaCm: Optional[float] = None
+    livLarguraCm: Optional[float] = None
+    livIlustrado: Optional[bool] = False
+    # Dados da Editora informados via formulário
+    ediCidade: Optional[str] = None
+    ediEstado: Optional[str] = None
+    ediPais: Optional[str] = "Brasil"
     # Campos relacionais — não são colunas de Livro, tratados no router
     livAutor: Optional[str] = None       # → tabela Autor + LivroAutor
     livEditora: Optional[str] = None     # → tabela Editora (FK idEditora)
     idCategoria: Optional[int] = None   # → tabela LivroCategoria
     idGenero: Optional[int] = None      # → tabela LivroGenero
     exemplarISBN: Optional[str] = None  # → Exemplar (não em Livro)
+    
+class FichaCatalograficaResponse(BaseModel):
+    fichaTexto: str
+    fichaHtml: Optional[str] = None
+    fichaJson: dict
+    geradaPorIA: bool
+    classificacaoSugerida: bool
+
+
+class FichaCatalograficaUpdate(BaseModel):
+    ficTexto: str
+    ficCDD: Optional[str] = None
+    ficGeradaPorIA: Optional[bool] = False
+    ficRevisada: Optional[bool] = True
+
+
 
 class Autor(BaseModel):
     autNome: str
