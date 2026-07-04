@@ -169,6 +169,33 @@ export default function BasicInfoSection({
     [generos, onCriarGenero]
   );
 
+  // Igual a resolverCategoria/resolverGenero: reaproveita o autor já cadastrado
+  // pelo nome ou cria uma entrada "pendente" (mesmo mecanismo do botão "+ Novo
+  // autor"), para que o nome apareça de fato selecionado no campo — e não fique
+  // em branco por não bater com nenhuma opção do select.
+  const resolverAutor = useCallback(
+    async (nomeAutor) => {
+      if (!nomeAutor || !nomeAutor.trim()) return "";
+      const existente = autores.find(
+        (item) => normalizeText(item.autNome) === normalizeText(nomeAutor)
+      );
+      if (existente) return existente.autNome;
+      try {
+        const criado = await onCriarAutor(nomeAutor);
+        return criado?.autNome ?? nomeAutor;
+      } catch (err) {
+        if (err.status === 409) {
+          const achado = autores.find(
+            (item) => normalizeText(item.autNome) === normalizeText(nomeAutor)
+          );
+          if (achado) return achado.autNome;
+        }
+        return nomeAutor;
+      }
+    },
+    [autores, onCriarAutor]
+  );
+
   const buscarPorISBN = useCallback(
     async (isbn) => {
       const isbnLimpo = isbn.replace(/[^0-9X]/gi, "");
@@ -236,17 +263,10 @@ export default function BasicInfoSection({
           isbn: isbnLimpo,
         });
 
-        // Não cria o autor aqui — só reaproveita a grafia já cadastrada, se
-        // houver. O backend resolve (busca ou cria) o autor pelo nome
-        // automaticamente ao salvar o livro.
-        let autorNome = dados.autorNome || "";
-        if (autorNome) {
-          const autorExistente = autores.find((item) => normalizeText(item.autNome) === normalizeText(autorNome));
-          if (autorExistente) {
-            autorNome = autorExistente.autNome;
-          }
-        }
-
+        // Reaproveita o autor já cadastrado pelo nome ou cria uma entrada
+        // pendente (mesmo mecanismo do botão "+ Novo autor" e do que já é
+        // feito aqui para categoria/gênero), para o nome aparecer selecionado.
+        const autorNome = await resolverAutor(dados.autorNome);
         const categoriaId = await resolverCategoria(dados.categoriaNome);
         const generoId = await resolverGenero(dados.generoNome);
 
@@ -263,7 +283,7 @@ export default function BasicInfoSection({
         setBuscandoISBN(false);
       }
     },
-    [autores, onISBNAutoFill, resolverCategoria, resolverGenero]
+    [onISBNAutoFill, resolverAutor, resolverCategoria, resolverGenero, autores]
   );
 
   const handleISBNDetectado = useCallback(
@@ -356,6 +376,11 @@ export default function BasicInfoSection({
         genero_sugerido: marcarPorPadrao("genero_sugerido"),
         faixa_etaria: marcarPorPadrao("faixa_etaria"),
         palavras_chave: marcarPorPadrao("palavras_chave"),
+        edicao: marcarPorPadrao("edicao"),
+        ilustrado: marcarPorPadrao("ilustrado"),
+        editora_cidade: marcarPorPadrao("editora_cidade"),
+        editora_estado: marcarPorPadrao("editora_estado"),
+        editora_pais: marcarPorPadrao("editora_pais"),
       });
     } catch (err) {
       console.error("Erro ao completar com IA:", err);
@@ -376,7 +401,9 @@ export default function BasicInfoSection({
 
     if (marcados.titulo && iaSugestao.titulo) atualizacoes.livTitulo = iaSugestao.titulo;
     if (marcados.subtitulo && iaSugestao.subtitulo) atualizacoes.livSubtitulo = iaSugestao.subtitulo;
-    if (marcados.autor_principal && iaSugestao.autor_principal) atualizacoes.livAutor = iaSugestao.autor_principal;
+    if (marcados.autor_principal && iaSugestao.autor_principal) {
+      atualizacoes.livAutor = await resolverAutor(iaSugestao.autor_principal);
+    }
     if (marcados.editora && iaSugestao.editora) atualizacoes.livEditora = iaSugestao.editora;
     if (marcados.ano_publicacao && iaSugestao.ano_publicacao) atualizacoes.livAnoPublicacao = String(iaSugestao.ano_publicacao);
     if (marcados.paginas && iaSugestao.paginas) atualizacoes.livPaginas = String(iaSugestao.paginas);
@@ -385,6 +412,21 @@ export default function BasicInfoSection({
     if (marcados.faixa_etaria && iaSugestao.faixa_etaria) atualizacoes.livFaixaEtaria = iaSugestao.faixa_etaria;
     if (marcados.palavras_chave && iaSugestao.palavras_chave?.length > 0) {
       atualizacoes.livPalavrasChave = iaSugestao.palavras_chave.join(", ");
+    }
+    if (marcados.edicao && iaSugestao.edicao) {
+      atualizacoes.livEdicao = String(iaSugestao.edicao);
+    }
+    if (marcados.ilustrado && iaSugestao.ilustrado === true) {
+      atualizacoes.livIlustrado = true;
+    }
+    if (marcados.editora_cidade && iaSugestao.editora_cidade) {
+      atualizacoes.ediCidade = iaSugestao.editora_cidade;
+    }
+    if (marcados.editora_estado && iaSugestao.editora_estado) {
+      atualizacoes.ediEstado = iaSugestao.editora_estado;
+    }
+    if (marcados.editora_pais && iaSugestao.editora_pais) {
+      atualizacoes.ediPais = iaSugestao.editora_pais;
     }
 
     if (marcados.categoria_sugerida && iaSugestao.categoria_sugerida) {
@@ -398,7 +440,7 @@ export default function BasicInfoSection({
 
     setIaSugestao(null);
     setIaCamposMarcados({});
-  }, [iaSugestao, iaCamposMarcados, resolverCategoria, resolverGenero, onFieldChange]);
+  }, [iaSugestao, iaCamposMarcados, resolverAutor, resolverCategoria, resolverGenero, onFieldChange]);
 
   return (
     <>
@@ -704,6 +746,11 @@ export default function BasicInfoSection({
                 label: "Palavras-chave",
                 valor: iaSugestao.palavras_chave?.length > 0 ? iaSugestao.palavras_chave.join(", ") : "",
               },
+              { campo: "edicao", label: "Edição", valor: iaSugestao.edicao ? `${iaSugestao.edicao}ª ed.` : "" },
+              { campo: "ilustrado", label: "Ilustrado", valor: iaSugestao.ilustrado === true ? "Sim" : "" },
+              { campo: "editora_cidade", label: "Cidade da editora", valor: iaSugestao.editora_cidade },
+              { campo: "editora_estado", label: "Estado da editora", valor: iaSugestao.editora_estado },
+              { campo: "editora_pais", label: "País da editora", valor: iaSugestao.editora_pais },
               { campo: "descricao", label: "Descrição", valor: iaSugestao.descricao },
             ]
               .filter((item) => item.valor)

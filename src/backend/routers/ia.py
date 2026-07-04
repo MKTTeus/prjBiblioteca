@@ -53,6 +53,32 @@ COMPLETAR_LIVRO_SCHEMA = {
             "type": "string",
             "description": "Ex.: Infantil, Juvenil, Adulto, Livre.",
         },
+        "edicao": {
+            "type": "integer",
+            "description": (
+                "Número da edição desta publicação (ex.: 2 para uma 2ª edição). "
+                "Preencha apenas se souber com razoável segurança."
+            ),
+        },
+        "ilustrado": {
+            "type": "boolean",
+            "description": (
+                "Se esta obra contém ilustrações (comum em livros infantis, "
+                "juvenis, quadrinhos ou didáticos). Preencha apenas se tiver confiança."
+            ),
+        },
+        "editora_cidade": {
+            "type": "string",
+            "description": "Cidade da sede da editora (ex.: São Paulo). Preencha só se souber.",
+        },
+        "editora_estado": {
+            "type": "string",
+            "description": "Estado da sede da editora, sigla ou nome (ex.: SP). Preencha só se souber.",
+        },
+        "editora_pais": {
+            "type": "string",
+            "description": "País da sede da editora (ex.: Brasil). Preencha só se souber.",
+        },
         "confianca_geral": {
             "type": "string",
             "enum": ["alta", "media", "baixa"],
@@ -124,6 +150,9 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
         "é preferível deixar o campo de fora a inventar um valor. Não faça isso para categoria, gênero, "
         "palavras-chave e faixa etária — para esses, sempre dê sua melhor sugestão com base no título/contexto "
         "disponível, mesmo que a obra não seja reconhecida.\n"
+        "- Edição, se ilustrado, e a cidade/estado/país da editora só devem ser preenchidos se você reconhece "
+        "a obra e a edição específica com segurança — nunca invente esses dados por inferência de gênero/contexto. "
+        "Na dúvida, omita e liste em campos_incertos.\n"
         "- Liste em campos_incertos qualquer campo que você preencheu apenas por inferência, não por reconhecer "
         "a obra.\n"
         "- Responda APENAS com o JSON no schema fornecido, sem texto adicional."

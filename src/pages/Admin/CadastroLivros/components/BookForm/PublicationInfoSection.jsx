@@ -35,12 +35,21 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className="editor-field">
-            <span>Estado / País da Editora</span>
+            <span>Estado da Editora</span>
             <input
               name="ediEstado"
               value={form.ediEstado || ""}
               onChange={(e) => onFieldChange("ediEstado", e.target.value)}
               placeholder="Ex.: SP"
+            />
+          </label>
+          <label className="editor-field">
+            <span>País da Editora</span>
+            <input
+              name="ediPais"
+              value={form.ediPais || ""}
+              onChange={(e) => onFieldChange("ediPais", e.target.value)}
+              placeholder="Ex.: Brasil"
             />
           </label>
           {/* ── Publicação ── */}
