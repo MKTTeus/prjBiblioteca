@@ -1,38 +1,234 @@
+/* ── Info Layout ─────────────────────────────── */
 .info-layout {
   display: flex;
   gap: 30px;
 }
-
 .info-capa img {
   width: 160px;
   border-radius: 8px;
 }
-
 .info-dados {
   flex: 1;
   color: var(--text-default);
 }
-
 .info-dados h3 {
   margin-bottom: 10px;
 }
-
 .info-descricao {
   margin-top: 15px;
   color: var(--text-soft);
 }
-
+.cdd-sugerida-badge {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+/* ── Ficha Catalográfica Section ─────────────── */
+.ficha-section {
+  margin-top: 10px;
+  border-top: 1px solid var(--surface-border);
+  padding-top: 20px;
+}
+.ficha-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ficha-section-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-default);
+  margin: 0;
+}
+/* ── Botões de ação ──────────────────────────── */
+.ficha-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ficha-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s ease, opacity 0.18s ease;
+}
+.ficha-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.ficha-btn--primary {
+  background: var(--primary);
+  color: #fff;
+}
+.ficha-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+.ficha-btn--secondary {
+  background: var(--surface-muted);
+  color: var(--text-default);
+  border: 1px solid var(--surface-border);
+}
+.ficha-btn--secondary:hover:not(:disabled) {
+  background: var(--surface-hover, var(--surface-muted));
+}
+.ficha-btn--ghost {
+  background: transparent;
+  color: var(--text-soft);
+  border: 1px solid var(--surface-border);
+}
+.ficha-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--text-default);
+}
+/* ── Estados ─────────────────────────────────── */
+.ficha-state {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-muted);
+  margin-top: 4px;
+}
+.ficha-state--loading,
+.ficha-state--generating {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  align-items: center;
+}
+.ficha-state--error {
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: var(--text-default);
+}
+.ficha-state--error strong { color: #ef4444; }
+.ficha-state--empty {
+  color: var(--text-soft);
+}
+.ficha-state--empty strong {
+  color: var(--text-default);
+  display: block;
+  margin-bottom: 4px;
+}
+.ficha-state-icon {
+  font-size: 1.5rem;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+/* ── Spinner ─────────────────────────────────── */
+.ficha-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--surface-border);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: fichaSpinnerAnim 0.8s linear infinite;
+  flex-shrink: 0;
+}
+.ficha-spinner--accent {
+  border-top-color: var(--primary);
+}
+@keyframes fichaSpinnerAnim {
+  to { transform: rotate(360deg); }
+}
+/* ── Badge IA ────────────────────────────────── */
+.ficha-badge-ia {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+/* ── Card da Ficha ───────────────────────────── */
+.ficha-card {
+  border: 2px solid var(--surface-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-bg);
+  box-shadow: var(--shadow-soft);
+}
+.ficha-card .ficha-catalografica-container {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+/* ── Edição ──────────────────────────────────── */
+.ficha-edit-area {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+.ficha-edit-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ficha-edit-label span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.ficha-edit-input-cdd {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--surface-bg);
+  color: var(--text-default);
+  font-size: 0.9rem;
+  max-width: 160px;
+  transition: border-color 0.2s;
+}
+.ficha-edit-input-cdd:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+.ficha-edit-textarea {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--surface-bg);
+  color: var(--text-default);
+  font-size: 0.85rem;
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 200px;
+  transition: border-color 0.2s;
+}
+.ficha-edit-textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+/* ── Tombos ──────────────────────────────────── */
 .tombos-section {
   margin-top: 25px;
+  border-top: 1px solid var(--surface-border);
+  padding-top: 18px;
 }
-
 .tombos-summary {
   display: flex;
   gap: 12px;
   margin-top: 12px;
   margin-bottom: 10px;
 }
-
 .tombos-summary-item {
   flex: 1;
   background: var(--surface-muted);
@@ -41,25 +237,21 @@
   padding: 10px 12px;
   text-align: center;
 }
-
 .tombos-summary-item strong {
   display: block;
   font-size: 1.25rem;
   color: var(--text-default);
 }
-
 .tombos-summary-item span {
   color: var(--text-muted);
   font-size: 0.85rem;
 }
-
 .tombos-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 10px;
   margin-top: 10px;
 }
-
 .tombo-card {
   background: var(--surface-bg);
   border: 1px solid var(--surface-border);
@@ -68,42 +260,55 @@
   box-shadow: var(--shadow-soft);
   text-align: center;
 }
-
 .tombo-card.disponivel {
   border-color: var(--accent-tombo-available);
 }
-
 .tombo-card.indisponivel {
   border-color: var(--accent-tombo-unavailable);
 }
-
 .tombo-code {
   font-weight: 700;
   color: var(--text-default);
   margin-bottom: 5px;
 }
-
 .tombo-status {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
-
 .tombo-meta {
   display: flex;
   flex-direction: column;
   gap: 3px;
   margin-top: 8px;
 }
-
 .tombo-isbn {
   font-size: 0.75rem;
   color: var(--text-soft);
 }
-
 .tombo-desc {
   font-size: 0.7rem;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* ── Responsividade ──────────────────────────── */
+@media (max-width: 600px) {
+  .info-layout {
+    flex-direction: column;
+  }
+  .info-capa img {
+    width: 120px;
+  }
+  .ficha-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ficha-actions {
+    width: 100%;
+  }
+  .ficha-btn {
+    flex: 1;
+    justify-content: center;
+  }
 }
