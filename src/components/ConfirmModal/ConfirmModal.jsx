@@ -25,7 +25,7 @@ export default function ConfirmModal({
         </div>
         <div className="confirm-modal-body">
           <h2>{title}</h2>
-          <p>{message}</p>
+          <div className="confirm-modal-message">{message}</div>
           {irreversivel && <p className="confirm-modal-warning">Essa ação não poderá ser desfeita.</p>}
         </div>
         <div className="confirm-modal-actions">

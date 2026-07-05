@@ -20,6 +20,7 @@ import BasicInfoSection from "./BasicInfoSection";
 import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
 import ConfirmExitModal from "../../../../../components/ConfirmExitModal/ConfirmExitModal";
+import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
 import "./BookFormModal.css";
 
 function normalizeText(value = "") {
@@ -64,6 +65,41 @@ const DEFAULT_FORM = {
   ediPais: "Brasil",
 };
 
+// Campos que, embora não bloqueiem o salvamento (diferente de título/páginas,
+// validados em validarFormulario), costumam ser preenchidos em um cadastro
+// completo. Se algum estiver em branco, o usuário é avisado antes de salvar —
+// mas o aviso deixa claro que vários deles podem legitimamente não existir
+// para aquele livro específico (ex: nem todo livro tem subtítulo ou edição).
+const CAMPOS_OPCIONAIS_PARA_CONFIRMACAO = [
+  { key: "livSubtitulo", label: "Subtítulo" },
+  { key: "livAutor", label: "Autor" },
+  { key: "autorAnoNascimento", label: "Ano de nascimento do autor" },
+  { key: "autorAnoFalecimento", label: "Ano de falecimento do autor" },
+  { key: "livDescricao", label: "Descrição / Sinopse" },
+  { key: "livEditora", label: "Editora" },
+  { key: "livAnoPublicacao", label: "Ano de publicação" },
+  { key: "livCapaURL", label: "Capa do livro" },
+  { key: "livIdioma", label: "Idioma" },
+  { key: "livFaixaEtaria", label: "Faixa etária" },
+  { key: "livPalavrasChave", label: "Palavras-chave" },
+  { key: "idCategoria", label: "Categoria" },
+  { key: "idGenero", label: "Gênero" },
+  { key: "exemplarISBN", label: "ISBN" },
+  { key: "livCDD", label: "CDD (Classificação Decimal de Dewey)" },
+  { key: "livEdicao", label: "Edição" },
+  { key: "livAlturaCm", label: "Altura (cm)" },
+  { key: "livLarguraCm", label: "Largura (cm)" },
+  { key: "ediCidade", label: "Cidade da editora" },
+  { key: "ediEstado", label: "Estado da editora" },
+];
+
+function obterCamposEmBranco(form) {
+  return CAMPOS_OPCIONAIS_PARA_CONFIRMACAO.filter(({ key }) => {
+    const valor = form[key];
+    return valor === "" || valor === null || valor === undefined;
+  });
+}
+
 // Prefixo usado para identificar, dentro do próprio form, uma categoria/gênero
 // que ainda não existe no banco — só é persistido de fato ao salvar o livro.
 const PENDING_PREFIX = "novo:";
@@ -106,6 +142,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [addConfig, setAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
   const [initialAddConfig, setInitialAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
+  const [confirmandoCamposEmBranco, setConfirmandoCamposEmBranco] = useState(false);
+  const [camposEmBrancoDetectados, setCamposEmBrancoDetectados] = useState([]);
 
   const carregarLivroEmEdicao = useCallback(async () => {
     setActiveTab("basic");
@@ -386,13 +424,32 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     onClose();
   }
 
-  async function handleSave() {
+  // Ponto de entrada do botão "Salvar". Faz a validação obrigatória (título,
+  // páginas) e, se passar, verifica se há campos opcionais em branco para
+  // pedir confirmação antes de seguir para o salvamento de fato.
+  function handleSave() {
     const errosValidacao = validarFormulario();
     if (errosValidacao.length > 0) {
       errosValidacao.forEach((msg) => addToast(msg, "error"));
       return;
     }
 
+    const camposEmBranco = obterCamposEmBranco(form);
+    if (camposEmBranco.length > 0) {
+      setCamposEmBrancoDetectados(camposEmBranco);
+      setConfirmandoCamposEmBranco(true);
+      return;
+    }
+
+    executarSalvar();
+  }
+
+  function confirmarSalvarComCamposEmBranco() {
+    setConfirmandoCamposEmBranco(false);
+    executarSalvar();
+  }
+
+  async function executarSalvar() {
     setLoading(true);
     try {
       let formResolvido;
@@ -644,6 +701,30 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         show={confirmandoSaida}
         onConfirm={confirmarSaida}
         onCancel={() => setConfirmandoSaida(false)}
+      />
+
+      <ConfirmModal
+        show={confirmandoCamposEmBranco}
+        title="Campos não preenchidos"
+        message={
+          <>
+            <p>Existem campos não preenchidos. Deseja realmente salvar?</p>
+            <ul className="confirm-modal-fields-list">
+              {camposEmBrancoDetectados.map((campo) => (
+                <li key={campo.key}>{campo.label}</li>
+              ))}
+            </ul>
+            <p className="confirm-modal-fields-note">
+              Alguns desses campos podem realmente não existir para este livro (por exemplo,
+              "Subtítulo" ou "Edição" nem sempre se aplicam) — preencha apenas o que fizer sentido.
+            </p>
+          </>
+        }
+        onConfirm={confirmarSalvarComCamposEmBranco}
+        onCancel={() => setConfirmandoCamposEmBranco(false)}
+        confirming={loading}
+        confirmText="Salvar mesmo assim"
+        cancelText="Revisar campos"
       />
     </div>
   );
