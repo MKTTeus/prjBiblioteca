@@ -27,7 +27,7 @@ def enriquecer_livros(livros: list) -> list:
     # atrás da outra — é o principal ponto de lentidão ao carregar livros,
     # já que esta função é chamada em toda listagem/detalhe/salvamento.
     consultas = [
-        lambda: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome)").in_("idLivro", ids).execute(),
+        lambda: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autAnoNascimento, autAnoFalecimento)").in_("idLivro", ids).execute(),
         lambda: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids).execute(),
         lambda: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids).execute(),
     ]
@@ -40,6 +40,8 @@ def enriquecer_livros(livros: list) -> list:
 
     la = resp_autor.data or []
     autor_map = {r["idLivro"]: r["Autor"]["autNome"] for r in la if r.get("Autor")}
+    autor_nasc_map = {r["idLivro"]: r["Autor"].get("autAnoNascimento") for r in la if r.get("Autor")}
+    autor_falec_map = {r["idLivro"]: r["Autor"].get("autAnoFalecimento") for r in la if r.get("Autor")}
 
     lc = resp_categoria.data or []
     cat_map    = {r["idLivro"]: r["Categoria"]["catNome"]    for r in lc if r.get("Categoria")}
@@ -67,6 +69,8 @@ def enriquecer_livros(livros: list) -> list:
         resultado.append({
             **l,
             "livAutor":    autor_map.get(lid, ""),
+            "autorAnoNascimento": autor_nasc_map.get(lid),
+            "autorAnoFalecimento": autor_falec_map.get(lid),
             "livEditora":  ed_map.get(l.get("idEditora"), ""),
             "livCategoria": cat_map.get(lid, ""),
             "livGenero":    gen_map.get(lid, ""),
@@ -80,14 +84,32 @@ def enriquecer_livros(livros: list) -> list:
     return resultado
 
 
-def resolver_autor(nome_autor: str) -> int | None:
-    """Busca ou cria um Autor pelo nome, retorna idAutor."""
+def resolver_autor(nome_autor: str, ano_nascimento: int | None = None, ano_falecimento: int | None = None) -> int | None:
+    """Busca ou cria um Autor pelo nome, retorna idAutor.
+
+    Quando o ano de nascimento/falecimento é informado, também atualiza o
+    registro existente (permite completar esse dado depois, ex.: acrescentar
+    o ano de falecimento de um autor que já estava cadastrado).
+    """
     if not nome_autor:
         return None
     au = supabase.table("Autor").select("idAutor").eq("autNome", nome_autor).limit(1).execute()
     if au.data:
-        return au.data[0]["idAutor"]
-    novo = supabase.table("Autor").insert({"autNome": nome_autor}).execute()
+        id_autor = au.data[0]["idAutor"]
+        upd = {}
+        if ano_nascimento is not None:
+            upd["autAnoNascimento"] = ano_nascimento
+        if ano_falecimento is not None:
+            upd["autAnoFalecimento"] = ano_falecimento
+        if upd:
+            supabase.table("Autor").update(upd).eq("idAutor", id_autor).execute()
+        return id_autor
+    payload = {"autNome": nome_autor}
+    if ano_nascimento is not None:
+        payload["autAnoNascimento"] = ano_nascimento
+    if ano_falecimento is not None:
+        payload["autAnoFalecimento"] = ano_falecimento
+    novo = supabase.table("Autor").insert(payload).execute()
     return novo.data[0]["idAutor"]
 
 
@@ -123,7 +145,7 @@ def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, 
 
 @router.get("/autores")
 def listar_autores():
-    res = supabase.table("Autor").select("idAutor, autNome").order("autNome").execute()
+    res = supabase.table("Autor").select("idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento").order("autNome").execute()
     return res.data or []
 
 
@@ -298,6 +320,8 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
         id_categoria = payload.pop("idCategoria", None)
         id_genero    = payload.pop("idGenero", None)
         nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
+        autor_ano_nasc  = payload.pop("autorAnoNascimento", None)
+        autor_ano_falec = payload.pop("autorAnoFalecimento", None)
         nome_editora = (payload.pop("livEditora", None) or "").strip() or None
         edi_cidade = (payload.pop("ediCidade", None) or "").strip() or None
         edi_estado = (payload.pop("ediEstado", None) or "").strip() or None
@@ -315,7 +339,7 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
         id_livro = livro_resp.data[0]["idLivro"]
 
         # Autor → LivroAutor
-        id_autor = resolver_autor(nome_autor)
+        id_autor = resolver_autor(nome_autor, autor_ano_nasc, autor_ano_falec)
         if id_autor:
             supabase.table("LivroAutor").insert({"idLivro": id_livro, "idAutor": id_autor}).execute()
 
@@ -370,6 +394,8 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         id_categoria = payload.pop("idCategoria", None)
         id_genero    = payload.pop("idGenero", None)
         nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
+        autor_ano_nasc  = payload.pop("autorAnoNascimento", None)
+        autor_ano_falec = payload.pop("autorAnoFalecimento", None)
         nome_editora = (payload.pop("livEditora", None) or "").strip() or None
         edi_cidade = (payload.pop("ediCidade", None) or "").strip() or None
         edi_estado = (payload.pop("ediEstado", None) or "").strip() or None
@@ -389,7 +415,7 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
 
         # Autor
         if nome_autor is not None:
-            id_autor = resolver_autor(nome_autor)
+            id_autor = resolver_autor(nome_autor, autor_ano_nasc, autor_ano_falec)
             if id_autor:
                 supabase.table("LivroAutor").delete().eq("idLivro", idLivro).execute()
                 supabase.table("LivroAutor").insert({"idLivro": idLivro, "idAutor": id_autor}).execute()

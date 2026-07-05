@@ -28,6 +28,21 @@ COMPLETAR_LIVRO_SCHEMA = {
             "type": "string",
             "description": "Nome completo do autor principal, formato usual (não ABNT).",
         },
+        "autor_ano_nascimento": {
+            "type": "integer",
+            "description": (
+                "Ano de nascimento do autor principal. Preencha apenas se souber com "
+                "segurança que se trata de uma pessoa real (não preencha para autores "
+                "fictícios, pseudônimos de identidade desconhecida ou obras institucionais)."
+            ),
+        },
+        "autor_ano_falecimento": {
+            "type": "integer",
+            "description": (
+                "Ano de falecimento do autor principal, se já tiver falecido e você "
+                "souber com segurança. Deixe de fora se o autor estiver vivo ou você não tiver certeza."
+            ),
+        },
         "editora": {"type": "string"},
         "ano_publicacao": {"type": "integer"},
         "paginas": {"type": "integer"},
@@ -153,6 +168,8 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
         "- Edição, se ilustrado, e a cidade/estado/país da editora só devem ser preenchidos se você reconhece "
         "a obra e a edição específica com segurança — nunca invente esses dados por inferência de gênero/contexto. "
         "Na dúvida, omita e liste em campos_incertos.\n"
+        "- O ano de nascimento/falecimento do autor só deve ser preenchido se você tem certeza de que é uma "
+        "pessoa real e sabe esses dados biográficos — nunca invente ou estime. Na dúvida, omita.\n"
         "- Liste em campos_incertos qualquer campo que você preencheu apenas por inferência, não por reconhecer "
         "a obra.\n"
         "- Responda APENAS com o JSON no schema fornecido, sem texto adicional."

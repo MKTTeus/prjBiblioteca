@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from database import supabase
 from core import get_admin
-from schemas import Autor
+from schemas import Autor, AutorUpdate
 
 router = APIRouter()
 
@@ -32,3 +32,21 @@ def criar_autor(autor: Autor, admin=Depends(get_admin)):
             raise HTTPException(status_code=409, detail="Autor já existe")
         print("Erro ao criar autor:", e)
         raise HTTPException(status_code=500, detail=f"Erro ao criar autor: {str(e)}")
+
+@router.put("/autores/{idAutor}")
+def atualizar_autor(idAutor: int, autor: AutorUpdate, admin=Depends(get_admin)):
+    """Permite editar um autor já cadastrado — por exemplo, para acrescentar
+    o ano de falecimento quando ele se torna conhecido depois do cadastro."""
+    try:
+        payload = {k: v for k, v in autor.dict().items() if v is not None}
+        if not payload:
+            raise HTTPException(status_code=400, detail="Nenhum campo para atualizar.")
+        res = supabase.table("Autor").update(payload).eq("idAutor", idAutor).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Autor não encontrado")
+        return res.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro ao atualizar autor:", e)
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar autor: {str(e)}")

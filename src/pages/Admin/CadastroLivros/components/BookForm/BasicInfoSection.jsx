@@ -13,6 +13,35 @@ function normalizeText(value = "") {
     .trim();
 }
 
+// Extrai só o ano (4 dígitos) de uma data em formato livre, como retornada
+// pela API de autores do Open Library (ex.: "January 2, 1920", "1920").
+function extrairAno(valor) {
+  if (!valor) return "";
+  const match = String(valor).match(/\d{4}/);
+  return match ? match[0] : "";
+}
+
+// Busca ano de nascimento/falecimento do autor na API de autores do Open
+// Library (best-effort — nem toda fonte de ISBN traz esse dado; hoje só o
+// Open Library expõe um registro de autor com essas datas biográficas).
+async function buscarAnosAutorOpenLibrary(authorKeyOrUrl) {
+  if (!authorKeyOrUrl) return { nascimento: "", falecimento: "" };
+  try {
+    const key = String(authorKeyOrUrl).replace(/^https?:\/\/openlibrary\.org/, "");
+    const url = `https://openlibrary.org${key.endsWith(".json") ? key : `${key}.json`}`;
+    const res = await fetch(url);
+    if (!res.ok) return { nascimento: "", falecimento: "" };
+    const data = await res.json();
+    return {
+      nascimento: extrairAno(data.birth_date),
+      falecimento: extrairAno(data.death_date),
+    };
+  } catch (err) {
+    console.error("Erro ao buscar dados biográficos do autor:", err);
+    return { nascimento: "", falecimento: "" };
+  }
+}
+
 function findMatchingOption(options = [], value, key) {
   const search = normalizeText(value);
   if (!search) return null;
@@ -25,6 +54,9 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
         .map((author) => (typeof author === "string" ? author : author?.name))
         .filter(Boolean)
     : [];
+  const authorKey = Array.isArray(livro?.authors)
+    ? livro.authors[0]?.url || livro.authors[0]?.key || ""
+    : "";
   const categories = Array.isArray(livro?.categories)
     ? livro.categories
         .map((cat) => (typeof cat === "string" ? cat : cat?.name))
@@ -80,6 +112,7 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
     categoriaNome: categoryName,
     generoNome: categoryName,
     autorNome: authorName,
+    autorKey: authorKey,
     exemplarISBN: isbn,
   };
 }
@@ -102,6 +135,15 @@ export default function BasicInfoSection({
   const [criandoCategoria, setCriandoCategoria] = useState(false);
   const [criandoGenero, setCriandoGenero] = useState(false);
   const [criandoAutor, setCriandoAutor] = useState(false);
+  const [mostrarFalecimento, setMostrarFalecimento] = useState(false);
+
+  // Mantém o campo de falecimento visível se o form já chegar com um valor
+  // (ex.: editando um livro cujo autor já tem ano de falecimento salvo).
+  useEffect(() => {
+    if (form.autorAnoFalecimento) {
+      setMostrarFalecimento(true);
+    }
+  }, [form.autorAnoFalecimento]);
 
   const [scannerAberto, setScannerAberto] = useState(false);
   const [buscandoISBN, setBuscandoISBN] = useState(false);
@@ -263,6 +305,12 @@ export default function BasicInfoSection({
           isbn: isbnLimpo,
         });
 
+        // Best-effort: só o Open Library retorna uma key/url de autor que dá
+        // pra consultar nascimento/falecimento; outras fontes não trazem isso.
+        const anosAutor = dados.autorKey
+          ? await buscarAnosAutorOpenLibrary(dados.autorKey)
+          : { nascimento: "", falecimento: "" };
+
         // Reaproveita o autor já cadastrado pelo nome ou cria uma entrada
         // pendente (mesmo mecanismo do botão "+ Novo autor" e do que já é
         // feito aqui para categoria/gênero), para o nome aparecer selecionado.
@@ -273,6 +321,8 @@ export default function BasicInfoSection({
         onISBNAutoFill({
           ...dados,
           livAutor: autorNome,
+          autorAnoNascimento: anosAutor.nascimento,
+          autorAnoFalecimento: anosAutor.falecimento,
           idCategoria: categoriaId,
           idGenero: generoId,
         });
@@ -331,6 +381,21 @@ export default function BasicInfoSection({
     }
   }
 
+  // Ao selecionar um autor já cadastrado, preenche os campos de ano de
+  // nascimento/falecimento com o que já está salvo pra esse autor (o
+  // bibliotecário pode ajustar ou completar o falecimento depois).
+  const handleSelecionarAutor = useCallback(
+    (nomeAutor) => {
+      onFieldChange("livAutor", nomeAutor);
+      const encontrado = autores.find(
+        (item) => normalizeText(item.autNome) === normalizeText(nomeAutor)
+      );
+      onFieldChange("autorAnoNascimento", encontrado?.autAnoNascimento || "");
+      onFieldChange("autorAnoFalecimento", encontrado?.autAnoFalecimento || "");
+    },
+    [autores, onFieldChange]
+  );
+
   const handleCompletarComIA = useCallback(async () => {
     setIaErro(null);
     setIaSugestao(null);
@@ -367,6 +432,8 @@ export default function BasicInfoSection({
         titulo: marcarPorPadrao("titulo"),
         subtitulo: marcarPorPadrao("subtitulo"),
         autor_principal: marcarPorPadrao("autor_principal"),
+        autor_ano_nascimento: marcarPorPadrao("autor_ano_nascimento"),
+        autor_ano_falecimento: marcarPorPadrao("autor_ano_falecimento"),
         editora: marcarPorPadrao("editora"),
         ano_publicacao: marcarPorPadrao("ano_publicacao"),
         paginas: marcarPorPadrao("paginas"),
@@ -403,6 +470,12 @@ export default function BasicInfoSection({
     if (marcados.subtitulo && iaSugestao.subtitulo) atualizacoes.livSubtitulo = iaSugestao.subtitulo;
     if (marcados.autor_principal && iaSugestao.autor_principal) {
       atualizacoes.livAutor = await resolverAutor(iaSugestao.autor_principal);
+    }
+    if (marcados.autor_ano_nascimento && iaSugestao.autor_ano_nascimento) {
+      atualizacoes.autorAnoNascimento = String(iaSugestao.autor_ano_nascimento);
+    }
+    if (marcados.autor_ano_falecimento && iaSugestao.autor_ano_falecimento) {
+      atualizacoes.autorAnoFalecimento = String(iaSugestao.autor_ano_falecimento);
     }
     if (marcados.editora && iaSugestao.editora) atualizacoes.livEditora = iaSugestao.editora;
     if (marcados.ano_publicacao && iaSugestao.ano_publicacao) atualizacoes.livAnoPublicacao = String(iaSugestao.ano_publicacao);
@@ -543,7 +616,7 @@ export default function BasicInfoSection({
                     name="livAutor"
                     value={form.livAutor}
                     options={autores.map((aut) => ({ value: aut.autNome, label: aut.autNome }))}
-                    onChange={(val) => onFieldChange("livAutor", val)}
+                    onChange={handleSelecionarAutor}
                     placeholder="Selecione um autor"
                   />
                   <button
@@ -556,46 +629,63 @@ export default function BasicInfoSection({
                   </button>
                 </div>
               )}
-            </div>
 
-            {/* GÊNERO */}
-            <div className="editor-field">
-              <span>Gênero</span>
-              {criandoGenero ? (
-                <div className="inline-create-row">
+              {/* Anos de nascimento/falecimento do autor — opcionais, usados
+                  na ficha catalográfica ao lado do nome (ex.: "1892-1973"). */}
+              <div className="editor-field-grid" style={{ marginTop: "8px", gridTemplateColumns: "1fr 1fr" }}>
+                <label className="editor-field">
+                  <span>Ano de nascimento</span>
                   <input
-                    autoFocus
-                    value={novoGenero}
-                    onChange={(e) => setNovoGenero(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCriarGenero()}
-                    placeholder="Nome do novo gênero"
+                    type="number"
+                    name="autorAnoNascimento"
+                    value={form.autorAnoNascimento}
+                    onChange={(e) => onFieldChange("autorAnoNascimento", e.target.value)}
+                    placeholder="Ex.: 1892"
                   />
-                  <button type="button" className="inline-create-confirm" onClick={handleCriarGenero}>
-                    Confirmar
-                  </button>
-                  <button type="button" className="inline-create-cancel" onClick={() => setCriandoGenero(false)}>
-                    Cancelar
-                  </button>
-                </div>
-              ) : (
-                <div className="inline-select-row">
-                  <SearchableSelect
-                    name="idGenero"
-                    value={form.idGenero}
-                    options={generos.map((gen) => ({ value: gen.idGenero, label: gen.genNome }))}
-                    onChange={(val) => onFieldChange("idGenero", val)}
-                    placeholder="Selecione um gênero"
-                  />
+                </label>
+                {mostrarFalecimento ? (
+                  <label className="editor-field">
+                    <span>Ano de falecimento</span>
+                    <div className="inline-select-row">
+                      <input
+                        type="number"
+                        name="autorAnoFalecimento"
+                        value={form.autorAnoFalecimento}
+                        onChange={(e) => onFieldChange("autorAnoFalecimento", e.target.value)}
+                        placeholder="Ex.: 1973"
+                      />
+                      <button
+                        type="button"
+                        className="inline-create-btn"
+                        title="Remover ano de falecimento"
+                        onClick={() => {
+                          onFieldChange("autorAnoFalecimento", "");
+                          setMostrarFalecimento(false);
+                        }}
+                      >
+                        <HiOutlineXMark />
+                      </button>
+                    </div>
+                  </label>
+                ) : (
                   <button
                     type="button"
-                    className="inline-create-btn"
-                    title="Criar novo gênero"
-                    onClick={() => { setNovoGenero(""); setCriandoGenero(true); }}
+                    className="isbn-hint-msg"
+                    style={{
+                      alignSelf: "flex-end",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      padding: 0,
+                      textDecoration: "underline",
+                    }}
+                    onClick={() => setMostrarFalecimento(true)}
                   >
-                    <HiOutlinePlus />
+                    <HiOutlinePlus style={{ verticalAlign: "middle" }} /> Adicionar ano de falecimento
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -605,8 +695,48 @@ export default function BasicInfoSection({
             <span>Classificação e resumo</span>
           </div>
 
-          {/* CATEGORIA */}
+          {/* GÊNERO */}
           <div className="editor-field">
+            <span>Gênero</span>
+            {criandoGenero ? (
+              <div className="inline-create-row">
+                <input
+                  autoFocus
+                  value={novoGenero}
+                  onChange={(e) => setNovoGenero(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCriarGenero()}
+                  placeholder="Nome do novo gênero"
+                />
+                <button type="button" className="inline-create-confirm" onClick={handleCriarGenero}>
+                  Confirmar
+                </button>
+                <button type="button" className="inline-create-cancel" onClick={() => setCriandoGenero(false)}>
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <div className="inline-select-row">
+                <SearchableSelect
+                  name="idGenero"
+                  value={form.idGenero}
+                  options={generos.map((gen) => ({ value: gen.idGenero, label: gen.genNome }))}
+                  onChange={(val) => onFieldChange("idGenero", val)}
+                  placeholder="Selecione um gênero"
+                />
+                <button
+                  type="button"
+                  className="inline-create-btn"
+                  title="Criar novo gênero"
+                  onClick={() => { setNovoGenero(""); setCriandoGenero(true); }}
+                >
+                  <HiOutlinePlus />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* CATEGORIA */}
+          <div className="editor-field" style={{ marginTop: "12px" }}>
             <span>Categoria</span>
             {criandoCategoria ? (
               <div className="inline-create-row">
@@ -734,6 +864,8 @@ export default function BasicInfoSection({
               { campo: "titulo", label: "Título", valor: iaSugestao.titulo },
               { campo: "subtitulo", label: "Subtítulo", valor: iaSugestao.subtitulo },
               { campo: "autor_principal", label: "Autor", valor: iaSugestao.autor_principal },
+              { campo: "autor_ano_nascimento", label: "Ano de nascimento do autor", valor: iaSugestao.autor_ano_nascimento },
+              { campo: "autor_ano_falecimento", label: "Ano de falecimento do autor", valor: iaSugestao.autor_ano_falecimento },
               { campo: "editora", label: "Editora", valor: iaSugestao.editora },
               { campo: "ano_publicacao", label: "Ano", valor: iaSugestao.ano_publicacao },
               { campo: "paginas", label: "Páginas", valor: iaSugestao.paginas },

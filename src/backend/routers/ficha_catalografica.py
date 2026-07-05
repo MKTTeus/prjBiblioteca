@@ -51,6 +51,19 @@ def converter_para_abnt(nome: str) -> str:
         nomes_restantes = partes[:-1]
     return f"{sobrenome}, {' '.join(nomes_restantes)}"
 
+def formatar_anos_vida(nascimento: Optional[int], falecimento: Optional[int]) -> str:
+    """Formata os anos de nascimento/falecimento do autor para exibição ao
+    lado do nome na ficha:
+    - nascimento informado, falecimento vazio -> "1985-"
+    - nascimento e falecimento informados      -> "1839-1908"
+    - nenhum informado                          -> ""
+    """
+    if nascimento and falecimento:
+        return f"{nascimento}-{falecimento}"
+    if nascimento:
+        return f"{nascimento}-"
+    return ""
+
 def buscar_cdd_externo(isbn: str) -> Optional[str]:
     if not isbn:
         return None
@@ -222,7 +235,7 @@ def obter_ficha_catalografica(idLivro: int):
         raise HTTPException(status_code=404, detail="Livro não encontrado.")
     livro = enriquecer_livros(livro_resp.data)[0]
     # Resolver autores
-    autores_resp = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autABNT)").eq("idLivro", idLivro).execute()
+    autores_resp = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento)").eq("idLivro", idLivro).execute()
     autores_list = []
     if autores_resp.data:
         for r in autores_resp.data:
@@ -232,7 +245,9 @@ def obter_ficha_catalografica(idLivro: int):
     autor_abnt = ""
     if autor_principal and len(autores_list) <= 3:
         autor_abnt = autor_principal.get("autABNT") or converter_para_abnt(autor_principal["autNome"])
-    # Reconstruir fichaJson
+        anos_vida = formatar_anos_vida(autor_principal.get("autAnoNascimento"), autor_principal.get("autAnoFalecimento"))
+        if anos_vida:
+            autor_abnt += f", {anos_vida}"
     assuntos = []
     linhas = [l.strip() for l in ficha["ficTexto"].split("\n") if l.strip()]
     for linha in linhas:
@@ -275,7 +290,7 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado.")
     livro = enriquecer_livros(livro_resp.data)[0]
-    autores_resp = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autABNT)").eq("idLivro", idLivro).execute()
+    autores_resp = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento)").eq("idLivro", idLivro).execute()
     autores_list = []
     if autores_resp.data:
         for r in autores_resp.data:
@@ -306,6 +321,9 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     else:
         autor_principal = autores_list[0]
         autor_abnt = autor_principal.get("autABNT") or converter_para_abnt(autor_principal["autNome"])
+        anos_vida = formatar_anos_vida(autor_principal.get("autAnoNascimento"), autor_principal.get("autAnoFalecimento"))
+        if anos_vida:
+            autor_abnt += f", {anos_vida}"
         autores_statement = ", ".join(nomes_autores)
         autores_entrada_secundaria = autores_list[1:]
     nomes_entrada_secundaria = [

@@ -46,6 +46,8 @@ class Livro(BaseModel):
     ediPais: Optional[str] = "Brasil"
     # Campos relacionais — não são colunas de Livro, tratados no router
     livAutor: Optional[str] = None       # → tabela Autor + LivroAutor
+    autorAnoNascimento: Optional[int] = None  # → coluna Autor.autAnoNascimento
+    autorAnoFalecimento: Optional[int] = None # → coluna Autor.autAnoFalecimento
     livEditora: Optional[str] = None     # → tabela Editora (FK idEditora)
     idCategoria: Optional[int] = None   # → tabela LivroCategoria
     idGenero: Optional[int] = None      # → tabela LivroGenero
@@ -70,6 +72,15 @@ class FichaCatalograficaUpdate(BaseModel):
 class Autor(BaseModel):
     autNome: str
     autABNT: Optional[str] = None
+    autAnoNascimento: Optional[int] = None
+    autAnoFalecimento: Optional[int] = None
+
+
+class AutorUpdate(BaseModel):
+    autNome: Optional[str] = None
+    autABNT: Optional[str] = None
+    autAnoNascimento: Optional[int] = None
+    autAnoFalecimento: Optional[int] = None
 
 class LivroCreate(BaseModel):
     livro: Livro

@@ -129,6 +129,12 @@ export const createAutor = (payload) =>
     method: "POST",
     body: JSON.stringify(payload),
   });
+  
+export const updateAutor = (idAutor, payload) =>
+  apiFetch(`/autores/${idAutor}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
 
 // ========================
 // CAPA
