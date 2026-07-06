@@ -9,6 +9,7 @@ passlib==1.7.4
 bcrypt==4.0.1
 cryptography
 pydantic
+email-validator
 supabase
 httpx
 google-genai
