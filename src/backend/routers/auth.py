@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from database import supabase
 from core import hash_password, normalize_email, parse_status, verify_password, create_token, validar_cpf, normalize_cpf
-from backend.rate_limit import limitar_login, limitar_signup
+from rate_limit import limitar_login, limitar_signup
 from schemas import Login, Signup
 
 router = APIRouter()
