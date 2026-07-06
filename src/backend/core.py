@@ -13,27 +13,18 @@ from database import supabase
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "segredo")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY não configurada. Defina a variável de ambiente SECRET_KEY "
+        "(uma string aleatória e secreta, ex.: gerada com `openssl rand -hex 32`) "
+        "no seu .env antes de iniciar o backend."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 6
 
 
 def executar_em_paralelo(*funcoes):
-    """Executa várias consultas independentes ao Supabase em paralelo
-    (threads), em vez de uma atrás da outra.
-
-    Cada `.execute()` do supabase-py é uma chamada de rede síncrona e
-    bloqueante à API REST (PostgREST). Quando várias consultas não dependem
-    do resultado umas das outras (ex.: buscar autores, categorias e gêneros
-    de uma lista de livros), rodá-las em série soma a latência de cada uma;
-    em paralelo, o tempo total fica próximo ao da consulta mais lenta.
-
-    Uso:
-        resp_a, resp_b = executar_em_paralelo(
-            lambda: supabase.table("A").select("*").execute(),
-            lambda: supabase.table("B").select("*").execute(),
-        )
-    """
     if not funcoes:
         return []
     if len(funcoes) == 1:

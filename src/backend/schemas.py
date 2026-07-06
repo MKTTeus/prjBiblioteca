@@ -1,18 +1,18 @@
 from typing import Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 
 class Login(BaseModel):
-    email: str
+    email: EmailStr
     senha: str
     UserType: str
 
 
 class Signup(BaseModel):
-    nome: str
-    email: str
-    senha: str
+    nome: str = Field(min_length=1)
+    email: EmailStr
+    senha: str = Field(min_length=8)
     telefone: str
     endereco: str
     telefoneResponsavel: Optional[str] = None
@@ -136,9 +136,9 @@ class ExemplarUpdate(BaseModel):
 
 
 class UsuarioCreate(BaseModel):
-    nome: str
-    email: str
-    senha: str
+    nome: str = Field(min_length=1)
+    email: EmailStr
+    senha: str = Field(min_length=8)
     telefone: Optional[str] = None
     telefoneResponsavel: Optional[str] = None
     endereco: Optional[str] = None
@@ -152,8 +152,8 @@ class UsuarioCreate(BaseModel):
 
 class UsuarioUpdate(BaseModel):
     nome: Optional[str] = None
-    email: Optional[str] = None
-    senha: Optional[str] = None
+    email: Optional[EmailStr] = None
+    senha: Optional[str] = Field(default=None, min_length=8)
     telefone: Optional[str] = None
     telefoneResponsavel: Optional[str] = None
     endereco: Optional[str] = None
@@ -177,14 +177,14 @@ class BatchStatus(BaseModel):
     status: bool
 
 class AdminCreate(BaseModel):
-    nome: str
-    email: str
-    senha: str
+    nome: str = Field(min_length=1)
+    email: EmailStr
+    senha: str = Field(min_length=8)
     status: Optional[Union[bool, str]] = "Ativo"
 
 
 class AdminUpdate(BaseModel):
     nome: Optional[str] = None
-    email: Optional[str] = None
-    senha: Optional[str] = None
+    email: Optional[EmailStr] = None
+    senha: Optional[str] = Field(default=None, min_length=8)
     status: Optional[Union[bool, str]] = None

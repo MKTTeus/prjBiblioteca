@@ -1,15 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 
 from database import supabase
 from core import hash_password, normalize_email, parse_status, verify_password, create_token, validar_cpf, normalize_cpf
+from rate_limit import limitar_login, limitar_signup
 from schemas import Login, Signup
 
 router = APIRouter()
 
 
 @router.post("/login")
-def login(data: Login):
+def login(data: Login, request: Request):
     email = normalize_email(data.email)
+
+    limitar_login(request, email)
 
     CREDENCIAIS_INVALIDAS = "Email ou senha inválidos"
 
@@ -84,7 +87,9 @@ def login(data: Login):
         raise HTTPException(status_code=400, detail="Tipo inválido")
         
 @router.post("/signup")
-def signup(data: Signup):
+def signup(data: Signup, request: Request):
+    limitar_signup(request)
+
     if data.tipo not in ["Aluno", "Comunidade"]:
         raise HTTPException(status_code=400, detail="Tipo inválido")
 
