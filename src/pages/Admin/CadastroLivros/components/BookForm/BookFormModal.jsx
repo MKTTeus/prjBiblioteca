@@ -741,7 +741,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
             ))}
           </div>
           <p className="editor-tabs-hint">
-            Tudo fica na mesma tela agora — use os atalhos acima só para pular direto até uma seção.
+            <strong>Use os atalhos acima para pular direto até uma seção.</strong>
           </p>
 
           <div className="editor-divider" />

@@ -269,6 +269,24 @@
   border: 1px solid var(--input-border);
 }
 
+.shared-book-card__button--deactivate {
+  background: var(--warning);
+  color: var(--btn-primary-text);
+}
+
+.shared-book-card__button--deactivate:hover {
+  filter: brightness(0.92);
+}
+
+.shared-book-card__button--reactivate {
+  background: var(--success);
+  color: var(--btn-primary-text);
+}
+
+.shared-book-card__button--reactivate:hover {
+  background: var(--status-success-text);
+}
+
 .shared-book-card__button--delete {
   background: var(--danger);
   color: var(--btn-primary-text);

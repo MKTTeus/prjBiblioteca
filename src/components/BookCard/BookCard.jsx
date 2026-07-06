@@ -200,7 +200,11 @@ export default function BookCard({
                 )}
                 <button
                   type="button"
-                  className="shared-book-card__button shared-book-card__button--delete"
+                  className={`shared-book-card__button ${
+                    book?.livAtivo === false
+                      ? "shared-book-card__button--reactivate"
+                      : "shared-book-card__button--deactivate"
+                  }`}
                   onClick={() => onToggleStatus && onToggleStatus(book)}
                 >
                   {book?.livAtivo === false ? <HiOutlineRefresh /> : <HiOutlineXCircle />}
