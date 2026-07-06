@@ -13,7 +13,7 @@ import {
   createCategoria,
   createGenero,
 } from "../../../../../services/api";
-import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
+import { HiOutlineSave, HiOutlineX, HiOutlineBookOpen, HiOutlineOfficeBuilding, HiOutlineClipboardList } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../../../contexts/ToastContext";
 import BasicInfoSection from "./BasicInfoSection";
@@ -333,48 +333,44 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   function handlePreencherISBN(dados) {
     const camposAlterados = [];
+    const next = { ...form };
 
-    setForm((prev) => {
-      const next = { ...prev };
-
-      const setSeHouver = (campo, valor) => {
-        if (valor !== undefined && valor !== null && valor !== "" && valor !== prev[campo]) {
-          next[campo] = valor;
-          camposAlterados.push(campo);
-        }
-      };
-
-      setSeHouver("livTitulo", dados.livTitulo);
-      setSeHouver("livSubtitulo", dados.livSubtitulo);
-      setSeHouver("livAutor", dados.livAutor);
-      setSeHouver("autorAnoNascimento", dados.autorAnoNascimento);
-      setSeHouver("autorAnoFalecimento", dados.autorAnoFalecimento);
-      setSeHouver("livEditora", dados.livEditora);
-      setSeHouver("livAnoPublicacao", dados.livAnoPublicacao);
-      setSeHouver("livPaginas", dados.livPaginas);
-      setSeHouver("livCapaURL", dados.livCapaURL);
-      setSeHouver("livDescricao", dados.livDescricao);
-      setSeHouver("livIdioma", dados.livIdioma);
-      setSeHouver("exemplarISBN", dados.exemplarISBN);
-
-      if (dados.idCategoria !== "" && dados.idCategoria !== null && dados.idCategoria !== undefined) {
-        const valorCategoria = isPendingId(dados.idCategoria) ? dados.idCategoria : Number(dados.idCategoria);
-        if (valorCategoria !== prev.idCategoria) {
-          next.idCategoria = valorCategoria;
-          camposAlterados.push("idCategoria");
-        }
+    const setSeHouver = (campo, valor) => {
+      if (valor !== undefined && valor !== null && valor !== "" && valor !== form[campo]) {
+        next[campo] = valor;
+        camposAlterados.push(campo);
       }
-      if (dados.idGenero !== "" && dados.idGenero !== null && dados.idGenero !== undefined) {
-        const valorGenero = isPendingId(dados.idGenero) ? dados.idGenero : Number(dados.idGenero);
-        if (valorGenero !== prev.idGenero) {
-          next.idGenero = valorGenero;
-          camposAlterados.push("idGenero");
-        }
+    };
+
+    setSeHouver("livTitulo", dados.livTitulo);
+    setSeHouver("livSubtitulo", dados.livSubtitulo);
+    setSeHouver("livAutor", dados.livAutor);
+    setSeHouver("autorAnoNascimento", dados.autorAnoNascimento);
+    setSeHouver("autorAnoFalecimento", dados.autorAnoFalecimento);
+    setSeHouver("livEditora", dados.livEditora);
+    setSeHouver("livAnoPublicacao", dados.livAnoPublicacao);
+    setSeHouver("livPaginas", dados.livPaginas);
+    setSeHouver("livCapaURL", dados.livCapaURL);
+    setSeHouver("livDescricao", dados.livDescricao);
+    setSeHouver("livIdioma", dados.livIdioma);
+    setSeHouver("exemplarISBN", dados.exemplarISBN);
+
+    if (dados.idCategoria !== "" && dados.idCategoria !== null && dados.idCategoria !== undefined) {
+      const valorCategoria = isPendingId(dados.idCategoria) ? dados.idCategoria : Number(dados.idCategoria);
+      if (valorCategoria !== form.idCategoria) {
+        next.idCategoria = valorCategoria;
+        camposAlterados.push("idCategoria");
       }
+    }
+    if (dados.idGenero !== "" && dados.idGenero !== null && dados.idGenero !== undefined) {
+      const valorGenero = isPendingId(dados.idGenero) ? dados.idGenero : Number(dados.idGenero);
+      if (valorGenero !== form.idGenero) {
+        next.idGenero = valorGenero;
+        camposAlterados.push("idGenero");
+      }
+    }
 
-      return next;
-    });
-
+    setForm(next);
     marcarCamposPreenchidosAutomaticamente(camposAlterados);
     addToast("Dados preenchidos a partir do ISBN! Campos alterados foram destacados.", "success");
   }
@@ -719,16 +715,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
               <p>Edite as informações do livro selecionado.</p>
             </div>
             <div className="editor-top-actions">
-              <LoadingButton
-                type="button"
-                className="top-action primary"
-                onClick={handleSave}
-                isLoading={loading || loadingDetails}
-                loadingText="Salvando..."
-              >
-                <HiOutlineSave />
-                <span>Salvar Atualizações</span>
-              </LoadingButton>
               <button
                 type="button"
                 className="editor-close-button"
@@ -766,7 +752,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
             ) : (
               <>
                 <section ref={basicSectionRef} className="editor-page-section">
-                  <h3 className="editor-page-section-title">Informações Básicas</h3>
+                  <h3 className="editor-page-section-title">
+                    <HiOutlineBookOpen /> Informações Básicas
+                  </h3>
                   <BasicInfoSection
                     form={form}
                     categorias={categorias}
@@ -786,7 +774,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                 <div className="editor-section-separator" />
 
                 <section ref={publicationSectionRef} className="editor-page-section">
-                  <h3 className="editor-page-section-title">Informações de Publicação</h3>
+                  <h3 className="editor-page-section-title">
+                    <HiOutlineOfficeBuilding /> Informações de Publicação
+                  </h3>
                   <PublicationInfoSection
                     form={form}
                     onFieldChange={handleFieldChange}
@@ -798,7 +788,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                 <div className="editor-section-separator" />
 
                 <section ref={copiesSectionRef} className="editor-page-section">
-                  <h3 className="editor-page-section-title">Editar Tombos</h3>
+                  <h3 className="editor-page-section-title">
+                    <HiOutlineClipboardList /> Editar Tombos
+                  </h3>
                   <TombosSection
                     bookTitle={form.livTitulo}
                     isEditing={Boolean(bookToEdit)}
@@ -808,6 +800,19 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                     onAddConfigChange={handleAddConfigChange}
                   />
                 </section>
+
+                <div className="editor-bottom-save-bar">
+                  <LoadingButton
+                    type="button"
+                    className="top-action primary bottom-save-button"
+                    onClick={handleSave}
+                    isLoading={loading || loadingDetails}
+                    loadingText="Salvando..."
+                  >
+                    <HiOutlineSave />
+                    <span>Salvar Atualizações</span>
+                  </LoadingButton>
+                </div>
               </>
             )}
           </div>

@@ -160,19 +160,53 @@
 }
 
 .editor-page-section-title {
-  margin: 0 0 16px;
-  font-size: 1.1rem;
-  font-weight: 800;
+  margin: 0 0 20px;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
   color: var(--text-default);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--surface-border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface-bg);
+}
+
+.editor-page-section-title svg {
+  flex-shrink: 0;
+  font-size: 1.5rem;
+  color: var(--btn-dark-hover);
+  background: var(--main-bg);
+  border-radius: 12px;
+  padding: 6px;
+  width: 34px;
+  height: 34px;
+  box-sizing: border-box;
 }
 
 .editor-section-separator {
   height: 1px;
   background: var(--surface-border);
   margin: 30px 0;
+}
+
+/* ── Barra do botão Salvar, agora ao final da rolagem ── */
+.editor-bottom-save-bar {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 26px;
+  margin-top: 30px;
+  border-top: 2px solid var(--surface-border);
+}
+
+.bottom-save-button {
+  min-height: 52px;
+  padding: 0 28px;
+  font-size: 1rem;
 }
 
 .editor-loading-state {
