@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   addExemplares,
   createBook,
@@ -31,11 +31,34 @@ function normalizeText(value = "") {
     .trim();
 }
 
-const TAB_ITEMS = [
+const SECTIONS = [
   { id: "basic", label: "Informações Básicas" },
   { id: "publication", label: "Informações de Publicação" },
   { id: "copies", label: "Editar Tombos" },
 ];
+
+// Campos que vivem na seção "Informações de Publicação". Usado só para saber
+// se devemos rolar a tela até ela quando o ISBN ou a IA preenchem algo lá —
+// antes essa seção ficava atrás de uma aba não visitada e o preenchimento
+// passava despercebido; agora ela está sempre visível, mas ainda pode estar
+// fora da área de rolagem no momento em que o dado chega.
+const PUBLICATION_FIELD_KEYS = new Set([
+  "livSubtitulo",
+  "livEditora",
+  "livAnoPublicacao",
+  "livPaginas",
+  "livEdicao",
+  "livIdioma",
+  "livFaixaEtaria",
+  "livCDD",
+  "livAlturaCm",
+  "livLarguraCm",
+  "livIlustrado",
+  "livPalavrasChave",
+  "ediCidade",
+  "ediEstado",
+  "ediPais",
+]);
 
 const DEFAULT_FORM = {
   livTitulo: "",
@@ -134,7 +157,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [editoras, setEditoras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState("basic");
   const [form, setForm] = useState(DEFAULT_FORM);
   const [initialForm, setInitialForm] = useState(DEFAULT_FORM);
   const [exemplares, setExemplares] = useState([]);
@@ -145,8 +167,49 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [confirmandoCamposEmBranco, setConfirmandoCamposEmBranco] = useState(false);
   const [camposEmBrancoDetectados, setCamposEmBrancoDetectados] = useState([]);
 
+  // Campos preenchidos automaticamente pelo ISBN ou pela IA ficam aqui
+  // temporariamente para receber destaque visual na tela — some sozinho
+  // depois de um tempo ou assim que o usuário edita o campo manualmente.
+  const [highlightedFields, setHighlightedFields] = useState(() => new Set());
+  const highlightTimeoutRef = useRef(null);
+  const basicSectionRef = useRef(null);
+  const publicationSectionRef = useRef(null);
+  const copiesSectionRef = useRef(null);
+  const sectionRefs = {
+    basic: basicSectionRef,
+    publication: publicationSectionRef,
+    copies: copiesSectionRef,
+  };
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    };
+  }, []);
+
+  // Marca campos como "preenchidos automaticamente" (destaque visual) e, se
+  // algum deles vive na seção de Publicação, rola a tela até lá — é o caso
+  // que mais gerava a sensação de "não sei o que mudou".
+  function marcarCamposPreenchidosAutomaticamente(nomesCampos) {
+    if (!nomesCampos || nomesCampos.length === 0) return;
+
+    setHighlightedFields((prev) => new Set([...prev, ...nomesCampos]));
+
+    if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+    highlightTimeoutRef.current = setTimeout(() => {
+      setHighlightedFields(new Set());
+    }, 9000);
+
+    const tocaPublicacao = nomesCampos.some((campo) => PUBLICATION_FIELD_KEYS.has(campo));
+    if (tocaPublicacao && publicationSectionRef.current) {
+      setTimeout(() => {
+        publicationSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+    }
+  }
+
   const carregarLivroEmEdicao = useCallback(async () => {
-    setActiveTab("basic");
+    setHighlightedFields(new Set());
 
     if (!bookToEdit) {
       setForm(DEFAULT_FORM);
@@ -244,6 +307,15 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
             : Number(value)
           : value,
     }));
+
+    // Editar manualmente um campo que tinha sido preenchido automaticamente
+    // (ISBN/IA) faz o destaque perder o sentido — ele some na hora.
+    setHighlightedFields((prev) => {
+      if (!prev.has(name)) return prev;
+      const next = new Set(prev);
+      next.delete(name);
+      return next;
+    });
   }
 
   function handleExemplarChange(id, field, value) {
@@ -260,34 +332,62 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   }
 
   function handlePreencherISBN(dados) {
-    setForm((prev) => ({
-      ...prev,
-      livTitulo:        dados.livTitulo        || prev.livTitulo,
-      livSubtitulo:     dados.livSubtitulo     || prev.livSubtitulo,
-      livAutor:         dados.livAutor         || prev.livAutor,
-      autorAnoNascimento: dados.autorAnoNascimento || prev.autorAnoNascimento,
-      autorAnoFalecimento: dados.autorAnoFalecimento || prev.autorAnoFalecimento,
-      livEditora:       dados.livEditora       || prev.livEditora,
-      livAnoPublicacao: dados.livAnoPublicacao || prev.livAnoPublicacao,
-      livPaginas:       dados.livPaginas       || prev.livPaginas,
-      livCapaURL:       dados.livCapaURL       || prev.livCapaURL,
-      livDescricao:     dados.livDescricao     || prev.livDescricao,
-      livIdioma:        dados.livIdioma        || prev.livIdioma,
-      idCategoria:
-        dados.idCategoria === "" || dados.idCategoria === null || dados.idCategoria === undefined
-          ? prev.idCategoria
-          : isPendingId(dados.idCategoria)
-            ? dados.idCategoria
-            : Number(dados.idCategoria),
-      idGenero:
-        dados.idGenero === "" || dados.idGenero === null || dados.idGenero === undefined
-          ? prev.idGenero
-          : isPendingId(dados.idGenero)
-            ? dados.idGenero
-            : Number(dados.idGenero),
-      exemplarISBN:     dados.exemplarISBN     || prev.exemplarISBN,
-    }));
-    addToast("Dados preenchidos a partir do ISBN!", "success");
+    const camposAlterados = [];
+
+    setForm((prev) => {
+      const next = { ...prev };
+
+      const setSeHouver = (campo, valor) => {
+        if (valor !== undefined && valor !== null && valor !== "" && valor !== prev[campo]) {
+          next[campo] = valor;
+          camposAlterados.push(campo);
+        }
+      };
+
+      setSeHouver("livTitulo", dados.livTitulo);
+      setSeHouver("livSubtitulo", dados.livSubtitulo);
+      setSeHouver("livAutor", dados.livAutor);
+      setSeHouver("autorAnoNascimento", dados.autorAnoNascimento);
+      setSeHouver("autorAnoFalecimento", dados.autorAnoFalecimento);
+      setSeHouver("livEditora", dados.livEditora);
+      setSeHouver("livAnoPublicacao", dados.livAnoPublicacao);
+      setSeHouver("livPaginas", dados.livPaginas);
+      setSeHouver("livCapaURL", dados.livCapaURL);
+      setSeHouver("livDescricao", dados.livDescricao);
+      setSeHouver("livIdioma", dados.livIdioma);
+      setSeHouver("exemplarISBN", dados.exemplarISBN);
+
+      if (dados.idCategoria !== "" && dados.idCategoria !== null && dados.idCategoria !== undefined) {
+        const valorCategoria = isPendingId(dados.idCategoria) ? dados.idCategoria : Number(dados.idCategoria);
+        if (valorCategoria !== prev.idCategoria) {
+          next.idCategoria = valorCategoria;
+          camposAlterados.push("idCategoria");
+        }
+      }
+      if (dados.idGenero !== "" && dados.idGenero !== null && dados.idGenero !== undefined) {
+        const valorGenero = isPendingId(dados.idGenero) ? dados.idGenero : Number(dados.idGenero);
+        if (valorGenero !== prev.idGenero) {
+          next.idGenero = valorGenero;
+          camposAlterados.push("idGenero");
+        }
+      }
+
+      return next;
+    });
+
+    marcarCamposPreenchidosAutomaticamente(camposAlterados);
+    addToast("Dados preenchidos a partir do ISBN! Campos alterados foram destacados.", "success");
+  }
+
+  // Chamado pela seção Básica ao clicar em "Aplicar selecionados" no painel
+  // de sugestões da IA — aplica tudo de uma vez e marca os campos para
+  // destaque, com o mesmo tratamento usado no preenchimento por ISBN.
+  function handleCamposAutoFillIA(atualizacoes) {
+    const entradas = Object.entries(atualizacoes || {});
+    if (entradas.length === 0) return;
+
+    setForm((prev) => ({ ...prev, ...atualizacoes }));
+    marcarCamposPreenchidosAutomaticamente(entradas.map(([campo]) => campo));
   }
 
   async function handleUpload(e) {
@@ -609,38 +709,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     return pendente;
   }
 
-  function renderActiveSection() {
-    if (activeTab === "publication") {
-      return <PublicationInfoSection form={form} onFieldChange={handleFieldChange} editoras={editoras} />;
-    }
-    if (activeTab === "copies") {
-      return (
-        <TombosSection
-          bookTitle={form.livTitulo}
-          isEditing={Boolean(bookToEdit)}
-          exemplares={exemplares}
-          addConfig={addConfig}
-          onExemplarChange={handleExemplarChange}
-          onAddConfigChange={handleAddConfigChange}
-        />
-      );
-    }
-    return (
-      <BasicInfoSection
-        form={form}
-        categorias={categorias}
-        generos={generos}
-        autores={autores}
-        onFieldChange={handleFieldChange}
-        onUpload={handleUpload}
-        onISBNAutoFill={handlePreencherISBN}
-        onCriarCategoria={handleCriarCategoria}
-        onCriarGenero={handleCriarGenero}
-        onCriarAutor={handleCriarAutor}
-      />
-    );
-  }
-
   return (
     <div className="modal-overlay">
       <div className="editor-modal-container">
@@ -673,17 +741,22 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           </div>
 
           <div className="editor-tabs-bar">
-            {TAB_ITEMS.map((tab) => (
+            {SECTIONS.map((section) => (
               <button
-                key={tab.id}
+                key={section.id}
                 type="button"
-                className={`editor-tab ${activeTab === tab.id ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.id)}
+                className="editor-tab"
+                onClick={() =>
+                  sectionRefs[section.id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
               >
-                {tab.label}
+                {section.label}
               </button>
             ))}
           </div>
+          <p className="editor-tabs-hint">
+            Tudo fica na mesma tela agora — use os atalhos acima só para pular direto até uma seção.
+          </p>
 
           <div className="editor-divider" />
 
@@ -691,7 +764,51 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
             {loadingDetails ? (
               <div className="editor-loading-state">Carregando dados do livro...</div>
             ) : (
-              renderActiveSection()
+              <>
+                <section ref={basicSectionRef} className="editor-page-section">
+                  <h3 className="editor-page-section-title">Informações Básicas</h3>
+                  <BasicInfoSection
+                    form={form}
+                    categorias={categorias}
+                    generos={generos}
+                    autores={autores}
+                    highlightedFields={highlightedFields}
+                    onFieldChange={handleFieldChange}
+                    onUpload={handleUpload}
+                    onISBNAutoFill={handlePreencherISBN}
+                    onCamposAutoFillIA={handleCamposAutoFillIA}
+                    onCriarCategoria={handleCriarCategoria}
+                    onCriarGenero={handleCriarGenero}
+                    onCriarAutor={handleCriarAutor}
+                  />
+                </section>
+
+                <div className="editor-section-separator" />
+
+                <section ref={publicationSectionRef} className="editor-page-section">
+                  <h3 className="editor-page-section-title">Informações de Publicação</h3>
+                  <PublicationInfoSection
+                    form={form}
+                    onFieldChange={handleFieldChange}
+                    editoras={editoras}
+                    highlightedFields={highlightedFields}
+                  />
+                </section>
+
+                <div className="editor-section-separator" />
+
+                <section ref={copiesSectionRef} className="editor-page-section">
+                  <h3 className="editor-page-section-title">Editar Tombos</h3>
+                  <TombosSection
+                    bookTitle={form.livTitulo}
+                    isEditing={Boolean(bookToEdit)}
+                    exemplares={exemplares}
+                    addConfig={addConfig}
+                    onExemplarChange={handleExemplarChange}
+                    onAddConfigChange={handleAddConfigChange}
+                  />
+                </section>
+              </>
             )}
           </div>
         </div>

@@ -3,14 +3,23 @@ import { HiOutlineBookOpen, HiOutlineOfficeBuilding } from "react-icons/hi";
 const IDIOMAS_COMUNS = ["Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano", "Mandarim", "Japonês", "Russo", "Árabe", "Hindi", "Bengali", "Coreano", "Turco", "Vietnamita"];
 const FAIXAS_ETARIAS = ["Infantil", "Juvenil", "Adulto", "Livre"];
 
-export default function PublicationInfoSection({ form, onFieldChange, editoras = [] }) {
+function fieldClass(name, highlightedFields, base = "editor-field") {
+  return highlightedFields?.has(name) ? `${base} field-autofilled` : base;
+}
+
+function AutoTag({ name, highlightedFields }) {
+  if (!highlightedFields?.has(name)) return null;
+  return <span className="field-autofilled-tag">✨ auto</span>;
+}
+
+export default function PublicationInfoSection({ form, onFieldChange, editoras = [], highlightedFields }) {
   return (
     <div className="editor-section-grid publication-grid">
       <div className="editor-form-panel publication-panel">
         <div className="editor-field-grid three-columns">
           {/* ── Editora ── */}
-          <label className="editor-field">
-            <span>Editora</span>
+          <label className={fieldClass("livEditora", highlightedFields)}>
+            <span>Editora <AutoTag name="livEditora" highlightedFields={highlightedFields} /></span>
             <input
               name="livEditora"
               value={form.livEditora}
@@ -25,8 +34,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               ))}
             </datalist>
           </label>
-          <label className="editor-field">
-            <span>Cidade da Editora</span>
+          <label className={fieldClass("ediCidade", highlightedFields)}>
+            <span>Cidade da Editora <AutoTag name="ediCidade" highlightedFields={highlightedFields} /></span>
             <input
               name="ediCidade"
               value={form.ediCidade || ""}
@@ -34,8 +43,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               placeholder="Ex.: São Paulo"
             />
           </label>
-          <label className="editor-field">
-            <span>Estado da Editora</span>
+          <label className={fieldClass("ediEstado", highlightedFields)}>
+            <span>Estado da Editora <AutoTag name="ediEstado" highlightedFields={highlightedFields} /></span>
             <input
               name="ediEstado"
               value={form.ediEstado || ""}
@@ -43,8 +52,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               placeholder="Ex.: SP"
             />
           </label>
-          <label className="editor-field">
-            <span>País da Editora</span>
+          <label className={fieldClass("ediPais", highlightedFields)}>
+            <span>País da Editora <AutoTag name="ediPais" highlightedFields={highlightedFields} /></span>
             <input
               name="ediPais"
               value={form.ediPais || ""}
@@ -53,8 +62,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           {/* ── Publicação ── */}
-          <label className="editor-field">
-            <span>Ano de publicação</span>
+          <label className={fieldClass("livAnoPublicacao", highlightedFields)}>
+            <span>Ano de publicação <AutoTag name="livAnoPublicacao" highlightedFields={highlightedFields} /></span>
             <input
               name="livAnoPublicacao"
               value={form.livAnoPublicacao}
@@ -63,8 +72,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           
-          <label className="editor-field">
-            <span>Páginas *</span>
+          <label className={fieldClass("livPaginas", highlightedFields)}>
+            <span>Páginas * <AutoTag name="livPaginas" highlightedFields={highlightedFields} /></span>
             <input
               name="livPaginas"
               value={form.livPaginas}
@@ -75,8 +84,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               required
             />
           </label>
-          <label className="editor-field">
-            <span>Edição</span>
+          <label className={fieldClass("livEdicao", highlightedFields)}>
+            <span>Edição <AutoTag name="livEdicao" highlightedFields={highlightedFields} /></span>
             <input
               name="livEdicao"
               value={form.livEdicao || ""}
@@ -87,8 +96,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           {/* ── Subtítulo / Idioma ── */}
-          <label className="editor-field">
-            <span>Subtítulo</span>
+          <label className={fieldClass("livSubtitulo", highlightedFields)}>
+            <span>Subtítulo <AutoTag name="livSubtitulo" highlightedFields={highlightedFields} /></span>
             <input
               name="livSubtitulo"
               value={form.livSubtitulo || ""}
@@ -96,8 +105,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               placeholder="Subtítulo do livro, se houver"
             />
           </label>
-          <label className="editor-field">
-            <span>Idioma</span>
+          <label className={fieldClass("livIdioma", highlightedFields)}>
+            <span>Idioma <AutoTag name="livIdioma" highlightedFields={highlightedFields} /></span>
             <input
               name="livIdioma"
               value={form.livIdioma || ""}
@@ -112,8 +121,8 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               ))}
             </datalist>
           </label>
-          <label className="editor-field">
-            <span>Faixa etária</span>
+          <label className={fieldClass("livFaixaEtaria", highlightedFields)}>
+            <span>Faixa etária <AutoTag name="livFaixaEtaria" highlightedFields={highlightedFields} /></span>
             <select
               name="livFaixaEtaria"
               value={form.livFaixaEtaria || ""}
@@ -159,7 +168,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               min="0"
             />
           </label>
-          <label className="editor-field" style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "10px", flexDirection: "row" }}>
+          <label className={fieldClass("livIlustrado", highlightedFields, "editor-field")} style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: "10px", flexDirection: "row" }}>
             <input
               type="checkbox"
               id="livIlustrado"
@@ -168,10 +177,10 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               onChange={(e) => onFieldChange("livIlustrado", e.target.checked)}
               style={{ width: "auto" }}
             />
-            <span htmlFor="livIlustrado" style={{ margin: 0 }}>Livro ilustrado</span>
+            <span htmlFor="livIlustrado" style={{ margin: 0 }}>Livro ilustrado <AutoTag name="livIlustrado" highlightedFields={highlightedFields} /></span>
           </label>
-          <label className="editor-field" style={{ gridColumn: "1 / -1" }}>
-            <span>Palavras-chave</span>
+          <label className={fieldClass("livPalavrasChave", highlightedFields)} style={{ gridColumn: "1 / -1" }}>
+            <span>Palavras-chave <AutoTag name="livPalavrasChave" highlightedFields={highlightedFields} /></span>
             <input
               name="livPalavrasChave"
               value={form.livPalavrasChave || ""}

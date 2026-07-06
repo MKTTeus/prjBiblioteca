@@ -132,11 +132,15 @@
   font-size: 0.98rem;
 }
 
-.editor-tab.active {
-  background: var(--btn-dark-hover);
-  color: var(--btn-primary-text);
-  border-color: var(--btn-dark-hover);
-  box-shadow: 0 10px 20px rgba(17, 24, 39, 0.12);
+.editor-tab:hover {
+  background: var(--btn-muted-hover);
+}
+
+.editor-tabs-hint {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--tabs-text);
+  font-weight: 500;
 }
 
 .editor-divider {
@@ -148,6 +152,27 @@
 
 .editor-content {
   min-height: 420px;
+}
+
+/* ── Seções empilhadas (antes eram abas separadas) ── */
+.editor-page-section {
+  scroll-margin-top: 20px;
+}
+
+.editor-page-section-title {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-default);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-section-separator {
+  height: 1px;
+  background: var(--surface-border);
+  margin: 30px 0;
 }
 
 .editor-loading-state {
@@ -230,12 +255,57 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  border-radius: 12px;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .editor-field span {
   color: var(--text-default);
   font-size: 0.86rem;
   font-weight: 800;
+}
+
+/* ── Destaque de campos preenchidos automaticamente (ISBN / IA) ──
+   Chama a atenção do usuário para o que mudou sem precisar procurar,
+   principalmente em campos que vivem numa seção diferente da que
+   disparou o preenchimento. Some sozinho depois de um tempo ou assim
+   que o campo é editado manualmente. */
+.editor-field.field-autofilled {
+  background: rgba(167, 139, 250, 0.08);
+  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35);
+  padding: 8px;
+  margin: -8px;
+  animation: field-autofilled-flash 1.4s ease;
+}
+
+.editor-field.field-autofilled input,
+.editor-field.field-autofilled select,
+.editor-field.field-autofilled textarea {
+  border-color: #a78bfa;
+}
+
+.field-autofilled-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.14);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: field-autofilled-pop 0.25s ease;
+}
+
+@keyframes field-autofilled-pop {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes field-autofilled-flash {
+  0% { box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.45); }
+  100% { box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35); }
 }
 
 .editor-field input,
