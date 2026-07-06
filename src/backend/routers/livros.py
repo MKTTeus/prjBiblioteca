@@ -118,12 +118,10 @@ def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, 
     if not nome_editora:
         return None
     ed = supabase.table("Editora").select("idEditora").eq("ediNome", nome_editora).limit(1).execute()
+
     if ed.data:
-        return ed.data[0]["idEditora"]
-    novo = supabase.table("Editora").insert({"ediNome": nome_editora}).execute()
-    id_editora = ed.data[0]["idEditora"]
-        # Se veio localização, atualiza a editora existente
-    if cidade or estado or pais:
+        id_editora = ed.data[0]["idEditora"]
+        # Editora já existe: atualiza cidade/estado/país se algum foi informado
         upd = {}
         if cidade is not None: upd["ediCidade"] = cidade
         if estado is not None: upd["ediEstado"] = estado
@@ -132,7 +130,7 @@ def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, 
             supabase.table("Editora").update(upd).eq("idEditora", id_editora).execute()
         return id_editora
 
-    # Insere uma nova editora
+    # Editora nova: insere já com a localização informada
     novo_payload = {"ediNome": nome_editora}
     if cidade is not None: novo_payload["ediCidade"] = cidade
     if estado is not None: novo_payload["ediEstado"] = estado
