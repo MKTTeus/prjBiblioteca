@@ -13,6 +13,55 @@ from typing import Optional as Opt
 router = APIRouter()
 
 
+def _buscar_conflito_usuario(email: str, ra: str = None, cpf: str = None, excluir_id: int = None):
+    filtros = [f"usuEmail.eq.{email}"]
+    if ra:
+        filtros.append(f"usuRA.eq.{ra}")
+    if cpf:
+        filtros.append(f"usuCPF.eq.{cpf}")
+
+    query = supabase.table("Usuario").select("*").or_(",".join(filtros))
+    if excluir_id:
+        query = query.neq("idUsuario", excluir_id)
+
+    encontrados = query.execute().data or []
+    if not encontrados:
+        return None
+
+    ids_distintos = {u["idUsuario"] for u in encontrados}
+    if len(ids_distintos) > 1:
+        raise HTTPException(
+            status_code=400,
+            detail="O e-mail e o RA/CPF informados pertencem a cadastros diferentes. Verifique os dados.",
+        )
+    return encontrados[0]
+
+
+def _resposta_conflito(usuario: dict, email: str, ra: str = None, cpf: str = None):
+    if usuario.get("usuExcluido") or usuario.get("usuStatus") is not True:
+        raise HTTPException(status_code=409, detail="USUARIO_INATIVO")
+
+    if usuario.get("usuEmail") == email:
+        campo = "Email"
+    elif ra and usuario.get("usuRA") == ra:
+        campo = "RA"
+    elif cpf and usuario.get("usuCPF") == cpf:
+        campo = "CPF"
+    else:
+        campo = "Cadastro"
+    raise HTTPException(status_code=400, detail=f"{campo} já cadastrado")
+
+
+def _tratar_erro_unicidade(e: Exception, campos: dict):
+    msg = str(e)
+    if "duplicate key" not in msg and "23505" not in msg:
+        return None
+    for coluna, rotulo in campos.items():
+        if coluna in msg:
+            return HTTPException(status_code=409, detail=f"{rotulo} já cadastrado para outro usuário")
+    return HTTPException(status_code=409, detail="Já existe um cadastro com esses dados")
+
+
 def _parse_upload(contents: bytes, filename: str) -> list[dict]:
     """Retorna lista de dicts com as linhas do arquivo (xlsx ou csv)."""
     if filename.lower().endswith(".csv"):
@@ -43,17 +92,15 @@ def listar_alunos(admin=Depends(get_admin)):
 @router.post("/alunos")
 def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
+    ra = (data.ra or "").strip() or None
 
     email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
-    if exist.data:
-        usuario = exist.data[0]
-        if usuario.get("usuStatus") == True:
-            raise HTTPException(status_code=400, detail="Aluno já existe")
-        raise HTTPException(status_code=409, detail="USUARIO_INATIVO")
+    conflito = _buscar_conflito_usuario(email, ra=ra)
+    if conflito:
+        _resposta_conflito(conflito, email, ra=ra)
 
     novo = {
         "usuNome": data.nome,
@@ -62,7 +109,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTelefone": data.telefone,
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
-        "usuRA": data.ra,
+        "usuRA": ra,
         "usuSerie": data.serie,
         "usuTurma": data.turma,
         "usuAnoLetivo": get_ano_letivo_atual(),
@@ -71,7 +118,13 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuStatus": parse_status(data.status),
         "usuExcluido": False,
     }
-    criado = supabase.table("Usuario").insert(novo).execute()
+    try:
+        criado = supabase.table("Usuario").insert(novo).execute()
+    except Exception as e:
+        erro = _tratar_erro_unicidade(e, {"usuEmail": "Email", "usuRA": "RA"})
+        if erro:
+            raise erro
+        raise HTTPException(status_code=500, detail="Falha ao criar aluno")
     if not criado.data:
         raise HTTPException(status_code=500, detail="Falha ao criar aluno")
     return criado.data[0]
@@ -80,25 +133,35 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
 @router.post("/alunos/reativar")
 def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
-    if not exist.data:
+    ra = (data.ra or "").strip() or None
+    
+    usuario = _buscar_conflito_usuario(email, ra=ra)
+    if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-    usuario = exist.data[0]
     payload = {
         "usuNome": data.nome,
+        "usuEmail": email,
         "usuSenha": hash_password(data.senha),
         "usuTelefone": data.telefone,
         "usuTelefoneResponsavel": data.telefoneResponsavel,
         "usuEndereco": data.endereco,
-        "usuRA": data.ra,
+        "usuRA": ra,
         "usuSerie": data.serie,
         "usuTurma": data.turma,
         "usuAnoLetivo": get_ano_letivo_atual(),
         "usuFormado": False,
+        "usuTipo": "Aluno",
         "usuStatus": True,
+        "usuExcluido": False,
     }
-    reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    try:
+        reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    except Exception as e:
+        erro = _tratar_erro_unicidade(e, {"usuEmail": "Email", "usuRA": "RA"})
+        if erro:
+            raise erro
+        raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     if not reativado.data:
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     return reativado.data[0]
@@ -210,7 +273,22 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
-    atual = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+    if "usuEmail" in payload or "usuRA" in payload:
+        conflito = _buscar_conflito_usuario(
+            payload.get("usuEmail", resp.data[0]["usuEmail"]),
+            ra=payload.get("usuRA"),
+            excluir_id=idUsuario,
+        )
+        if conflito:
+            _resposta_conflito(conflito, payload.get("usuEmail", ""), ra=payload.get("usuRA"))
+
+    try:
+        atual = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+    except Exception as e:
+        erro = _tratar_erro_unicidade(e, {"usuEmail": "Email", "usuRA": "RA"})
+        if erro:
+            raise erro
+        raise HTTPException(status_code=500, detail="Falha ao atualizar aluno")
     if not atual.data:
         raise HTTPException(status_code=500, detail="Falha ao atualizar aluno")
     return atual.data[0]
@@ -218,7 +296,15 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
 
 @router.delete("/alunos/{idUsuario}")
 def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
-    supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Aluno").execute()
+    resp = (
+        supabase.table("Usuario")
+        .update({"usuExcluido": True})
+        .eq("idUsuario", idUsuario)
+        .eq("usuTipo", "Aluno")
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
     return {"message": "Aluno excluído com sucesso"}
 
 # ── COMUNIDADE ────────────────────────────────────────────────────
@@ -235,24 +321,19 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     if not validar_cpf(cpf):
         raise HTTPException(status_code=400, detail="CPF inválido")
 
-    email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", data.email).execute()
+    email = normalize_email(data.email)
+
+    email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", data.email).eq("usuExcluido", False).execute()
-    if exist.data:
-        usuario = exist.data[0]
-        if usuario.get("usuStatus") == True:
-            raise HTTPException(status_code=400, detail="Membro já existe")
-        raise HTTPException(status_code=409, detail="USUARIO_INATIVO")
-
-    cpf_existe = supabase.table("Usuario").select("idUsuario").eq("usuCPF", cpf).eq("usuExcluido", False).execute()
-    if cpf_existe.data:
-        raise HTTPException(status_code=400, detail="CPF já cadastrado")
+    conflito = _buscar_conflito_usuario(email, cpf=cpf)
+    if conflito:
+        _resposta_conflito(conflito, email, cpf=cpf)
 
     novo = {
         "usuNome": data.nome,
-        "usuEmail": data.email,
+        "usuEmail": email,
         "usuSenha": hash_password(data.senha),
         "usuTelefone": data.telefone,
         "usuTelefoneResponsavel": data.telefoneResponsavel,
@@ -262,7 +343,13 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuStatus": parse_status(data.status),
         "usuExcluido": False,
     }
-    criado = supabase.table("Usuario").insert(novo).execute()
+    try:
+        criado = supabase.table("Usuario").insert(novo).execute()
+    except Exception as e:
+        erro = _tratar_erro_unicidade(e, {"usuEmail": "Email", "usuCPF": "CPF"})
+        if erro:
+            raise erro
+        raise HTTPException(status_code=500, detail="Falha ao criar membro")
     if not criado.data:
         raise HTTPException(status_code=500, detail="Falha ao criar membro")
     return criado.data[0]
@@ -275,26 +362,14 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=400, detail="CPF inválido")
 
     email = normalize_email(data.email)
-    exist = supabase.table("Usuario").select("*").eq("usuEmail", email).eq("usuExcluido", False).execute()
-    if not exist.data:
+
+    usuario = _buscar_conflito_usuario(email, cpf=cpf)
+    if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
-
-    usuario = exist.data[0]
-
-    cpf_existe = (
-        supabase.table("Usuario")
-        .select("idUsuario")
-        .eq("usuCPF", cpf)
-        .eq("usuExcluido", False)
-        .neq("idUsuario", usuario["idUsuario"])
-        .execute()
-    )
-    if cpf_existe.data:
-        raise HTTPException(status_code=400, detail="CPF já cadastrado")
 
     payload = {
         "usuNome": data.nome,
-        "usuEmail": data.email,
+        "usuEmail": email,
         "usuSenha": hash_password(data.senha),
         "usuTelefone": data.telefone,
         "usuTelefoneResponsavel": data.telefoneResponsavel,
@@ -302,13 +377,20 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuCPF": cpf,
         "usuTipo": "Comunidade",
         "usuStatus": True,
+        "usuExcluido": False,
         # Ex-aluno retornando como comunidade: limpa os dados acadêmicos
         "usuSerie": None,
         "usuTurma": None,
         "usuAnoLetivo": None,
         "usuFormado": False,
     }
-    reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    try:
+        reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
+    except Exception as e:
+        erro = _tratar_erro_unicidade(e, {"usuEmail": "Email", "usuCPF": "CPF"})
+        if erro:
+            raise erro
+        raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     if not reativado.data:
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     return reativado.data[0]
@@ -415,14 +497,34 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
     if data.endereco is not None:
         payload["usuEndereco"] = data.endereco
     if data.cpf is not None:
-        payload["usuCPF"] = data.cpf
+        cpf = normalize_cpf(data.cpf)
+        if not validar_cpf(cpf):
+            raise HTTPException(status_code=400, detail="CPF inválido")
+        payload["usuCPF"] = cpf
     if data.status is not None:
         payload["usuStatus"] = parse_status(data.status)
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
-    atual = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+    # Se e-mail ou CPF estão sendo trocados, checa se já pertencem a OUTRO
+    # usuário (ativo, inativo ou excluído) antes de tentar salvar.
+    if "usuEmail" in payload or "usuCPF" in payload:
+        conflito = _buscar_conflito_usuario(
+            payload.get("usuEmail", resp.data[0]["usuEmail"]),
+            cpf=payload.get("usuCPF"),
+            excluir_id=idUsuario,
+        )
+        if conflito:
+            _resposta_conflito(conflito, payload.get("usuEmail", ""), cpf=payload.get("usuCPF"))
+
+    try:
+        atual = supabase.table("Usuario").update(payload).eq("idUsuario", idUsuario).execute()
+    except Exception as e:
+        erro = _tratar_erro_unicidade(e, {"usuEmail": "Email", "usuCPF": "CPF"})
+        if erro:
+            raise erro
+        raise HTTPException(status_code=500, detail="Falha ao atualizar membro")
     if not atual.data:
         raise HTTPException(status_code=500, detail="Falha ao atualizar membro")
     return atual.data[0]
@@ -430,7 +532,15 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 
 @router.delete("/comunidade/{idUsuario}")
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
-    supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", idUsuario).eq("usuTipo", "Comunidade").execute()
+    resp = (
+        supabase.table("Usuario")
+        .update({"usuExcluido": True})
+        .eq("idUsuario", idUsuario)
+        .eq("usuTipo", "Comunidade")
+        .execute()
+    )
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Membro não encontrado")
     return {"message": "Membro da comunidade excluído com sucesso"}
 
 
