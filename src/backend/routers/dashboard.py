@@ -17,11 +17,15 @@ def dashboard_stats(user=Depends(get_optional_user)):
         movimentacoes = supabase.table("Movimentacao").select("*").execute().data or []
         movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").execute().data or []
 
+        exemplares_reservados = (
+            supabase.table("Exemplar").select("idExemplar").eq("exeLivStatus", "Reservado").execute().data or []
+        )
+        reservados = len(exemplares_reservados)
+
         ativos = 0
         pendentes = 0
         atrasados = 0
-        devolvidos_hoje = 0
-        reservados = 0
+        vencem_hoje = 0
 
         # map movimentacao -> exemplares
         mov_ex_map = {}
@@ -34,34 +38,29 @@ def dashboard_stats(user=Depends(get_optional_user)):
 
             if "ativo" in status:
                 ativos += 1
-                # if any exemplar for this movimentacao is overdue
+                mov_atrasado = False
+                mov_vence_hoje = False
                 for me in me_list:
+                    if me.get("dataDevolucao"):
+                        continue
                     data_prev = me.get("dataPrevistaDevolucao")
-                    if data_prev:
-                        try:
-                            data_dev = datetime.fromisoformat(data_prev).date()
-                            if data_dev < hoje and not me.get("dataDevolucao"):
-                                atrasados += 1
-                                break
-                        except:
-                            pass
+                    if not data_prev:
+                        continue
+                    try:
+                        data_dev = datetime.fromisoformat(data_prev).date()
+                    except Exception:
+                        continue
+                    if data_dev < hoje:
+                        mov_atrasado = True
+                    elif data_dev == hoje:
+                        mov_vence_hoje = True
+                if mov_atrasado:
+                    atrasados += 1
+                elif mov_vence_hoje:
+                    vencem_hoje += 1
 
             if status == "pendente":
                 pendentes += 1
-
-            # devolvidos hoje (any exemplar devolvido today)
-            for me in me_list:
-                data_entrega = me.get("dataDevolucao")
-                if data_entrega:
-                    try:
-                        data_ent = datetime.fromisoformat(data_entrega).date()
-                        if data_ent == hoje:
-                            devolvidos_hoje += 1
-                    except:
-                        pass
-
-            if status == "reservado":
-                reservados += 1
 
     except Exception as e:
         print("Erro dashboard:", e)
@@ -82,5 +81,5 @@ def dashboard_stats(user=Depends(get_optional_user)):
         "devolucoesPendentes": pendentes,
         "reservados": reservados,
         "atrasados": atrasados,
-        "devolucoesHoje": devolvidos_hoje
+        "devolucoesHoje": vencem_hoje
     }
