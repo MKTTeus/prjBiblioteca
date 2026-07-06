@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
 from core import get_admin, gerar_tombos, executar_em_paralelo
-from schemas import Livro, LivroCreate, ExemplarUpdate
+from schemas import Livro, LivroCreate, ExemplarUpdate, LivroStatusUpdate
 
 router = APIRouter()
 
@@ -187,7 +187,8 @@ def listar_livros(
     categoria: str | None = "todas",
     status: str | None = "todos",
     page: int = 1,
-    per_page: int = 100
+    per_page: int = 100,
+    incluir_inativos: bool = False
 ):
     try:
         allowed_ids = None
@@ -249,6 +250,8 @@ def listar_livros(
             return []
 
         query = supabase.table("Livro").select("*")
+        if not incluir_inativos:
+            query = query.eq("livAtivo", True)
         if isinstance(allowed_ids, set):
             query = query.in_("idLivro", list(allowed_ids))
 
@@ -447,10 +450,70 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail=f"Erro ao atualizar livro: {str(e)}")
 
 
+@router.patch("/livros/{idLivro}/status")
+def alterar_status_livro(idLivro: int, data: LivroStatusUpdate, admin=Depends(get_admin)):
+    """
+    Ativa/desativa um livro (soft toggle, totalmente reversível).
+
+    Um livro desativado (livAtivo = false) some do catálogo dos usuários
+    (GET /livros sem incluir_inativos), mas continua no banco com todos os
+    seus dados intactos — Exemplares, histórico de empréstimos, vínculos de
+    autor/categoria/gênero — e pode ser reativado a qualquer momento.
+    """
+    livro = supabase.table("Livro").select("idLivro").eq("idLivro", idLivro).execute()
+    if not livro.data:
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+
+    supabase.table("Livro").update({"livAtivo": data.ativo}).eq("idLivro", idLivro).execute()
+
+    mensagem = "Livro reativado com sucesso" if data.ativo else "Livro desativado e removido do catálogo"
+    return {"message": mensagem, "ativo": data.ativo}
+
+
 @router.delete("/livros/{idLivro}")
 def deletar_livro(idLivro: int, admin=Depends(get_admin)):
-    supabase.table("Exemplar").update({"exeLivStatus": "Inativo"}).eq("idLivro", idLivro).execute()
-    return {"message": "Livro desativado com sucesso"}
+    """
+    Exclui um livro PERMANENTEMENTE, junto de seus Exemplares e vínculos com
+    autor/categoria/gênero.
+
+    Isso é bloqueado (409) se qualquer Exemplar desse livro já apareceu em
+    alguma Movimentacao (empréstimo/reserva, passado ou presente) — ou seja,
+    serve para corrigir um cadastro feito por engano, não para "apagar" um
+    livro com histórico. Nesses casos, use a desativação
+    (PATCH /livros/{idLivro}/status) para tirá-lo do catálogo sem perder
+    o histórico nem violar as chaves estrangeiras (Movimentacao/MovimentacaoExemplar
+    continuam existindo e apontando para o Exemplar/Livro).
+    """
+    livro = supabase.table("Livro").select("idLivro").eq("idLivro", idLivro).execute()
+    if not livro.data:
+        raise HTTPException(status_code=404, detail="Livro não encontrado")
+
+    exemplares = supabase.table("Exemplar").select("idExemplar").eq("idLivro", idLivro).execute().data or []
+    exemplar_ids = [e["idExemplar"] for e in exemplares]
+
+    if exemplar_ids:
+        movs = supabase.table("MovimentacaoExemplar") \
+            .select("idExemplar") \
+            .in_("idExemplar", exemplar_ids) \
+            .limit(1) \
+            .execute()
+        if movs.data:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Este livro possui histórico de empréstimos/reservas e não pode ser "
+                    "excluído permanentemente. Use a opção \"Desativar\" para retirá-lo do "
+                    "catálogo sem apagar seus dados."
+                ),
+            )
+        supabase.table("Exemplar").delete().in_("idExemplar", exemplar_ids).execute()
+
+    supabase.table("LivroAutor").delete().eq("idLivro", idLivro).execute()
+    supabase.table("LivroCategoria").delete().eq("idLivro", idLivro).execute()
+    supabase.table("LivroGenero").delete().eq("idLivro", idLivro).execute()
+    supabase.table("Livro").delete().eq("idLivro", idLivro).execute()
+
+    return {"message": "Livro excluído permanentemente com sucesso"}
 
 
 @router.put("/exemplares/{idExemplar}")

@@ -55,6 +55,7 @@ export const getBooks = (params = {}) => {
   if (params.status) query.append("status", params.status);
   if (params.page) query.append("page", params.page);
   if (params.per_page) query.append("per_page", params.per_page);
+  if (params.incluir_inativos) query.append("incluir_inativos", "true");
   const qs = query.toString();
   const endpoint = qs ? `/livros?${qs}` : "/livros";
   return apiFetch(endpoint);
@@ -75,6 +76,14 @@ export const updateBook = (idLivro, payload) =>
     body: JSON.stringify(payload)
   });
 
+// Ativa/desativa o livro (reversível) — some do catálogo dos usuários sem apagar nada.
+export const setBookStatus = (idLivro, ativo) =>
+  apiFetch(`/livros/${idLivro}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ ativo })
+  });
+
+// Exclui o livro PERMANENTEMENTE (bloqueado pelo backend se houver histórico de empréstimos).
 export const deleteBook = (idLivro) =>
   apiFetch(`/livros/${idLivro}`, {
     method: "DELETE"

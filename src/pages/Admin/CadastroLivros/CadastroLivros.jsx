@@ -8,7 +8,7 @@ import {
   HiOutlineCalendar,
 } from "react-icons/hi";
 
-import { getBooks, getBook, deleteBook } from "../../../services/api";
+import { getBooks, getBook, deleteBook, setBookStatus } from "../../../services/api";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import BookList from "./components/BookList/BookList";
 import BookFormModal from "./components/BookForm/BookFormModal";
@@ -27,6 +27,8 @@ export default function CadastroLivros() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingDeleteBook, setPendingDeleteBook] = useState(null);
+  const [pendingToggleBook, setPendingToggleBook] = useState(null);
+  const [togglingStatus, setTogglingStatus] = useState(false);
   const { addToast } = useToast();
   const [currentBook, setCurrentBook] = useState(null);
   const [fichaBook, setFichaBook] = useState(null);
@@ -56,8 +58,9 @@ export default function CadastroLivros() {
     }
 
     if (filters.status && filters.status !== "todas") {
-      const st = (b.status || "").toLowerCase();
-      if (!st.includes(filters.status.toLowerCase())) return false;
+      const ativo = b.livAtivo !== false; // ausência do campo é tratada como ativo
+      if (filters.status.toLowerCase() === "ativo" && !ativo) return false;
+      if (filters.status.toLowerCase() === "inativo" && ativo) return false;
     }
 
     return true;
@@ -66,7 +69,7 @@ export default function CadastroLivros() {
   const loadBooks = useCallback(async (params = {}) => {
     try {
       setLoading(true);
-      const data = await getBooks(params);
+      const data = await getBooks({ incluir_inativos: true, ...params });
       setBooks(data || []);
     } catch (err) {
       console.error(err);
@@ -99,13 +102,48 @@ export default function CadastroLivros() {
 
     try {
       await deleteBook(pendingDeleteBook.idLivro);
-      addToast("Livro excluído com sucesso", "success");
+      addToast("Livro excluído permanentemente com sucesso", "success");
       loadBooks();
     } catch (err) {
       console.error(err);
-      addToast("Falha ao excluir o livro", "error");
+      const detalhe = err?.data?.detail;
+      addToast(
+        typeof detalhe === "string" ? detalhe : "Falha ao excluir o livro",
+        "error"
+      );
     } finally {
       setPendingDeleteBook(null);
+    }
+  }
+
+  function handleToggleStatus(book) {
+    setPendingToggleBook(book);
+  }
+
+  async function confirmToggleStatus() {
+    if (!pendingToggleBook) return;
+    const novoAtivo = pendingToggleBook.livAtivo === false;
+
+    try {
+      setTogglingStatus(true);
+      await setBookStatus(pendingToggleBook.idLivro, novoAtivo);
+      addToast(
+        novoAtivo
+          ? "Livro reativado com sucesso"
+          : "Livro desativado e removido do catálogo",
+        "success"
+      );
+      loadBooks();
+    } catch (err) {
+      console.error(err);
+      const detalhe = err?.data?.detail;
+      addToast(
+        typeof detalhe === "string" ? detalhe : "Falha ao alterar o status do livro",
+        "error"
+      );
+    } finally {
+      setTogglingStatus(false);
+      setPendingToggleBook(null);
     }
   }
 
@@ -204,6 +242,7 @@ export default function CadastroLivros() {
           books={filteredBooks}
           onEditBook={handleEdit}
           onDeleteBook={handleDelete}
+          onToggleStatus={handleToggleStatus}
           onViewFicha={handleViewFicha}
           isAdmin={isAdmin}
         />
@@ -226,16 +265,39 @@ export default function CadastroLivros() {
 
       <ConfirmModal
         show={Boolean(pendingDeleteBook)}
-        title="Confirmar exclusão"
+        title="Excluir permanentemente"
         message={
-          pendingDeleteBook
-            ? `Tem certeza que deseja excluir este livro?`
-            : "Tem certeza que deseja excluir este livro?"
+          <>
+            <p>
+              Tem certeza que deseja excluir <strong>permanentemente</strong> o livro{" "}
+              "{pendingDeleteBook?.livTitulo}"?
+            </p>
+            <p className="confirm-modal-fields-note">
+              Isso apaga o livro e seus exemplares do banco de dados. Só é possível quando o
+              livro nunca teve nenhum empréstimo/reserva — use "Desativar" caso contrário.
+            </p>
+          </>
         }
         onConfirm={confirmDeleteBook}
         onCancel={() => setPendingDeleteBook(null)}
-        confirmText="Excluir"
+        confirmText="Excluir permanentemente"
         cancelText="Cancelar"
+        irreversivel
+      />
+
+      <ConfirmModal
+        show={Boolean(pendingToggleBook)}
+        title={pendingToggleBook?.livAtivo === false ? "Reativar livro" : "Desativar livro"}
+        message={
+          pendingToggleBook?.livAtivo === false
+            ? `Tem certeza que deseja reativar "${pendingToggleBook?.livTitulo}"? Ele voltará a aparecer no catálogo dos usuários.`
+            : `Tem certeza que deseja desativar "${pendingToggleBook?.livTitulo}"? Ele deixará de aparecer no catálogo dos usuários, mas nenhum dado será apagado — você pode reativá-lo a qualquer momento.`
+        }
+        onConfirm={confirmToggleStatus}
+        onCancel={() => setPendingToggleBook(null)}
+        confirmText={pendingToggleBook?.livAtivo === false ? "Reativar" : "Desativar"}
+        cancelText="Cancelar"
+        confirming={togglingStatus}
       />
     </div>
   );

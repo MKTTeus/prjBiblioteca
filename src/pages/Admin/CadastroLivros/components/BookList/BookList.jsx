@@ -3,7 +3,7 @@ import BookCard from "../../../../../components/BookCard/BookCard";
 import { getCategorias, getGeneros } from "../../../../../services/api";
 import "./BookList.css";
 
-const BookList = ({ books = [], onEditBook, onDeleteBook, onViewFicha, isAdmin = false }) => {
+const BookList = ({ books = [], onEditBook, onDeleteBook, onToggleStatus, onViewFicha, isAdmin = false }) => {
   const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(true);
@@ -58,6 +58,7 @@ const BookList = ({ books = [], onEditBook, onDeleteBook, onViewFicha, isAdmin =
                 isAdmin={isAdmin}
                 onEdit={onEditBook}
                 onDelete={onDeleteBook}
+                onToggleStatus={onToggleStatus}
                 onViewFicha={onViewFicha}
               />
             );

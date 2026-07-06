@@ -7,11 +7,17 @@ import {
   HiOutlineLocationMarker,
   HiOutlinePencil,
   HiOutlineXCircle,
+  HiOutlineRefresh,
+  HiOutlineTrash,
   HiOutlineDocumentText,
 } from "react-icons/hi";
 import "./BookCard.css";
 
 function getBookStatus(book) {
+  if (book?.livAtivo === false) {
+    return { label: "Inativo", className: "indisponivel" };
+  }
+
   const total      = Number(book?.total_exemplares ?? book?.totalExemplares ?? 0);
   const disponiveis = Number(book?.disponiveis ?? book?.livrosDisponiveis ?? 0);
   const emprestados = Number(book?.emprestados ?? book?.livrosEmprestados ?? 0);
@@ -64,6 +70,7 @@ export default function BookCard({
   isAdmin = false,
   onEdit,
   onDelete,
+  onToggleStatus,
   onViewFicha,
   onRequestLoan,
   jasolicitado = false,
@@ -194,10 +201,19 @@ export default function BookCard({
                 <button
                   type="button"
                   className="shared-book-card__button shared-book-card__button--delete"
-                  onClick={() => onDelete && onDelete(book)}
+                  onClick={() => onToggleStatus && onToggleStatus(book)}
                 >
-                  <HiOutlineXCircle />
-                  <span>Inativar</span>
+                  {book?.livAtivo === false ? <HiOutlineRefresh /> : <HiOutlineXCircle />}
+                  <span>{book?.livAtivo === false ? "Reativar" : "Desativar"}</span>
+                </button>
+                <button
+                  type="button"
+                  className="shared-book-card__button shared-book-card__button--delete"
+                  onClick={() => onDelete && onDelete(book)}
+                  title="Excluir permanentemente (só é possível sem histórico de empréstimos)"
+                >
+                  <HiOutlineTrash />
+                  <span>Excluir</span>
                 </button>
               </>
             )}

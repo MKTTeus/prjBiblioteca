@@ -88,6 +88,10 @@ class LivroCreate(BaseModel):
     prefixo_tombo: str = "T"
 
 
+class LivroStatusUpdate(BaseModel):
+    ativo: bool
+
+
 class CompletarIARequest(BaseModel):
     isbn: Optional[str] = None
     livTitulo: Optional[str] = None
