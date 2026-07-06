@@ -12,8 +12,8 @@ def dashboard_stats(user=Depends(get_optional_user)):
     try:
         hoje = datetime.utcnow().date()
 
-        livros = supabase.table("Livro").select("idLivro").execute().data or []
-        usuarios = supabase.table("Usuario").select("idUsuario").execute().data or []
+        livros = supabase.table("Livro").select("idLivro").eq("livAtivo", True).execute().data or []
+        usuarios = supabase.table("Usuario").select("idUsuario").eq("usuExcluido", False).execute().data or []
         movimentacoes = supabase.table("Movimentacao").select("*").execute().data or []
         movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").execute().data or []
 

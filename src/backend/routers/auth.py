@@ -11,6 +11,8 @@ router = APIRouter()
 def login(data: Login):
     email = normalize_email(data.email)
 
+    CREDENCIAIS_INVALIDAS = "Email ou senha inválidos"
+
     if data.UserType == "Administrador":
         resp = (
             supabase.table("Administrador")
@@ -21,7 +23,7 @@ def login(data: Login):
         )
 
         if not resp.data:
-            raise HTTPException(status_code=400, detail="Admin não encontrado ou conta desativada")
+            raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
         a = resp.data[0]
 
@@ -29,7 +31,7 @@ def login(data: Login):
             raise HTTPException(status_code=400, detail="Conta de administrador desativada")
 
         if not verify_password(data.senha, a["admSenha"]):
-            raise HTTPException(status_code=400, detail="Senha inválida")
+            raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
         token = create_token({
             "sub": a["admEmail"],
@@ -53,20 +55,19 @@ def login(data: Login):
         )
 
         if not usuario_resp.data:
-            raise HTTPException(status_code=400, detail="Usuário não encontrado ou conta desativada")
+            raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
         u = usuario_resp.data[0]
 
         if not parse_status(u.get("usuStatus")):
             raise HTTPException(status_code=400, detail="Conta de usuario desativada")
 
-        # Verifica tipo
         if u["usuTipo"] != data.UserType:
-            raise HTTPException(status_code=400, detail="Tipo de usuário incorreto para este login")
+            raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
         # Verifica senha
         if not verify_password(data.senha, u["usuSenha"]):
-            raise HTTPException(status_code=400, detail="Senha inválida")
+            raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
         token = create_token({
             "sub": u["usuEmail"],

@@ -55,6 +55,47 @@ def get_max_books_per_user(configs: dict = None):
     return get_config_int("livros_por_aluno", 3, configs)
 
 
+def contar_movimentacoes_em_curso(id_usuario: int) -> int:
+    """Conta quantos empréstimos/solicitações "em curso" um usuário já tem.
+
+    Usada tanto pela criação direta de empréstimo (admin) quanto pela
+    solicitação feita pelo próprio usuário, para que as duas vias apliquem
+    exatamente a mesma regra de limite (antes, cada rota contava de um jeito
+    diferente e um admin conseguia furar o limite que o aluno já esbarrava).
+
+    Conta:
+    - Movimentações "Ativo" que ainda têm algum item com itemStatus "Ativo"
+      (empréstimo em andamento).
+    - Movimentações "Pendente" (solicitação aguardando aprovação do admin).
+    """
+    movimentacoes = (
+        supabase.table("Movimentacao")
+        .select("idMovimentacao, movStatus")
+        .eq("idUsuario", id_usuario)
+        .in_("movStatus", ["Ativo", "Pendente"])
+        .execute()
+        .data
+        or []
+    )
+
+    pendentes = sum(1 for m in movimentacoes if m.get("movStatus") == "Pendente")
+
+    ativos_ids = [m["idMovimentacao"] for m in movimentacoes if m.get("movStatus") == "Ativo" and m.get("idMovimentacao")]
+    itens_ativos = 0
+    if ativos_ids:
+        itens_ativos = len(
+            supabase.table("MovimentacaoExemplar")
+            .select("idMovimentacao")
+            .in_("idMovimentacao", ativos_ids)
+            .eq("itemStatus", "Ativo")
+            .execute()
+            .data
+            or []
+        )
+
+    return pendentes + itens_ativos
+
+
 @router.get("/configuracoes")
 def listar_configuracoes(user=Depends(get_optional_user)):
     try:
@@ -479,15 +520,25 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
         dias = get_config_days(configs)
         max_por_usuario = get_max_books_per_user(configs)
 
-        # verificar limite de empréstimos ativos por usuário
-        movimentacoes_ativas = supabase.table("Movimentacao").select("idMovimentacao").eq("idUsuario", data.idUsuario).eq("movStatus", "Ativo").execute().data or []
-        movimentacao_ids = [mov["idMovimentacao"] for mov in movimentacoes_ativas if mov.get("idMovimentacao")]
-        emprestimos_ativos = []
-        if movimentacao_ids:
-            emprestimos_ativos = supabase.table("MovimentacaoExemplar").select("idMovimentacao").in_("idMovimentacao", movimentacao_ids).eq("itemStatus", "Ativo").execute().data or []
+        # Verificar limite de empréstimos/solicitações em curso — mesma regra
+        # (e mesma função) usada na solicitação feita pelo próprio usuário,
+        # para que o admin não consiga criar um empréstimo além do limite que
+        # o aluno já teria atingido.
+        em_curso = contar_movimentacoes_em_curso(data.idUsuario)
+        if em_curso >= max_por_usuario:
+            raise HTTPException(status_code=400, detail=f"O usuário já possui {max_por_usuario} empréstimos/solicitações em curso")
 
-        if len(emprestimos_ativos) >= max_por_usuario:
-            raise HTTPException(status_code=400, detail=f"O usuário já possui {max_por_usuario} empréstimos ativos")
+        # Reserva atômica do exemplar: só marca como "Emprestado" se ele ainda
+        # estiver "Disponível" nesse exato momento. Se outro admin/aluno já
+        # tiver mudado o status entre a leitura acima e este update, a
+        # atualização não afeta nenhuma linha e sabemos que perdemos a corrida
+        # (evita dois empréstimos ativos para o mesmo exemplar físico).
+        reserva = supabase.table("Exemplar").update({
+            "exeLivStatus": "Emprestado"
+        }).eq("idExemplar", data.idExemplar).eq("exeLivStatus", "Disponível").execute()
+
+        if not reserva.data:
+            raise HTTPException(status_code=409, detail="Exemplar acabou de ficar indisponível. Tente novamente.")
 
         id_admin = get_admin_id(admin)
 
@@ -502,6 +553,8 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
 
         mov_resp = supabase.table("Movimentacao").insert(novo_mov).execute()
         if not mov_resp.data:
+            # Reverte a reserva do exemplar já que o empréstimo não foi criado
+            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", data.idExemplar).execute()
             raise HTTPException(status_code=500, detail="Erro ao criar movimentacao")
 
         id_mov = mov_resp.data[0].get("idMovimentacao")
@@ -517,10 +570,11 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
         }
 
         me_resp = supabase.table("MovimentacaoExemplar").insert(novo_me).execute()
-
-        supabase.table("Exemplar").update({
-            "exeLivStatus": "Emprestado"
-        }).eq("idExemplar", data.idExemplar).execute()
+        if not me_resp.data:
+            # Reverte movimentação e reserva do exemplar em caso de falha
+            supabase.table("Movimentacao").update({"movStatus": "Cancelado"}).eq("idMovimentacao", id_mov).execute()
+            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", data.idExemplar).execute()
+            raise HTTPException(status_code=500, detail="Erro ao registrar item do empréstimo")
 
         return {"idMovimentacao": id_mov}
     except HTTPException:
@@ -585,20 +639,29 @@ def listar_exemplares():
 def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
         hoje = datetime.utcnow().date()
-        # marcar movimentacao como devolvida e atualizar movimentacao_exemplar
-        mov_resp = supabase.table("Movimentacao").update({
-            "movStatus": "Devolvido"
-        }).eq("idMovimentacao", idEmprestimo).execute()
 
+        # Buscar e validar a movimentação ANTES de alterar qualquer coisa.
+        mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
         if not mov_resp.data:
-            raise HTTPException(status_code=404, detail="Não encontrado")
+            raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
 
-        # atualizar dataDevolucao e itemStatus na MovimentacaoExemplar
+        mov = mov_resp.data[0]
+        if mov.get("movStatus") != "Ativo":
+            raise HTTPException(status_code=400, detail=f"Este empréstimo não está ativo (status atual: {mov.get('movStatus')}) e não pode ser devolvido")
+
         me_resp = supabase.table("MovimentacaoExemplar").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
         if not me_resp.data:
             raise HTTPException(status_code=404, detail="Item de empréstimo não encontrado")
 
-        idExemplar = me_resp.data[0].get("idExemplar")
+        me = me_resp.data[0]
+        if me.get("itemStatus") != "Ativo":
+            raise HTTPException(status_code=400, detail="Este item já foi devolvido, renovado ou cancelado anteriormente")
+
+        idExemplar = me.get("idExemplar")
+
+        supabase.table("Movimentacao").update({
+            "movStatus": "Devolvido"
+        }).eq("idMovimentacao", idEmprestimo).execute()
 
         supabase.table("MovimentacaoExemplar").update({
             "dataDevolucao": hoje.isoformat(),
@@ -610,6 +673,8 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
         }).eq("idExemplar", idExemplar).execute()
 
         return {"message": "Devolvido com sucesso"}
+    except HTTPException:
+        raise
     except Exception as e:
         print("Erro devolver:", e)
         raise HTTPException(status_code=500, detail="Erro ao devolver")
@@ -618,12 +683,22 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 @router.put("/emprestimos/{idEmprestimo}/renovar")
 def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
+        # Buscar e validar a movimentação primeiro — só é possível renovar
+        # um empréstimo que ainda está Ativo (não devolvido/rejeitado/cancelado).
+        mov_resp = supabase.table("Movimentacao").select("movStatus").eq("idMovimentacao", idEmprestimo).limit(1).execute()
+        if not mov_resp.data:
+            raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
+        if mov_resp.data[0].get("movStatus") != "Ativo":
+            raise HTTPException(status_code=400, detail=f"Este empréstimo não está ativo (status atual: {mov_resp.data[0].get('movStatus')}) e não pode ser renovado")
+
         # Buscar movimentacao_exemplar para este emprestimo
         me_resp = supabase.table("MovimentacaoExemplar").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
         if not me_resp.data:
             raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
 
         me = me_resp.data[0]
+        if me.get("itemStatus") != "Ativo":
+            raise HTTPException(status_code=400, detail="Este item já foi devolvido ou cancelado e não pode ser renovado")
 
         configs = get_config_map()
         dias = get_config_days(configs)
@@ -691,15 +766,11 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
         configs = get_config_map()
         max_por_usuario = get_max_books_per_user(configs)
 
-        # Verificar limite: contar movimentações Ativas ou Pendentes diretamente
-        # (sem filtrar por itemStatus, pois pendentes ainda não têm itemStatus = "Ativo")
-        movimentacoes_em_curso = supabase.table("Movimentacao") \
-            .select("idMovimentacao") \
-            .eq("idUsuario", id_usuario) \
-            .in_("movStatus", ["Ativo", "Pendente"]) \
-            .execute().data or []
+        # Mesma função usada em /emprestimos (criação direta pelo admin), para
+        # que as duas vias apliquem exatamente a mesma regra de limite.
+        em_curso = contar_movimentacoes_em_curso(id_usuario)
 
-        if len(movimentacoes_em_curso) >= max_por_usuario:
+        if em_curso >= max_por_usuario:
             raise HTTPException(
                 status_code=400,
                 detail=f"Você já possui {max_por_usuario} empréstimos ou solicitações em curso"
