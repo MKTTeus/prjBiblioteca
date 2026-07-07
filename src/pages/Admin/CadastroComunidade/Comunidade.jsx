@@ -18,6 +18,7 @@ import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
 import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
+import { getErrorMessage } from "../../../utils/apiError";
 
 const EMPTY_MEMBRO = {
   nome: "",
@@ -29,6 +30,13 @@ const EMPTY_MEMBRO = {
   senha: "",
   status: "Ativo",
 };
+
+const CAMPOS_OBRIGATORIOS_MEMBRO = [
+  { chave: "nome", rotulo: "Nome Completo" },
+  { chave: "email", rotulo: "E-mail" },
+  { chave: "telefone", rotulo: "Telefone" },
+  { chave: "endereco", rotulo: "Endereço" },
+];
 
 export default function Comunidade() {
   const [modalAberto, setModalAberto] = useState(false);
@@ -87,10 +95,15 @@ useEffect(() => {
     setIsDirty(false);
   };
 
-  const handleSalvar = async () => {
-    if (isProcessing) return;
-    if (modoEdicao && !isDirty) return;
-    if (!novoMembro.nome || !novoMembro.email || !novoMembro.telefone || !novoMembro.endereco) return;
+const handleSalvar = async () => {
+  if (isProcessing) return;
+  if (modoEdicao && !isDirty) return;
+
+  const faltando = CAMPOS_OBRIGATORIOS_MEMBRO.find(({ chave }) => !novoMembro[chave]);
+  if (faltando) {
+    addToast(`O campo "${faltando.rotulo}" não pode ficar em branco.`, "error");
+    return;
+  }
 
     if (!validarCPF(novoMembro.cpf)) {
       addToast("O CPF informado é inválido", "error");
@@ -131,7 +144,10 @@ useEffect(() => {
         );
         addToast("Informações atualizadas com sucesso", "success");
       } else {
-        if (!novoMembro.senha || novoMembro.senha.length < 6) return;
+        if (!novoMembro.senha || novoMembro.senha.length < 6) {
+          addToast("A senha deve possuir pelo menos 6 caracteres", "error");
+          return;
+        }
 
         const created = await createComunidade({
           nome: novoMembro.nome,
@@ -165,9 +181,8 @@ useEffect(() => {
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar membro:", err);
-      const detalhe = err?.data?.detail || err?.message;
       const fallback = modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro";
-      addToast(detalhe && detalhe !== "USUARIO_INATIVO" ? detalhe : fallback, "error");
+      addToast(getErrorMessage(err, fallback), "error");
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);

@@ -10,6 +10,13 @@ import csv
 from pydantic import BaseModel
 from typing import Optional as Opt
 
+def _validar_campos_obrigatorios(valores: dict, campos: list[tuple[str, str]]):
+    for chave, rotulo in campos:
+        valor = valores.get(chave)
+        if valor is None or (isinstance(valor, str) and not valor.strip()):
+            raise HTTPException(status_code=400, detail=f'O campo "{rotulo}" não pode ficar em branco.')
+
+
 router = APIRouter()
 
 
@@ -94,6 +101,23 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
     ra = (data.ra or "").strip() or None
 
+    _validar_campos_obrigatorios(
+        {
+            "nome": data.nome,
+            "telefone": data.telefone,
+            "endereco": data.endereco,
+            "ra": ra,
+            "serie": data.serie,
+        },
+        [
+            ("nome", "Nome Completo"),
+            ("telefone", "Telefone"),
+            ("endereco", "Endereço"),
+            ("ra", "RA"),
+            ("serie", "Série"),
+        ],
+    )
+
     email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
@@ -134,7 +158,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
 def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
     ra = (data.ra or "").strip() or None
-    
+
     usuario = _buscar_conflito_usuario(email, ra=ra)
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
@@ -273,6 +297,17 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
 
+    mapa_campos = [
+        ("usuNome", "nome", "Nome Completo"),
+        ("usuTelefone", "telefone", "Telefone"),
+        ("usuEndereco", "endereco", "Endereço"),
+        ("usuRA", "ra", "RA"),
+        ("usuSerie", "serie", "Série"),
+    ]
+    valores_presentes = {chave: payload[campo] for campo, chave, _ in mapa_campos if campo in payload}
+    campos_presentes = [(chave, rotulo) for campo, chave, rotulo in mapa_campos if campo in payload]
+    _validar_campos_obrigatorios(valores_presentes, campos_presentes)
+
     if "usuEmail" in payload or "usuRA" in payload:
         conflito = _buscar_conflito_usuario(
             payload.get("usuEmail", resp.data[0]["usuEmail"]),
@@ -322,6 +357,11 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=400, detail="CPF inválido")
 
     email = normalize_email(data.email)
+
+    _validar_campos_obrigatorios(
+        {"nome": data.nome, "telefone": data.telefone, "endereco": data.endereco},
+        [("nome", "Nome Completo"), ("telefone", "Telefone"), ("endereco", "Endereço")],
+    )
 
     email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
     if email_existe_admin.data:
@@ -506,6 +546,15 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    mapa_campos = [
+        ("usuNome", "nome", "Nome Completo"),
+        ("usuTelefone", "telefone", "Telefone"),
+        ("usuEndereco", "endereco", "Endereço"),
+    ]
+    valores_presentes = {chave: payload[campo] for campo, chave, _ in mapa_campos if campo in payload}
+    campos_presentes = [(chave, rotulo) for campo, chave, rotulo in mapa_campos if campo in payload]
+    _validar_campos_obrigatorios(valores_presentes, campos_presentes)
 
     # Se e-mail ou CPF estão sendo trocados, checa se já pertencem a OUTRO
     # usuário (ativo, inativo ou excluído) antes de tentar salvar.

@@ -106,7 +106,7 @@ export default function AlunoModal({
                   </label>
 
                   <label className="editor-field">
-                    <span>E-mail</span>
+                    <span>E-mail *</span>
                     <input
                       name="email"
                       value={aluno.email}
@@ -124,7 +124,7 @@ export default function AlunoModal({
 
                 <div className="editor-field-grid basic-column-grid">
                   <label className="editor-field">
-                    <span>Telefone</span>
+                    <span>Telefone *</span>
                     <IMaskInput
                       mask={MASK_TELEFONE}
                       name="telefone"
@@ -185,7 +185,7 @@ export default function AlunoModal({
                   </label>
 
                   <label className="editor-field">
-                    <span>Série</span>
+                    <span>Série *</span>
                     <select name="serie" value={aluno.serie || ""} onChange={onChange}>
                       <option value="">Selecione a série</option>
                       {SERIES.map((s) => (

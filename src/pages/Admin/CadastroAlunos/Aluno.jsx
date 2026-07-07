@@ -11,6 +11,7 @@ import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
 import { reativarAluno } from "../../../services/api";
+import { getErrorMessage } from "../../../utils/apiError";
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -24,6 +25,16 @@ const EMPTY_ALUNO = {
   senha: "",
   status: "Ativo",
 };
+
+const CAMPOS_OBRIGATORIOS_ALUNO = [
+  { chave: "nome", rotulo: "Nome Completo" },
+  { chave: "ra", rotulo: "RA" },
+  { chave: "email", rotulo: "E-mail" },
+  { chave: "telefone", rotulo: "Telefone" },
+  { chave: "endereco", rotulo: "Endereço" },
+  { chave: "serie", rotulo: "Série" },
+  { chave: "status", rotulo: "Status" },
+];
 
 export default function Aluno() {
   const [modalAberto, setModalAberto] = useState(false);
@@ -90,13 +101,9 @@ const handleSalvar = async () => {
   if (isProcessing) return;
   if (modoEdicao && !isDirty) return;
 
-  if (
-    !novoAluno.nome ||
-    !novoAluno.email ||
-    !novoAluno.telefone ||
-    !novoAluno.endereco ||
-    !novoAluno.status
-  ) {
+  const faltando = CAMPOS_OBRIGATORIOS_ALUNO.find(({ chave }) => !novoAluno[chave]);
+  if (faltando) {
+    addToast(`O campo "${faltando.rotulo}" não pode ficar em branco.`, "error");
     return;
   }
 
@@ -212,9 +219,12 @@ const handleSalvar = async () => {
     console.error("Erro ao salvar aluno:", err);
 
     addToast(
-      modoEdicao
-        ? "Falha ao atualizar as informações"
-        : "Falha ao realizar o cadastro",
+      getErrorMessage(
+        err,
+        modoEdicao
+          ? "Falha ao atualizar as informações"
+          : "Falha ao realizar o cadastro"
+      ),
       "error"
     );
   } finally {
