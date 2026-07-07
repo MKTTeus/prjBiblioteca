@@ -59,6 +59,22 @@ def _resposta_conflito(usuario: dict, email: str, ra: str = None, cpf: str = Non
     raise HTTPException(status_code=400, detail=f"{campo} já cadastrado")
 
 
+def _mensagem_conflito_importacao(usuario: dict, email: str, ra: str = None, cpf: str = None) -> str:
+    """Traduz um conflito encontrado por _buscar_conflito_usuario em uma mensagem
+    amigável para uso nas linhas de erro da importação em massa."""
+    if usuario.get("usuExcluido"):
+        return "pertence a um cadastro excluído — reative pela tela de cadastro"
+    if usuario.get("usuEmail") == email:
+        campo = "Email"
+    elif ra and usuario.get("usuRA") == ra:
+        campo = "RA"
+    elif cpf and usuario.get("usuCPF") == cpf:
+        campo = "CPF"
+    else:
+        campo = "Cadastro"
+    return f"{campo} já cadastrado"
+
+
 def _tratar_erro_unicidade(e: Exception, campos: dict):
     msg = str(e)
     if "duplicate key" not in msg and "23505" not in msg:
@@ -210,18 +226,21 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             resultados["ignorados"] += 1
             continue
 
-        existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuExcluido", False).execute()
-        if existe_email.data:
-            resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
+        if not ra or not serie:
+            resultados["erros"].append(f"Linha {i}: RA e Série são obrigatórios para Aluno")
             resultados["ignorados"] += 1
             continue
 
-        if ra:
-            existe_ra = supabase.table("Usuario").select("idUsuario").eq("usuRA", ra).eq("usuExcluido", False).execute()
-            if existe_ra.data:
-                resultados["erros"].append(f"Linha {i}: RA '{ra}' já cadastrado")
-                resultados["ignorados"] += 1
-                continue
+        try:
+            conflito = _buscar_conflito_usuario(email, ra=ra)
+        except HTTPException as e:
+            resultados["erros"].append(f"Linha {i}: {e.detail}")
+            resultados["ignorados"] += 1
+            continue
+        if conflito:
+            resultados["erros"].append(f"Linha {i}: {_mensagem_conflito_importacao(conflito, email, ra=ra)}")
+            resultados["ignorados"] += 1
+            continue
 
         novo = {
             "usuNome": nome,
@@ -253,18 +272,38 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
 def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
-    return {"message": f"{len(data.ids)} aluno(s) excluído(s) com sucesso"}
+    resp = (
+        supabase.table("Usuario")
+        .update({"usuExcluido": True})
+        .in_("idUsuario", data.ids)
+        .eq("usuTipo", "Aluno")
+        .execute()
+    )
+    afetados = {row["idUsuario"] for row in (resp.data or [])}
+    nao_encontrados = [id for id in data.ids if id not in afetados]
+    mensagem = f"{len(afetados)} aluno(s) excluído(s) com sucesso"
+    if nao_encontrados:
+        mensagem += f"; {len(nao_encontrados)} não encontrado(s): {nao_encontrados}"
+    return {"message": mensagem, "afetados": len(afetados), "naoEncontrados": nao_encontrados}
 
 
 @router.post("/alunos/batch/status")
 def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Aluno").execute()
-    return {"message": f"{len(data.ids)} aluno(s) atualizados com sucesso"}
+    resp = (
+        supabase.table("Usuario")
+        .update({"usuStatus": data.status})
+        .in_("idUsuario", data.ids)
+        .eq("usuTipo", "Aluno")
+        .execute()
+    )
+    afetados = {row["idUsuario"] for row in (resp.data or [])}
+    nao_encontrados = [id for id in data.ids if id not in afetados]
+    mensagem = f"{len(afetados)} aluno(s) atualizados com sucesso"
+    if nao_encontrados:
+        mensagem += f"; {len(nao_encontrados)} não encontrado(s): {nao_encontrados}"
+    return {"message": mensagem, "afetados": len(afetados), "naoEncontrados": nao_encontrados}
 
 @router.put("/alunos/{idUsuario}")
 def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
@@ -463,18 +502,16 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             resultados["ignorados"] += 1
             continue
 
-        existe_email = supabase.table("Usuario").select("idUsuario").eq("usuEmail", email).eq("usuExcluido", False).execute()
-        if existe_email.data:
-            resultados["erros"].append(f"Linha {i}: email '{email}' já cadastrado")
+        try:
+            conflito = _buscar_conflito_usuario(email, cpf=cpf or None)
+        except HTTPException as e:
+            resultados["erros"].append(f"Linha {i}: {e.detail}")
             resultados["ignorados"] += 1
             continue
-
-        if cpf:
-            existe_cpf = supabase.table("Usuario").select("idUsuario").eq("usuCPF", cpf).eq("usuExcluido", False).execute()
-            if existe_cpf.data:
-                resultados["erros"].append(f"Linha {i}: CPF '{cpf}' já cadastrado")
-                resultados["ignorados"] += 1
-                continue
+        if conflito:
+            resultados["erros"].append(f"Linha {i}: {_mensagem_conflito_importacao(conflito, email, cpf=cpf or None)}")
+            resultados["ignorados"] += 1
+            continue
 
         novo = {
             "usuNome": nome,
@@ -504,18 +541,38 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
 def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuExcluido": True}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
-    return {"message": f"{len(data.ids)} membro(s) excluído(s) com sucesso"}
+    resp = (
+        supabase.table("Usuario")
+        .update({"usuExcluido": True})
+        .in_("idUsuario", data.ids)
+        .eq("usuTipo", "Comunidade")
+        .execute()
+    )
+    afetados = {row["idUsuario"] for row in (resp.data or [])}
+    nao_encontrados = [id for id in data.ids if id not in afetados]
+    mensagem = f"{len(afetados)} membro(s) excluído(s) com sucesso"
+    if nao_encontrados:
+        mensagem += f"; {len(nao_encontrados)} não encontrado(s): {nao_encontrados}"
+    return {"message": mensagem, "afetados": len(afetados), "naoEncontrados": nao_encontrados}
 
 
 @router.post("/comunidade/batch/status")
 def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        supabase.table("Usuario").update({"usuStatus": data.status}).eq("idUsuario", id).eq("usuTipo", "Comunidade").execute()
-    return {"message": f"{len(data.ids)} membro(s) atualizados com sucesso"}
+    resp = (
+        supabase.table("Usuario")
+        .update({"usuStatus": data.status})
+        .in_("idUsuario", data.ids)
+        .eq("usuTipo", "Comunidade")
+        .execute()
+    )
+    afetados = {row["idUsuario"] for row in (resp.data or [])}
+    nao_encontrados = [id for id in data.ids if id not in afetados]
+    mensagem = f"{len(afetados)} membro(s) atualizados com sucesso"
+    if nao_encontrados:
+        mensagem += f"; {len(nao_encontrados)} não encontrado(s): {nao_encontrados}"
+    return {"message": mensagem, "afetados": len(afetados), "naoEncontrados": nao_encontrados}
 
 @router.put("/comunidade/{idUsuario}")
 def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
