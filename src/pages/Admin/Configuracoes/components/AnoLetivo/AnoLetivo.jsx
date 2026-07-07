@@ -4,6 +4,7 @@ import { Calendar, Users, GraduationCap, AlertTriangle, Lock } from "lucide-reac
 import { useToast } from "../../../../../contexts/ToastContext";
 import StatsCard from "../../../../../components/StatsCard/StatsCard";
 import { getAnoLetivo, encerrarAnoLetivo } from "../../../../../services/api";
+import { getErrorMessage } from "../../../../../utils/apiError";
 import "./AnoLetivo.css";
 
 export default function AnoLetivo() {
@@ -59,7 +60,7 @@ export default function AnoLetivo() {
       setShowModal(false);
       await carregar();
     } catch (err) {
-      addToast(err?.data?.detail || err?.message || "Falha ao encerrar o ano letivo", "error");
+      addToast(getErrorMessage(err, "Falha ao encerrar o ano letivo"), "error");
     } finally {
       setProcessando(false);
     }

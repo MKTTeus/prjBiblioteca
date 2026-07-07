@@ -6,6 +6,7 @@ import { getBooks, solicitarEmprestimo, getExemplaresDisponiveis, getEmprestimos
 import "../UserArea.css";
 import "./Biblioteca.css";
 import { useAuth } from "../../../contexts/AuthContext";
+import { getErrorMessage } from "../../../utils/apiError";
 
 export default function Biblioteca() {
   const { addToast } = useToast();
@@ -63,14 +64,7 @@ export default function Biblioteca() {
       setSolicitados((prev) => ({ ...prev, [idLivro]: true }));
       addToast("Solicitação enviada! Aguarde aprovação do administrador.", "success");
     } catch (err) {
-      const detail = err.data?.detail;
-      const mensagem =
-        typeof detail === "string"
-          ? detail
-          : Array.isArray(detail)
-          ? detail.map((d) => d.msg).join(", ")
-          : err.message || "Erro ao solicitar empréstimo";
-      addToast(mensagem, "error");
+      addToast(getErrorMessage(err, "Erro ao solicitar empréstimo"), "error");
     } finally {
       setSolicitando((prev) => ({ ...prev, [idLivro]: false }));
     }

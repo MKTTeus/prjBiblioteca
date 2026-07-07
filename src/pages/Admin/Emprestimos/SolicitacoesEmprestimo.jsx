@@ -13,6 +13,7 @@ import {
 import "./Emprestimos.css";
 import LoadingButton from "../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../contexts/ToastContext";
+import { getErrorMessage } from "../../../utils/apiError";
 
 const statusLabel = {
   ativo: "Aceita",
@@ -168,8 +169,7 @@ export default function SolicitacoesEmprestimo() {
       addToast("Solicitação aprovada com sucesso", "success");
     } catch (error) {
       console.error(error);
-      const mensagem = error.data?.detail || error.message || "Erro ao aprovar solicitação";
-      addToast(mensagem, "error");
+      addToast(getErrorMessage(error, "Erro ao aprovar solicitação"), "error");
     } finally {
       setProcessando((prev) => ({ ...prev, [id]: false }));
     }
@@ -195,8 +195,7 @@ export default function SolicitacoesEmprestimo() {
       addToast("Solicitação rejeitada", "error");
     } catch (error) {
       console.error(error);
-      const mensagem = error.data?.detail || error.message || "Erro ao rejeitar solicitação";
-      addToast(mensagem, "error");
+      addToast(getErrorMessage(error, "Erro ao rejeitar solicitação"), "error");
     } finally {
       setProcessando((prev) => ({ ...prev, [id]: false }));
     }

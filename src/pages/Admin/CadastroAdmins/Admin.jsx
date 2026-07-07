@@ -8,6 +8,7 @@ import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import { getErrorMessage } from "../../../utils/apiError";
 
 
 const EMPTY_ADMIN = {
@@ -137,7 +138,10 @@ export default function Admin() {
       fecharModal();
     } catch (err) {
       console.error("Erro ao salvar administrador:", err);
-      addToast(modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro", "error");
+      addToast(
+        getErrorMessage(err, modoEdicao ? "Falha ao atualizar as informações" : "Falha ao realizar o cadastro"),
+        "error"
+      );
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
@@ -184,7 +188,7 @@ export default function Admin() {
       addToast("Administrador excluído com sucesso", "success");
     } catch (err) {
       console.error("Erro ao excluir administrador:", err);
-      addToast("Falha ao excluir o administrador", "error");
+      addToast(getErrorMessage(err, "Falha ao excluir o administrador"), "error");
     } finally {
       setConfirmingDelete(false);
       setPendingDeleteAdmin(null);
@@ -227,7 +231,7 @@ export default function Admin() {
     addToast(`Admin ${novoStatus === "Ativo" ? "ativado" : "desativado"} com sucesso`, "success");
   } catch (err) {
     console.error("Erro ao atualizar status:", err);
-    addToast("Falha ao alterar status", "error");
+    addToast(getErrorMessage(err, "Falha ao alterar status"), "error");
   } finally {
     setPendingToggleAdmin(null);
   }
@@ -259,7 +263,7 @@ export default function Admin() {
       addToast(`${selecionados.length} admin(s) excluído(s) com sucesso`, "success");
       setSelecionados([]);
     } catch (err) {
-      addToast("Falha ao excluir administradores", "error");
+      addToast(getErrorMessage(err, "Falha ao excluir administradores"), "error");
     } finally {
       setPendingBatchExcluir(false);
     }
@@ -275,7 +279,7 @@ export default function Admin() {
       addToast(`${selecionados.length} admin(s) ${novoStatusBool ? "ativados" : "desativados"} com sucesso`, "success");
       setSelecionados([]);
     } catch (err) {
-      addToast("Falha ao atualizar status", "error");
+      addToast(getErrorMessage(err, "Falha ao atualizar status"), "error");
     } finally {
       setPendingBatchStatus(null);
     }

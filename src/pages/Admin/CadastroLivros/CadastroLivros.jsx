@@ -16,6 +16,7 @@ import BookInfoModal from "./components/BookInfo/BookInfoModal";
 import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
 import { useAuth } from "../../../contexts/AuthContext";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import { getErrorMessage } from "../../../utils/apiError";
 
 import "./cadastroLivros.css";
 
@@ -106,11 +107,7 @@ export default function CadastroLivros() {
       loadBooks();
     } catch (err) {
       console.error(err);
-      const detalhe = err?.data?.detail;
-      addToast(
-        typeof detalhe === "string" ? detalhe : "Falha ao excluir o livro",
-        "error"
-      );
+      addToast(getErrorMessage(err, "Falha ao excluir o livro"), "error");
     } finally {
       setPendingDeleteBook(null);
     }
@@ -136,11 +133,7 @@ export default function CadastroLivros() {
       loadBooks();
     } catch (err) {
       console.error(err);
-      const detalhe = err?.data?.detail;
-      addToast(
-        typeof detalhe === "string" ? detalhe : "Falha ao alterar o status do livro",
-        "error"
-      );
+      addToast(getErrorMessage(err, "Falha ao alterar o status do livro"), "error");
     } finally {
       setTogglingStatus(false);
       setPendingToggleBook(null);
