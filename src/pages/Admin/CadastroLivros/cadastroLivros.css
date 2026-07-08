@@ -166,7 +166,6 @@
 /* AÇÕES */
 
 .acoes {
-  display: flex;
   gap: 10px;
 }
 
