@@ -155,14 +155,18 @@
 
 /* ── OVERLAY ── */
 .sidebar-overlay {
-  display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0,0,0,.45);
   z-index: 89;
+
   opacity: 0;
-  transition: opacity 0.25s ease;
+  visibility: hidden;
+  pointer-events: none;
+
+  transition: opacity .25s ease;
 }
+
 
 /* ── MOBILE ── */
 @media (max-width: 768px) {
@@ -180,12 +184,9 @@
     transform: translateX(0);
   }
 
-  .sidebar-overlay {
-    display: block;
-  }
-
-  .sidebar-overlay.open {
+   .sidebar-overlay.open{
     opacity: 1;
+    visibility: visible;
     pointer-events: auto;
   }
 }
