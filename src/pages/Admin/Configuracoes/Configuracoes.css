@@ -263,6 +263,15 @@ button:hover {
 
 /* RESPONSIVO */
 @media (max-width: 768px) {
+  .config-container{
+    width:100%;
+    overflow-x:hidden;
+}
+  .card{
+    width:100%;
+    overflow:hidden;
+    box-sizing:border-box;
+}
   .top-actions{
     flex-direction:column;
     width:100%;
