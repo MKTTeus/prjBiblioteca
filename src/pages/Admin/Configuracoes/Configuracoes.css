@@ -10,6 +10,8 @@
   margin-bottom: 35px;
   box-shadow: var(--shadow-soft);
   flex-wrap: wrap;
+  width:100%;
+  box-sizing:border-box;
 }
 
 .top-bar h1 {
@@ -167,6 +169,7 @@ button:hover {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   margin-top: 20px;
+  
 }
 
 .form-group {
@@ -260,8 +263,45 @@ button:hover {
 
 /* RESPONSIVO */
 @media (max-width: 768px) {
+  .top-actions{
+    flex-direction:column;
+    width:100%;
+}
+
+.top-actions button{
+    width:100%;
+}
+  .top-bar{
+    padding:20px;
+}
+
+.top-bar h1{
+    font-size:2rem;
+}
+
+.top-bar p{
+    font-size:1rem;
+}
+  .tabs {
+  overflow-x: auto;
+  justify-content: flex-start;
+  gap: 8px;
+  white-space: nowrap;
+  padding: 6px;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  min-width: 110px;
+}
   .form-grid {
     grid-template-columns: 1fr;
+    .form-group input,
+    .form-group select,
+    .form-group textarea{
+    width:100%;
+    box-sizing:border-box;
+}
   }
 
   .form-group.full {
