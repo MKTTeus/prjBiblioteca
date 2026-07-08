@@ -343,3 +343,16 @@ button:hover {
     flex: 1 1 100%;
   }
 }
+@media (max-width: 768px) {
+  .top-actions {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .top-actions button {
+    flex: 1;
+    min-width: 0;
+  }
+}
