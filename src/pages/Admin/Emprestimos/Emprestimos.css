@@ -678,6 +678,14 @@
 }
 
 @media (max-width: 640px) {
+  .emp-summary-card-fixed {
+  margin: 16px 0 0;
+  width: 100%;
+}
+
+.emp-summary-card {
+  padding: 16px;
+}
   .emp-summary-card {
   padding: 14px 16px;
 }
