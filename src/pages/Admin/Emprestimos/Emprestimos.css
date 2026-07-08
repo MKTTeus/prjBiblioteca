@@ -678,6 +678,30 @@
 }
 
 @media (max-width: 640px) {
+  .emp-summary-card {
+  padding: 14px 16px;
+}
+
+.emp-summary-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+.emp-summary-row {
+  padding: 6px 0;
+}
+
+.emp-summary-row span {
+  font-size: 0.85rem;
+}
+
+.emp-summary-row strong {
+  font-size: 0.9rem;
+}
+
+.emp-summary-card-fixed {
+  margin: 12px 18px;
+}
   .emp-modal-topbar h2 {
   font-size: 1.5rem;
 }
