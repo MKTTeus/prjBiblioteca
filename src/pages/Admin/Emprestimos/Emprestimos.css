@@ -624,4 +624,167 @@
     opacity: 1;
   }
 }
+/* ===========================
+   TABLETS
+=========================== */
+@media (max-width: 900px) {
 
+  .emp-page {
+    width: 100%;
+    padding: 22px 18px 28px;
+  }
+
+  .emp-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .emp-header-actions,
+  .emp-btn-primary {
+    width: 100%;
+  }
+
+  .emp-filtros {
+    padding: 14px;
+  }
+
+  .emp-modal-overlay {
+    padding: 12px;
+    align-items: center;
+  }
+
+  .emp-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 14px;
+  }
+
+  .emp-modal-topbar,
+  .emp-modal-content,
+  .emp-modal-actions {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .emp-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .emp-list-box {
+    height: 260px;
+  }
+
+  .emp-summary-card-fixed {
+    margin: 18px;
+  }
+}
+
+
+/* ===========================
+   CELULARES
+=========================== */
+@media (max-width: 640px) {
+
+  .emp-modal-overlay {
+    padding: 8px;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .emp-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    border-radius: 12px;
+  }
+
+  .emp-modal-topbar {
+    padding: 16px;
+  }
+
+  .emp-modal-topbar h2 {
+    font-size: 1.35rem;
+  }
+
+  .emp-modal-content {
+    padding: 16px;
+  }
+
+  .emp-modal-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .emp-step-card {
+    width: 100%;
+  }
+
+  .emp-list-box {
+    height: 220px;
+  }
+
+  .emp-list-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .emp-summary-card-fixed {
+    width: auto;
+    margin: 16px;
+  }
+
+  .emp-summary-card {
+    padding: 16px;
+  }
+
+  .emp-summary-card h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+
+  .emp-summary-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 0;
+  }
+
+  .emp-summary-row span {
+    font-size: .85rem;
+  }
+
+  .emp-summary-row strong {
+    width: 100%;
+    font-size: .9rem;
+    text-align: left;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: initial;
+  }
+
+  .emp-modal-actions {
+    padding: 16px;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .emp-modal-actions button {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .emp-filter-tabs {
+    width: 100%;
+  }
+
+  .emp-filter-tab {
+    flex: 1;
+  }
+}
