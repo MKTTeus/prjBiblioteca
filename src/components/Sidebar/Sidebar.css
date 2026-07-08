@@ -153,7 +153,6 @@
   color: var(--sidebar-active-text);
 }
 
-/* ── OVERLAY ── */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -176,15 +175,14 @@
     z-index: 90;
     top: 0;
     height: 100vh;
-
-     padding-top: 40px;
+    padding-top: 40px;
   }
 
   .sidebar.open {
     transform: translateX(0);
   }
 
-   .sidebar-overlay.open{
+  .sidebar-overlay.open {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
