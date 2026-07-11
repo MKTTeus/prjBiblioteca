@@ -162,6 +162,11 @@ export default function BasicInfoSection({
   const [scannerAberto, setScannerAberto] = useState(false);
   const [buscandoISBN, setBuscandoISBN] = useState(false);
   const [erroISBN, setErroISBN] = useState(null);
+  const isbnInputRef = useRef(null);
+  // Guarda o texto acumulado e o horário da última tecla para detectar
+  // "rajadas" de digitação de leitores de código de barras (ver useEffect
+  // logo abaixo de handleISBNDetectado).
+  const scanBufferRef = useRef({ texto: "", ultimaTecla: 0 });
 
   const [iaCarregando, setIaCarregando] = useState(false);
   const [iaErro, setIaErro] = useState(null);
@@ -358,6 +363,80 @@ export default function BasicInfoSection({
     },
     [buscarPorISBN, onFieldChange]
   );
+
+  // Autofoca o campo ISBN assim que a seção monta (ou seja, quando o modal de
+  // cadastro/edição abre). Isso permite que um leitor de código de barras
+  // USB/Bluetooth — que o sistema operacional enxerga como um teclado —
+  // já escreva direto nesse campo sem o usuário precisar clicar nele antes.
+  // O pequeno atraso evita disputar o foco com a animação de abertura do modal.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      isbnInputRef.current?.focus();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Detecta a "rajada" de digitação típica de um leitor de código de barras
+  // físico mesmo quando o foco não está no campo ISBN (ex.: o usuário clicou
+  // em outro lugar da página antes de escanear). Um leitor desses digita
+  // dezenas de caracteres em poucos milissegundos — bem mais rápido que
+  // qualquer digitação humana — e normalmente finaliza com Enter.
+  //
+  // Só entra em ação quando o elemento focado no momento NÃO é um campo de
+  // formulário (input/textarea/select), para nunca atrapalhar quem está de
+  // fato digitando em outro campo (ex.: Título). Quando o foco já está no
+  // próprio campo ISBN, o onChange/onKeyDown dele (mais abaixo) já dão conta
+  // do recado, então este listener global se mantém de fora.
+  useEffect(() => {
+    const INTERVALO_MAX_MS = 50; // intervalo entre teclas compatível com scanner
+    const TAMANHO_MIN_CODIGO = 8; // menor tamanho plausível de EAN/ISBN
+
+    function ehCampoDeFormulario(el) {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    }
+
+    function handleKeyDown(e) {
+      if (ehCampoDeFormulario(document.activeElement)) return;
+
+      const buffer = scanBufferRef.current;
+      const agora = Date.now();
+
+      if (e.key === "Enter") {
+        if (buffer.texto.length >= TAMANHO_MIN_CODIGO) {
+          e.preventDefault();
+          const codigo = buffer.texto;
+          buffer.texto = "";
+          onFieldChange("exemplarISBN", codigo);
+          setErroISBN(null);
+          isbnInputRef.current?.focus();
+          buscarPorISBN(codigo);
+        }
+        return;
+      }
+
+      // Só acumula dígitos (e "X", dígito verificador do ISBN-10); qualquer
+      // outra tecla (setas, letras, atalhos etc.) reinicia o buffer, pois não
+      // faz parte de um código de barras válido.
+      if (!/^[0-9Xx]$/.test(e.key)) {
+        buffer.texto = "";
+        return;
+      }
+
+      // Se passou tempo demais desde a última tecla, não é uma rajada de
+      // scanner — é o início de uma digitação humana comum. Reinicia o buffer.
+      if (buffer.texto && agora - buffer.ultimaTecla > INTERVALO_MAX_MS) {
+        buffer.texto = "";
+      }
+
+      buffer.texto += e.key;
+      buffer.ultimaTecla = agora;
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onFieldChange, buscarPorISBN]);
 
   // onCriarCategoria/onCriarGenero/onCriarAutor agora só enfileiram o item
   // localmente (ver BookFormModal) — nunca chamam a API nem lançam 409, então
@@ -565,6 +644,7 @@ export default function BasicInfoSection({
               <span>ISBN <AutoTag name="exemplarISBN" highlightedFields={highlightedFields} /></span>
               <div className="isbn-input-row">
                 <input
+                  ref={isbnInputRef}
                   name="exemplarISBN"
                   value={form.exemplarISBN}
                   onChange={(e) => {
@@ -603,7 +683,8 @@ export default function BasicInfoSection({
               </div>
               {erroISBN && <span className="isbn-error-msg">{erroISBN}</span>}
               <span className="isbn-hint-msg">
-                Escaneie ou digite e clique em{" "}
+                Use a câmera, um leitor de código de barras USB/Bluetooth ou digite e
+                clique em{" "}
                 <HiOutlineMagnifyingGlass style={{ verticalAlign: "middle" }} />{" "}
                 para preencher automaticamente
               </span>
