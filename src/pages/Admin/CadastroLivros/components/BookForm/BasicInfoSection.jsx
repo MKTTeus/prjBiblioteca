@@ -167,6 +167,12 @@ export default function BasicInfoSection({
   // "rajadas" de digitação de leitores de código de barras (ver useEffect
   // logo abaixo de handleISBNDetectado).
   const scanBufferRef = useRef({ texto: "", ultimaTecla: 0 });
+  // Debounce do auto-disparo da busca quando o valor do campo já forma um
+  // ISBN completo — não depende do Enter, porque nem todo leitor físico de
+  // código de barras está configurado para enviar Enter como terminador
+  // (alguns mandam Tab, outros nada).
+  const isbnDebounceRef = useRef(null);
+  const isbnAutoBuscadoRef = useRef("");
 
   const [iaCarregando, setIaCarregando] = useState(false);
   const [iaErro, setIaErro] = useState(null);
@@ -376,6 +382,14 @@ export default function BasicInfoSection({
     return () => clearTimeout(timer);
   }, []);
 
+  // Limpa o debounce de auto-busca do ISBN se o componente desmontar no meio
+  // do caminho (ex.: usuário fecha o modal logo depois de escanear).
+  useEffect(() => {
+    return () => {
+      if (isbnDebounceRef.current) clearTimeout(isbnDebounceRef.current);
+    };
+  }, []);
+
   // Detecta a "rajada" de digitação típica de um leitor de código de barras
   // físico mesmo quando o foco não está no campo ISBN (ex.: o usuário clicou
   // em outro lugar da página antes de escanear). Um leitor desses digita
@@ -390,11 +404,22 @@ export default function BasicInfoSection({
   useEffect(() => {
     const INTERVALO_MAX_MS = 50; // intervalo entre teclas compatível com scanner
     const TAMANHO_MIN_CODIGO = 8; // menor tamanho plausível de EAN/ISBN
+    let debounceBuffer = null; // timer do fallback por padrão de ISBN completo
 
     function ehCampoDeFormulario(el) {
       if (!el) return false;
       const tag = el.tagName;
       return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    }
+
+    function dispararBusca(codigo) {
+      const buffer = scanBufferRef.current;
+      buffer.texto = "";
+      if (debounceBuffer) clearTimeout(debounceBuffer);
+      onFieldChange("exemplarISBN", codigo);
+      setErroISBN(null);
+      isbnInputRef.current?.focus();
+      buscarPorISBN(codigo);
     }
 
     function handleKeyDown(e) {
@@ -406,12 +431,7 @@ export default function BasicInfoSection({
       if (e.key === "Enter") {
         if (buffer.texto.length >= TAMANHO_MIN_CODIGO) {
           e.preventDefault();
-          const codigo = buffer.texto;
-          buffer.texto = "";
-          onFieldChange("exemplarISBN", codigo);
-          setErroISBN(null);
-          isbnInputRef.current?.focus();
-          buscarPorISBN(codigo);
+          dispararBusca(buffer.texto);
         }
         return;
       }
@@ -432,10 +452,26 @@ export default function BasicInfoSection({
 
       buffer.texto += e.key;
       buffer.ultimaTecla = agora;
+
+      // Fallback: mesmo sem Enter (scanner configurado sem terminador, ou
+      // com Tab), se o que já foi digitado bate com um ISBN completo, dispara
+      // a busca sozinha depois de uma pequena pausa sem nenhuma tecla nova.
+      if (debounceBuffer) clearTimeout(debounceBuffer);
+      const candidato = buffer.texto;
+      if (/^(978|979|97[0-9])\d{10}$|^\d{9}[\dX]$/i.test(candidato)) {
+        debounceBuffer = setTimeout(() => {
+          if (scanBufferRef.current.texto === candidato) {
+            dispararBusca(candidato);
+          }
+        }, 300);
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (debounceBuffer) clearTimeout(debounceBuffer);
+    };
   }, [onFieldChange, buscarPorISBN]);
 
   // onCriarCategoria/onCriarGenero/onCriarAutor agora só enfileiram o item
@@ -648,18 +684,38 @@ export default function BasicInfoSection({
                   name="exemplarISBN"
                   value={form.exemplarISBN}
                   onChange={(e) => {
-                    onFieldChange("exemplarISBN", e.target.value);
+                    const valor = e.target.value;
+                    onFieldChange("exemplarISBN", valor);
                     setErroISBN(null);
+
+                    // Dispara a busca sozinha assim que o valor já formar um
+                    // ISBN-10/13 completo, sem depender de Enter — nem todo
+                    // leitor físico de código de barras está configurado para
+                    // mandar Enter no final da leitura (alguns mandam Tab,
+                    // outros nada). Uma pequena pausa (debounce) evita disparar
+                    // no meio da digitação manual, e o "já buscado" evita
+                    // repetir a mesma busca a cada re-render.
+                    if (isbnDebounceRef.current) clearTimeout(isbnDebounceRef.current);
+                    const limpo = valor.replace(/[^0-9X]/gi, "");
+                    const pareceCompleto = /^(978|979|97[0-9])\d{10}$|^\d{9}[\dX]$/i.test(limpo);
+                    if (pareceCompleto && isbnAutoBuscadoRef.current !== limpo) {
+                      isbnDebounceRef.current = setTimeout(() => {
+                        isbnAutoBuscadoRef.current = limpo;
+                        buscarPorISBN(valor);
+                      }, 300);
+                    }
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
+                      if (isbnDebounceRef.current) clearTimeout(isbnDebounceRef.current);
                       // Lê o valor direto do DOM (e.target.value), não do
                       // estado do React (form.exemplarISBN). Um leitor físico
                       // digita o código inteiro + Enter em poucos milissegundos
                       // — mais rápido do que o React consegue re-renderizar —
                       // então form.exemplarISBN pode ainda estar desatualizado
                       // nesse instante. O valor do input em si nunca está.
+                      isbnAutoBuscadoRef.current = e.target.value.replace(/[^0-9X]/gi, "");
                       buscarPorISBN(e.target.value);
                     }
                   }}
