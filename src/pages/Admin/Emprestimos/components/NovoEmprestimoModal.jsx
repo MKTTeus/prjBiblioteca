@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import { HiOutlineX } from "react-icons/hi";
+import { FiCheck, FiBookOpen, FiRepeat } from "react-icons/fi";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
 import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
-import { formatarCPF } from "../../../../utils/masks";
+
+function getIniciais(nome = "") {
+  const partes = nome.trim().split(" ").filter(Boolean);
+  if (partes.length === 0) return "?";
+  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+  return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
+}
 
 export default function NovoEmprestimoModal({
   aberto,
@@ -18,16 +25,43 @@ export default function NovoEmprestimoModal({
   onBuscaExemplarChange,
   exemplaresFiltrados,
   onSelecionarExemplar,
-  resumoUsuario,
-  resumoExemplar,
+  totalExemplaresDisponiveis = 0,
   onSalvar,
   salvando = false,
 }) {
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
-
-  if (!aberto) return null;
+  const buscaUsuarioRef = useRef(null);
+  const buscaExemplarRef = useRef(null);
 
   const isDirty = Boolean(selecionado.idUsuario || selecionado.idExemplar);
+
+  useEffect(() => {
+    if (!aberto) return;
+    if (usuarioSelecionado) {
+      buscaExemplarRef.current?.focus();
+    } else {
+      buscaUsuarioRef.current?.focus();
+    }
+  }, [aberto, usuarioSelecionado]);
+
+  useEffect(() => {
+    if (!aberto) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        if (isDirty) {
+          setConfirmandoSaida(true);
+        } else {
+          onFechar();
+        }
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [aberto, isDirty, onFechar]);
+
+  if (!aberto) return null;
 
   function handleRequestClose() {
     if (isDirty) {
@@ -53,7 +87,22 @@ export default function NovoEmprestimoModal({
         </div>
 
         <div className="emp-modal-content">
-          <div className="emp-modal-grid">
+          {usuarioSelecionado ? (
+            <div className="emp-user-chip">
+              <div className="emp-chip-avatar">{getIniciais(usuarioSelecionado.nome)}</div>
+              <div className="emp-chip-info">
+                <strong title={usuarioSelecionado.nome}>{usuarioSelecionado.nome}</strong>
+                <span className="emp-chip-badge">{usuarioSelecionado.tipo}</span>
+              </div>
+              <button
+                type="button"
+                className="emp-chip-trocar"
+                onClick={() => onSelecionarUsuario(null)}
+              >
+                <FiRepeat /> Trocar
+              </button>
+            </div>
+          ) : (
             <section className="emp-step-card">
               <div className="emp-step-header">
                 <div>
@@ -65,6 +114,7 @@ export default function NovoEmprestimoModal({
               <div className="emp-step-search">
                 <CiSearch />
                 <input
+                  ref={buscaUsuarioRef}
                   placeholder="Buscar usuário..."
                   value={buscaUsuario}
                   onChange={(event) => onBuscaUsuarioChange(event.target.value)}
@@ -79,88 +129,80 @@ export default function NovoEmprestimoModal({
                     <button
                       type="button"
                       key={usuario.id}
-                      className={`emp-list-item ${
-                        selecionado.idUsuario === usuario.id ? "selected" : ""
-                      }`}
+                      className="emp-list-item"
                       onClick={() => onSelecionarUsuario(usuario.id)}
                     >
                       <div className="emp-list-main">
                         <strong>{usuario.nome}</strong>
-                        <small>
-                          {usuario.tipo === "Aluno"
-                            ? `RA: ${usuario.documento || "-"}`
-                            : `CPF: ${usuario.documento ? formatarCPF(usuario.documento) : "-"}`}
-                        </small>
+                        <span className="emp-list-badge">{usuario.tipo}</span>
                       </div>
                     </button>
                   ))
                 )}
               </div>
             </section>
+          )}
 
-            <section className={`emp-step-card ${!usuarioSelecionado ? "is-disabled" : ""}`}>
-              <div className="emp-step-header">
-                <div>
-                  <span className="emp-step-number">2.</span>
-                  <h3>Selecionar Exemplar</h3>
-                </div>
+          <section className={`emp-step-card ${!usuarioSelecionado ? "is-disabled" : ""}`}>
+            <div className="emp-step-header">
+              <div>
+                <span className="emp-step-number">2.</span>
+                <h3>Selecionar Exemplar</h3>
               </div>
+              {usuarioSelecionado && (
+                <span className="emp-step-subtitle">
+                  {totalExemplaresDisponiveis}{" "}
+                  {totalExemplaresDisponiveis === 1 ? "disponível" : "disponíveis"}
+                </span>
+              )}
+            </div>
 
-              {usuarioSelecionado ? (
-                <>
-                  <div className="emp-step-search">
-                    <CiSearch />
-                    <input
-                      placeholder="Buscar exemplar..."
-                      value={buscaExemplar}
-                      onChange={(event) => onBuscaExemplarChange(event.target.value)}
-                    />
-                  </div>
+            {usuarioSelecionado ? (
+              <>
+                <div className="emp-step-search">
+                  <CiSearch />
+                  <input
+                    ref={buscaExemplarRef}
+                    placeholder="Buscar exemplar..."
+                    value={buscaExemplar}
+                    onChange={(event) => onBuscaExemplarChange(event.target.value)}
+                  />
+                </div>
 
-                  <div className="emp-list-box">
-                    {exemplaresFiltrados.length === 0 ? (
-                      <div className="emp-empty-state">Nenhum exemplar encontrado.</div>
-                    ) : (
-                      exemplaresFiltrados.map((exemplar) => (
+                <div className="emp-list-box">
+                  {exemplaresFiltrados.length === 0 ? (
+                    <div className="emp-empty-state">Nenhum exemplar encontrado.</div>
+                  ) : (
+                    exemplaresFiltrados.map((exemplar) => {
+                      const isSelecionado = selecionado.idExemplar === exemplar.id;
+                      return (
                         <button
                           type="button"
                           key={exemplar.id}
-                          className={`emp-list-item ${
-                            selecionado.idExemplar === exemplar.id ? "selected" : ""
+                          className={`emp-list-item emp-list-item-exemplar ${
+                            isSelecionado ? "selected" : ""
                           }`}
                           onClick={() => onSelecionarExemplar(exemplar.id)}
                         >
-                          <div className="emp-list-main">
+                          <FiBookOpen className="emp-list-icon" />
+                          <div className="emp-list-main emp-list-main-column">
                             <strong>{exemplar.nome}</strong>
                             <small>Tombo: {exemplar.tombo || "-"}</small>
                           </div>
+                          {isSelecionado && <FiCheck className="emp-list-check" />}
                         </button>
-                      ))
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="emp-list-box emp-list-box-placeholder">
-                  <div className="emp-empty-state">Selecione um usuário primeiro</div>
+                      );
+                    })
+                  )}
                 </div>
-              )}
-            </section>
-          </div>
+              </>
+            ) : (
+              <div className="emp-list-box emp-list-box-placeholder">
+                <div className="emp-empty-state">Selecione um usuário primeiro</div>
+              </div>
+            )}
+          </section>
         </div>
-
-        <section className="emp-summary-card emp-summary-card-fixed">
-          <h3>Resumo da seleção</h3>
-
-          <div className="emp-summary-row">
-            <span>Usuário</span>
-            <strong title={resumoUsuario}>{resumoUsuario}</strong>
-          </div>
-
-          <div className="emp-summary-row">
-            <span>Exemplar</span>
-            <strong title={resumoExemplar}>{resumoExemplar}</strong>
-          </div>
-        </section>
 
         <div className="emp-modal-actions">
           <button onClick={handleRequestClose}>Cancelar</button>
@@ -171,7 +213,7 @@ export default function NovoEmprestimoModal({
             onClick={onSalvar}
             disabled={!selecionado.idUsuario || !selecionado.idExemplar || salvando}
           >
-            Salvar
+            Confirmar Empréstimo
           </LoadingButton>
         </div>
       </div>

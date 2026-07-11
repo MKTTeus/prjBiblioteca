@@ -1,128 +1,201 @@
-import React, { useEffect, useState } from "react";
-import { getEmprestimos } from "../../../services/api";
-import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
-import { resolverStatus } from "../../../utils/loanStatus";
+import { useEffect, useMemo, useState } from "react";
 import "./Emprestimos.css";
 
-const statusLabelMap = {
-  pendente: "Pendente",
-  ativo: "Ativo",
-  atrasado: "Atrasado",
-  devolvido: "Devolvido",
-};
+import StatsCard from "../../../components/StatsCard/StatsCard";
+import { useToast } from "../../../contexts/ToastContext";
+import {
+  criarEmprestimo,
+  devolverEmprestimo,
+  renovarEmprestimo,
+  getAlunos,
+  getComunidade,
+  getEmprestimos,
+  getExemplaresDisponiveis,
+} from "../../../services/api";
+import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
+import HeaderEmprestimos from "./components/HeaderEmprestimos";
+import NovoEmprestimoModal from "./components/NovoEmprestimoModal";
+import TabelaEmprestimos from "./components/TabelaEmprestimos";
+import {
+  FILTRO_STATUS_OPTIONS,
+  calcularMetricas,
+  criarCardsResumo,
+  criarMapaPorId,
+  filtrarEmprestimos,
+  filtrarExemplares,
+  filtrarUsuarios,
+  formatarUsuarios,
+} from "./utils";
 
 export default function Emprestimos() {
-  const [loans, setLoans] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [emprestimos, setEmprestimos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
+  const [exemplares, setExemplares] = useState([]);
+  const [mapUsuarios, setMapUsuarios] = useState({});
+  const [mapExemplares, setMapExemplares] = useState({});
+
+  const [busca, setBusca] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("todos");
+
+  const [modalAberto, setModalAberto] = useState(false);
+  const [buscaUsuario, setBuscaUsuario] = useState("");
+  const [buscaExemplar, setBuscaExemplar] = useState("");
+  const [selecionado, setSelecionado] = useState({
+    idUsuario: null,
+    idExemplar: null,
+  });
+  const [salvando, setSalvando] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
-    async function fetchLoans() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await getEmprestimos();
-        setLoans(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erro ao carregar empréstimos:", err);
-        setLoans([]);
-        setError("Erro ao carregar seus empréstimos. Tente novamente.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchLoans();
+    carregarDados();
   }, []);
 
-  // Aplicar a mesma lógica de status que o admin usa
-  const loansComStatus = loans.map((loan) => ({
-    ...loan,
-    _statusResolvido: resolverStatus(loan),
-  }));
+  async function carregarDados() {
+    try {
+      const [dadosEmprestimos, alunos, comunidade, dadosExemplaresDisponiveis] = await Promise.all([
+        getEmprestimos(),
+        getAlunos(),
+        getComunidade(),
+        getExemplaresDisponiveis(),
+      ]);
 
-  const pendentes = loansComStatus.filter((l) => l._statusResolvido === "pendente");
-  const ativos    = loansComStatus.filter((l) => l._statusResolvido === "ativo");
-  const atrasados = loansComStatus.filter((l) => l._statusResolvido === "atrasado");
+      const usuariosFormatados = formatarUsuarios(alunos, comunidade);
 
-  const renderLoanList = (items, emptyMessage) => {
-    if (isLoading) return <div className="user-empty-state">Carregando empréstimos...</div>;
-    if (error)     return <div className="user-empty-state">{error}</div>;
-    if (items.length === 0) return <div className="user-empty-state">{emptyMessage}</div>;
+      setEmprestimos(dadosEmprestimos);
+      setUsuarios(usuariosFormatados);
+      setMapUsuarios(criarMapaPorId(usuariosFormatados));
+      setExemplares(dadosExemplaresDisponiveis);
+      setMapExemplares(criarMapaPorId(dadosExemplaresDisponiveis));
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
-    return (
-      <div className="user-loans-list">
-        {items.map((loan) => (
-          <article className="user-loan-item" key={loan.idEmprestimo ?? loan.id}>
-            <div className="user-loan-item__top">
-              <div>
-                <h4>{loan.titulo || "Livro desconhecido"}</h4>
-                <small>{loan.codigo || "Sem código"}</small>
-              </div>
-              <span className={`status-badge ${loan._statusResolvido}`}>
-                {statusLabelMap[loan._statusResolvido] || loan._statusResolvido}
-              </span>
-            </div>
-            <p>Data do registro: {loan.dataEmprestimo || "Não disponível"}</p>
-            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "Não disponível"}</p>
-            <p>Renovações: {loan.renovacoes ?? 0}</p>
-          </article>
-        ))}
-      </div>
-    );
-  };
+  const metricas = useMemo(() => calcularMetricas(emprestimos), [emprestimos]);
+  const cardsResumo = useMemo(() => criarCardsResumo(metricas), [metricas]);
+
+  const emprestimosFiltrados = useMemo(
+    () => filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios, mapExemplares),
+    [emprestimos, busca, filtroStatus, mapUsuarios, mapExemplares]
+  );
+
+  const usuariosFiltrados = useMemo(() => filtrarUsuarios(usuarios, buscaUsuario), [usuarios, buscaUsuario]);
+
+  const exemplaresFiltrados = useMemo(
+    () => filtrarExemplares(exemplares, buscaExemplar),
+    [exemplares, buscaExemplar]
+  );
+
+  const usuarioSelecionado = selecionado.idUsuario
+    ? mapUsuarios[selecionado.idUsuario] ||
+      usuarios.find((usuario) => usuario.id === selecionado.idUsuario) ||
+      null
+    : null;
+
+  async function registrarEmprestimo() {
+    setSalvando(true);
+    try {
+      await criarEmprestimo(selecionado);
+      addToast("Empréstimo realizado com sucesso", "success");
+      fecharModal();
+      carregarDados();
+    } catch (error) {
+      console.error(error);
+      addToast("Falha ao realizar o empréstimo", "error");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function devolver(idEmprestimo) {
+    await devolverEmprestimo(idEmprestimo);
+    carregarDados();
+  }
+
+  async function renovar(idEmprestimo) {
+    try {
+      await renovarEmprestimo(idEmprestimo);
+      addToast("Empréstimo renovado com sucesso", "success");
+      carregarDados();
+    } catch (error) {
+      console.error(error);
+      addToast("Falha ao renovar o empréstimo", "error");
+    }
+  }
+
+  function fecharModal() {
+    setModalAberto(false);
+    setSelecionado({ idUsuario: null, idExemplar: null });
+    setBuscaUsuario("");
+    setBuscaExemplar("");
+  }
+
+  function selecionarUsuario(idUsuario) {
+    setSelecionado((estadoAtual) => ({
+      idUsuario,
+      idExemplar: estadoAtual.idUsuario === idUsuario ? estadoAtual.idExemplar : null,
+    }));
+    setBuscaExemplar("");
+  }
+
+  function selecionarExemplar(idExemplar) {
+    setSelecionado((estadoAtual) => ({
+      ...estadoAtual,
+      idExemplar,
+    }));
+  }
 
   return (
-    <div className="user-page page-shell">
-      <section className="user-page__hero">
-        <div className="user-page__hero-content">
-          <h2>Meus empréstimos</h2>
-          <p>Acompanhe solicitações pendentes e empréstimos ativos.</p>
-        </div>
+    <div className="emp-page page-shell">
+      <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
+
+      <section className="stats-cards-grid" aria-label="Resumo de empréstimos">
+        {cardsResumo.map((card) => (
+          <StatsCard
+            key={card.chave}
+            title={card.titulo}
+            value={card.valor}
+            subtitle="Atualizado com os dados da tela"
+            icon={card.icone}
+            color={card.cor}
+          />
+        ))}
       </section>
 
-      {!isLoading && !error && pendentes.length > 0 && (
-        <div className="user-loans-pending-banner">
-          <FiClock className="user-loans-pending-banner__icon" />
-          <span>
-            Você tem <strong>{pendentes.length}</strong> solicitação{pendentes.length > 1 ? "ões" : ""} aguardando aprovação da biblioteca.
-          </span>
-        </div>
-      )}
+      <FiltrosEmprestimos
+        busca={busca}
+        onBuscaChange={setBusca}
+        filtroStatus={filtroStatus}
+        opcoesFiltro={FILTRO_STATUS_OPTIONS}
+        onFiltroStatusChange={setFiltroStatus}
+      />
 
-      <section className="user-loans-grid">
-        <div className="user-section-card user-loans-column">
-          <div className="user-section-card__header user-section-card__header--pendente">
-            <FiClock className="user-section-card__header-icon" />
-            <h3>Pendentes</h3>
-            {!isLoading && pendentes.length > 0 && (
-              <span className="user-section-count user-section-count--pendente">{pendentes.length}</span>
-            )}
-          </div>
-          {renderLoanList(pendentes, "Nenhuma solicitação pendente no momento.")}
-        </div>
+      <TabelaEmprestimos
+        emprestimos={emprestimosFiltrados}
+        mapUsuarios={mapUsuarios}
+        mapExemplares={mapExemplares}
+        onDevolver={devolver}
+        onRenovar={renovar}
+      />
 
-        <div className="user-section-card user-loans-column">
-          <div className="user-section-card__header user-section-card__header--ativo">
-            <FiCheckCircle className="user-section-card__header-icon" />
-            <h3>Ativos</h3>
-            {!isLoading && ativos.length > 0 && (
-              <span className="user-section-count user-section-count--ativo">{ativos.length}</span>
-            )}
-          </div>
-          {renderLoanList(ativos, "Você não possui empréstimos ativos no momento.")}
-        </div>
-
-        <div className="user-section-card user-loans-column">
-          <div className="user-section-card__header user-section-card__header--atrasado">
-            <FiAlertCircle className="user-section-card__header-icon" />
-            <h3>Atrasados</h3>
-            {!isLoading && atrasados.length > 0 && (
-              <span className="user-section-count user-section-count--atrasado">{atrasados.length}</span>
-            )}
-          </div>
-          {renderLoanList(atrasados, "Você não possui empréstimos atrasados.")}
-        </div>
-      </section>
+      <NovoEmprestimoModal
+        aberto={modalAberto}
+        onFechar={fecharModal}
+        buscaUsuario={buscaUsuario}
+        onBuscaUsuarioChange={setBuscaUsuario}
+        usuariosFiltrados={usuariosFiltrados}
+        selecionado={selecionado}
+        onSelecionarUsuario={selecionarUsuario}
+        usuarioSelecionado={usuarioSelecionado}
+        buscaExemplar={buscaExemplar}
+        onBuscaExemplarChange={setBuscaExemplar}
+        exemplaresFiltrados={exemplaresFiltrados}
+        onSelecionarExemplar={selecionarExemplar}
+        totalExemplaresDisponiveis={exemplares.length}
+        onSalvar={registrarEmprestimo}
+        salvando={salvando}
+      />
     </div>
   );
 }
