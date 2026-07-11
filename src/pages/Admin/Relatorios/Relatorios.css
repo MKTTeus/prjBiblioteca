@@ -1,0 +1,212 @@
+.rel-page {
+  color: var(--text-default);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  box-sizing: border-box;
+}
+
+.rel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+  color: var(--btn-primary-text);
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-soft);
+  flex-wrap: wrap;
+}
+
+.rel-header h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.rel-header p {
+  margin: 8px 0 0;
+  font-size: 15px;
+  color: rgba(249, 250, 251, 0.9);
+}
+
+.rel-export-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.rel-btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: var(--surface-bg);
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.rel-btn-export:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+.rel-btn-export:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rel-filtros {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin: 24px 0;
+}
+
+.rel-filtro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 150px;
+}
+
+.rel-filtro-campo label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rel-filtro-campo input,
+.rel-filtro-campo select {
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  background: var(--canvas-bg);
+  color: var(--text-default);
+}
+
+.rel-btn-filtrar {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  background: var(--primary);
+  color: var(--btn-primary-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+}
+
+.rel-btn-filtrar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.rel-spinner {
+  animation: rel-spin 0.8s linear infinite;
+}
+
+@keyframes rel-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.rel-erro {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+  color: #b91c1c;
+  border: 1px solid color-mix(in srgb, #ef4444 30%, transparent);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.rel-table-box {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  overflow-x: auto;
+  box-shadow: var(--shadow-soft);
+}
+
+.rel-table-box table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.rel-table-box th {
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.rel-table-box td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--surface-border);
+  white-space: nowrap;
+}
+
+.rel-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 32px 16px !important;
+  white-space: normal !important;
+}
+
+.rel-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.rel-status-ativo {
+  background: color-mix(in srgb, #3b82f6 15%, transparent);
+  color: #1d4ed8;
+}
+
+.rel-status-atrasado {
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #b91c1c;
+}
+
+.rel-status-devolvido {
+  background: color-mix(in srgb, #22c55e 15%, transparent);
+  color: #15803d;
+}
+
+@media (max-width: 768px) {
+  .rel-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rel-btn-filtrar {
+    width: 100%;
+  }
+}

@@ -9,6 +9,7 @@ import {
   FiChevronDown,
   FiBookmark,
   FiBell,
+  FiPieChart,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
@@ -157,6 +158,19 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                     </NavLink>
                   </li>
                 </ul>
+              </li>
+            )}
+
+            {isAdmin && (
+              <li>
+                <NavLink
+                  to="/admin/relatorios"
+                  className={({ isActive }) => (isActive ? "active" : undefined)}
+                  onClick={close}
+                >
+                  <FiPieChart />
+                  <span>Relatórios</span>
+                </NavLink>
               </li>
             )}
 

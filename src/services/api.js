@@ -470,6 +470,21 @@ export const renovarEmprestimo = (id) =>
 
 export const getExemplaresDisponiveis = () =>
   apiFetch("/exemplares/disponiveis");
+
+// ========================
+// RELATÓRIOS
+// ========================
+
+export const getRelatorioEmprestimos = (filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== "" && valor !== "todos") {
+      params.set(chave, valor);
+    }
+  });
+  const query = params.toString();
+  return apiFetch(`/relatorios/emprestimos${query ? `?${query}` : ""}`);
+};
 export const getExemplares = () =>
   apiFetch("/exemplares");
 

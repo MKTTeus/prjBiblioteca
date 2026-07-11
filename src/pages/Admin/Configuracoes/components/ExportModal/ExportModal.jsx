@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FiX, FiDownload, FiFileText, FiCode, FiLoader } from "react-icons/fi";
 import { getConfiguracoes } from "../../../../../services/api";
+import { exportarPDF } from "../../../../../utils/exportarArquivo";
 import "./ExportModal.css";
 
 const LABELS = {
@@ -72,77 +73,21 @@ function exportJSON(configs) {
 
 function exportPDF(configs, nomeBiblioteca) {
   const map = buildConfigMap(configs);
-  const date = new Date().toLocaleString("pt-BR");
 
-  const sectionsHTML = SECTIONS.map(({ label, keys }) => {
-    const rows = keys.map((key) => {
-      const valor = maskSenha(key, map[key]);
-      return `
-        <tr>
-          <td class="col-label">${LABELS[key] ?? key}</td>
-          <td class="col-value">${valor}</td>
-        </tr>`;
-    }).join("");
+  // Cada linha traz a seção na primeira coluna para manter o agrupamento
+  // visível numa única tabela (o gerador de PDF é genérico e trabalha com
+  // uma tabela por documento).
+  const linhas = SECTIONS.flatMap(({ label, keys }) =>
+    keys.map((key) => [label, LABELS[key] ?? key, String(maskSenha(key, map[key]))])
+  );
 
-    return `
-      <div class="section">
-        <div class="section-title">${label}</div>
-        <table>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-  }).join("");
-
-  const html = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8"/>
-  <title>Configurações do Sistema</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #fff; padding: 32px 40px; }
-    header { border-bottom: 2px solid #6366f1; padding-bottom: 16px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; }
-    header h1 { font-size: 22px; font-weight: 700; color: #4f46e5; }
-    header .meta { font-size: 12px; color: #64748b; text-align: right; line-height: 1.6; }
-    .section { margin-bottom: 24px; break-inside: avoid; }
-    .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6366f1; background: #eef2ff; padding: 6px 12px; border-radius: 6px; margin-bottom: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-    tr:nth-child(even) { background: #f8fafc; }
-    td { padding: 7px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
-    .col-label { color: #475569; width: 52%; font-weight: 500; }
-    .col-value { color: #1e293b; }
-    footer { margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 12px; font-size: 11px; color: #94a3b8; text-align: center; }
-    .notice { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-    @media print {
-      body { padding: 16px 24px; }
-      @page { margin: 1.5cm; size: A4; }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div>
-      <h1>${nomeBiblioteca || "Biblioteca"}</h1>
-      <div class="notice">Relatório de Configurações do Sistema</div>
-    </div>
-    <div class="meta">
-      <div>Gerado em: ${date}</div>
-      <div>⚠ Senha SMTP ocultada por segurança</div>
-    </div>
-  </header>
-  ${sectionsHTML}
-  <footer>Documento gerado automaticamente pelo sistema de gerenciamento da biblioteca.</footer>
-  <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }</script>
-</body>
-</html>`;
-
-  const win = window.open("", "_blank", "width=800,height=700");
-  if (!win) {
-    alert("Permita pop-ups para gerar o PDF.");
-    return;
-  }
-  win.document.write(html);
-  win.document.close();
+  exportarPDF({
+    titulo: nomeBiblioteca || "Biblioteca",
+    subtitulo: "Relatório de Configurações do Sistema  •  ⚠ Senha SMTP ocultada por segurança",
+    colunas: ["Seção", "Configuração", "Valor"],
+    linhas,
+    nomeArquivo: `configuracoes-${new Date().toISOString().slice(0, 10)}`,
+  });
 }
 
 export default function ExportModal({ onClose }) {

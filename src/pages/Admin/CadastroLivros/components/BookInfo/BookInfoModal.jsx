@@ -16,6 +16,7 @@ import {
   gerarFichaCatalografica,
   updateFichaCatalografica,
 } from "../../../../../services/api";
+import { exportarFichaCatalografica } from "../../../../../utils/exportarArquivo";
 import "./BookInfoModal.css";
 export default function BookInfoModal({ book, onClose }) {
   const { user } = useAuth();
@@ -97,6 +98,16 @@ export default function BookInfoModal({ book, onClose }) {
   function handleExportarPDF() {
     if (!ficha?.fichaTexto) return;
     const titulo = book.livTitulo || "Livro";
+    const paragrafos = ficha.fichaTexto.split("\n\n");
+    exportarFichaCatalografica({
+      tituloLivro: titulo,
+      paragrafos,
+      nomeArquivo: `ficha-catalografica-${titulo.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    });
+  }
+  function handleImprimir() {
+    if (!ficha?.fichaTexto) return;
+    const titulo = book.livTitulo || "Livro";
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -136,12 +147,9 @@ export default function BookInfoModal({ book, onClose }) {
 </body>
 </html>`;
     const win = window.open("", "_blank", "width=800,height=700");
-    if (!win) { alert("Permita pop-ups para exportar o PDF."); return; }
+    if (!win) { alert("Permita pop-ups para imprimir a ficha."); return; }
     win.document.write(html);
     win.document.close();
-  }
-  function handleImprimir() {
-    handleExportarPDF();
   }
   function renderFichaSection() {
     return (

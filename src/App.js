@@ -23,6 +23,7 @@ import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
 import Backups from "./pages/Admin/Configuracoes/components/Backup/Backups";
 import AnoLetivo from "./pages/Admin/Configuracoes/components/AnoLetivo/AnoLetivo";
 import UserDashboard from "./pages/user/UserDashboard";
+import Relatorios from "./pages/Admin/Relatorios/Relatorios";
 
 function RoleHomeRedirect() {
   const { user, loadingUser } = useAuth();
@@ -100,6 +101,7 @@ function App() {
         <Route path="comunidade" element={<Comunidade />} />
         <Route path="emprestimos" element={<Emprestimos />} />
         <Route path="emprestimos/solicitacoes" element={<SolicitacoesEmprestimo />} />
+        <Route path="relatorios" element={<Relatorios />} />
         <Route path="notificacoes" element={<AdminNotificacoes />} />
         <Route path="admins" element={<Admin />} />
         <Route path="biblioteca" element={<Biblioteca />} />
