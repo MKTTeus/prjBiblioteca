@@ -26,7 +26,6 @@ import {
   filtrarUsuarios,
   formatarUsuarios,
 } from "./utils";
-import { formatarCPF } from "../../../utils/masks";
 
 export default function Emprestimos() {
   const [emprestimos, setEmprestimos] = useState([]);
@@ -93,30 +92,6 @@ export default function Emprestimos() {
       usuarios.find((usuario) => usuario.id === selecionado.idUsuario) ||
       null
     : null;
-
-  const exemplarSelecionado = selecionado.idExemplar
-    ? mapExemplares[selecionado.idExemplar] ||
-      exemplares.find((exemplar) => exemplar.id === selecionado.idExemplar) ||
-      null
-    : null;
-
-  const resumoUsuario = usuarioSelecionado
-    ? `${usuarioSelecionado.nome || "Usuário selecionado"} (${
-        usuarioSelecionado.tipo === "Aluno" ? "RA" : "CPF"
-      }: ${
-        usuarioSelecionado.documento
-          ? usuarioSelecionado.tipo === "Aluno"
-            ? usuarioSelecionado.documento
-            : formatarCPF(usuarioSelecionado.documento)
-          : "-"
-      })`
-    : "Nenhum usuário selecionado";
-
-  const resumoExemplar = exemplarSelecionado
-    ? `${exemplarSelecionado.nome || "Exemplar selecionado"} - Tombo: ${
-        exemplarSelecionado.tombo || "-"
-      }`
-    : "Nenhum exemplar selecionado";
 
   async function registrarEmprestimo() {
     setSalvando(true);
@@ -217,8 +192,7 @@ export default function Emprestimos() {
         onBuscaExemplarChange={setBuscaExemplar}
         exemplaresFiltrados={exemplaresFiltrados}
         onSelecionarExemplar={selecionarExemplar}
-        resumoUsuario={resumoUsuario}
-        resumoExemplar={resumoExemplar}
+        totalExemplaresDisponiveis={exemplares.length}
         onSalvar={registrarEmprestimo}
         salvando={salvando}
       />

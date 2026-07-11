@@ -338,7 +338,7 @@
 
 .emp-modal {
   background: var(--surface-bg);
-  width: min(1180px, 100%);
+  width: min(620px, 100%);
   max-height: 92vh;
   border-radius: 20px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
@@ -381,31 +381,33 @@
 }
 
 .emp-modal-content {
-  display: block;
-  padding: 22px 38px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 30px 24px;
   overflow-y: auto;
   flex: 1 1 auto;
 }
 
-.emp-modal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  align-items: stretch;
-}
-
-.emp-step-card,
-.emp-summary-card {
+.emp-step-card {
   border: 1px solid var(--surface-border);
   border-radius: 12px;
   background: var(--surface-bg);
   overflow: hidden;
 }
 
+.emp-step-card.is-disabled {
+  opacity: 0.65;
+}
+
 .emp-step-header {
   padding: 18px 24px 16px;
   border-bottom: 1px solid var(--table-row-border);
   background: linear-gradient(180deg, var(--surface-muted) 0%, var(--canvas-bg) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .emp-step-header div {
@@ -414,8 +416,7 @@
   gap: 10px;
 }
 
-.emp-step-header h3,
-.emp-summary-card h3 {
+.emp-step-header h3 {
   margin: 0;
   color: var(--text-default);
   font-size: 1.1rem;
@@ -424,6 +425,73 @@
 .emp-step-number {
   color: var(--text-default);
   font-weight: 700;
+}
+
+.emp-step-subtitle {
+  color: var(--emp-text-soft, var(--text-muted));
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.emp-user-chip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+
+.emp-chip-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-muted);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.emp-chip-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.emp-chip-info strong {
+  color: var(--text-default);
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emp-chip-trocar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--input-border);
+  background: var(--surface-bg);
+  color: var(--text-default);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.emp-chip-trocar:hover {
+  background: var(--surface-bg);
+  border-color: var(--border-strong);
 }
 
 .emp-step-search {
@@ -456,7 +524,7 @@
   border: 1px solid var(--surface-border);
   border-radius: 0 0 12px 12px;
   overflow: hidden;
-  height: 420px;
+  height: 300px;
   overflow-y: auto;
   background: var(--surface-bg);
 }
@@ -479,12 +547,26 @@
   transition: background 0.18s ease, border-color 0.18s ease;
 }
 
+.emp-list-item-exemplar {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
 .emp-list-main {
   display: flex;
   align-items: baseline;
   justify-content: flex-start;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.emp-list-main-column {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .emp-list-item:last-child {
@@ -509,6 +591,32 @@
   color: var(--emp-text-soft, var(--text-muted));
 }
 
+.emp-list-badge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--primary-muted);
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.emp-list-icon {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+  color: var(--emp-text-soft, var(--text-muted));
+}
+
+.emp-list-item-exemplar.selected .emp-list-icon {
+  color: var(--primary);
+}
+
+.emp-list-check {
+  margin-left: auto;
+  color: var(--primary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
 .emp-empty-state {
   min-height: 100%;
   display: flex;
@@ -518,52 +626,6 @@
   padding: 24px;
   text-align: center;
   font-size: 1rem;
-}
-
-.emp-summary-card {
-  padding: 20px 22px;
-  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--canvas-bg) 100%);
-}
-
-.emp-summary-card-fixed {
-  margin: 0 38px 0;
-  flex-shrink: 0;
-}
-
-.emp-summary-card h3 {
-  margin-bottom: 14px;
-}
-
-.emp-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 8px 0;
-  border-top: 1px solid var(--surface-border);
-}
-
-.emp-summary-row:first-of-type {
-  border-top: none;
-  padding-top: 0;
-}
-
-.emp-summary-row span {
-  color: var(--emp-text-soft, var(--text-muted));
-  flex: 0 0 92px;
-  font-size: 0.92rem;
-}
-
-.emp-summary-row strong {
-  color: var(--text-default);
-  text-align: right;
-  font-size: 0.96rem;
-  font-weight: 600;
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .emp-modal-actions {
@@ -668,17 +730,8 @@
     padding-right: 18px;
   }
 
-  .emp-modal-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
   .emp-list-box {
     height: 260px;
-  }
-
-  .emp-summary-card-fixed {
-    margin: 18px;
   }
 }
 
@@ -713,14 +766,9 @@
     padding: 16px;
   }
 
-  .emp-modal-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .emp-step-card {
-    width: 100%;
+  .emp-step-header {
+    padding: 14px 16px 12px;
+    flex-wrap: wrap;
   }
 
   .emp-list-box {
@@ -733,40 +781,13 @@
     gap: 2px;
   }
 
-  .emp-summary-card-fixed {
-    width: auto;
-    margin: 16px;
+  .emp-user-chip {
+    flex-wrap: wrap;
   }
 
-  .emp-summary-card {
-    padding: 16px;
-  }
-
-  .emp-summary-card h3 {
-    font-size: 1rem;
-    margin-bottom: 12px;
-  }
-
-  .emp-summary-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    padding: 8px 0;
-  }
-
-  .emp-summary-row span {
-    font-size: .85rem;
-  }
-
-  .emp-summary-row strong {
+  .emp-chip-trocar {
     width: 100%;
-    font-size: .9rem;
-    text-align: left;
-    white-space: normal;
-    word-break: break-word;
-    overflow: visible;
-    text-overflow: initial;
+    justify-content: center;
   }
 
   .emp-modal-actions {
