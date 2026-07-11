@@ -188,6 +188,7 @@ export default function NovoEmprestimoModal({
                           <div className="emp-list-main emp-list-main-column">
                             <strong>{exemplar.nome}</strong>
                             <small>Tombo: {exemplar.tombo || "-"}</small>
+                            <small>ISBN: {exemplar.isbn || "-"}</small>
                           </div>
                           {isSelecionado && <FiCheck className="emp-list-check" />}
                         </button>

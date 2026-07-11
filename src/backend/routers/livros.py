@@ -541,14 +541,15 @@ def exemplares_disponiveis():
         livro_ids = list({ex["idLivro"] for ex in exemplares})
         mapa_livros = {}
         if livro_ids:
-            livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
-            mapa_livros = {l["idLivro"]: l["livTitulo"] for l in livros}
+            livros = supabase.table("Livro").select("idLivro, livTitulo, livISBN").in_("idLivro", livro_ids).execute().data or []
+            mapa_livros = {l["idLivro"]: l for l in livros}
 
         return [
             {
                 "id":      ex["idExemplar"],
                 "tombo":   ex["exeLivTombo"],
-                "nome":    mapa_livros.get(ex["idLivro"], "Livro"),
+                "nome":    mapa_livros.get(ex["idLivro"], {}).get("livTitulo", "Livro"),
+                "isbn":    mapa_livros.get(ex["idLivro"], {}).get("livISBN"),
                 "idLivro": ex["idLivro"],
             }
             for ex in exemplares

@@ -163,7 +163,7 @@ export function filtrarUsuarios(usuarios, buscaUsuario) {
 export function filtrarExemplares(exemplares, buscaExemplar) {
   const termoBusca = (buscaExemplar || "").toLowerCase();
   return exemplares.filter((exemplar) =>
-    `${exemplar.nome} ${exemplar.tombo}`.toLowerCase().includes(termoBusca)
+    `${exemplar.nome} ${exemplar.tombo} ${exemplar.isbn || ""}`.toLowerCase().includes(termoBusca)
   );
 }
 
