@@ -284,9 +284,9 @@ def listar_emprestimos(user=Depends(get_optional_user)):
             exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro").in_("idExemplar", list(set(exemplar_ids))).execute().data or []
             livro_ids = list({ex.get("idLivro") for ex in exemplares if ex.get("idLivro")})
             if livro_ids:
-                livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
+                livros = supabase.table("Livro").select("idLivro, livTitulo, livISBN").in_("idLivro", livro_ids).execute().data or []
 
-        livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
+        livro_map = {l["idLivro"]: l for l in livros}
         exemplar_map = {e["idExemplar"]: e for e in exemplares}
 
         for mov in emprestimos:
@@ -298,12 +298,14 @@ def listar_emprestimos(user=Depends(get_optional_user)):
             mov["usuario"] = u.get("usuNome", "Usuário não informado")
             mov["usuarioTipo"] = u.get("usuTipo", "-")
 
-            # Título e código sempre, independente do status
+            # Título, ISBN e código sempre, independente do status
             if exemplar:
                 ex = exemplar_map.get(exemplar.get("idExemplar"))
                 if ex:
                     mov["codigo"] = ex.get("exeLivTombo")
-                    mov["titulo"] = livro_map.get(ex.get("idLivro"), mov.get("titulo"))
+                    info_livro = livro_map.get(ex.get("idLivro"), {})
+                    mov["titulo"] = info_livro.get("livTitulo", mov.get("titulo"))
+                    mov["isbn"] = info_livro.get("livISBN")
 
             data_prev = exemplar.get("dataPrevistaDevolucao") if exemplar else None
 
