@@ -654,7 +654,13 @@ export default function BasicInfoSection({
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      buscarPorISBN(form.exemplarISBN);
+                      // Lê o valor direto do DOM (e.target.value), não do
+                      // estado do React (form.exemplarISBN). Um leitor físico
+                      // digita o código inteiro + Enter em poucos milissegundos
+                      // — mais rápido do que o React consegue re-renderizar —
+                      // então form.exemplarISBN pode ainda estar desatualizado
+                      // nesse instante. O valor do input em si nunca está.
+                      buscarPorISBN(e.target.value);
                     }
                   }}
                   placeholder="ISBN padrão dos exemplares"
@@ -683,10 +689,10 @@ export default function BasicInfoSection({
               </div>
               {erroISBN && <span className="isbn-error-msg">{erroISBN}</span>}
               <span className="isbn-hint-msg">
-                Use a câmera, um leitor de código de barras USB/Bluetooth ou digite e
-                clique em{" "}
-                <HiOutlineMagnifyingGlass style={{ verticalAlign: "middle" }} />{" "}
-                para preencher automaticamente
+                Escaneie (câmera ou leitor USB/Bluetooth) ou digite e toque no
+                ícone{" "}
+                <HiOutlineMagnifyingGlass size={15} style={{ verticalAlign: "middle", flexShrink: 0 }} />{" "}
+                para buscar os dados
               </span>
             </div>
 
