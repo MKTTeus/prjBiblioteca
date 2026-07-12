@@ -200,6 +200,66 @@
   color: #15803d;
 }
 
+/* ── Abas de relatório ── */
+.rel-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border-default, #e2e8f0);
+  padding-bottom: 0;
+}
+
+.rel-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: 0.15s;
+}
+
+.rel-tab-btn:hover {
+  color: var(--primary);
+}
+
+.rel-tab-btn-active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.rel-subheader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.rel-subheader p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.rel-badge-contagem {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: color-mix(in srgb, #ef4444 15%, transparent);
+  color: #b91c1c;
+}
+
 @media (max-width: 768px) {
   .rel-filtros {
     flex-direction: column;
@@ -208,5 +268,10 @@
 
   .rel-btn-filtrar {
     width: 100%;
+  }
+
+  .rel-subheader {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

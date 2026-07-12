@@ -49,3 +49,52 @@ export const COLUNAS_EXPORT = [
   "Devolução",
   "Status",
 ];
+
+// ── Relatório: Usuários com atraso/inadimplentes ──────────────────
+export function linhasParaExportAtrasos(itens) {
+  return itens.map((item) => [
+    item.usuario,
+    item.usuarioTipo,
+    item.contato || "-",
+    item.titulo,
+    item.tombo || "-",
+    formatarData(item.dataPrevistaDevolucao),
+    item.diasAtraso,
+  ]);
+}
+
+export const COLUNAS_EXPORT_ATRASOS = [
+  "Usuário",
+  "Tipo",
+  "Contato",
+  "Livro",
+  "Tombo",
+  "Previsão Devolução",
+  "Dias em Atraso",
+];
+
+// ── Relatório: Acervo por categoria/gênero ─────────────────────────
+export const AGRUPADOR_OPTIONS = [
+  { valor: "categoria", label: "Categoria" },
+  { valor: "genero", label: "Gênero" },
+];
+
+export function linhasParaExportAcervo(itens) {
+  return itens.map((item) => [
+    item.grupo,
+    item.quantidadeLivros,
+    item.quantidadeExemplares,
+    item.quantidadeDisponiveis,
+    item.quantidadeEmprestados,
+  ]);
+}
+
+export function colunasExportAcervo(agrupador) {
+  return [
+    agrupador === "genero" ? "Gênero" : "Categoria",
+    "Títulos",
+    "Exemplares (cópias)",
+    "Disponíveis",
+    "Emprestados",
+  ];
+}

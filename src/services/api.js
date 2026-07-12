@@ -485,6 +485,21 @@ export const getRelatorioEmprestimos = (filtros = {}) => {
   const query = params.toString();
   return apiFetch(`/relatorios/emprestimos${query ? `?${query}` : ""}`);
 };
+
+export const getRelatorioAtrasos = (filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== "" && valor !== "todos") {
+      params.set(chave, valor);
+    }
+  });
+  const query = params.toString();
+  return apiFetch(`/relatorios/atrasos${query ? `?${query}` : ""}`);
+};
+
+export const getRelatorioAcervo = (agrupador = "categoria") =>
+  apiFetch(`/relatorios/acervo?agrupador=${agrupador}`);
+
 export const getExemplares = () =>
   apiFetch("/exemplares");
 
