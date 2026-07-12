@@ -4,10 +4,10 @@ import { useAuth } from "./contexts/AuthContext";
 import AppShell from "./components/AppShell/AppShell";
 import Dashboard from "./pages/Admin/Dashboard/Dashboard";
 import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
-import TabelasAuxiliares from "./pages/Admin/CadastroLivros/components/TabelasAuxiliares/TabelasAuxiliares";
-import CategoriasTab from "./pages/Admin/CadastroLivros/components/TabelasAuxiliares/tabs/CategoriasTab";
-import GenerosTab from "./pages/Admin/CadastroLivros/components/TabelasAuxiliares/tabs/GenerosTab";
-import AutoresTab from "./pages/Admin/CadastroLivros/components/TabelasAuxiliares/tabs/AutoresTab";
+import CadastrosAuxiliares from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/CadastrosAuxiliares";
+import CategoriasTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/CategoriasTab";
+import GenerosTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/GenerosTab";
+import AutoresTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/AutoresTab";
 import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
 import Comunidade from "./pages/Admin/CadastroComunidade/Comunidade";
 import Emprestimos from "./pages/Admin/Emprestimos/Emprestimos";
@@ -101,7 +101,7 @@ function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="livros" element={<Livros />} />
-        <Route path="livros/tabelas-auxiliares" element={<TabelasAuxiliares />}>
+        <Route path="livros/cadastros-auxiliares" element={<CadastrosAuxiliares />}>
           <Route index element={<Navigate to="categorias" replace />} />
           <Route path="categorias" element={<CategoriasTab />} />
           <Route path="generos" element={<GenerosTab />} />

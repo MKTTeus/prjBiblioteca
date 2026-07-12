@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import "./TabelasAuxiliares.css";
+import "./CadastrosAuxiliares.css";
 
 const abas = [
   { id: "categorias", label: "Categorias" },
@@ -9,14 +9,14 @@ const abas = [
   { id: "autores", label: "Autores" },
 ];
 
-export default function TabelasAuxiliares() {
+export default function CadastrosAuxiliares() {
   const location = useLocation();
 
   return (
     <div className="tab-aux page-shell">
       <div className="cadastro-header">
         <div>
-          <h1>Tabelas Auxiliares</h1>
+          <h1>Cadastros Auxiliares</h1>
           <p>
             Gerencie os autores, gêneros e categorias usados no cadastro de livros — corrija
             nomes duplicados ou remova itens que não são mais usados.

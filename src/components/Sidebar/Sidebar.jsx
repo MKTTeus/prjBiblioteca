@@ -141,8 +141,8 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/admin/livros/tabelas-auxiliares" onClick={close}>
-                      Tabelas Auxiliares
+                    <NavLink to="/admin/livros/cadastros-auxiliares" onClick={close}>
+                      Cadastros Auxiliares
                     </NavLink>
                   </li>
                 </ul>
