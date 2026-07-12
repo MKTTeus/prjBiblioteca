@@ -117,6 +117,14 @@ class Categoria(BaseModel):
     catNome: str
 
 
+class CategoriaUpdate(BaseModel):
+    catNome: str = Field(min_length=1)
+
+
+class MesclarPayload(BaseModel):
+    idDestino: int
+
+
 class Configuracao(BaseModel):
     chave: str
     valor: str
@@ -127,6 +135,10 @@ class Configuracao(BaseModel):
 
 class Genero(BaseModel):
     genNome: str
+
+
+class GeneroUpdate(BaseModel):
+    genNome: str = Field(min_length=1)
 
 
 class ExemplarUpdate(BaseModel):

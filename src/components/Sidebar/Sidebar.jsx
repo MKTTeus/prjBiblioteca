@@ -28,6 +28,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
   const { isOpen, close } = useSidebar();
   const [openPessoas, setOpenPessoas] = useState(false);
   const [openEmprestimos, setOpenEmprestimos] = useState(false);
+  const [openLivros, setOpenLivros] = useState(false);
 
   const isAdmin = type === "admin" || (!type && user?.tipo === "admin");
 
@@ -115,15 +116,36 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             </li>
 
             {isAdmin && (
-              <li>
-                <NavLink
-                  to="/admin/livros"
-                  className={({ isActive }) => (isActive ? "active" : undefined)}
-                  onClick={close}
+              <li className="submenu-container">
+                <button
+                  type="button"
+                  className={`submenu-toggle ${openLivros ? "open" : ""}`}
+                  onClick={() => setOpenLivros((current) => !current)}
                 >
-                  <FiBook />
-                  <span>Livros</span>
-                </NavLink>
+                  <div className="submenu-left">
+                    <FiBook />
+                    <span>Livros</span>
+                  </div>
+                  <FiChevronDown className="arrow" />
+                </button>
+
+                <ul className={`submenu ${openLivros ? "open" : ""}`}>
+                  <li>
+                    <NavLink
+                      to="/admin/livros"
+                      end
+                      className={({ isActive }) => (isActive ? "active" : undefined)}
+                      onClick={close}
+                    >
+                      Catálogo (acervo)
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/admin/livros/tabelas-auxiliares" onClick={close}>
+                      Tabelas Auxiliares
+                    </NavLink>
+                  </li>
+                </ul>
               </li>
             )}
 

@@ -1,0 +1,160 @@
+.tab-aux-tabs.tabs {
+  display: flex;
+  justify-content: space-between;
+  background: var(--btn-muted-bg);
+  padding: 6px;
+  border-radius: 14px;
+  margin-bottom: 25px;
+}
+
+.tab-aux-tabs .tab-btn {
+  flex: 1;
+  text-align: center;
+  text-decoration: none;
+  color: var(--tabs-text);
+  padding: 10px 0;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.tab-aux-tabs .tab-btn:hover {
+  background: var(--btn-muted-hover);
+}
+
+.tab-aux-tabs .tab-btn.active {
+  background: var(--surface-bg);
+  color: var(--primary);
+  box-shadow: var(--shadow-soft);
+}
+
+@media (max-width: 720px) {
+  .tab-aux-tabs.tabs {
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .tab-aux-tabs .tab-btn {
+    flex: 0 0 auto;
+    min-width: 110px;
+  }
+}
+
+/* ==== Tabela de taxonomias (categorias / gêneros / autores) ==== */
+
+.taxonomia-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.taxonomia-tab-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-default);
+}
+
+.taxonomia-tab-header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.taxonomia-col-livros {
+  white-space: nowrap;
+}
+
+.taxonomia-badge-livros {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--btn-muted-bg);
+  color: var(--text-default);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.taxonomia-badge-livros.zero {
+  opacity: 0.6;
+}
+
+.taxonomia-acoes-cell .acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.taxonomia-inline-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.taxonomia-inline-edit input {
+  padding: 8px 10px;
+}
+
+.taxonomia-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.taxonomia-tab .icon-green { color: var(--success); }
+.taxonomia-tab .icon-red { color: var(--danger); }
+
+.taxonomia-tab .acoes-coluna,
+.taxonomia-tab .taxonomia-acoes-cell {
+  width: 130px;
+  min-width: 130px;
+  text-align: right;
+}
+
+.taxonomia-tab .acoes {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.taxonomia-tab .btn-edit,
+.taxonomia-tab .btn-delete,
+.taxonomia-tab .btn-status {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.taxonomia-tab .btn-edit {
+  background: var(--primary-muted);
+}
+
+.taxonomia-tab .btn-delete {
+  background: var(--status-danger-bg);
+}
+
+.taxonomia-tab .btn-status {
+  background: var(--main-bg);
+}
+
+.taxonomia-tab .btn-edit:disabled,
+.taxonomia-tab .btn-delete:disabled,
+.taxonomia-tab .btn-status:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

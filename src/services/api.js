@@ -197,6 +197,60 @@ export const getGeneros = () =>
 export const getEditoras = () =>
   apiFetch("/editoras");
 
+export const updateCategoria = (idCategoria, payload) =>
+  apiFetch(`/categorias/${idCategoria}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteCategoria = (idCategoria) =>
+  apiFetch(`/categorias/${idCategoria}`, {
+    method: "DELETE",
+  });
+
+export const getCategoriaUso = (idCategoria) =>
+  apiFetch(`/categorias/${idCategoria}/uso`);
+
+export const mesclarCategoria = (idCategoria, idDestino) =>
+  apiFetch(`/categorias/${idCategoria}/mesclar`, {
+    method: "POST",
+    body: JSON.stringify({ idDestino }),
+  });
+
+export const updateGenero = (idGenero, payload) =>
+  apiFetch(`/generos/${idGenero}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const deleteGenero = (idGenero) =>
+  apiFetch(`/generos/${idGenero}`, {
+    method: "DELETE",
+  });
+
+export const getGeneroUso = (idGenero) =>
+  apiFetch(`/generos/${idGenero}/uso`);
+
+export const mesclarGenero = (idGenero, idDestino) =>
+  apiFetch(`/generos/${idGenero}/mesclar`, {
+    method: "POST",
+    body: JSON.stringify({ idDestino }),
+  });
+
+export const deleteAutor = (idAutor) =>
+  apiFetch(`/autores/${idAutor}`, {
+    method: "DELETE",
+  });
+
+export const getAutorUso = (idAutor) =>
+  apiFetch(`/autores/${idAutor}/uso`);
+
+export const mesclarAutor = (idAutor, idDestino) =>
+  apiFetch(`/autores/${idAutor}/mesclar`, {
+    method: "POST",
+    body: JSON.stringify({ idDestino }),
+  });
+
 export const getConfiguracoes = () =>
   apiFetch("/configuracoes");
 
