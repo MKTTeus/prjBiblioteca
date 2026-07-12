@@ -158,11 +158,9 @@ def relatorio_atrasos(
     try:
         hoje = datetime.utcnow().date()
 
-        # Itens de empréstimo ainda ativos (sem devolução registrada)
-        itens_ativos = (
+        todos_itens = (
             supabase.table("MovimentacaoExemplar")
             .select("*")
-            .eq("itemStatus", "Ativo")
             .execute()
             .data
             or []
@@ -170,7 +168,9 @@ def relatorio_atrasos(
 
         # Só nos interessam os que já passaram da data prevista
         atrasados_raw = []
-        for it in itens_ativos:
+        for it in todos_itens:
+            if it.get("dataDevolucao"):
+                continue  # já foi devolvido, não é atraso
             data_prevista = it.get("dataPrevistaDevolucao")
             if not data_prevista:
                 continue
