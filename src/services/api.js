@@ -500,6 +500,9 @@ export const getRelatorioAtrasos = (filtros = {}) => {
 export const getRelatorioAcervo = (agrupador = "categoria") =>
   apiFetch(`/relatorios/acervo?agrupador=${agrupador}`);
 
+export const getRelatorioAcervoTitulos = (idLivros = []) =>
+  apiFetch(`/relatorios/acervo/titulos?ids=${idLivros.join(",")}`);
+
 export const getExemplares = () =>
   apiFetch("/exemplares");
 

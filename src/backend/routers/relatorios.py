@@ -310,27 +310,36 @@ def relatorio_acervo(
             if not grupo:
                 continue
             lid = v.get("idLivro")
-            grupos_por_livro.setdefault(lid, []).append(grupo.get(campo_nome, "Sem nome"))
+            grupos_por_livro.setdefault(lid, []).append(
+                (grupo.get(campo_id), grupo.get(campo_nome, "Sem nome"))
+            )
 
-        agregados = {}  # nome_grupo -> {"livros": set(idLivro), "exemplares": int, "disponiveis": int}
+        nome_sem_grupo = "Sem categoria" if agrupador == "categoria" else "Sem gênero"
+
+        # agregados agrupados por id do grupo (None = bucket "sem categoria/gênero"),
+        # guardando também os idLivro de cada grupo para permitir consultar os
+        # títulos depois (ver /relatorios/acervo/titulos)
+        agregados = {}  # id_grupo -> {"nome": str, "livros": set(idLivro), "exemplares": int, "disponiveis": int}
 
         for lid in livro_ids:
-            nomes = grupos_por_livro.get(lid) or ["Sem categoria" if agrupador == "categoria" else "Sem gênero"]
-            for nome in nomes:
-                bucket = agregados.setdefault(nome, {"livros": set(), "exemplares": 0, "disponiveis": 0})
+            pares = grupos_por_livro.get(lid) or [(None, nome_sem_grupo)]
+            for id_grupo, nome in pares:
+                bucket = agregados.setdefault(id_grupo, {"nome": nome, "livros": set(), "exemplares": 0, "disponiveis": 0})
                 bucket["livros"].add(lid)
                 bucket["exemplares"] += exemplares_por_livro.get(lid, 0)
                 bucket["disponiveis"] += disponiveis_por_livro.get(lid, 0)
 
         itens = [
             {
-                "grupo": nome,
+                "idGrupo": id_grupo,
+                "grupo": dados["nome"],
                 "quantidadeLivros": len(dados["livros"]),
                 "quantidadeExemplares": dados["exemplares"],
                 "quantidadeDisponiveis": dados["disponiveis"],
                 "quantidadeEmprestados": dados["exemplares"] - dados["disponiveis"],
+                "idLivros": sorted(dados["livros"]),
             }
-            for nome, dados in agregados.items()
+            for id_grupo, dados in agregados.items()
         ]
         itens.sort(key=lambda i: i["quantidadeLivros"], reverse=True)
 
@@ -344,3 +353,60 @@ def relatorio_acervo(
     except Exception as e:
         print("Erro relatorio acervo:", e)
         return {"itens": [], "resumo": {"totalLivros": 0, "totalExemplares": 0, "totalGrupos": 0}, "agrupador": agrupador}
+
+
+@router.get("/relatorios/acervo/titulos")
+def relatorio_acervo_titulos(
+    ids: str,  # idLivro separados por vírgula, ex.: "3,7,12"
+    admin=Depends(get_admin),
+):
+    """Detalha os títulos de um grupo específico (categoria ou gênero) do
+    relatório de acervo — usado pelo modal que abre ao clicar no nome do grupo."""
+    try:
+        livro_ids = [int(i) for i in ids.split(",") if i.strip().isdigit()]
+        if not livro_ids:
+            return {"itens": []}
+
+        consultas = [
+            lambda: supabase.table("Livro").select("idLivro, livTitulo, livISBN").in_("idLivro", livro_ids).execute(),
+            lambda: supabase.table("LivroAutor").select("idLivro, Autor(autNome)").in_("idLivro", livro_ids).execute(),
+            lambda: supabase.table("Exemplar").select("idLivro, exeLivStatus").in_("idLivro", livro_ids).execute(),
+        ]
+        resp_livros, resp_autores, resp_exemplares = executar_em_paralelo(*consultas)
+
+        livros = resp_livros.data or []
+        autores = resp_autores.data or []
+        exemplares = resp_exemplares.data or []
+
+        autores_por_livro = {}
+        for a in autores:
+            autor = a.get("Autor")
+            if not autor:
+                continue
+            autores_por_livro.setdefault(a["idLivro"], []).append(autor.get("autNome", "-"))
+
+        exemplares_por_livro = {}
+        disponiveis_por_livro = {}
+        for ex in exemplares:
+            lid = ex.get("idLivro")
+            exemplares_por_livro[lid] = exemplares_por_livro.get(lid, 0) + 1
+            if (ex.get("exeLivStatus") or "").lower() == "disponível":
+                disponiveis_por_livro[lid] = disponiveis_por_livro.get(lid, 0) + 1
+
+        itens = [
+            {
+                "idLivro": l["idLivro"],
+                "titulo": l.get("livTitulo", "-"),
+                "isbn": l.get("livISBN") or "-",
+                "autores": ", ".join(autores_por_livro.get(l["idLivro"], [])) or "-",
+                "quantidadeExemplares": exemplares_por_livro.get(l["idLivro"], 0),
+                "quantidadeDisponiveis": disponiveis_por_livro.get(l["idLivro"], 0),
+            }
+            for l in livros
+        ]
+        itens.sort(key=lambda i: i["titulo"])
+
+        return {"itens": itens}
+    except Exception as e:
+        print("Erro relatorio acervo titulos:", e)
+        return {"itens": []}

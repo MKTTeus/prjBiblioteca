@@ -260,6 +260,66 @@
   color: #b91c1c;
 }
 
+/* ── Link de grupo (categoria/gênero) que abre o modal de títulos ── */
+.rel-link-grupo {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rel-link-grupo:hover {
+  color: var(--primary-hover, var(--primary));
+}
+
+/* ── Modal de títulos do grupo ── */
+.rel-modal-titulos {
+  width: min(720px, 92vw) !important;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.rel-modal-titulo {
+  margin: 0 0 4px;
+  font-size: 20px;
+  padding-right: 24px;
+}
+
+.rel-modal-subtitulo {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.rel-modal-tabela-box {
+  overflow-x: auto;
+}
+
+.rel-modal-tabela-box table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rel-modal-tabela-box th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-default, #e2e8f0);
+}
+
+.rel-modal-tabela-box td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border-default, #e2e8f0);
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .rel-filtros {
     flex-direction: column;

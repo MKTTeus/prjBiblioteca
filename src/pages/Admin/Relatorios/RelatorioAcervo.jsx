@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { FiDownload, FiFileText, FiBook, FiLayers, FiLoader } from "react-icons/fi";
 
 import StatsCard from "../../../components/StatsCard/StatsCard";
-import { getRelatorioAcervo } from "../../../services/api";
+import Modal from "../../../components/Modal/Modal";
+import { getRelatorioAcervo, getRelatorioAcervoTitulos } from "../../../services/api";
 import { exportarPDF, exportarExcel } from "../../../utils/exportarArquivo";
 import {
   AGRUPADOR_OPTIONS,
@@ -21,6 +22,12 @@ export default function RelatorioAcervo() {
   const [resumo, setResumo] = useState({ totalLivros: 0, totalExemplares: 0, totalGrupos: 0 });
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
+
+  // Modal de títulos do grupo clicado
+  const [grupoSelecionado, setGrupoSelecionado] = useState(null); // { grupo, idLivros }
+  const [titulos, setTitulos] = useState([]);
+  const [carregandoTitulos, setCarregandoTitulos] = useState(false);
+  const [erroTitulos, setErroTitulos] = useState(null);
 
   async function buscar(agrupadorAtual = agrupador) {
     setCarregando(true);
@@ -47,6 +54,31 @@ export default function RelatorioAcervo() {
     buscar(valor);
   }
 
+  async function handleAbrirTitulos(item) {
+    setGrupoSelecionado(item);
+    setTitulos([]);
+    setErroTitulos(null);
+
+    if (!item.idLivros || item.idLivros.length === 0) return;
+
+    setCarregandoTitulos(true);
+    try {
+      const resultado = await getRelatorioAcervoTitulos(item.idLivros);
+      setTitulos(resultado.itens || []);
+    } catch (error) {
+      console.error(error);
+      setErroTitulos("Não foi possível carregar os títulos deste grupo.");
+    } finally {
+      setCarregandoTitulos(false);
+    }
+  }
+
+  function handleFecharTitulos() {
+    setGrupoSelecionado(null);
+    setTitulos([]);
+    setErroTitulos(null);
+  }
+
   const labelGrupo = agrupador === "genero" ? "Gênero" : "Categoria";
 
   function handleExportarPDF() {
@@ -71,7 +103,7 @@ export default function RelatorioAcervo() {
   return (
     <div className="rel-tab-content">
       <div className="rel-subheader">
-        <p>Quantidade de títulos e exemplares do acervo, agrupados por {labelGrupo.toLowerCase()}.</p>
+        <p>Quantidade de títulos e exemplares do acervo, agrupados por {labelGrupo.toLowerCase()}. Clique no nome para ver os títulos.</p>
 
         <div className="rel-export-actions">
           <button
@@ -142,8 +174,17 @@ export default function RelatorioAcervo() {
               </tr>
             ) : (
               itens.map((item) => (
-                <tr key={item.grupo}>
-                  <td>{item.grupo}</td>
+                <tr key={item.idGrupo ?? item.grupo}>
+                  <td>
+                    <button
+                      type="button"
+                      className="rel-link-grupo"
+                      onClick={() => handleAbrirTitulos(item)}
+                      title={`Ver títulos de ${item.grupo}`}
+                    >
+                      {item.grupo}
+                    </button>
+                  </td>
                   <td>{item.quantidadeLivros}</td>
                   <td>{item.quantidadeExemplares}</td>
                   <td>{item.quantidadeDisponiveis}</td>
@@ -154,6 +195,52 @@ export default function RelatorioAcervo() {
           </tbody>
         </table>
       </div>
+
+      <Modal show={!!grupoSelecionado} onClose={handleFecharTitulos} className="rel-modal-titulos">
+        <h2 className="rel-modal-titulo">
+          Títulos em "{grupoSelecionado?.grupo}"
+        </h2>
+        <p className="rel-modal-subtitulo">
+          {grupoSelecionado?.quantidadeLivros} título(s) · {grupoSelecionado?.quantidadeExemplares} exemplar(es)
+        </p>
+
+        {erroTitulos && <div className="rel-erro">{erroTitulos}</div>}
+
+        <div className="rel-modal-tabela-box">
+          <table>
+            <thead>
+              <tr>
+                <th>Título</th>
+                <th>Autor(es)</th>
+                <th>ISBN</th>
+                <th>Exemplares</th>
+                <th>Disponíveis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {carregandoTitulos ? (
+                <tr>
+                  <td colSpan="5" className="rel-empty">Carregando...</td>
+                </tr>
+              ) : titulos.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="rel-empty">Nenhum título encontrado.</td>
+                </tr>
+              ) : (
+                titulos.map((t) => (
+                  <tr key={t.idLivro}>
+                    <td>{t.titulo}</td>
+                    <td>{t.autores}</td>
+                    <td>{t.isbn}</td>
+                    <td>{t.quantidadeExemplares}</td>
+                    <td>{t.quantidadeDisponiveis}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Modal>
     </div>
   );
 }
