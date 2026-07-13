@@ -142,6 +142,7 @@ export default function BasicInfoSection({
   onCriarGenero,
   onCriarAutor,
   highlightedFields,
+  isbnFilledFields,
 }) {
   const [novaCategoria, setNovaCategoria] = useState("");
   const [novoGenero, setNovoGenero] = useState("");
@@ -1022,17 +1023,27 @@ export default function BasicInfoSection({
 
           <div className="ia-review-fields">
             {[
-              { campo: "titulo", label: "Título", valor: iaSugestao.titulo },
-              { campo: "subtitulo", label: "Subtítulo", valor: iaSugestao.subtitulo },
-              { campo: "autor_principal", label: "Autor", valor: iaSugestao.autor_principal },
-              { campo: "autor_ano_nascimento", label: "Ano de nascimento do autor", valor: iaSugestao.autor_ano_nascimento },
-              { campo: "autor_ano_falecimento", label: "Ano de falecimento do autor", valor: iaSugestao.autor_ano_falecimento },
-              { campo: "editora", label: "Editora", valor: iaSugestao.editora },
-              { campo: "ano_publicacao", label: "Ano", valor: iaSugestao.ano_publicacao },
-              { campo: "paginas", label: "Páginas", valor: iaSugestao.paginas },
-              { campo: "idioma", label: "Idioma", valor: iaSugestao.idioma },
-              { campo: "categoria_sugerida", label: "Categoria", valor: iaSugestao.categoria_sugerida },
-              { campo: "genero_sugerido", label: "Gênero", valor: iaSugestao.genero_sugerido },
+              { campo: "titulo", label: "Título", valor: iaSugestao.titulo, campoFormulario: "livTitulo" },
+              { campo: "subtitulo", label: "Subtítulo", valor: iaSugestao.subtitulo, campoFormulario: "livSubtitulo" },
+              { campo: "autor_principal", label: "Autor", valor: iaSugestao.autor_principal, campoFormulario: "livAutor" },
+              {
+                campo: "autor_ano_nascimento",
+                label: "Ano de nascimento do autor",
+                valor: iaSugestao.autor_ano_nascimento,
+                campoFormulario: "autorAnoNascimento",
+              },
+              {
+                campo: "autor_ano_falecimento",
+                label: "Ano de falecimento do autor",
+                valor: iaSugestao.autor_ano_falecimento,
+                campoFormulario: "autorAnoFalecimento",
+              },
+              { campo: "editora", label: "Editora", valor: iaSugestao.editora, campoFormulario: "livEditora" },
+              { campo: "ano_publicacao", label: "Ano", valor: iaSugestao.ano_publicacao, campoFormulario: "livAnoPublicacao" },
+              { campo: "paginas", label: "Páginas", valor: iaSugestao.paginas, campoFormulario: "livPaginas" },
+              { campo: "idioma", label: "Idioma", valor: iaSugestao.idioma, campoFormulario: "livIdioma" },
+              { campo: "categoria_sugerida", label: "Categoria", valor: iaSugestao.categoria_sugerida, campoFormulario: "idCategoria" },
+              { campo: "genero_sugerido", label: "Gênero", valor: iaSugestao.genero_sugerido, campoFormulario: "idGenero" },
               { campo: "faixa_etaria", label: "Faixa etária", valor: iaSugestao.faixa_etaria },
               {
                 campo: "palavras_chave",
@@ -1044,20 +1055,29 @@ export default function BasicInfoSection({
               { campo: "editora_cidade", label: "Cidade da editora", valor: iaSugestao.editora_cidade },
               { campo: "editora_estado", label: "Estado da editora", valor: iaSugestao.editora_estado },
               { campo: "editora_pais", label: "País da editora", valor: iaSugestao.editora_pais },
-              { campo: "descricao", label: "Descrição", valor: iaSugestao.descricao },
+              { campo: "descricao", label: "Descrição", valor: iaSugestao.descricao, campoFormulario: "livDescricao" },
             ]
               .filter((item) => item.valor)
-              .map((item) => (
-                <label key={item.campo} className="ia-review-field">
-                  <input
-                    type="checkbox"
-                    checked={!!iaCamposMarcados[item.campo]}
-                    onChange={() => handleToggleCampoIA(item.campo)}
-                  />
-                  <span className="ia-review-field-label">{item.label}</span>
-                  <span className="ia-review-field-valor">{item.valor}</span>
-                </label>
-              ))}
+              .map((item) => {
+                const jaPreenchidoPeloISBN =
+                  item.campoFormulario && isbnFilledFields?.has(item.campoFormulario);
+                return (
+                  <label key={item.campo} className="ia-review-field">
+                    <input
+                      type="checkbox"
+                      checked={!!iaCamposMarcados[item.campo]}
+                      onChange={() => handleToggleCampoIA(item.campo)}
+                    />
+                    <span className="ia-review-field-label">
+                      {item.label}
+                      {jaPreenchidoPeloISBN && (
+                        <span className="ia-review-field-isbn-tag">já preenchido via ISBN</span>
+                      )}
+                    </span>
+                    <span className="ia-review-field-valor">{item.valor}</span>
+                  </label>
+                );
+              })}
           </div>
 
           <div className="ia-review-actions">

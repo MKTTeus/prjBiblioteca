@@ -810,6 +810,18 @@
   color: var(--text-default);
   flex-shrink: 0;
   min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ia-review-field-isbn-tag {
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--btn-muted-bg);
+  border-radius: 999px;
+  padding: 1px 8px;
+  width: fit-content;
 }
 .ia-review-field-valor {
   color: var(--text-label);

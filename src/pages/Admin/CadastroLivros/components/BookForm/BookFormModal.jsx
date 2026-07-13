@@ -108,7 +108,6 @@ const CAMPOS_OPCIONAIS_PARA_CONFIRMACAO = [
   { key: "idCategoria", label: "Categoria" },
   { key: "idGenero", label: "Gênero" },
   { key: "exemplarISBN", label: "ISBN" },
-  { key: "livCDD", label: "CDD (Classificação Decimal de Dewey)" },
   { key: "livEdicao", label: "Edição" },
   { key: "livAlturaCm", label: "Altura (cm)" },
   { key: "livLarguraCm", label: "Largura (cm)" },
@@ -171,6 +170,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   // temporariamente para receber destaque visual na tela — some sozinho
   // depois de um tempo ou assim que o usuário edita o campo manualmente.
   const [highlightedFields, setHighlightedFields] = useState(() => new Set());
+  // Diferente do highlightedFields acima (que é só o "brilho" visual e some
+  // sozinho depois de alguns segundos), este aqui não expira — serve para o
+  // painel de sugestões da IA saber, a qualquer momento, quais campos já
+  // vieram do ISBN e evitar que o admin sobrescreva sem perceber.
+  const [isbnFilledFields, setIsbnFilledFields] = useState(() => new Set());
   const highlightTimeoutRef = useRef(null);
   const basicSectionRef = useRef(null);
   const publicationSectionRef = useRef(null);
@@ -210,6 +214,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   const carregarLivroEmEdicao = useCallback(async () => {
     setHighlightedFields(new Set());
+    setIsbnFilledFields(new Set());
 
     if (!bookToEdit) {
       setForm(DEFAULT_FORM);
@@ -316,6 +321,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       next.delete(name);
       return next;
     });
+    setIsbnFilledFields((prev) => {
+      if (!prev.has(name)) return prev;
+      const next = new Set(prev);
+      next.delete(name);
+      return next;
+    });
   }
 
   function handleExemplarChange(id, field, value) {
@@ -372,6 +383,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
     setForm(next);
     marcarCamposPreenchidosAutomaticamente(camposAlterados);
+    if (camposAlterados.length > 0) {
+      setIsbnFilledFields((prev) => new Set([...prev, ...camposAlterados]));
+    }
     addToast("Dados preenchidos a partir do ISBN! Campos alterados foram destacados.", "success");
   }
 
@@ -761,6 +775,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                     generos={generos}
                     autores={autores}
                     highlightedFields={highlightedFields}
+                    isbnFilledFields={isbnFilledFields}
                     onFieldChange={handleFieldChange}
                     onUpload={handleUpload}
                     onISBNAutoFill={handlePreencherISBN}
