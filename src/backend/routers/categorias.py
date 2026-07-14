@@ -12,10 +12,7 @@ def listar_categorias():
         res = supabase.table("Categoria").select("*").order("catNome").execute()
         categorias = res.data or []
         if categorias:
-            ids = [c["idCategoria"] for c in categorias]
-            links = (
-                supabase.table("LivroCategoria").select("idCategoria").in_("idCategoria", ids).execute().data or []
-            )
+            links = supabase.table("LivroCategoria").select("idCategoria").execute().data or []
             contagem = {}
             for l in links:
                 contagem[l["idCategoria"]] = contagem.get(l["idCategoria"], 0) + 1

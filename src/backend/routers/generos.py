@@ -12,10 +12,7 @@ def listar_generos():
         res = supabase.table("Genero").select("*").order("genNome").execute()
         generos = res.data or []
         if generos:
-            ids = [g["idGenero"] for g in generos]
-            links = (
-                supabase.table("LivroGenero").select("idGenero").in_("idGenero", ids).execute().data or []
-            )
+            links = supabase.table("LivroGenero").select("idGenero").execute().data or []
             contagem = {}
             for l in links:
                 contagem[l["idGenero"]] = contagem.get(l["idGenero"], 0) + 1

@@ -11,10 +11,7 @@ def listar_autores():
         res = supabase.table("Autor").select("*").order("autNome").execute()
         autores = res.data or []
         if autores:
-            ids = [a["idAutor"] for a in autores]
-            links = (
-                supabase.table("LivroAutor").select("idAutor").in_("idAutor", ids).execute().data or []
-            )
+            links = supabase.table("LivroAutor").select("idAutor").execute().data or []
             contagem = {}
             for l in links:
                 contagem[l["idAutor"]] = contagem.get(l["idAutor"], 0) + 1
