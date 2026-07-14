@@ -266,8 +266,9 @@ export default function CadastroLivros() {
               "{pendingDeleteBook?.livTitulo}"?
             </p>
             <p className="confirm-modal-fields-note">
-              Isso apaga o livro e seus exemplares do banco de dados. Só é possível quando o
-              livro nunca teve nenhum empréstimo/reserva — use "Desativar" caso contrário.
+              Este livro será excluído permanentemente e essa ação não pode ser desfeita. 
+              A exclusão só é permitida se ele nunca teve empréstimos ou reservas. 
+              Caso contrário, use <strong>Desativar</strong>.
             </p>
           </>
         }

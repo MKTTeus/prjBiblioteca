@@ -117,7 +117,7 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
     const novoValor = novasPartes
       .map((p, idx) => (idx === 0 ? p.trim() : ` ${p.trim()}`))
       .join(",");
-    onChangeTexto(novoValor);
+    onChangeTexto(`${novoValor}, `);
     onSelecionarSugestao(autor.autNome, indiceSegmentoAtual);
     inputRef.current?.focus();
   }
@@ -764,10 +764,15 @@ export default function BasicInfoSection({
     if (marcados.titulo && iaSugestao.titulo) atualizacoes.livTitulo = iaSugestao.titulo;
     if (marcados.subtitulo && iaSugestao.subtitulo) atualizacoes.livSubtitulo = iaSugestao.subtitulo;
     if (marcados.autor_principal && iaSugestao.autor_principal) {
-      const resolvido = await resolverAutor(iaSugestao.autor_principal);
+      // A IA pode retornar mais de um autor (ex.: "Fulano de Tal, Ciclana
+      // Pereira") — divide por vírgula e resolve/cria cada um, em vez de
+      // tratar a string inteira como um único nome de autor.
       const atuais = splitAutores(form.livAutor);
-      if (resolvido && !atuais.some((n) => normalizeText(n) === normalizeText(resolvido))) {
-        atuais.push(resolvido);
+      for (const nome of splitAutores(iaSugestao.autor_principal)) {
+        const resolvido = await resolverAutor(nome);
+        if (resolvido && !atuais.some((n) => normalizeText(n) === normalizeText(resolvido))) {
+          atuais.push(resolvido);
+        }
       }
       atualizacoes.livAutor = atuais.join(", ");
     }
@@ -962,7 +967,7 @@ export default function BasicInfoSection({
                 </div>
               )}
               <span className="isbn-hint-msg">
-                Para mais de um autor, separe os nomes por vírgula.
+                Selecione um ou mais autores da lista ou digite novos nomes separados por vírgula.
               </span>
 
               {/* Anos de nascimento/falecimento do autor — opcionais, usados

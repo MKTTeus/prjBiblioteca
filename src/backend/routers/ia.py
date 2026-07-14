@@ -26,7 +26,12 @@ COMPLETAR_LIVRO_SCHEMA = {
         "subtitulo": {"type": "string"},
         "autor_principal": {
             "type": "string",
-            "description": "Nome completo do autor principal, formato usual (não ABNT).",
+            "description": (
+                "Nome completo do(s) autor(es), formato usual (não ABNT). Se a obra tiver "
+                "mais de um autor, liste TODOS os nomes completos separados por vírgula "
+                "(ex.: 'Fulano de Tal, Ciclana Pereira') — nunca use 'e' ou '&' para "
+                "juntar nomes, pois cada nome vira um autor cadastrado separadamente."
+            ),
         },
         "autor_ano_nascimento": {
             "type": "integer",
@@ -170,6 +175,8 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
         "Na dúvida, omita e liste em campos_incertos.\n"
         "- O ano de nascimento/falecimento do autor só deve ser preenchido se você tem certeza de que é uma "
         "pessoa real e sabe esses dados biográficos — nunca invente ou estime. Na dúvida, omita.\n"
+        "- Se a obra tiver mais de um autor, coloque todos em autor_principal separados por vírgula "
+        "(ex.: 'Fulano de Tal, Ciclana Pereira'). NUNCA use 'e' ou '&' entre os nomes.\n"
         "- Liste em campos_incertos qualquer campo que você preencheu apenas por inferência, não por reconhecer "
         "a obra.\n"
         "- Responda APENAS com o JSON no schema fornecido, sem texto adicional."
