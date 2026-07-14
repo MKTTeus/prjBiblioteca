@@ -31,6 +31,83 @@ function normalizeText(value = "") {
     .trim();
 }
 
+// Distância de Levenshtein simples (número mínimo de inserções/remoções/
+// substituições para transformar uma string na outra) — usada para detectar
+// nomes de autor/gênero/categoria parecidos (não idênticos) e sugerir ao
+// admin reaproveitar o já cadastrado em vez de criar uma entrada duplicada.
+function levenshtein(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+
+  let anterior = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const atual = [i];
+    for (let j = 1; j <= n; j++) {
+      const custo = a[i - 1] === b[j - 1] ? 0 : 1;
+      atual[j] = Math.min(
+        anterior[j] + 1, // remoção
+        atual[j - 1] + 1, // inserção
+        anterior[j - 1] + custo // substituição
+      );
+    }
+    anterior = atual;
+  }
+  return anterior[n];
+}
+
+// Similaridade normalizada entre 0 (nada parecido) e 1 (idêntico), baseada
+// na distância de Levenshtein relativa ao tamanho do maior texto.
+function similaridadeTexto(a, b) {
+  const maxLen = Math.max(a.length, b.length);
+  if (maxLen === 0) return 1;
+  return 1 - levenshtein(a, b) / maxLen;
+}
+
+// Limiar a partir do qual dois nomes são considerados "parecidos o
+// suficiente" para valer a pena perguntar ao admin — calibrado para pegar
+// erros de digitação e pequenas variações (plural, acentuação já é
+// ignorada por normalizeText) sem disparar para nomes genuinamente
+// diferentes. Nomes muito curtos (< 3 caracteres) são ignorados, pois
+// qualquer palavra curta tende a "parecer" com outra por acaso.
+const LIMIAR_SIMILARIDADE = 0.72;
+
+// Procura, numa lista de categorias/gêneros/autores já cadastrados, um item
+// cujo nome seja parecido (mas não idêntico — isso já é tratado à parte)
+// com o nome informado. Devolve o item mais parecido acima do limiar, ou
+// null se nenhum for parecido o bastante.
+function encontrarNomeParecido(nome, lista, chaveNome) {
+  const nomeNormalizado = normalizeText(nome);
+  if (nomeNormalizado.length < 3) return null;
+
+  let melhorItem = null;
+  let melhorScore = 0;
+  for (const item of lista) {
+    if (item?.pendente) continue; // não compara com outra pendência ainda não salva
+    const itemNormalizado = normalizeText(item?.[chaveNome]);
+    if (!itemNormalizado || itemNormalizado === nomeNormalizado) continue;
+    const score = similaridadeTexto(nomeNormalizado, itemNormalizado);
+    if (score >= LIMIAR_SIMILARIDADE && score > melhorScore) {
+      melhorItem = item;
+      melhorScore = score;
+    }
+  }
+  return melhorItem;
+}
+
+const CAMPO_NOME_POR_TIPO = {
+  categoria: "catNome",
+  genero: "genNome",
+  autor: "autNome",
+};
+
+const LABEL_POR_TIPO = {
+  categoria: "categoria",
+  genero: "gênero",
+  autor: "autor",
+};
+
 const SECTIONS = [
   { id: "basic", label: "Informações Básicas" },
   { id: "publication", label: "Informações de Publicação" },
@@ -165,6 +242,14 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [confirmandoCamposEmBranco, setConfirmandoCamposEmBranco] = useState(false);
   const [camposEmBrancoDetectados, setCamposEmBrancoDetectados] = useState([]);
+
+  // Guarda a sugestão de possível duplicata (autor/gênero/categoria) em
+  // análise no momento, para exibir o modal de confirmação pedindo ao admin
+  // que decida entre reaproveitar o item já existente ou manter o novo.
+  const [duplicidadeSugestao, setDuplicidadeSugestao] = useState(null);
+  // Guarda a função "resolve" da Promise pendente enquanto o admin não
+  // responde ao modal de duplicidade (ver perguntarSubstituicao abaixo).
+  const duplicidadeResolverRef = useRef(null);
 
   // Campos preenchidos automaticamente pelo ISBN ou pela IA ficam aqui
   // temporariamente para receber destaque visual na tela — some sozinho
@@ -668,6 +753,31 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     }
   }
 
+  // Abre o modal perguntando se o admin quer reaproveitar um item já
+  // cadastrado (parecido com o que está sendo digitado/preenchido via ISBN
+  // ou IA) em vez de criar uma entrada nova possivelmente duplicada.
+  // Devolve uma Promise<boolean> que só resolve quando o admin responder —
+  // as funções handleCriarCategoria/Genero/Autor abaixo já são async e
+  // aguardam essa resposta antes de decidir o que fazer.
+  function perguntarSubstituicao(tipo, nomeDigitado, itemExistente) {
+    return new Promise((resolve) => {
+      duplicidadeResolverRef.current = resolve;
+      setDuplicidadeSugestao({ tipo, nomeDigitado, itemExistente });
+    });
+  }
+
+  function confirmarUsarExistenteNaDuplicidade() {
+    duplicidadeResolverRef.current?.(true);
+    duplicidadeResolverRef.current = null;
+    setDuplicidadeSugestao(null);
+  }
+
+  function manterNovoNaDuplicidade() {
+    duplicidadeResolverRef.current?.(false);
+    duplicidadeResolverRef.current = null;
+    setDuplicidadeSugestao(null);
+  }
+
   // Não cria nada no backend ainda — apenas registra a categoria como
   // "pendente" localmente, com um id temporário. Ela só é persistida de
   // verdade em resolverPendencias(), disparado ao clicar em Salvar/Finalizar.
@@ -677,6 +787,18 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       (item) => normalizeText(item.catNome) === normalizeText(nomeLimpo)
     );
     if (existente) return existente;
+
+    // Antes de criar algo novo, verifica se já existe uma categoria com
+    // nome parecido (possível duplicata/erro de digitação) e, se houver,
+    // pergunta ao admin se prefere reaproveitar a já cadastrada.
+    const parecida = encontrarNomeParecido(nomeLimpo, categorias, "catNome");
+    if (parecida) {
+      const usarExistente = await perguntarSubstituicao("categoria", nomeLimpo, parecida);
+      if (usarExistente) {
+        addToast(`Usando a categoria já cadastrada "${parecida.catNome}"`, "success");
+        return parecida;
+      }
+    }
 
     const idCategoria = pendingIdFor(nomeLimpo);
     const jaPendente = categorias.find((item) => item.idCategoria === idCategoria);
@@ -695,6 +817,15 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       (item) => normalizeText(item.genNome) === normalizeText(nomeLimpo)
     );
     if (existente) return existente;
+
+    const parecido = encontrarNomeParecido(nomeLimpo, generos, "genNome");
+    if (parecido) {
+      const usarExistente = await perguntarSubstituicao("genero", nomeLimpo, parecido);
+      if (usarExistente) {
+        addToast(`Usando o gênero já cadastrado "${parecido.genNome}"`, "success");
+        return parecido;
+      }
+    }
 
     const idGenero = pendingIdFor(nomeLimpo);
     const jaPendente = generos.find((item) => item.idGenero === idGenero);
@@ -716,6 +847,15 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       (item) => normalizeText(item.autNome) === normalizeText(nomeLimpo)
     );
     if (existente) return existente;
+
+    const parecido = encontrarNomeParecido(nomeLimpo, autores, "autNome");
+    if (parecido) {
+      const usarExistente = await perguntarSubstituicao("autor", nomeLimpo, parecido);
+      if (usarExistente) {
+        addToast(`Usando o autor já cadastrado "${parecido.autNome}"`, "success");
+        return parecido;
+      }
+    }
 
     const pendente = { autNome: nomeLimpo, pendente: true };
     setAutores((prev) => [...prev, pendente]);
@@ -866,6 +1006,30 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         confirming={loading}
         confirmText="Salvar mesmo assim"
         cancelText="Revisar campos"
+      />
+
+      <ConfirmModal
+        show={Boolean(duplicidadeSugestao)}
+        title="Possível duplicata encontrada"
+        message={
+          duplicidadeSugestao && (
+            <>
+              <p>
+                Já existe {duplicidadeSugestao.tipo === "autor" ? "um" : "uma"}{" "}
+                {LABEL_POR_TIPO[duplicidadeSugestao.tipo]} cadastrado(a) chamado(a){" "}
+                <strong>
+                  "{duplicidadeSugestao.itemExistente[CAMPO_NOME_POR_TIPO[duplicidadeSugestao.tipo]]}"
+                </strong>
+                , parecido com "{duplicidadeSugestao.nomeDigitado}".
+              </p>
+              <p>Deseja substituir pelo já existente em vez de criar um novo cadastro?</p>
+            </>
+          )
+        }
+        onConfirm={confirmarUsarExistenteNaDuplicidade}
+        onCancel={manterNovoNaDuplicidade}
+        confirmText="Sim, usar o existente"
+        cancelText="Não, manter novo"
       />
     </div>
   );
