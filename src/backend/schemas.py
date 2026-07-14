@@ -45,7 +45,7 @@ class Livro(BaseModel):
     ediEstado: Optional[str] = None
     ediPais: Optional[str] = "Brasil"
     # Campos relacionais — não são colunas de Livro, tratados no router
-    livAutor: Optional[str] = None       # → tabela Autor + LivroAutor
+    livAutor: Optional[str] = None       # → tabela Autor + LivroAutor (aceita vários nomes separados por vírgula)
     autorAnoNascimento: Optional[int] = None  # → coluna Autor.autAnoNascimento
     autorAnoFalecimento: Optional[int] = None # → coluna Autor.autAnoFalecimento
     livEditora: Optional[str] = None     # → tabela Editora (FK idEditora)

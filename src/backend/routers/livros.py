@@ -39,9 +39,12 @@ def enriquecer_livros(livros: list) -> list:
     resp_autor, resp_categoria, resp_genero, *resto = executar_em_paralelo(*consultas)
 
     la = resp_autor.data or []
-    autor_map = {r["idLivro"]: r["Autor"]["autNome"] for r in la if r.get("Autor")}
-    autor_nasc_map = {r["idLivro"]: r["Autor"].get("autAnoNascimento") for r in la if r.get("Autor")}
-    autor_falec_map = {r["idLivro"]: r["Autor"].get("autAnoFalecimento") for r in la if r.get("Autor")}
+    autores_por_livro: dict[int, list[dict]] = {}
+    for r in la:
+        autor = r.get("Autor")
+        if not autor:
+            continue
+        autores_por_livro.setdefault(r["idLivro"], []).append(autor)
 
     lc = resp_categoria.data or []
     cat_map    = {r["idLivro"]: r["Categoria"]["catNome"]    for r in lc if r.get("Categoria")}
@@ -66,11 +69,17 @@ def enriquecer_livros(livros: list) -> list:
     resultado = []
     for l in livros:
         lid = l["idLivro"]
+        autores_livro = autores_por_livro.get(lid, [])
         resultado.append({
             **l,
-            "livAutor":    autor_map.get(lid, ""),
-            "autorAnoNascimento": autor_nasc_map.get(lid),
-            "autorAnoFalecimento": autor_falec_map.get(lid),
+            # livAutor continua sendo uma string (compatibilidade com o front
+            # e com a ficha catalográfica) — quando há mais de um autor, os
+            # nomes vêm separados por vírgula. A lista completa (com id e
+            # anos de cada autor) vai em "autores", para quem precisar dela.
+            "livAutor":    ", ".join(a["autNome"] for a in autores_livro),
+            "autores":     autores_livro,
+            "autorAnoNascimento": autores_livro[0].get("autAnoNascimento") if autores_livro else None,
+            "autorAnoFalecimento": autores_livro[0].get("autAnoFalecimento") if autores_livro else None,
             "livEditora":  ed_map.get(l.get("idEditora"), ""),
             "livCategoria": cat_map.get(lid, ""),
             "livGenero":    gen_map.get(lid, ""),
@@ -111,6 +120,38 @@ def resolver_autor(nome_autor: str, ano_nascimento: int | None = None, ano_falec
         payload["autAnoFalecimento"] = ano_falecimento
     novo = supabase.table("Autor").insert(payload).execute()
     return novo.data[0]["idAutor"]
+
+
+def resolver_autores_multiplos(nomes_autor: str | None, ano_nascimento: int | None = None, ano_falecimento: int | None = None) -> list[int]:
+    """Aceita o mesmo campo de texto do formulário (livAutor), mas agora
+    permite vários nomes separados por vírgula — ex.: "J.R.R. Tolkien,
+    Christopher Tolkien" — já que um livro pode ter vários autores (relação
+    M:N via LivroAutor). Busca ou cria cada um e retorna a lista de idAutor,
+    na mesma ordem em que foram digitados, sem duplicatas.
+
+    Ano de nascimento/falecimento só é aplicado ao primeiro nome da lista,
+    porque o formulário só expõe esses dois campos para um único autor.
+    """
+    if not nomes_autor:
+        return []
+
+    nomes = [n.strip() for n in nomes_autor.split(",")]
+    nomes = [n for n in nomes if n]
+
+    ids: list[int] = []
+    vistos: set[str] = set()
+    for indice, nome in enumerate(nomes):
+        chave = nome.lower()
+        if chave in vistos:
+            continue
+        vistos.add(chave)
+        if indice == 0:
+            id_autor = resolver_autor(nome, ano_nascimento, ano_falecimento)
+        else:
+            id_autor = resolver_autor(nome)
+        if id_autor:
+            ids.append(id_autor)
+    return ids
 
 
 def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, pais: str = None) -> int | None:
@@ -339,10 +380,13 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
             raise HTTPException(status_code=500, detail="Não foi possível criar o livro")
         id_livro = livro_resp.data[0]["idLivro"]
 
-        # Autor → LivroAutor
-        id_autor = resolver_autor(nome_autor, autor_ano_nasc, autor_ano_falec)
-        if id_autor:
-            supabase.table("LivroAutor").insert({"idLivro": id_livro, "idAutor": id_autor}).execute()
+        # Autor(es) → LivroAutor (um livro pode ter vários autores; o campo
+        # aceita nomes separados por vírgula)
+        ids_autores = resolver_autores_multiplos(nome_autor, autor_ano_nasc, autor_ano_falec)
+        if ids_autores:
+            supabase.table("LivroAutor").insert(
+                [{"idLivro": id_livro, "idAutor": id_autor} for id_autor in ids_autores]
+            ).execute()
 
         # Categoria → LivroCategoria
         if id_categoria:
@@ -414,12 +458,15 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         if not resp.data:
             raise HTTPException(status_code=404, detail="Livro não encontrado")
 
-        # Autor
+        # Autor(es) — mesmo tratamento da criação: aceita vários nomes
+        # separados por vírgula e substitui todos os vínculos do livro.
         if nome_autor is not None:
-            id_autor = resolver_autor(nome_autor, autor_ano_nasc, autor_ano_falec)
-            if id_autor:
+            ids_autores = resolver_autores_multiplos(nome_autor, autor_ano_nasc, autor_ano_falec)
+            if ids_autores:
                 supabase.table("LivroAutor").delete().eq("idLivro", idLivro).execute()
-                supabase.table("LivroAutor").insert({"idLivro": idLivro, "idAutor": id_autor}).execute()
+                supabase.table("LivroAutor").insert(
+                    [{"idLivro": idLivro, "idAutor": id_autor} for id_autor in ids_autores]
+                ).execute()
 
         # Categoria
         if id_categoria is not None:

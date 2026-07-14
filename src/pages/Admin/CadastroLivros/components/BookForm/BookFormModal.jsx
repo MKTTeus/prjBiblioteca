@@ -364,6 +364,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     setSeHouver("livCapaURL", dados.livCapaURL);
     setSeHouver("livDescricao", dados.livDescricao);
     setSeHouver("livIdioma", dados.livIdioma);
+    setSeHouver("livPalavrasChave", dados.livPalavrasChave);
+    setSeHouver("ediCidade", dados.ediCidade);
+    setSeHouver("ediEstado", dados.ediEstado);
+    setSeHouver("ediPais", dados.ediPais);
     setSeHouver("exemplarISBN", dados.exemplarISBN);
 
     if (dados.idCategoria !== "" && dados.idCategoria !== null && dados.idCategoria !== undefined) {

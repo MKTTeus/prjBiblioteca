@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
 import { HiOutlineQrCode, HiOutlineMagnifyingGlass, HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
@@ -60,6 +60,101 @@ function AutoTag({ name, highlightedFields }) {
   return <span className="field-autofilled-tag">✨ auto</span>;
 }
 
+// O campo de autor guarda uma única string, mas um livro pode ter vários
+// autores — nomes ficam separados por vírgula (ex.: "J.K. Rowling, Mary
+// GrandPré"). Estas duas funções centralizam esse formato.
+function splitAutores(texto) {
+  return String(texto || "")
+    .split(",")
+    .map((nome) => nome.trim())
+    .filter(Boolean);
+}
+
+/**
+ * AutorMultiInput
+ *
+ * Campo de texto livre para o(s) autor(es) do livro — permite digitar vários
+ * nomes separados por vírgula (relação M:N com LivroAutor). Mantém uma lista
+ * de sugestões dos autores já cadastrados, filtrada pelo trecho depois da
+ * última vírgula, para reduzir cadastros duplicados por causa de digitação.
+ *
+ * onSelecionarSugestao(nomeEscolhido, indiceSegmento) é chamado ao clicar
+ * numa sugestão — indiceSegmento === 0 indica que é o primeiro autor da
+ * lista, usado pelo formulário pra também preencher nascimento/falecimento.
+ */
+function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickFora(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickFora);
+    return () => document.removeEventListener("mousedown", handleClickFora);
+  }, []);
+
+  const partes = String(value || "").split(",");
+  const indiceSegmentoAtual = partes.length - 1;
+  const segmentoAtual = normalizeText(partes[indiceSegmentoAtual]);
+
+  const sugestoes = useMemo(() => {
+    const disponiveis = autores.filter(
+      (item) => !splitAutores(value).some((nome) => normalizeText(nome) === normalizeText(item.autNome))
+    );
+    if (!segmentoAtual) return disponiveis.slice(0, 8);
+    return disponiveis
+      .filter((item) => normalizeText(item.autNome).includes(segmentoAtual))
+      .slice(0, 8);
+  }, [autores, segmentoAtual, value]);
+
+  function handleSelecionar(autor) {
+    const novasPartes = [...partes];
+    novasPartes[indiceSegmentoAtual] = ` ${autor.autNome}`;
+    const novoValor = novasPartes
+      .map((p, idx) => (idx === 0 ? p.trim() : ` ${p.trim()}`))
+      .join(",");
+    onChangeTexto(novoValor);
+    onSelecionarSugestao(autor.autNome, indiceSegmentoAtual);
+    inputRef.current?.focus();
+  }
+
+  return (
+    <div className="searchable-select" ref={containerRef}>
+      <input
+        ref={inputRef}
+        type="text"
+        className="searchable-select-input"
+        value={value || ""}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => onChangeTexto(e.target.value)}
+        onBlur={() => setOpen(false)}
+        placeholder={placeholder}
+        autoComplete="off"
+      />
+      {open && sugestoes.length > 0 && (
+        <ul className="searchable-select-list">
+          {sugestoes.map((autor) => (
+            <li
+              key={autor.idAutor}
+              className="searchable-select-option"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelecionar(autor);
+              }}
+            >
+              {autor.autNome}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export function buildISBNAutoFillData({ livro, categorias = [], generos = [], autores = [], isbn = "" }) {
   const authors = Array.isArray(livro?.authors)
     ? livro.authors
@@ -89,10 +184,44 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
   const matchingCategoria = findMatchingOption(categorias, categoryName, "catNome");
   const matchingGenero = findMatchingOption(generos, categoryName, "genNome");
 
+  // Um livro pode ter vários autores (BrasilAPI e Open Library normalmente
+  // trazem a lista completa) — cada nome já tenta bater com um autor já
+  // cadastrado, senão mantém como veio da fonte. Quem consome isso decide
+  // como juntar/criar cada um (ver resolverAutores em BasicInfoSection).
+  const autoresNomes = authors.map(
+    (nome) => findMatchingOption(autores, nome, "autNome")?.autNome || nome
+  );
+
+  // Palavras-chave: BrasilAPI e Open Library trazem em "subjects", Google
+  // Books em "categories" — juntamos as duas listas (sem repetir), já que
+  // ambas servem igualmente bem como palavras-chave do livro.
+  const palavrasChave = Array.from(new Set([...subjects, ...categories])).slice(0, 10);
+
+  // Local da editora: só a BrasilAPI traz isso de forma estruturada, no
+  // formato "CIDADE, UF" (ex.: "SÃO PAULO, SP") — como essa fonte agrega
+  // registros nacionais (CBL/Mercado Editorial), o país é sempre Brasil
+  // quando esse campo vem preenchido. Open Library às vezes traz a cidade
+  // solta em "publish_places", sem estado/país.
+  let editoraCidade = "";
+  let editoraEstado = "";
+  let editoraPais = "";
+  if (typeof livro?.location === "string" && livro.location.trim()) {
+    const partes = livro.location.split(",").map((p) => p.trim()).filter(Boolean);
+    editoraCidade = partes[0] || "";
+    editoraEstado = partes[1] || "";
+    editoraPais = "Brasil";
+  } else if (Array.isArray(livro?.publish_places) && livro.publish_places.length > 0) {
+    const local = String(livro.publish_places[0] || "");
+    const partes = local.split(",").map((p) => p.trim()).filter(Boolean);
+    editoraCidade = partes[0] || "";
+    editoraEstado = partes[1] || "";
+  }
+
   return {
     livTitulo: livro?.title || livro?.livTitulo || "",
     livSubtitulo: livro?.subtitle || livro?.livSubtitulo || "",
-    livAutor: matchingAutor?.autNome || authorName,
+    livAutor: autoresNomes.length > 0 ? autoresNomes.join(", ") : matchingAutor?.autNome || authorName,
+    autoresNomes,
     livEditora: publisher || "",
     livAnoPublicacao: livro?.publish_date
       ? String(livro.publish_date).replace(/\D/g, "").slice(0, 4)
@@ -119,6 +248,10 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
       livro?.cover_url ||
       "",
     livDescricao: livro?.description || livro?.synopsis || "",
+    livPalavrasChave: palavrasChave.join(", "),
+    ediCidade: editoraCidade,
+    ediEstado: editoraEstado,
+    ediPais: editoraPais,
     idCategoria: matchingCategoria?.idCategoria ?? "",
     idGenero: matchingGenero?.idGenero ?? "",
     categoriaNome: categoryName,
@@ -264,6 +397,30 @@ export default function BasicInfoSection({
     [autores, onCriarAutor]
   );
 
+  // Um livro pode ter vários autores — aceita tanto um array (vindo do ISBN,
+  // que às vezes já traz a lista completa) quanto uma string com nomes
+  // separados por vírgula (o que o campo do formulário aceita digitado à
+  // mão), resolve/cria cada um e devolve tudo já junto em uma única string.
+  const resolverAutores = useCallback(
+    async (nomesAutor) => {
+      const lista = Array.isArray(nomesAutor)
+        ? nomesAutor
+        : String(nomesAutor || "").split(",");
+      const nomesLimpos = lista.map((n) => n.trim()).filter(Boolean);
+      if (nomesLimpos.length === 0) return "";
+
+      const resolvidos = [];
+      for (const nome of nomesLimpos) {
+        const resolvido = await resolverAutor(nome);
+        if (resolvido && !resolvidos.some((r) => normalizeText(r) === normalizeText(resolvido))) {
+          resolvidos.push(resolvido);
+        }
+      }
+      return resolvidos.join(", ");
+    },
+    [resolverAutor]
+  );
+
   const buscarPorISBN = useCallback(
     async (isbn) => {
       const isbnLimpo = isbn.replace(/[^0-9X]/gi, "");
@@ -337,16 +494,19 @@ export default function BasicInfoSection({
           ? await buscarAnosAutorOpenLibrary(dados.autorKey)
           : { nascimento: "", falecimento: "" };
 
-        // Reaproveita o autor já cadastrado pelo nome ou cria uma entrada
-        // pendente (mesmo mecanismo do botão "+ Novo autor" e do que já é
-        // feito aqui para categoria/gênero), para o nome aparecer selecionado.
-        const autorNome = await resolverAutor(dados.autorNome);
+        // Reaproveita os autores já cadastrados pelo nome ou cria uma entrada
+        // pendente pra cada um (mesmo mecanismo do botão "+ Novo autor" e do
+        // que já é feito aqui para categoria/gênero) — um livro pode ter
+        // vários autores, então resolve a lista inteira, não só o primeiro.
+        const autorTexto = await resolverAutores(
+          dados.autoresNomes && dados.autoresNomes.length > 0 ? dados.autoresNomes : dados.autorNome
+        );
         const categoriaId = await resolverCategoria(dados.categoriaNome);
         const generoId = await resolverGenero(dados.generoNome);
 
         onISBNAutoFill({
           ...dados,
-          livAutor: autorNome,
+          livAutor: autorTexto,
           autorAnoNascimento: anosAutor.nascimento,
           autorAnoFalecimento: anosAutor.falecimento,
           idCategoria: categoriaId,
@@ -359,7 +519,7 @@ export default function BasicInfoSection({
         setBuscandoISBN(false);
       }
     },
-    [onISBNAutoFill, resolverAutor, resolverCategoria, resolverGenero, autores]
+    [onISBNAutoFill, resolverAutores, resolverCategoria, resolverGenero, autores]
   );
 
   const handleISBNDetectado = useCallback(
@@ -505,18 +665,23 @@ export default function BasicInfoSection({
     if (!nome) return;
     const criado = await onCriarAutor(nome);
     if (criado) {
-      onFieldChange("livAutor", criado.autNome);
+      const atuais = splitAutores(form.livAutor);
+      if (!atuais.some((n) => normalizeText(n) === normalizeText(criado.autNome))) {
+        atuais.push(criado.autNome);
+      }
+      onFieldChange("livAutor", atuais.join(", "));
       setNovoAutor("");
       setCriandoAutor(false);
     }
   }
 
-  // Ao selecionar um autor já cadastrado, preenche os campos de ano de
-  // nascimento/falecimento com o que já está salvo pra esse autor (o
-  // bibliotecário pode ajustar ou completar o falecimento depois).
+  // Ao selecionar um autor já cadastrado (num dos nomes separados por
+  // vírgula), preenche os campos de ano de nascimento/falecimento com o que
+  // já está salvo pra esse autor — mas só quando é o primeiro nome da
+  // lista, já que o formulário só tem esses dois campos pra um autor.
   const handleSelecionarAutor = useCallback(
-    (nomeAutor) => {
-      onFieldChange("livAutor", nomeAutor);
+    (nomeAutor, indiceSegmento) => {
+      if (indiceSegmento !== 0) return;
       const encontrado = autores.find(
         (item) => normalizeText(item.autNome) === normalizeText(nomeAutor)
       );
@@ -599,7 +764,12 @@ export default function BasicInfoSection({
     if (marcados.titulo && iaSugestao.titulo) atualizacoes.livTitulo = iaSugestao.titulo;
     if (marcados.subtitulo && iaSugestao.subtitulo) atualizacoes.livSubtitulo = iaSugestao.subtitulo;
     if (marcados.autor_principal && iaSugestao.autor_principal) {
-      atualizacoes.livAutor = await resolverAutor(iaSugestao.autor_principal);
+      const resolvido = await resolverAutor(iaSugestao.autor_principal);
+      const atuais = splitAutores(form.livAutor);
+      if (resolvido && !atuais.some((n) => normalizeText(n) === normalizeText(resolvido))) {
+        atuais.push(resolvido);
+      }
+      atualizacoes.livAutor = atuais.join(", ");
     }
     if (marcados.autor_ano_nascimento && iaSugestao.autor_ano_nascimento) {
       atualizacoes.autorAnoNascimento = String(iaSugestao.autor_ano_nascimento);
@@ -647,7 +817,7 @@ export default function BasicInfoSection({
 
     setIaSugestao(null);
     setIaCamposMarcados({});
-  }, [iaSugestao, iaCamposMarcados, resolverAutor, resolverCategoria, resolverGenero, onFieldChange, onCamposAutoFillIA]);
+  }, [iaSugestao, iaCamposMarcados, resolverAutor, resolverCategoria, resolverGenero, onFieldChange, onCamposAutoFillIA, form.livAutor]);
 
   return (
     <>
@@ -774,12 +944,12 @@ export default function BasicInfoSection({
                 </div>
               ) : (
                 <div className="inline-select-row">
-                  <SearchableSelect
-                    name="livAutor"
+                  <AutorMultiInput
                     value={form.livAutor}
-                    options={autores.map((aut) => ({ value: aut.autNome, label: aut.autNome }))}
-                    onChange={handleSelecionarAutor}
-                    placeholder="Selecione um autor"
+                    autores={autores}
+                    onChangeTexto={(texto) => onFieldChange("livAutor", texto)}
+                    onSelecionarSugestao={handleSelecionarAutor}
+                    placeholder="Ex.: J.K. Rowling, Mary GrandPré"
                   />
                   <button
                     type="button"
@@ -791,9 +961,13 @@ export default function BasicInfoSection({
                   </button>
                 </div>
               )}
+              <span className="isbn-hint-msg">
+                Para mais de um autor, separe os nomes por vírgula.
+              </span>
 
               {/* Anos de nascimento/falecimento do autor — opcionais, usados
-                  na ficha catalográfica ao lado do nome (ex.: "1892-1973"). */}
+                  na ficha catalográfica ao lado do nome (ex.: "1892-1973").
+                  Quando há mais de um autor, referem-se só ao primeiro da lista. */}
               <div className="editor-field-grid" style={{ marginTop: "8px", gridTemplateColumns: "1fr 1fr" }}>
                 <label className={fieldClass("autorAnoNascimento", highlightedFields)}>
                   <span>Ano de nascimento <AutoTag name="autorAnoNascimento" highlightedFields={highlightedFields} /></span>
@@ -1049,12 +1223,13 @@ export default function BasicInfoSection({
                 campo: "palavras_chave",
                 label: "Palavras-chave",
                 valor: iaSugestao.palavras_chave?.length > 0 ? iaSugestao.palavras_chave.join(", ") : "",
+                campoFormulario: "livPalavrasChave",
               },
               { campo: "edicao", label: "Edição", valor: iaSugestao.edicao ? `${iaSugestao.edicao}ª ed.` : "" },
               { campo: "ilustrado", label: "Ilustrado", valor: iaSugestao.ilustrado === true ? "Sim" : "" },
-              { campo: "editora_cidade", label: "Cidade da editora", valor: iaSugestao.editora_cidade },
-              { campo: "editora_estado", label: "Estado da editora", valor: iaSugestao.editora_estado },
-              { campo: "editora_pais", label: "País da editora", valor: iaSugestao.editora_pais },
+              { campo: "editora_cidade", label: "Cidade da editora", valor: iaSugestao.editora_cidade, campoFormulario: "ediCidade" },
+              { campo: "editora_estado", label: "Estado da editora", valor: iaSugestao.editora_estado, campoFormulario: "ediEstado" },
+              { campo: "editora_pais", label: "País da editora", valor: iaSugestao.editora_pais, campoFormulario: "ediPais" },
               { campo: "descricao", label: "Descrição", valor: iaSugestao.descricao, campoFormulario: "livDescricao" },
             ]
               .filter((item) => item.valor)
