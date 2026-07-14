@@ -182,12 +182,6 @@ def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, 
 
 # ── Endpoints auxiliares ──────────────────────────────────────────
 
-@router.get("/autores")
-def listar_autores():
-    res = supabase.table("Autor").select("idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento").order("autNome").execute()
-    return res.data or []
-
-
 @router.get("/editoras")
 def listar_editoras():
     res = supabase.table("Editora").select("idEditora, ediNome").order("ediNome").execute()
