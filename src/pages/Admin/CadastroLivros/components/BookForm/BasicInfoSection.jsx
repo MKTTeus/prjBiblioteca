@@ -86,6 +86,10 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
   const [open, setOpen] = useState(false);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
+  // Guarda o id do setTimeout usado pra fechar a lista no blur, pra poder
+  // cancelar quando o fechamento foi só um efeito colateral de clicar numa
+  // sugestão (ver handleBlur/handleSelecionar abaixo).
+  const closeTimeoutRef = useRef(null);
 
   useEffect(() => {
     function handleClickFora(e) {
@@ -94,7 +98,10 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
       }
     }
     document.addEventListener("mousedown", handleClickFora);
-    return () => document.removeEventListener("mousedown", handleClickFora);
+    return () => {
+      document.removeEventListener("mousedown", handleClickFora);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
   }, []);
 
   const partes = String(value || "").split(",");
@@ -111,7 +118,15 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
       .slice(0, 8);
   }, [autores, segmentoAtual, value]);
 
+  function handleBlur() {
+    closeTimeoutRef.current = setTimeout(() => setOpen(false), 150);
+  }
+
   function handleSelecionar(autor) {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
     const novasPartes = [...partes];
     novasPartes[indiceSegmentoAtual] = ` ${autor.autNome}`;
     const novoValor = novasPartes
@@ -119,6 +134,7 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
       .join(",");
     onChangeTexto(`${novoValor}, `);
     onSelecionarSugestao(autor.autNome, indiceSegmentoAtual);
+    setOpen(true);
     inputRef.current?.focus();
   }
 
@@ -131,12 +147,15 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
         value={value || ""}
         onFocus={() => setOpen(true)}
         onChange={(e) => onChangeTexto(e.target.value)}
-        onBlur={() => setOpen(false)}
+        onBlur={handleBlur}
         placeholder={placeholder}
         autoComplete="off"
       />
       {open && sugestoes.length > 0 && (
-        <ul className="searchable-select-list">
+        <ul
+          className="searchable-select-list"
+          onMouseDown={(e) => e.preventDefault()}
+        >
           {sugestoes.map((autor) => (
             <li
               key={autor.idAutor}
