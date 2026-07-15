@@ -1270,7 +1270,7 @@ export default function BasicInfoSection({
                     <span className="ia-review-field-label">
                       {item.label}
                       {jaPreenchidoPeloISBN && (
-                        <span className="ia-review-field-isbn-tag">já preenchido via ISBN</span>
+                        <span className="ia-review-field-isbn-tag">via ISBN</span>
                       )}
                     </span>
                     <span className="ia-review-field-valor">{item.valor}</span>

@@ -165,6 +165,28 @@ const DEFAULT_FORM = {
   ediPais: "Brasil",
 };
 
+// Campos de texto que podem vir de uma busca por ISBN (usado para limpar
+// dados de uma busca anterior quando uma nova busca não os retorna — ver
+// handlePreencherISBN). idCategoria/idGenero são tratados à parte, pois têm
+// lógica de conversão numérica própria.
+const ISBN_FILLABLE_FIELDS = [
+  "livTitulo",
+  "livSubtitulo",
+  "livAutor",
+  "autorAnoNascimento",
+  "autorAnoFalecimento",
+  "livEditora",
+  "livAnoPublicacao",
+  "livPaginas",
+  "livCapaURL",
+  "livDescricao",
+  "livIdioma",
+  "livPalavrasChave",
+  "ediCidade",
+  "ediEstado",
+  "ediPais",
+];
+
 // Campos que, embora não bloqueiem o salvamento (diferente de título/páginas,
 // validados em validarFormulario), costumam ser preenchidos em um cadastro
 // completo. Se algum estiver em branco, o usuário é avisado antes de salvar —
@@ -431,6 +453,19 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     const camposAlterados = [];
     const next = { ...form };
 
+    // Cada busca por ISBN representa a consulta de um livro (possivelmente
+    // diferente do que estava no formulário até então). Campos que ainda
+    // estavam marcados como "vindos do ISBN anterior" (ou seja, o usuário
+    // não os editou manualmente) e que a busca atual não retornou são
+    // limpos aqui — do contrário eles ficariam com o valor do livro
+    // anterior, mas continuariam etiquetados como "já preenchido via ISBN"
+    // referentes ao ISBN atual, o que é enganoso.
+    ISBN_FILLABLE_FIELDS.forEach((campo) => {
+      if (isbnFilledFields.has(campo) && (dados[campo] === undefined || dados[campo] === null || dados[campo] === "")) {
+        next[campo] = DEFAULT_FORM[campo];
+      }
+    });
+
     const setSeHouver = (campo, valor) => {
       if (valor !== undefined && valor !== null && valor !== "" && valor !== form[campo]) {
         next[campo] = valor;
@@ -439,6 +474,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     };
 
     setSeHouver("livTitulo", dados.livTitulo);
+
     setSeHouver("livSubtitulo", dados.livSubtitulo);
     setSeHouver("livAutor", dados.livAutor);
     setSeHouver("autorAnoNascimento", dados.autorAnoNascimento);
@@ -454,6 +490,13 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     setSeHouver("ediEstado", dados.ediEstado);
     setSeHouver("ediPais", dados.ediPais);
     setSeHouver("exemplarISBN", dados.exemplarISBN);
+
+    if (isbnFilledFields.has("idCategoria") && (dados.idCategoria === "" || dados.idCategoria === null || dados.idCategoria === undefined)) {
+      next.idCategoria = DEFAULT_FORM.idCategoria;
+    }
+    if (isbnFilledFields.has("idGenero") && (dados.idGenero === "" || dados.idGenero === null || dados.idGenero === undefined)) {
+      next.idGenero = DEFAULT_FORM.idGenero;
+    }
 
     if (dados.idCategoria !== "" && dados.idCategoria !== null && dados.idCategoria !== undefined) {
       const valorCategoria = isPendingId(dados.idCategoria) ? dados.idCategoria : Number(dados.idCategoria);
@@ -472,9 +515,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
     setForm(next);
     marcarCamposPreenchidosAutomaticamente(camposAlterados);
-    if (camposAlterados.length > 0) {
-      setIsbnFilledFields((prev) => new Set([...prev, ...camposAlterados]));
-    }
+    // Substitui (em vez de somar) o conjunto anterior: os campos "vindos do
+    // ISBN" precisam refletir apenas a busca atual, não a de um livro
+    // anterior que o usuário tenha consultado antes neste mesmo formulário.
+    setIsbnFilledFields(new Set(camposAlterados));
     addToast("Dados preenchidos a partir do ISBN! Campos alterados foram destacados.", "success");
   }
 
