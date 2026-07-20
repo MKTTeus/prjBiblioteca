@@ -21,6 +21,15 @@ class Signup(BaseModel):
     tipo: str
 
 
+class EsqueciSenha(BaseModel):
+    email: EmailStr
+
+
+class RedefinirSenha(BaseModel):
+    token: str = Field(min_length=1)
+    novaSenha: str = Field(min_length=8)
+
+
 class Livro(BaseModel):
     livTitulo: str
     livDescricao: Optional[str] = None

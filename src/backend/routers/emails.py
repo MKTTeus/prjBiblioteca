@@ -173,6 +173,37 @@ def _email_devolucao(nome: str, titulo: str, dias_restantes: int, prazo_fmt: str
     return _base_template(conteudo)
 
 
+def _email_redefinir_senha(nome: str, link: str, minutos_validade: int) -> str:
+    conteudo = f"""
+      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        Recebemos uma solicitação para redefinir a senha da sua conta no Sistema de Biblioteca.
+        Clique no botão abaixo para escolher uma nova senha:
+      </p>
+
+      <table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+        <tr>
+          <td style="background:#111827;border-radius:8px;padding:14px 28px;">
+            <a href="{link}" style="color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
+              🔑 Redefinir minha senha
+            </a>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 8px;font-size:13px;color:#6b7280;line-height:1.6;">
+        Este link expira em {minutos_validade} minutos. Se você não solicitou a redefinição,
+        pode ignorar este e-mail — sua senha permanecerá inalterada.
+      </p>
+
+      <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;line-height:1.6;word-break:break-all;">
+        Ou copie e cole este link no navegador:<br />{link}
+      </p>
+    """
+    return _base_template(conteudo)
+
+
 @router.get("/cron/lembretes-atraso")
 def lembretes_atraso_email(_=Depends(verificar_cron)):
     if not get_config_bool("notificacao_email", True) or not get_config_bool("lembrete_atraso", True):
