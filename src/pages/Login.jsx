@@ -137,6 +137,10 @@ export default function Login() {
               />
             </div>
 
+            <p className="forgot-password-link">
+              <span onClick={() => navigate("/esqueci-senha")}>Esqueci minha senha</span>
+            </p>
+
             {error && <div className="error">{error}</div>}
 
             <LoadingButton

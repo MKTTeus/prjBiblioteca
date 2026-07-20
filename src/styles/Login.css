@@ -217,3 +217,18 @@ body {
   color: var(--accent-blue);
   cursor: pointer;
 }
+
+.forgot-password-link {
+  text-align: right;
+  margin: -8px 0 15px;
+  font-size: 13px;
+}
+
+.forgot-password-link span {
+  color: var(--accent-blue);
+  cursor: pointer;
+}
+
+.forgot-password-link span:hover {
+  text-decoration: underline;
+}

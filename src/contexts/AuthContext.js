@@ -150,6 +150,48 @@ export function AuthProvider({ children }) {
 
   const getToken = () => user?.token || localStorage.getItem("token");
 
+  const esqueciSenha = async (email) => {
+    try {
+      const normalizedEmail = email?.trim().toLowerCase();
+
+      const response = await fetch(`${API_URL}/esqueci-senha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { ok: false, message: data.detail || "Erro ao solicitar redefinição de senha" };
+      }
+
+      return { ok: true, message: data.message };
+    } catch (error) {
+      return { ok: false, message: "Erro de conexão com o servidor" };
+    }
+  };
+
+  const redefinirSenha = async ({ token, novaSenha }) => {
+    try {
+      const response = await fetch(`${API_URL}/redefinir-senha`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, novaSenha }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { ok: false, message: data.detail || "Erro ao redefinir senha" };
+      }
+
+      return { ok: true, message: data.message };
+    } catch (error) {
+      return { ok: false, message: "Erro de conexão com o servidor" };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -157,6 +199,8 @@ export function AuthProvider({ children }) {
         login,
         logout,
         signup,
+        esqueciSenha,
+        redefinirSenha,
         getToken,
         loadingUser,
         isAuthenticated: !!user,

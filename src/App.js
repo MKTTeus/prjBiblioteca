@@ -16,6 +16,8 @@ import Admin from "./pages/Admin/CadastroAdmins/Admin";
 import Login from "./pages/Login";
 import Biblioteca from "./pages/Admin/Biblioteca/Biblioteca";
 import Signup from "./pages/Signup";
+import EsqueciSenha from "./pages/EsqueciSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Configuracoes from "./pages/Admin/Configuracoes/Configuracoes";
 import Geral from "./pages/Admin/Configuracoes/components/Geral/Geral";
@@ -80,6 +82,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
       <Route path="/" element={<RoleHomeRedirect />} />
       <Route
