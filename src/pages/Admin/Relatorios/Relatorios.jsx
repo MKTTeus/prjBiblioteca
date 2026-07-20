@@ -9,7 +9,7 @@ import RelatorioAcervo from "./RelatorioAcervo";
 const ABAS = [
   { valor: "emprestimos", label: "Empréstimos", icon: <FiBookOpen />, Componente: RelatorioEmprestimos },
   { valor: "atrasos", label: "Usuários em Atraso", icon: <FiAlertTriangle />, Componente: RelatorioAtrasos },
-  { valor: "acervo", label: "Acervo por Categoria/Gênero", icon: <FiGrid />, Componente: RelatorioAcervo },
+  { valor: "acervo", label: "Acervo por Categoria/Gênero/Autor/Editora", icon: <FiGrid />, Componente: RelatorioAcervo },
 ];
 
 export default function Relatorios() {

@@ -266,13 +266,13 @@ def relatorio_atrasos(
 
 @router.get("/relatorios/acervo")
 def relatorio_acervo(
-    agrupador: Optional[str] = "categoria",  # categoria | genero
+    agrupador: Optional[str] = "categoria",  # categoria | genero | autor | editora
     admin=Depends(get_admin),
 ):
-    """Acervo agrupado por categoria ou por gênero: quantidade de títulos e
-    de exemplares (cópias físicas) em cada grupo."""
+    """Acervo agrupado por categoria, gênero, autor ou editora: quantidade de
+    títulos e de exemplares (cópias físicas) em cada grupo."""
     try:
-        livros = supabase.table("Livro").select("idLivro, livAtivo").eq("livAtivo", True).execute().data or []
+        livros = supabase.table("Livro").select("idLivro, livAtivo, idEditora").eq("livAtivo", True).execute().data or []
         livro_ids = [l["idLivro"] for l in livros]
 
         if not livro_ids:
@@ -280,17 +280,48 @@ def relatorio_acervo(
 
         if agrupador == "genero":
             tabela_vinculo, tabela_grupo, campo_id, campo_nome = "LivroGenero", "Genero", "idGenero", "genNome"
+        elif agrupador == "autor":
+            tabela_vinculo, tabela_grupo, campo_id, campo_nome = "LivroAutor", "Autor", "idAutor", "autNome"
+        elif agrupador == "editora":
+            tabela_vinculo = None  # Editora é FK direta em Livro, não tabela de vínculo N:N
         else:
             agrupador = "categoria"
             tabela_vinculo, tabela_grupo, campo_id, campo_nome = "LivroCategoria", "Categoria", "idCategoria", "catNome"
 
-        consultas = [
-            lambda: supabase.table(tabela_vinculo).select(f"idLivro, {tabela_grupo}({campo_id}, {campo_nome})").in_("idLivro", livro_ids).execute(),
-            lambda: supabase.table("Exemplar").select("idLivro, exeLivStatus").in_("idLivro", livro_ids).execute(),
-        ]
-        resp_vinculo, resp_exemplares = executar_em_paralelo(*consultas)
+        if agrupador == "editora":
+            editora_ids = list({l.get("idEditora") for l in livros if l.get("idEditora")})
+            consultas = [
+                lambda: supabase.table("Editora").select("idEditora, ediNome").in_("idEditora", editora_ids).execute()
+                if editora_ids else None,
+                lambda: supabase.table("Exemplar").select("idLivro, exeLivStatus").in_("idLivro", livro_ids).execute(),
+            ]
+            resp_editoras, resp_exemplares = executar_em_paralelo(*consultas)
+            editora_nome_map = {e["idEditora"]: e.get("ediNome", "Sem nome") for e in ((resp_editoras.data or []) if resp_editoras else [])}
+            grupos_por_livro = {
+                l["idLivro"]: [(l.get("idEditora"), editora_nome_map.get(l.get("idEditora"), "Sem nome"))]
+                for l in livros if l.get("idEditora")
+            }
+        else:
+            consultas = [
+                lambda: supabase.table(tabela_vinculo).select(f"idLivro, {tabela_grupo}({campo_id}, {campo_nome})").in_("idLivro", livro_ids).execute(),
+                lambda: supabase.table("Exemplar").select("idLivro, exeLivStatus").in_("idLivro", livro_ids).execute(),
+            ]
+            resp_vinculo, resp_exemplares = executar_em_paralelo(*consultas)
 
-        vinculos = resp_vinculo.data or []
+            vinculos = resp_vinculo.data or []
+
+            # nome do grupo por livro (um livro pode ter só 1 categoria/gênero hoje,
+            # mas o vínculo é N:N, então tratamos como lista)
+            grupos_por_livro = {}
+            for v in vinculos:
+                grupo = v.get(tabela_grupo)
+                if not grupo:
+                    continue
+                lid = v.get("idLivro")
+                grupos_por_livro.setdefault(lid, []).append(
+                    (grupo.get(campo_id), grupo.get(campo_nome, "Sem nome"))
+                )
+
         exemplares = resp_exemplares.data or []
 
         # quantos exemplares (e quantos disponíveis) cada livro tem
@@ -302,19 +333,12 @@ def relatorio_acervo(
             if (ex.get("exeLivStatus") or "").lower() == "disponível":
                 disponiveis_por_livro[lid] = disponiveis_por_livro.get(lid, 0) + 1
 
-        # nome do grupo por livro (um livro pode ter só 1 categoria/gênero hoje,
-        # mas o vínculo é N:N, então tratamos como lista)
-        grupos_por_livro = {}
-        for v in vinculos:
-            grupo = v.get(tabela_grupo)
-            if not grupo:
-                continue
-            lid = v.get("idLivro")
-            grupos_por_livro.setdefault(lid, []).append(
-                (grupo.get(campo_id), grupo.get(campo_nome, "Sem nome"))
-            )
-
-        nome_sem_grupo = "Sem categoria" if agrupador == "categoria" else "Sem gênero"
+        nome_sem_grupo = {
+            "categoria": "Sem categoria",
+            "genero": "Sem gênero",
+            "autor": "Sem autor",
+            "editora": "Sem editora",
+        }[agrupador]
 
         # agregados agrupados por id do grupo (None = bucket "sem categoria/gênero"),
         # guardando também os idLivro de cada grupo para permitir consultar os

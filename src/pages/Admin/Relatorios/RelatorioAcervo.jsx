@@ -79,7 +79,10 @@ export default function RelatorioAcervo() {
     setErroTitulos(null);
   }
 
-  const labelGrupo = agrupador === "genero" ? "Gênero" : "Categoria";
+  const LABEL_GRUPO = { genero: "Gênero", autor: "Autor", editora: "Editora", categoria: "Categoria" };
+  const LABEL_GRUPO_PLURAL = { genero: "Gêneros", autor: "Autores", editora: "Editoras", categoria: "Categorias" };
+  const labelGrupo = LABEL_GRUPO[agrupador] || "Categoria";
+  const labelGrupoPlural = LABEL_GRUPO_PLURAL[agrupador] || "Categorias";
 
   function handleExportarPDF() {
     exportarPDF({
@@ -128,7 +131,7 @@ export default function RelatorioAcervo() {
       <section className="stats-cards-grid" aria-label="Resumo do acervo">
         <StatsCard title="Títulos Ativos" value={resumo.totalLivros} icon={<FiBook />} color="blue" />
         <StatsCard title="Exemplares (cópias)" value={resumo.totalExemplares} icon={<FiLayers />} color="blue" />
-        <StatsCard title={`${labelGrupo}s no Acervo`} value={resumo.totalGrupos} icon={<FiLayers />} color="green" />
+        <StatsCard title={`${labelGrupoPlural} no Acervo`} value={resumo.totalGrupos} icon={<FiLayers />} color="green" />
       </section>
 
       <div className="rel-filtros">
