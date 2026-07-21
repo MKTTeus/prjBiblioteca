@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public."RedefinicaoSenha" (
 );
 
 CREATE INDEX IF NOT EXISTS idx_redefinicaosenha_tokenhash
-  ON public."RedefinicaoSenha" (tokenHash);
+  ON public."RedefinicaoSenha" ("tokenHash");
 
 CREATE INDEX IF NOT EXISTS idx_redefinicaosenha_usuemail
-  ON public."RedefinicaoSenha" (usuEmail);
+  ON public."RedefinicaoSenha" ("usuEmail");
