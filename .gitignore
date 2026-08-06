@@ -95,3 +95,24 @@ htmlcov/
 
 # Preserve example env template
 !.env.example      
+src/backend/pytest.ini
+src/backend/requirements-dev.txt
+src/backend/tests/fakes.py
+src/backend/tests/test_auth_helpers.py
+src/backend/tests/test_backup_helpers.py
+src/backend/tests/test_capas_helpers.py
+src/backend/tests/test_config_helpers.py
+src/backend/tests/test_core_auth.py
+src/backend/tests/test_core_helpers.py
+src/backend/tests/test_emails_templates.py
+src/backend/tests/test_enriquecer_livros.py
+src/backend/tests/test_ficha_helpers.py
+src/backend/tests/test_ia_prompt.py
+src/backend/tests/test_main_helpers.py
+src/backend/tests/test_rate_limit.py
+src/backend/tests/test_usuarios_import_helpers.py
+src/test-utils/mockFetch.js
+src/test-utils/renderWithProviders.jsx
+src/utils/Apierror.test.js
+src/utils/Loanstatus.test.js
+src/utils/Masks.test.js
