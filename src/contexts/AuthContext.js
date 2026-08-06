@@ -125,6 +125,23 @@ export function AuthProvider({ children }) {
         timerRef.current = setTimeout(doLogout, ms);
       });
 
+      // Aplica o tema salvo no banco (aluno/comunidade) já no login, pra
+      // funcionar em qualquer dispositivo sem precisar abrir Configurações.
+      if (data.tipo === "Aluno" || data.tipo === "Comunidade") {
+        fetch(`${API_URL}/usuario/me`, {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((perfil) => {
+            if (perfil?.tema) {
+              import("../utils/theme").then(({ applyTheme }) => {
+                applyTheme(perfil.tema, { animate: false });
+              });
+            }
+          })
+          .catch(() => {});
+      }
+
       return {
         ok: true,
         access_token: data.access_token,

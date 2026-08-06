@@ -4,7 +4,7 @@ import { IMaskInput } from "react-imask";
 import Switch from "react-switch";
 import { useToast } from "../../../contexts/ToastContext";
 import { getMeuPerfil, atualizarMeuPerfil } from "../../../services/api";
-import { applyTheme, getSavedTheme } from "../../../utils/theme";
+import { applyTheme } from "../../../utils/theme";
 import { formatarCPF, MASK_TELEFONE } from "../../../utils/masks";
 import "../UserArea.css";
 import "./Configuracoes.css";
@@ -40,7 +40,8 @@ export default function ConfiguracoesUser() {
         setTelefone(data.telefone || "");
         setTelefoneResp(data.telefoneResponsavel || "");
         setEndereco(data.endereco || "");
-        setTemaDark(getSavedTheme().toLowerCase() === "escuro");
+        setTemaDark(data.tema?.toLowerCase() === "escuro");
+        applyTheme(data.tema || "Claro", { animate: false });
       } catch {
         addToast("Erro ao carregar perfil", "error");
       } finally {
@@ -80,11 +81,23 @@ export default function ConfiguracoesUser() {
     }
   }
 
-  function handleToggleTema(checked) {
+  async function handleToggleTema(checked) {
     const novoTema = checked ? "Escuro" : "Claro";
+    const temaAnterior = temaDark;
+
+    // Aplica visualmente na hora, sem esperar a resposta do servidor
     setTemaDark(checked);
     applyTheme(novoTema);
-    addToast(`Tema ${novoTema.toLowerCase()} aplicado`, "success");
+
+    try {
+      await atualizarMeuPerfil({ tema: novoTema });
+      addToast(`Tema ${novoTema.toLowerCase()} aplicado`, "success");
+    } catch (e) {
+      // Reverte se não conseguiu salvar no banco
+      setTemaDark(temaAnterior);
+      applyTheme(temaAnterior ? "Escuro" : "Claro");
+      addToast(e?.message || "Erro ao salvar tema", "error");
+    }
   }
 
   const documento = perfil?.ra

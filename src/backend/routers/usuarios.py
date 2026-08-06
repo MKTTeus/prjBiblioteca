@@ -659,6 +659,7 @@ class PerfilUpdate(BaseModel):
     endereco:             Opt[str] = None
     senhaAtual:           Opt[str] = None
     novaSenha:            Opt[str] = None
+    tema:                 Opt[str] = None
 
 @router.get("/usuario/me")
 def get_perfil(user=Depends(get_optional_user)):
@@ -679,6 +680,7 @@ def get_perfil(user=Depends(get_optional_user)):
         "telefone":             u.get("usuTelefone"),
         "telefoneResponsavel":  u.get("usuTelefoneResponsavel"),
         "tipo":                 u.get("usuTipo"),
+        "tema":                 u.get("usuTema") or "Claro",
     }
 
 @router.patch("/usuario/me")
@@ -700,6 +702,12 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
         payload["usuTelefoneResponsavel"] = data.telefoneResponsavel
     if data.endereco is not None:
         payload["usuEndereco"] = data.endereco
+
+    # Tema (aparência) — só aceita os dois valores válidos do enum
+    if data.tema is not None:
+        if data.tema not in ("Claro", "Escuro"):
+            raise HTTPException(status_code=400, detail="Tema inválido. Use 'Claro' ou 'Escuro'.")
+        payload["usuTema"] = data.tema
 
     # Senha: exige senha atual correta
     if data.novaSenha:
@@ -728,4 +736,5 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
         "telefone":             updated.get("usuTelefone"),
         "telefoneResponsavel":  updated.get("usuTelefoneResponsavel"),
         "tipo":                 updated.get("usuTipo"),
+        "tema":                 updated.get("usuTema") or "Claro",
     }

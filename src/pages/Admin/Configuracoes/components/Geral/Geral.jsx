@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
-import Select from "react-select";
+import Switch from "react-switch";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { getConfigValue, configToNumber } from "../../utils/configUtils";
 import { applyTheme, getSavedTheme } from "../../../../../utils/theme";
-import { getReactSelectStyles } from "../../../../../utils/reactSelectStyles";
 import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Geral.css";
-
-const temaOptions = [
-  { value: "Claro", label: "Claro" },
-  { value: "Escuro", label: "Escuro" },
-];
 
 export default function Geral() {
   const { addToast } = useToast();
@@ -19,9 +13,8 @@ export default function Geral() {
   const [dias, setDias] = useState(14);
   const [renovacoes, setRenovacoes] = useState(2);
   const [livrosPorAluno, setLivrosPorAluno] = useState(3);
-  const [tema, setTema] = useState(getSavedTheme());
+  const [temaDark, setTemaDark] = useState(getSavedTheme().toLowerCase() === "escuro");
   const [isSaving, setIsSaving] = useState(false);
-  const selectStyles = getReactSelectStyles();
 
   useEffect(() => {
     async function load() {
@@ -39,7 +32,7 @@ export default function Geral() {
         setDias(configToNumber(configs, "dias_emprestimo", 14));
         setRenovacoes(configToNumber(configs, "maximo_renovacoes", 2));
         setLivrosPorAluno(configToNumber(configs, "livros_por_aluno", 3));
-        setTema(getConfigValue(configs, "tema", getSavedTheme()));
+        setTemaDark(getConfigValue(configs, "tema", getSavedTheme()).toLowerCase() === "escuro");
       } catch (error) {
         addToast("Erro ao carregar configurações gerais", "error");
       }
@@ -50,6 +43,7 @@ export default function Geral() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    const tema = temaDark ? "Escuro" : "Claro";
     try {
       await Promise.all([
         updateConfiguracao({ chave: "nome_biblioteca", valor: nome }),
@@ -96,14 +90,22 @@ export default function Geral() {
           />
         </div>
 
-        <div className="form-group">
+        <div className="form-group switch-section">
           <label>Tema</label>
-          <Select
-            options={temaOptions}
-            value={temaOptions.find((option) => option.value === tema)}
-            onChange={(option) => setTema(option?.value || "Claro")}
-            styles={selectStyles}
-          />
+          <div className="control-row">
+            <Switch
+              checked={temaDark}
+              onChange={setTemaDark}
+              offColor="#cbd5e1"
+              onColor="#111827"
+              uncheckedIcon={false}
+              checkedIcon={false}
+              height={26}
+              width={52}
+              handleDiameter={22}
+            />
+            <span className="toggle-text">{temaDark ? "Escuro" : "Claro"}</span>
+          </div>
           <span className="field-hint">Tema do sistema</span>
         </div>
 

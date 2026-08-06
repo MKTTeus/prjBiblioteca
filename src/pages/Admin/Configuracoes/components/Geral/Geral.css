@@ -26,6 +26,18 @@
   grid-column: span 2;
 }
 
+.form-group.switch-section .control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.form-group.switch-section .toggle-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
 .form-group label {
   margin-bottom: 6px;
   font-size: 14px;
