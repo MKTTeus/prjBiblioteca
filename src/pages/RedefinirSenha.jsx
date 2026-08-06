@@ -1,33 +1,52 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { FiLock } from "react-icons/fi";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
 import "../styles/Login.css";
 
+const MENSAGEM_LINK_INVALIDO =
+  "Link inválido ou expirado. Solicite uma nova redefinição de senha.";
+
 export default function RedefinirSenha() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { redefinirSenha } = useAuth();
+  const { redefinirSenha, validarTokenRedefinicao } = useAuth();
   const submitRef = useRef(false);
 
   const token = searchParams.get("token") || "";
 
+  // "verificando" | "valido" | "invalido"
+  const [statusToken, setStatusToken] = useState("verificando");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sucesso, setSucesso] = useState(false);
 
+  useEffect(() => {
+    let ativo = true;
+
+    if (!token) {
+      setStatusToken("invalido");
+      return;
+    }
+
+    validarTokenRedefinicao(token).then((result) => {
+      if (!ativo) return;
+      setStatusToken(result?.ok ? "valido" : "invalido");
+    });
+
+    return () => {
+      ativo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (loading || submitRef.current) {
-      return;
-    }
-
-    if (!token) {
-      setError("Link inválido ou expirado. Solicite uma nova redefinição de senha.");
       return;
     }
 
@@ -48,6 +67,10 @@ export default function RedefinirSenha() {
     try {
       const result = await redefinirSenha({ token, novaSenha });
       if (!result?.ok) {
+        // Se o token expirou/foi usado bem no meio do preenchimento do
+        // formulário, volta pro estado de link inválido em vez de deixar
+        // o formulário aberto indefinidamente.
+        setStatusToken("invalido");
         setError(result?.message || "Não foi possível redefinir a senha.");
         return;
       }
@@ -80,7 +103,22 @@ export default function RedefinirSenha() {
         <main className="login-card">
           <h2>Redefinir senha</h2>
 
-          {sucesso ? (
+          {statusToken === "verificando" && (
+            <p className="login-subtitle">Verificando link...</p>
+          )}
+
+          {statusToken === "invalido" && !sucesso && (
+            <>
+              <div className="error">{MENSAGEM_LINK_INVALIDO}</div>
+              <p className="signup-link">
+                <span onClick={() => navigate("/esqueci-senha")}>
+                  Solicitar nova redefinição
+                </span>
+              </p>
+            </>
+          )}
+
+          {statusToken === "valido" && sucesso && (
             <>
               <p className="login-subtitle">
                 Sua senha foi redefinida com sucesso. Você já pode fazer login com a nova senha.
@@ -94,18 +132,9 @@ export default function RedefinirSenha() {
                 Ir para o login
               </LoadingButton>
             </>
-          ) : !token ? (
-            <>
-              <div className="error">
-                Link inválido ou expirado. Solicite uma nova redefinição de senha.
-              </div>
-              <p className="signup-link">
-                <span onClick={() => navigate("/esqueci-senha")}>
-                  Solicitar nova redefinição
-                </span>
-              </p>
-            </>
-          ) : (
+          )}
+
+          {statusToken === "valido" && !sucesso && (
             <>
               <p className="login-subtitle">Escolha uma nova senha para sua conta.</p>
 

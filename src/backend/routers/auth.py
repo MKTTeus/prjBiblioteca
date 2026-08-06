@@ -197,11 +197,11 @@ def esqueci_senha(data: EsqueciSenha, request: Request):
     return MENSAGEM_RESET_GENERICA
 
 
-@router.post("/redefinir-senha")
-def redefinir_senha(data: RedefinirSenha, request: Request):
-    limitar_redefinir_senha(request)
-
-    token_hash = _hash_token(data.token)
+def _validar_token_redefinicao(token: str) -> dict:
+    """Valida um token de redefinição sem marcá-lo como usado.
+    Lança HTTPException 400 se o token não existir, já tiver sido usado ou
+    estiver expirado. Retorna o registro correspondente quando válido."""
+    token_hash = _hash_token(token)
 
     resp = (
         supabase.table("RedefinicaoSenha")
@@ -226,6 +226,24 @@ def redefinir_senha(data: RedefinirSenha, request: Request):
 
     if datetime.utcnow() > expira_em:
         raise HTTPException(status_code=400, detail=TOKEN_INVALIDO_OU_EXPIRADO)
+
+    return registro
+
+
+@router.get("/redefinir-senha/validar")
+def validar_token_redefinicao(token: str, request: Request):
+    """Checagem somente-leitura usada pelo front para decidir se mostra o
+    formulário de nova senha ou a mensagem de link inválido/expirado."""
+    limitar_redefinir_senha(request)
+    _validar_token_redefinicao(token)
+    return {"valido": True}
+
+
+@router.post("/redefinir-senha")
+def redefinir_senha(data: RedefinirSenha, request: Request):
+    limitar_redefinir_senha(request)
+
+    registro = _validar_token_redefinicao(data.token)
 
     supabase.table("Usuario").update({
         "usuSenha": hash_password(data.novaSenha)

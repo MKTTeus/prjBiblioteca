@@ -172,6 +172,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const validarTokenRedefinicao = async (token) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/redefinir-senha/validar?token=${encodeURIComponent(token)}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return { ok: false, message: data.detail || "Link inválido ou expirado." };
+      }
+
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, message: "Erro de conexão com o servidor" };
+    }
+  };
+
   const redefinirSenha = async ({ token, novaSenha }) => {
     try {
       const response = await fetch(`${API_URL}/redefinir-senha`, {
@@ -200,6 +218,7 @@ export function AuthProvider({ children }) {
         logout,
         signup,
         esqueciSenha,
+        validarTokenRedefinicao,
         redefinirSenha,
         getToken,
         loadingUser,
