@@ -32,8 +32,8 @@ export default function Signup() {
     if (isCommunity && !validarCPF(cpf)) return "O CPF informado é inválido.";
     if (!telefone.trim()) return "O telefone é obrigatório.";
     if (telefone.length < 11) return "O telefone deve conter 11 números.";
-    if (!senha || senha.length < 6) {
-      return "A senha deve ter pelo menos 6 caracteres.";
+    if (!senha || senha.length < 8) {
+      return "A senha deve ter pelo menos 8 caracteres.";
     }
 
     return "";

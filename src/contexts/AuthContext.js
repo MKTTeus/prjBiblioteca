@@ -4,6 +4,22 @@ import { API_URL } from "../services/apiConfig";
 const AuthContext = createContext();
 const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
 
+function extrairMensagemErro(data, fallback) {
+  const detail = data?.detail;
+
+  if (!detail) return fallback;
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    const mensagens = detail
+      .map((item) => (typeof item === "string" ? item : item?.msg))
+      .filter(Boolean);
+    return mensagens.length ? mensagens.join(" ") : fallback;
+  }
+
+  return fallback;
+}
+
 async function fetchTimeoutMs() {
   try {
     const token = localStorage.getItem("token");
@@ -84,7 +100,7 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
-        return { ok: false, message: data.detail || "Erro ao fazer login" };
+        return { ok: false, message: extrairMensagemErro(data, "Erro ao fazer login") };
       }
 
       if (!data.access_token) {
@@ -139,7 +155,7 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
-        return { ok: false, message: data.detail || "Erro ao criar conta" };
+        return { ok: false, message: extrairMensagemErro(data, "Erro ao criar conta") };
       }
 
       return { ok: true, message: data.message || "Conta criada com sucesso" };
@@ -163,7 +179,7 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
-        return { ok: false, message: data.detail || "Erro ao solicitar redefinição de senha" };
+        return { ok: false, message: extrairMensagemErro(data, "Erro ao solicitar redefinição de senha") };
       }
 
       return { ok: true, message: data.message };
@@ -181,7 +197,7 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
-        return { ok: false, message: data.detail || "Link inválido ou expirado." };
+        return { ok: false, message: extrairMensagemErro(data, "Link inválido ou expirado.") };
       }
 
       return { ok: true };
@@ -201,7 +217,7 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
-        return { ok: false, message: data.detail || "Erro ao redefinir senha" };
+        return { ok: false, message: extrairMensagemErro(data, "Erro ao redefinir senha") };
       }
 
       return { ok: true, message: data.message };
