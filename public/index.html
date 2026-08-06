@@ -2,18 +2,20 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/logo-novedejulho-fundo.png" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" href="%PUBLIC_URL%/logo-novedejulho-fundo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- theme-color meta removed due to compatibility warnings across some browsers; color-scheme is set via JS -->
     <meta name="msapplication-TileColor" content="#061226" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta
       name="description"
-      content="Sistema da Biblioteca da Escola 9 de Julho de Taquaritinga. Consulte o acervo, solicite empréstimos de livros e acompanhe suas devoluções."
+      content="Consulte o acervo da Biblioteca da Escola 9 de Julho de Taquaritinga, solicite empréstimos de livros e acompanhe suas devoluções."
     />
     <meta name="robots" content="index, follow" />
+    <meta property="og:site_name" content="Biblioteca 9 de Julho" />
     <meta property="og:title" content="Biblioteca Escola 9 de Julho de Taquaritinga" />
-    <meta property="og:description" content="Sistema da Biblioteca da Escola 9 de Julho de Taquaritinga. Consulte o acervo, solicite empréstimos de livros e acompanhe suas devoluções." />
+    <meta property="og:description" content="Consulte o acervo da Biblioteca da Escola 9 de Julho de Taquaritinga, solicite empréstimos de livros e acompanhe suas devoluções." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="%PUBLIC_URL%/logo-novedejulho-fundo.png" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo-novedejulho-fundo.png" />
@@ -31,7 +33,16 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>Biblioteca Escola 9 de Julho de Taquaritinga</title>
+    <title>Biblioteca 9 de Julho - Taquaritinga</title>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Biblioteca 9 de Julho",
+      "alternateName": "Biblioteca 9 de Julho - Taquaritinga",
+      "url": "https://prj-biblioteca.vercel.app/"
+    }
+    </script>
     <script>
       (function () {
         try {
