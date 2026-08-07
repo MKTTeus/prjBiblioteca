@@ -1,10 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Optional as Opt
 
 from database import supabase
 from core import get_admin, hash_password, normalize_email, parse_status
 from schemas import AdminCreate, AdminUpdate, BatchIds, BatchStatus
 
 router = APIRouter()
+
+
+def _tema_para_app(valor_db: str | None) -> str:
+    """Converte o valor do enum `preferenciatema` (CLARO/ESCURO) para o
+    formato usado no resto do app (Claro/Escuro)."""
+    return (valor_db or "CLARO").capitalize()
+
+
+def _tema_para_db(valor_app: str) -> str:
+    """Converte Claro/Escuro (formato usado no app) para o enum do banco."""
+    return valor_app.upper()
 
 
 @router.get("/admins")
@@ -81,3 +94,57 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
 def deletar_admin(idAdmin: int, admin=Depends(get_admin)):
     supabase.table("Administrador").update({"admStatus": False}).eq("idAdmin", idAdmin).execute()
     return {"message": "Admin desativado com sucesso"}
+
+
+# ── PERFIL DO PRÓPRIO ADMIN ───────────────────────────────────────
+
+
+class AdminPerfilUpdate(BaseModel):
+    tema: Opt[str] = None
+
+
+@router.get("/admin/me")
+def get_perfil_admin(admin=Depends(get_admin)):
+    resp = supabase.table("Administrador").select("*").eq("admEmail", admin["sub"]).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Admin não encontrado")
+    a = resp.data[0]
+    return {
+        "idAdmin": a.get("idAdmin"),
+        "nome":    a.get("admNome"),
+        "email":   a.get("admEmail"),
+        "tema":    _tema_para_app(a.get("admTema")),
+    }
+
+
+@router.patch("/admin/me")
+def atualizar_perfil_admin(data: AdminPerfilUpdate, admin=Depends(get_admin)):
+    resp = supabase.table("Administrador").select("*").eq("admEmail", admin["sub"]).execute()
+    if not resp.data:
+        raise HTTPException(status_code=404, detail="Admin não encontrado")
+    a = resp.data[0]
+
+    payload = {}
+
+    # Tema (aparência) — só aceita os dois valores válidos; convertido pro
+    # formato do enum `preferenciatema` no banco (CLARO/ESCURO). Cada admin
+    # guarda sua própria preferência, sem afetar os demais usuários.
+    if data.tema is not None:
+        if data.tema not in ("Claro", "Escuro"):
+            raise HTTPException(status_code=400, detail="Tema inválido. Use 'Claro' ou 'Escuro'.")
+        payload["admTema"] = _tema_para_db(data.tema)
+
+    if not payload:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    atual = supabase.table("Administrador").update(payload).eq("idAdmin", a["idAdmin"]).execute()
+    if not atual.data:
+        raise HTTPException(status_code=500, detail="Falha ao atualizar perfil")
+
+    updated = atual.data[0]
+    return {
+        "idAdmin": updated.get("idAdmin"),
+        "nome":    updated.get("admNome"),
+        "email":   updated.get("admEmail"),
+        "tema":    _tema_para_app(updated.get("admTema")),
+    }

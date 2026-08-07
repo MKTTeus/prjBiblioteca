@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { FiBookOpen, FiMoon, FiSliders } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
-import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
+import {
+  getConfiguracoes,
+  updateConfiguracao,
+  getMeuPerfilAdmin,
+  atualizarMeuPerfilAdmin,
+} from "../../../../../services/api";
 import { getConfigValue, configToNumber } from "../../utils/configUtils";
 import { applyTheme, getSavedTheme } from "../../../../../utils/theme";
 import { useRegisterSave } from "../../contexts/ConfigSaveContext";
@@ -33,9 +38,16 @@ export default function Geral() {
         setDias(configToNumber(configs, "dias_emprestimo", 14));
         setRenovacoes(configToNumber(configs, "maximo_renovacoes", 2));
         setLivrosPorAluno(configToNumber(configs, "livros_por_aluno", 3));
-        setTemaDark(getConfigValue(configs, "tema", getSavedTheme()).toLowerCase() === "escuro");
       } catch (error) {
         addToast("Erro ao carregar configurações gerais", "error");
+      }
+
+      // Tema é preferência individual do admin logado, não configuração global.
+      try {
+        const perfil = await getMeuPerfilAdmin();
+        setTemaDark((perfil?.tema || getSavedTheme()).toLowerCase() === "escuro");
+      } catch (error) {
+        setTemaDark(getSavedTheme().toLowerCase() === "escuro");
       }
     }
 
@@ -65,7 +77,8 @@ export default function Geral() {
   };
 
   // Tema salva na hora, sem passar pelo "Salvar Tudo" — igual ao comportamento
-  // da tela de configurações do usuário.
+  // da tela de configurações do usuário. É preferência individual: fica
+  // salva apenas para o admin logado, não afeta os demais usuários.
   const handleToggleTema = async (checked) => {
     const novoTema = checked ? "Escuro" : "Claro";
     const temaAnterior = temaDark;
@@ -74,8 +87,8 @@ export default function Geral() {
     applyTheme(novoTema);
 
     try {
-      await updateConfiguracao({ chave: "tema", valor: novoTema });
-      addToast(`Tema ${novoTema.toLowerCase()} aplicado para todo o sistema`, "success");
+      await atualizarMeuPerfilAdmin({ tema: novoTema });
+      addToast(`Tema ${novoTema.toLowerCase()} aplicado`, "success");
     } catch (error) {
       setTemaDark(temaAnterior);
       applyTheme(temaAnterior ? "Escuro" : "Claro");
@@ -132,7 +145,7 @@ export default function Geral() {
             />
             <span className="toggle-text">{temaDark ? "Escuro" : "Claro"}</span>
           </div>
-          <span className="field-hint">Aplicado imediatamente para todos os usuários do sistema</span>
+          <span className="field-hint">Aplicado apenas para a sua conta de administrador</span>
         </div>
       </div>
 

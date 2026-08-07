@@ -10,7 +10,6 @@ const LABELS = {
   dias_emprestimo: "Dias de Empréstimo",
   maximo_renovacoes: "Máximo de Renovações",
   livros_por_aluno: "Livros por Aluno",
-  tema: "Tema",
   // Notificações
   notificacao_email: "Notificações por E-mail",
   notificacao_sms: "Notificações por SMS",
@@ -36,7 +35,7 @@ const LABELS = {
 };
 
 const SECTIONS = [
-  { label: "Geral", keys: ["nome_biblioteca", "dias_emprestimo", "maximo_renovacoes", "livros_por_aluno", "tema"] },
+  { label: "Geral", keys: ["nome_biblioteca", "dias_emprestimo", "maximo_renovacoes", "livros_por_aluno"] },
   { label: "Notificações", keys: ["notificacao_email", "notificacao_sms", "lembrete_atraso", "lembrete_devolucao", "dias_antecedencia_lembrete"] },
   { label: "Segurança", keys: ["timeout_sessao", "tamanho_minimo_senha", "exigir_senha_forte", "autenticacao_dois_fatores"] },
   { label: "E-mail", keys: ["smtp_servidor", "smtp_porta", "smtp_usuario", "smtp_senha"] },

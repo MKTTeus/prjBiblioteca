@@ -570,3 +570,14 @@ export const atualizarMeuPerfil = (payload) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
+// ── Perfil do admin logado ────────────────────────────────────────
+export const getMeuPerfilAdmin = () =>
+  apiFetch("/admin/me");
+
+export const atualizarMeuPerfilAdmin = (payload) =>
+  apiFetch("/admin/me", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });

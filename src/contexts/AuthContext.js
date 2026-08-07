@@ -125,10 +125,12 @@ export function AuthProvider({ children }) {
         timerRef.current = setTimeout(doLogout, ms);
       });
 
-      // Aplica o tema salvo no banco (aluno/comunidade) já no login, pra
-      // funcionar em qualquer dispositivo sem precisar abrir Configurações.
-      if (data.tipo === "Aluno" || data.tipo === "Comunidade") {
-        fetch(`${API_URL}/usuario/me`, {
+      // Aplica o tema salvo no banco (por usuário: aluno, comunidade ou
+      // admin) já no login, pra funcionar em qualquer dispositivo sem
+      // precisar abrir Configurações. Cada um guarda sua própria preferência.
+      const rotaPerfil = data.tipo === "admin" ? "/admin/me" : "/usuario/me";
+      if (data.tipo === "admin" || data.tipo === "Aluno" || data.tipo === "Comunidade") {
+        fetch(`${API_URL}${rotaPerfil}`, {
           headers: { Authorization: `Bearer ${data.access_token}` },
         })
           .then((res) => (res.ok ? res.json() : null))
