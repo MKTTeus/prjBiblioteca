@@ -365,6 +365,37 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
         raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
         raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
 
+def _email_redefinir_senha(nome: str, link: str, ttl_minutos: int) -> str:
+    conteudo = f"""
+      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        Recebemos uma solicitação para redefinir a senha da sua conta no
+        Sistema de Biblioteca. Clique no botão abaixo para escolher uma nova senha.
+      </p>
+
+      <table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+        <tr>
+          <td style="background:#111827;border-radius:8px;padding:14px 28px;">
+            <a href="{link}" style="color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
+              🔑 Redefinir minha senha
+            </a>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:0 0 16px;font-size:13px;color:#6b7280;line-height:1.6;">
+        Este link expira em <strong>{ttl_minutos} minutos</strong>. Se você não solicitou
+        essa redefinição, pode ignorar este e-mail — sua senha permanecerá inalterada.
+      </p>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+        Em caso de dúvidas, procure a equipe da biblioteca.
+      </p>
+    """
+    return _base_template(conteudo)
+
+
 # ── Email templates for confirmation workflow ─────────────────────────
 
 def _email_confirmacao(nome: str, titulo: str, prazo_fmt: str, prazo_horas: int) -> str:
