@@ -238,7 +238,7 @@ export default function SolicitacoesEmprestimo() {
       setSolicitacoes((prev) =>
         prev.map((s) =>
           (s.idEmprestimo || s.idMovimentacao) === id
-            ? { ...s, status: "ativo", movStatus: "Ativo" }
+            ? { ...s, status: "aprovado", movStatus: "Aprovado" }
             : s
         )
       );
