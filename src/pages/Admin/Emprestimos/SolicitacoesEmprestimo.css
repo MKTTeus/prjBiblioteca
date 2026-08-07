@@ -93,3 +93,152 @@
     align-items: stretch;
   }
 }
+
+/* ── Confirmation workflow styles ─────────────────────────── */
+
+.row-expirada {
+  background: #fef2f2 !important;
+  opacity: 0.8;
+}
+
+.row-expirada td {
+  color: #991b1b !important;
+}
+
+/* Confirmation info column */
+.emp-confirmacao-cell {
+  min-width: 160px;
+}
+
+.confirmacao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confirmacao-prazo {
+  color: var(--text-muted, #6b7280);
+  font-size: 0.8rem;
+}
+
+/* Badge prazo countdown */
+.badge-prazo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge-prazo-normal {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-prazo-urgente {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  animation: pulse-urgente 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-urgente {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.inline-warning {
+  font-size: 0.72rem;
+  color: #c2410c;
+  font-weight: 600;
+}
+
+/* Confirmation status badges */
+.confirmacao-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.confirmacao-pendente {
+  background: var(--status-warning-bg, #fffbeb);
+  color: var(--status-warning-text, #92400e);
+}
+
+.confirmacao-retirada {
+  background: var(--status-success-bg, #ecfdf5);
+  color: var(--status-success-text, #065f46);
+}
+
+.confirmacao-expirada {
+  background: var(--status-danger-bg, #fef2f2);
+  color: var(--danger, #dc2626);
+}
+
+/* Status pill: expired */
+.emp-status.expirado {
+  background: var(--status-danger-bg, #fef2f2);
+  color: var(--danger, #dc2626);
+}
+
+/* Status pill: confirmed */
+.emp-status.confirmada {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+/* Action buttons */
+.emp-btn-confirm {
+  background: #7c3aed !important;
+  color: #fff !important;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.emp-btn-confirm:hover:not(:disabled) {
+  background: #6d28d9 !important;
+}
+
+.emp-btn-retirar {
+  background: #059669 !important;
+  color: #fff !important;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.emp-btn-retirar:hover:not(:disabled) {
+  background: #047857 !important;
+}
+
+.emp-btn-expirar {
+  background: transparent !important;
+  color: var(--danger, #dc2626) !important;
+  border: 1px solid var(--danger, #dc2626);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.emp-btn-expirar:hover:not(:disabled) {
+  background: #fef2f2 !important;
+}

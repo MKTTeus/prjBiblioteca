@@ -173,37 +173,6 @@ def _email_devolucao(nome: str, titulo: str, dias_restantes: int, prazo_fmt: str
     return _base_template(conteudo)
 
 
-def _email_redefinir_senha(nome: str, link: str, minutos_validade: int) -> str:
-    conteudo = f"""
-      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
-
-      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
-        Recebemos uma solicitação para redefinir a senha da sua conta no Sistema de Biblioteca.
-        Clique no botão abaixo para escolher uma nova senha:
-      </p>
-
-      <table cellpadding="0" cellspacing="0" style="margin:24px 0;">
-        <tr>
-          <td style="background:#111827;border-radius:8px;padding:14px 28px;">
-            <a href="{link}" style="color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;">
-              🔑 Redefinir minha senha
-            </a>
-          </td>
-        </tr>
-      </table>
-
-      <p style="margin:0 0 8px;font-size:13px;color:#6b7280;line-height:1.6;">
-        Este link expira em {minutos_validade} minutos. Se você não solicitou a redefinição,
-        pode ignorar este e-mail — sua senha permanecerá inalterada.
-      </p>
-
-      <p style="margin:16px 0 0;font-size:12px;color:#9ca3af;line-height:1.6;word-break:break-all;">
-        Ou copie e cole este link no navegador:<br />{link}
-      </p>
-    """
-    return _base_template(conteudo)
-
-
 @router.get("/cron/lembretes-atraso")
 def lembretes_atraso_email(_=Depends(verificar_cron)):
     if not get_config_bool("notificacao_email", True) or not get_config_bool("lembrete_atraso", True):
@@ -394,3 +363,360 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
     except Exception as e:
         print("Erro lembretes devolucao email:", e)
         raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
+        raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
+
+# ── Email templates for confirmation workflow ─────────────────────────
+
+def _email_confirmacao(nome: str, titulo: str, prazo_fmt: str, prazo_horas: int) -> str:
+    conteudo = f"""
+      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
+
+      <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-left:4px solid #10b981;
+                  border-radius:8px;padding:20px 24px;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#059669;text-transform:uppercase;
+                  letter-spacing:0.5px;">✅ Retirada Confirmada</p>
+        <p style="margin:0;font-size:22px;font-weight:700;color:#111827;">{titulo}</p>
+        <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">
+          Prazo para retirada: <strong style="color:#111827;">{prazo_fmt}</strong>
+          ({prazo_horas}h após confirmação)
+        </p>
+      </div>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        A retirada do livro acima foi confirmada pelo administrador. Você tem
+        <strong>{prazo_horas} horas</strong> para retirar o livro na biblioteca.
+      </p>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        Caso não retire dentro do prazo, a reserva será cancelada automaticamente
+        e será necessário solicitar novamente.
+      </p>
+
+      <table cellpadding="0" cellspacing="0" width="100%"
+             style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px 20px;margin-bottom:8px;">
+        <tr>
+          <td style="font-size:13px;color:#6b7280;">📅 Prazo máximo</td>
+          <td align="right" style="font-size:14px;font-weight:700;color:#111827;">{prazo_fmt}</td>
+        </tr>
+      </table>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+        Em caso de dúvidas, procure a equipe da biblioteca.
+      </p>
+    """
+    return _base_template(conteudo)
+
+
+def _email_lembrete_confirmacao(nome: str, titulo: str, horas_passadas: int, prazo_fmt: str) -> str:
+    conteudo = f"""
+      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
+
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;
+                  border-radius:8px;padding:20px 24px;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#d97706;text-transform:uppercase;
+                  letter-spacing:0.5px;">🔔 Lembrete de Retirada</p>
+        <p style="margin:0;font-size:22px;font-weight:700;color:#111827;">{titulo}</p>
+        <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">
+          {horas_passadas}h desde a confirmação — prazo limite: <strong style="color:#111827;">{prazo_fmt}</strong>
+        </p>
+      </div>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        Lembrete: a retirada do livro acima foi confirmada há <strong>{horas_passadas} horas</strong>.
+        Caso não retire até <strong>{prazo_fmt}</strong>, a reserva será cancelada automaticamente.
+      </p>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+        Em caso de dúvidas, procure a equipe da biblioteca.
+      </p>
+    """
+    return _base_template(conteudo)
+
+
+def _email_aviso_expiracao(nome: str, titulo: str, horas_restantes: int, prazo_fmt: str) -> str:
+    conteudo = f"""
+      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
+
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #ef4444;
+                  border-radius:8px;padding:20px 24px;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#dc2626;text-transform:uppercase;
+                  letter-spacing:0.5px;">⚠️ Prazo de Retirada Expirando!</p>
+        <p style="margin:0;font-size:22px;font-weight:700;color:#111827;">{titulo}</p>
+        <p style="margin:8px 0 0;font-size:14px;color:#6b7280;">
+          Restam apenas <strong style="color:#dc2626;">{horas_restantes}h</strong> — prazo limite: <strong>{prazo_fmt}</strong>
+        </p>
+      </div>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        <strong>Atenção!</strong> Faltam apenas <strong>{horas_restantes} horas</strong> para o prazo
+        de retirada expirar. Dirija-se à biblioteca o mais rápido possível para retirar o livro.
+      </p>
+
+      <table cellpadding="0" cellspacing="0" style="margin:24px 0;">
+        <tr>
+          <td style="background:#dc2626;border-radius:8px;padding:14px 28px;">
+            <span style="color:#ffffff;font-size:14px;font-weight:600;">
+              📍 Dirija-se à biblioteca agora
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+        Se a retirada não for realizada a tempo, a reserva será cancelada automaticamente.
+      </p>
+    """
+    return _base_template(conteudo)
+
+
+def _email_expirado(nome: str, titulo: str) -> str:
+    conteudo = f"""
+      <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
+
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-left:4px solid #ef4444;
+                  border-radius:8px;padding:20px 24px;margin:24px 0;">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:700;color:#dc2626;text-transform:uppercase;
+                  letter-spacing:0.5px;">❌ Reserva Expirada</p>
+        <p style="margin:0;font-size:22px;font-weight:700;color:#111827;">{titulo}</p>
+      </div>
+
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        O prazo para retirada do livro acima expirou e a reserva foi cancelada automaticamente.
+        Caso ainda deseje o livro, será necessário solicitar um novo empréstimo.
+      </p>
+
+      <p style="margin:16px 0 0;font-size:13px;color:#9ca3af;line-height:1.6;">
+        Em caso de dúvidas, procure a equipe da biblioteca.
+      </p>
+    """
+    return _base_template(conteudo)
+
+
+# ── Helper to fetch user/book info for a movimentacao ────────────────
+
+def _get_mov_user_book(mov):
+    """Return (usuario, titulo) for a movimentacao record."""
+    usuario = {}
+    titulo = "Livro"
+    try:
+        id_usuario = mov.get("idUsuario")
+        if id_usuario:
+            u_resp = supabase.table("Usuario").select("idUsuario, usuNome, usuEmail").eq("idUsuario", id_usuario).limit(1).execute()
+            if u_resp.data:
+                usuario = u_resp.data[0]
+
+        me_resp = supabase.table("MovimentacaoExemplar").select("idExemplar").eq("idMovimentacao", mov["idMovimentacao"]).limit(1).execute()
+        if me_resp.data:
+            id_exemplar = me_resp.data[0].get("idExemplar")
+            if id_exemplar:
+                ex = supabase.table("Exemplar").select("idLivro").eq("idExemplar", id_exemplar).limit(1).execute()
+                if ex.data and ex.data[0].get("idLivro"):
+                    lv = supabase.table("Livro").select("livTitulo").eq("idLivro", ex.data[0]["idLivro"]).limit(1).execute()
+                    if lv.data:
+                        titulo = lv.data[0].get("livTitulo", titulo)
+    except Exception:
+        pass
+    return usuario, titulo
+
+
+# ── Cron: check expirations + send expiration emails ─────────────────
+
+@router.get("/cron/verificar-expiracoes")
+def cron_verificar_expiracoes(_=Depends(verificar_cron)):
+    """Hourly cron: expire overdue confirmed solicitations + send emails."""
+    from routers.emprestimos import verificar_expiracoes
+
+    if not get_config_bool("notificacao_email", True):
+        expirados = verificar_expiracoes()
+        return {"expirados": len(expirados), "emails_enviados": 0}
+
+    # First, find confirmed ones about to expire (to send pre-expiration alerts)
+    agora = datetime.utcnow()
+    alerta_horas = get_config_int("alerta_expiracao_horas", 2)
+
+    pre_alert_enviados = 0
+    try:
+        movs_confirmadas = (
+            supabase.table("Movimentacao")
+            .select("idMovimentacao, idUsuario, data_confirmacao, prazo_horas, status_confirmacao")
+            .eq("status_confirmacao", "CONFIRMADA")
+            .execute()
+            .data or []
+        )
+
+        for mov in movs_confirmadas:
+            data_conf_str = mov.get("data_confirmacao")
+            prazo = mov.get("prazo_horas") or 48
+            if not data_conf_str:
+                continue
+            try:
+                dt_conf = datetime.fromisoformat(data_conf_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                data_limite = dt_conf + timedelta(hours=prazo)
+                horas_restantes = (data_limite - agora).total_seconds() / 3600
+
+                # Send pre-expiration alert if within the alert window
+                if 0 < horas_restantes <= alerta_horas:
+                    # Check if we already sent this alert
+                    me_resp = supabase.table("MovimentacaoExemplar").select("emailConfirmacaoNotificadoEm, emailLembreteConfHoras").eq("idMovimentacao", mov["idMovimentacao"]).limit(1).execute()
+                    horas_enviadas = set()
+                    if me_resp.data:
+                        raw = me_resp.data[0].get("emailLembreteConfHoras") or ""
+                        horas_enviadas = set(raw.split(",")) if raw else set()
+
+                    if "pre_exp" not in horas_enviadas:
+                        usuario, titulo = _get_mov_user_book(mov)
+                        email = usuario.get("usuEmail")
+                        if email:
+                            prazo_fmt = data_limite.strftime("%d/%m/%Y %H:%M")
+                            html = _email_aviso_expiracao(
+                                usuario.get("usuNome", "aluno(a)"), titulo,
+                                max(1, int(horas_restantes)), prazo_fmt
+                            )
+                            if enviar_email(email, f"⚠️ Prazo de retirada expirando: {titulo}", html):
+                                pre_alert_enviados += 1
+                                horas_enviadas.add("pre_exp")
+                                supabase.table("MovimentacaoExemplar").update({
+                                    "emailLembreteConfHoras": ",".join(horas_enviadas)
+                                }).eq("idMovimentacao", mov["idMovimentacao"]).execute()
+            except Exception:
+                continue
+    except Exception as e:
+        print("Erro pre-expiration alerts:", e)
+
+    # Now run actual expiration check
+    expirados = verificar_expiracoes()
+
+    # Send expiration emails
+    emails_exp_enviados = 0
+    for id_mov in expirados:
+        try:
+            mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", id_mov).limit(1).execute()
+            if mov_resp.data:
+                usuario, titulo = _get_mov_user_book(mov_resp.data[0])
+                email = usuario.get("usuEmail")
+                if email:
+                    html = _email_expirado(usuario.get("usuNome", "aluno(a)"), titulo)
+                    if enviar_email(email, f"❌ Reserva expirada: {titulo}", html):
+                        emails_exp_enviados += 1
+        except Exception:
+            continue
+
+    return {
+        "expirados": len(expirados),
+        "emails_expiracao_enviados": emails_exp_enviados,
+        "emails_pre_alerta_enviados": pre_alert_enviados,
+    }
+
+# ── Cron: send reminder emails 2h before expiration ───────────────
+
+@router.get("/cron/lembretes-confirmacao")
+def lembretes_confirmacao_email(_=Depends(verificar_cron)):
+    """
+    Envia apenas um lembrete quando faltam 2 horas para a retirada expirar.
+    O e-mail de expiração é enviado pelo endpoint /cron/verificar-expiracoes.
+    """
+    if not get_config_bool("notificacao_email", True):
+        return {"enviados": 0, "motivo": "notificações desativadas"}
+
+    try:
+        agora = datetime.utcnow()
+        alerta_horas = 2
+
+        # Busca apenas movimentações confirmadas
+        movs = (
+            supabase.table("Movimentacao")
+            .select(
+                "idMovimentacao, idUsuario, data_confirmacao, "
+                "prazo_horas, status_confirmacao"
+            )
+            .eq("status_confirmacao", "CONFIRMADA")
+            .execute()
+            .data or []
+        )
+
+        enviados = 0
+
+        for mov in movs:
+            data_conf_str = mov.get("data_confirmacao")
+            prazo = mov.get("prazo_horas") or 48
+
+            if not data_conf_str:
+                continue
+
+            try:
+                dt_conf = datetime.fromisoformat(
+                    data_conf_str.replace("Z", "+00:00")
+                ).replace(tzinfo=None)
+            except Exception:
+                continue
+
+            # Calcula o momento exato da expiração
+            data_limite = dt_conf + timedelta(hours=prazo)
+
+            # Quantas horas faltam para expirar
+            horas_restantes = (
+                data_limite - agora
+            ).total_seconds() / 3600
+
+            # Envia somente quando estiver dentro das 2 horas anteriores
+            if not (0 < horas_restantes <= alerta_horas):
+                continue
+
+            # Verifica se o aviso de 2h já foi enviado
+            me_resp = (
+                supabase.table("MovimentacaoExemplar")
+                .select("emailLembreteConfHoras")
+                .eq("idMovimentacao", mov["idMovimentacao"])
+                .limit(1)
+                .execute()
+            )
+
+            avisos_enviados = set()
+
+            if me_resp.data:
+                raw = me_resp.data[0].get("emailLembreteConfHoras") or ""
+                avisos_enviados = set(raw.split(",")) if raw else set()
+
+            # Evita enviar o mesmo aviso novamente
+            if "2h_expiracao" in avisos_enviados:
+                continue
+
+            usuario, titulo = _get_mov_user_book(mov)
+            email = usuario.get("usuEmail")
+
+            if not email:
+                continue
+
+            prazo_fmt = data_limite.strftime("%d/%m/%Y %H:%M")
+
+            html = _email_aviso_expiracao(
+                usuario.get("usuNome", "aluno(a)"),
+                titulo,
+                max(1, int(horas_restantes)),
+                prazo_fmt
+            )
+
+            if enviar_email(
+                email,
+                f"⚠️ Faltam 2 horas para retirar: {titulo}",
+                html
+            ):
+                enviados += 1
+
+                avisos_enviados.add("2h_expiracao")
+
+                supabase.table("MovimentacaoExemplar").update({
+                    "emailLembreteConfHoras": ",".join(avisos_enviados)
+                }).eq(
+                    "idMovimentacao",
+                    mov["idMovimentacao"]
+                ).execute()
+
+        return {"enviados": enviados}
+
+    except Exception as e:
+        print("Erro lembrete 2h confirmação:", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Erro ao enviar lembrete de 2 horas"
+        )
