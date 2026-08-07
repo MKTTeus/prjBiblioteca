@@ -289,16 +289,29 @@
   color: var(--success);
 }
 
+.emp-status.aprovado {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
 .emp-actions-cell {
-  width: 140px;
+  width: 170px;
   text-align: center;
 }
 
 .emp-actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
+}
+
+.emp-actions .emp-btn-light,
+.emp-actions .emp-btn-confirm,
+.emp-actions .emp-btn-retirar,
+.emp-actions .emp-btn-expirar {
+  width: 100%;
+  white-space: nowrap;
 }
 
 .emp-btn-light {

@@ -6,6 +6,7 @@ import "./Emprestimos.css";
 
 const statusLabelMap = {
   pendente: "Pendente",
+  aprovado: "Aprovado — aguarde retirada",
   ativo: "Ativo",
   atrasado: "Atrasado",
   devolvido: "Devolvido",
@@ -40,7 +41,9 @@ export default function Emprestimos() {
     _statusResolvido: resolverStatus(loan),
   }));
 
-  const pendentes = loansComStatus.filter((l) => l._statusResolvido === "pendente");
+  const pendentes = loansComStatus.filter(
+    (l) => l._statusResolvido === "pendente" || l._statusResolvido === "aprovado"
+  );
   const ativos    = loansComStatus.filter((l) => l._statusResolvido === "ativo");
   const atrasados = loansComStatus.filter((l) => l._statusResolvido === "atrasado");
 

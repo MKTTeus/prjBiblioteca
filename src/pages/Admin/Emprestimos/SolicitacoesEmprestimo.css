@@ -182,6 +182,12 @@
   color: var(--danger, #dc2626);
 }
 
+.confirmacao-nao-aplica {
+  background: var(--surface-muted, #f3f4f6);
+  color: var(--text-muted, #9ca3af);
+  font-weight: 700;
+}
+
 /* Status pill: expired */
 .emp-status.expirado {
   background: var(--status-danger-bg, #fef2f2);

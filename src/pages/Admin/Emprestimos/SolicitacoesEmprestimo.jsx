@@ -466,13 +466,21 @@ export default function SolicitacoesEmprestimo() {
                           )}
                         </div>
                       ) : statusConf === "RETIRADA" ? (
-                        <span className="confirmacao-badge confirmacao-retirada">✅ Retirado</span>
+                        <span className="confirmacao-badge confirmacao-retirada">Retirado</span>
                       ) : statusConf === "EXPIRADA" ? (
                         <span className="confirmacao-badge confirmacao-expirada" title="A reserva expirou e foi cancelada">
-                          ❌ Expirada
+                          Expirada
+                        </span>
+                      ) : status === "negado" || status === "rejeitado" || status === "cancelado" ? (
+                        <span className="confirmacao-badge confirmacao-nao-aplica">—</span>
+                      ) : status === "aprovado" ? (
+                        <span className="confirmacao-badge confirmacao-pendente" title="Aprovada — aguardando confirmação de retirada">
+                          Aguardando retirada
                         </span>
                       ) : (
-                        <span className="confirmacao-badge confirmacao-pendente">Aguardando</span>
+                        <span className="confirmacao-badge confirmacao-pendente" title="Aguardando decisão do administrador">
+                          Aguardando aprovação
+                        </span>
                       )}
                     </td>
                     <td>
@@ -485,8 +493,27 @@ export default function SolicitacoesEmprestimo() {
                       </span>
                     </td>
                     <td className="emp-actions-cell">
-                      {status === "pendente" && statusConf === "PENDENTE" && (
-                        <>
+                      <div className="emp-actions">
+                        {status === "pendente" && statusConf === "PENDENTE" && (
+                          <>
+                            <LoadingButton
+                              className="emp-btn-light"
+                              onClick={() => handleAprovarSolicitacao(item)}
+                              disabled={isProcessando}
+                              title="Aprovar solicitação e liberar para confirmar retirada"
+                            >
+                              Aprovar
+                            </LoadingButton>
+                            <LoadingButton
+                              className="emp-btn-light"
+                              onClick={() => handleNegarSolicitacao(item)}
+                              disabled={isProcessando}
+                            >
+                              Negar
+                            </LoadingButton>
+                          </>
+                        )}
+                        {status === "aprovado" && statusConf === "PENDENTE" && (
                           <LoadingButton
                             className="emp-btn-confirm"
                             onClick={() => handleConfirmarRetirada(item)}
@@ -495,43 +522,28 @@ export default function SolicitacoesEmprestimo() {
                           >
                             Confirmar retirada
                           </LoadingButton>
-                          <LoadingButton 
-                            className="emp-btn-light" 
-                            onClick={() => handleAprovarSolicitacao(item)}
-                            disabled={isProcessando}
-                            title="Aprovar diretamente sem exigir retirada com prazo"
-                          >
-                            Aprovar
-                          </LoadingButton>
-                          <LoadingButton 
-                            className="emp-btn-light" 
-                            onClick={() => handleNegarSolicitacao(item)}
-                            disabled={isProcessando}
-                          >
-                            Negar
-                          </LoadingButton>
-                        </>
-                      )}
-                      {statusConf === "CONFIRMADA" && (
-                        <>
-                          <LoadingButton
-                            className="emp-btn-retirar"
-                            onClick={() => handleRegistrarRetirada(item)}
-                            disabled={isProcessando}
-                            title="Registrar que o aluno retirou o livro"
-                          >
-                            Retirar
-                          </LoadingButton>
-                          <LoadingButton
-                            className="emp-btn-expirar"
-                            onClick={() => handleExpirarSolicitacao(item)}
-                            disabled={isProcessando}
-                            title="Expirar manualmente esta solicitação"
-                          >
-                            Expirar
-                          </LoadingButton>
-                        </>
-                      )}
+                        )}
+                        {statusConf === "CONFIRMADA" && (
+                          <>
+                            <LoadingButton
+                              className="emp-btn-retirar"
+                              onClick={() => handleRegistrarRetirada(item)}
+                              disabled={isProcessando}
+                              title="Registrar que o aluno retirou o livro"
+                            >
+                              Retirar
+                            </LoadingButton>
+                            <LoadingButton
+                              className="emp-btn-expirar"
+                              onClick={() => handleExpirarSolicitacao(item)}
+                              disabled={isProcessando}
+                              title="Expirar manualmente esta solicitação"
+                            >
+                              Expirar
+                            </LoadingButton>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -543,5 +555,3 @@ export default function SolicitacoesEmprestimo() {
     </div>
   );
 }
-
-

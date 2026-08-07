@@ -124,6 +124,11 @@
   color: var(--status-warning-text);
 }
 
+.status-badge.aprovado {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
 .status-badge.ativo {
   background: var(--status-success-bg);
   color: var(--status-success-text);

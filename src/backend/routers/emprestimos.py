@@ -711,7 +711,7 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
         movimentacoes_em_curso = supabase.table("Movimentacao") \
             .select("idMovimentacao") \
             .eq("idUsuario", id_usuario) \
-            .in_("movStatus", ["Ativo", "Pendente"]) \
+            .in_("movStatus", ["Ativo", "Pendente", "Aprovado"]) \
             .execute().data or []
 
         if len(movimentacoes_em_curso) >= max_por_usuario:
@@ -774,13 +774,14 @@ def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_o
 @router.put("/emprestimos/{idEmprestimo}/aprovar")
 def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
     """
-    Aprovar uma solicitação de empréstimo e ativá-la.
+    Aprovar uma solicitação de empréstimo.
+
+    A aprovação NÃO ativa o empréstimo imediatamente — ela apenas libera a
+    solicitação para a etapa seguinte (confirmar retirada). O empréstimo só
+    fica ativo de fato quando a retirada física é registrada em
+    `/emprestimos/solicitacoes/{id}/retirar`.
     """
     try:
-        hoje = datetime.utcnow().date()
-        configs = get_config_map()
-        dias = get_config_days(configs)
-
         # Buscar movimentação
         mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
         if not mov_resp.data:
@@ -808,25 +809,16 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
 
         id_admin = get_admin_id(admin)
 
-        # Atualizar movimentação para Ativa
+        # Apenas marca como aprovada — o exemplar continua Reservado e o
+        # empréstimo só é ativado quando a retirada for confirmada e registrada.
         supabase.table("Movimentacao").update({
-            "movTipo": "EMPRESTIMO",
-            "movStatus": "Ativo",
-            "movDataEmprestimo": hoje.isoformat(),
+            "movStatus": "Aprovado",
             "idAdmin": id_admin,
         }).eq("idMovimentacao", idEmprestimo).execute()
 
-        # Atualizar MovimentacaoExemplar
-        vencimento_date = (hoje + timedelta(days=dias)).isoformat()
         supabase.table("MovimentacaoExemplar").update({
-            "itemStatus": "Ativo",
-            "dataPrevistaDevolucao": vencimento_date,
+            "itemStatus": "Aprovado",
         }).eq("idMovimentacao", idEmprestimo).execute()
-
-        # Atualizar status do exemplar
-        supabase.table("Exemplar").update({
-            "exeLivStatus": "Emprestado"
-        }).eq("idExemplar", idExemplar).execute()
 
         return {"message": "Solicitação aprovada com sucesso"}
     except HTTPException:
@@ -898,6 +890,10 @@ def confirmar_retirada(idSolicitacao: int, admin=Depends(get_admin)):
     """
     Admin confirms that a student may pick up the reserved book.
     Sets status_confirmacao = CONFIRMADA and records data_confirmacao + prazo.
+
+    Só pode ser chamado depois que a solicitação foi aprovada
+    (`/emprestimos/{id}/aprovar`) — confirmar retirada é o passo seguinte
+    à aprovação, não uma alternativa a ela.
     """
     try:
         mov_resp = (
@@ -912,9 +908,9 @@ def confirmar_retirada(idSolicitacao: int, admin=Depends(get_admin)):
 
         mov = mov_resp.data[0]
 
-        # Only pending solicitations can be confirmed
-        if mov.get("movStatus") != "Pendente":
-            raise HTTPException(status_code=400, detail="Apenas solicitações pendentes podem ser confirmadas")
+        # Only approved solicitations can have their withdrawal confirmed
+        if mov.get("movStatus") != "Aprovado":
+            raise HTTPException(status_code=400, detail="Apenas solicitações aprovadas podem ser confirmadas para retirada")
 
         agora = datetime.utcnow()
         configs = get_config_map()

@@ -16,6 +16,12 @@ export function resolverStatus(loan) {
   // Negado é definitivo
   if (loan.movStatus === "Negado" || loan.status === "negado") return "negado";
 
+  // Aprovado: já aprovado pela biblioteca, aguardando confirmação/retirada
+  if (
+    loan.movStatus === "Aprovado" ||
+    loan.status === "aprovado"
+  ) return "aprovado";
+
   // Pendente: solicitação ainda não aprovada
   if (
     loan.movStatus === "Pendente" ||

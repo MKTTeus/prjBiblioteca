@@ -83,6 +83,14 @@
   background: linear-gradient(135deg, var(--accent-red), var(--danger));
 }
 
+.stats-card-icon.purple {
+  background: linear-gradient(135deg, #a78bfa, #7c3aed);
+}
+
+.stats-card-icon.gray {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+}
+
 .stats-cards-grid-admin {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
