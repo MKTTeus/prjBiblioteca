@@ -1,7 +1,14 @@
+/* Empilha as seções (Identidade / Aparência / Regras) com respiro entre elas */
+.geral-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .geral-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
@@ -11,10 +18,19 @@
   font-weight: 600;
 }
 
+.card-section-icon {
+  font-size: 18px;
+  color: var(--text-label);
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.form-grid.three-col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .form-group {
@@ -23,19 +39,7 @@
 }
 
 .form-group.full {
-  grid-column: span 2;
-}
-
-.form-group.switch-section .control-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-.form-group.switch-section .toggle-text {
-  font-size: 14px;
-  font-weight: 500;
+  grid-column: 1 / -1;
 }
 
 .form-group label {
@@ -78,36 +82,22 @@
   color: var(--text-label);
 }
 
-/* Tema Select igual aos inputs */
-.form-group .react-select__control {
-  padding: 2px 4px;
-  border-radius: 8px;
-  border: 1px solid var(--input-border);
-  box-shadow: none;
+/* Bloco do switch de tema */
+.form-group.switch-section .control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.form-group.switch-section .toggle-text {
   font-size: 14px;
-  background: var(--surface-bg);
-  color: var(--text-default);
-  transition: all 0.2s ease;
-  min-height: unset;
+  font-weight: 500;
 }
 
-.form-group .react-select__control--is-focused {
-  border-color: var(--input-focus-border);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-}
-
-.form-group .react-select__value-container {
-  padding: 0 8px;
-}
-
-.form-group .react-select__single-value {
-  color: var(--text-default);
-  font-size: 14px;
-}
-
-.form-group .react-select__indicator-separator { display: none; }
-
-.form-group .react-select__dropdown-indicator {
-  padding: 0 8px;
-  color: var(--text-label);
+@media (max-width: 720px) {
+  .form-grid,
+  .form-grid.three-col {
+    grid-template-columns: 1fr;
+  }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Switch from "react-switch";
+import { FiBookOpen, FiMoon, FiSliders } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
 import { getConfigValue, configToNumber } from "../../utils/configUtils";
@@ -43,23 +44,16 @@ export default function Geral() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const tema = temaDark ? "Escuro" : "Claro";
     try {
       await Promise.all([
         updateConfiguracao({ chave: "nome_biblioteca", valor: nome }),
         updateConfiguracao({ chave: "dias_emprestimo", valor: String(dias) }),
         updateConfiguracao({ chave: "maximo_renovacoes", valor: String(renovacoes) }),
         updateConfiguracao({ chave: "livros_por_aluno", valor: String(livrosPorAluno) }),
-        updateConfiguracao({ chave: "tema", valor: tema }),
       ]);
 
       localStorage.setItem("nomeBiblioteca", nome);
       window.dispatchEvent(new Event("nomeBibliotecaAtualizado"));
-      try {
-        applyTheme(tema);
-      } catch (e) {
-        console.error("Erro ao aplicar tema após salvar", e);
-      }
 
       addToast("Configurações gerais salvas com sucesso", "success");
     } catch (error) {
@@ -70,32 +64,64 @@ export default function Geral() {
     }
   };
 
+  // Tema salva na hora, sem passar pelo "Salvar Tudo" — igual ao comportamento
+  // da tela de configurações do usuário.
+  const handleToggleTema = async (checked) => {
+    const novoTema = checked ? "Escuro" : "Claro";
+    const temaAnterior = temaDark;
+
+    setTemaDark(checked);
+    applyTheme(novoTema);
+
+    try {
+      await updateConfiguracao({ chave: "tema", valor: novoTema });
+      addToast(`Tema ${novoTema.toLowerCase()} aplicado para todo o sistema`, "success");
+    } catch (error) {
+      setTemaDark(temaAnterior);
+      applyTheme(temaAnterior ? "Escuro" : "Claro");
+      addToast("Erro ao salvar tema", "error");
+    }
+  };
+
   // Register this tab's save handler in the shared context
   useRegisterSave("geral", handleSave);
 
   return (
-    <div className="card">
-      <div className="geral-header">
-        <h3>Configurações Gerais</h3>
+    <div className="geral-sections">
+      {/* Identidade da Biblioteca */}
+      <div className="card">
+        <div className="geral-header">
+          <FiBookOpen className="card-section-icon" />
+          <h3>Identidade da Biblioteca</h3>
+        </div>
+
+        <div className="form-grid">
+          <div className="form-group full">
+            <label>Nome da Biblioteca</label>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Ex: Biblioteca Municipal"
+            />
+            <span className="field-hint">Nome exibido no cabeçalho e nos documentos gerados pelo sistema</span>
+          </div>
+        </div>
       </div>
 
-      <div className="form-grid">
-        <div className="form-group full">
-          <label>Nome da Biblioteca</label>
-          <input
-            type="text"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex: Biblioteca Municipal"
-          />
+      {/* Aparência */}
+      <div className="card">
+        <div className="geral-header">
+          <FiMoon className="card-section-icon" />
+          <h3>Aparência</h3>
         </div>
 
         <div className="form-group switch-section">
-          <label>Tema</label>
+          <label>Tema do sistema</label>
           <div className="control-row">
             <Switch
               checked={temaDark}
-              onChange={setTemaDark}
+              onChange={handleToggleTema}
               offColor="#cbd5e1"
               onColor="#111827"
               uncheckedIcon={false}
@@ -106,52 +132,62 @@ export default function Geral() {
             />
             <span className="toggle-text">{temaDark ? "Escuro" : "Claro"}</span>
           </div>
-          <span className="field-hint">Tema do sistema</span>
-        </div>
-
-        <div className="form-group">
-          <label>Dias Máximos de Empréstimo</label>
-          <input
-            type="number"
-            value={dias}
-            min={1}
-            onChange={(e) => setDias(Number(e.target.value) || 1)}
-          />
-          <span className="field-hint">Prazo padrão para devolução de livros</span>
-        </div>
-
-        <div className="form-group">
-          <label>Máximo de Renovações</label>
-          <input
-            type="number"
-            value={renovacoes}
-            min={0}
-            onChange={(e) => setRenovacoes(Number(e.target.value) || 0)}
-          />
-          <span className="field-hint">Renovações permitidas por empréstimo</span>
-        </div>
-
-        <div className="form-group">
-          <label>Livros por Aluno</label>
-          <input
-            type="number"
-            value={livrosPorAluno}
-            min={1}
-            onChange={(e) => setLivrosPorAluno(Number(e.target.value) || 1)}
-          />
-          <span className="field-hint">Quantidade máxima simultânea</span>
+          <span className="field-hint">Aplicado imediatamente para todos os usuários do sistema</span>
         </div>
       </div>
 
-      <div className="card-actions">
-        <button
-          className="btn-secondary"
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          {isSaving ? "Salvando..." : "Salvar Configurações"}
-        </button>
+      {/* Regras de Empréstimo */}
+      <div className="card">
+        <div className="geral-header">
+          <FiSliders className="card-section-icon" />
+          <h3>Regras de Empréstimo</h3>
+        </div>
+
+        <div className="form-grid three-col">
+          <div className="form-group">
+            <label>Dias Máximos</label>
+            <input
+              type="number"
+              value={dias}
+              min={1}
+              onChange={(e) => setDias(Number(e.target.value) || 1)}
+            />
+            <span className="field-hint">Prazo padrão para devolução</span>
+          </div>
+
+          <div className="form-group">
+            <label>Máximo de Renovações</label>
+            <input
+              type="number"
+              value={renovacoes}
+              min={0}
+              onChange={(e) => setRenovacoes(Number(e.target.value) || 0)}
+            />
+            <span className="field-hint">Renovações por empréstimo</span>
+          </div>
+
+          <div className="form-group">
+            <label>Livros por Aluno</label>
+            <input
+              type="number"
+              value={livrosPorAluno}
+              min={1}
+              onChange={(e) => setLivrosPorAluno(Number(e.target.value) || 1)}
+            />
+            <span className="field-hint">Quantidade máxima simultânea</span>
+          </div>
+        </div>
+
+        <div className="card-actions">
+          <button
+            className="btn-secondary"
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            {isSaving ? "Salvando..." : "Salvar Configurações"}
+          </button>
+        </div>
       </div>
     </div>
   );

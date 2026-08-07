@@ -661,6 +661,17 @@ class PerfilUpdate(BaseModel):
     novaSenha:            Opt[str] = None
     tema:                 Opt[str] = None
 
+
+def _tema_para_app(valor_db: str | None) -> str:
+    """Converte o valor do enum `preferenciatema` (CLARO/ESCURO) para o
+    formato usado no resto do app (Claro/Escuro)."""
+    return (valor_db or "CLARO").capitalize()
+
+
+def _tema_para_db(valor_app: str) -> str:
+    """Converte Claro/Escuro (formato usado no app) para o enum do banco."""
+    return valor_app.upper()
+
 @router.get("/usuario/me")
 def get_perfil(user=Depends(get_optional_user)):
     if not user:
@@ -680,7 +691,7 @@ def get_perfil(user=Depends(get_optional_user)):
         "telefone":             u.get("usuTelefone"),
         "telefoneResponsavel":  u.get("usuTelefoneResponsavel"),
         "tipo":                 u.get("usuTipo"),
-        "tema":                 u.get("usuTema") or "Claro",
+        "tema":                 _tema_para_app(u.get("usuTema")),
     }
 
 @router.patch("/usuario/me")
@@ -703,11 +714,12 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
     if data.endereco is not None:
         payload["usuEndereco"] = data.endereco
 
-    # Tema (aparência) — só aceita os dois valores válidos do enum
+    # Tema (aparência) — só aceita os dois valores válidos; convertido pro
+    # formato do enum `preferenciatema` no banco (CLARO/ESCURO).
     if data.tema is not None:
         if data.tema not in ("Claro", "Escuro"):
             raise HTTPException(status_code=400, detail="Tema inválido. Use 'Claro' ou 'Escuro'.")
-        payload["usuTema"] = data.tema
+        payload["usuTema"] = _tema_para_db(data.tema)
 
     # Senha: exige senha atual correta
     if data.novaSenha:
@@ -736,5 +748,5 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
         "telefone":             updated.get("usuTelefone"),
         "telefoneResponsavel":  updated.get("usuTelefoneResponsavel"),
         "tipo":                 updated.get("usuTipo"),
-        "tema":                 updated.get("usuTema") or "Claro",
+        "tema":                 _tema_para_app(updated.get("usuTema")),
     }
