@@ -26,13 +26,13 @@ export default function Biblioteca() {
     async function carregarSolicitados() {
       try {
         const emprestimos = await getEmprestimos();
-        const pendentesOuAtivos = emprestimos.filter(
-          (e) => ["pendente", "aprovado", "ativo"].includes((e.movStatus || e.status || "").toLowerCase())
+        const relevantes = emprestimos.filter((e) =>
+          ["pendente", "aprovado", "ativo"].includes((e.movStatus || e.status || "").toLowerCase())
         );
         const mapa = {};
-        for (const emp of pendentesOuAtivos) {
+        for (const emp of relevantes) {
           const idLivro = emp.idLivro;
-          if (idLivro) mapa[idLivro] = true;
+          if (idLivro) mapa[idLivro] = (emp.movStatus || emp.status || "").toLowerCase();
         }
         setSolicitados(mapa);
       } catch {
@@ -61,7 +61,7 @@ export default function Biblioteca() {
       }
 
       await solicitarEmprestimo({ idExemplar: exemplarDisponivel.id });
-      setSolicitados((prev) => ({ ...prev, [idLivro]: true }));
+      setSolicitados((prev) => ({ ...prev, [idLivro]: "pendente" }));
       addToast("Solicitação enviada! Aguarde aprovação do administrador.", "success");
     } catch (err) {
       addToast(getErrorMessage(err, "Erro ao solicitar empréstimo"), "error");
@@ -123,7 +123,7 @@ export default function Biblioteca() {
                   categoryName={book.livCategoria || book.categoria}
                   genreName={book.livGenero || book.genero}
                   onRequestLoan={isAluno ? handleRequestLoan : undefined}
-                  jasolicitado={!!solicitados[id]}
+                  statusSolicitacao={solicitados[id] || null}
                   solicitando={!!solicitando[id]}
                   isComunidade={!isAluno}
                 />

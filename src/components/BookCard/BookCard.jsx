@@ -73,7 +73,7 @@ export default function BookCard({
   onToggleStatus,
   onViewFicha,
   onRequestLoan,
-  jasolicitado = false,
+  statusSolicitacao = null,
   solicitando = false,
   isComunidade = false,
 }) {
@@ -91,6 +91,18 @@ export default function BookCard({
   const locationText = getLocationText(book);
   const tombo = getBookCode(book);
   const tags = [categoryName || book?.categoria, genreName || book?.genero].filter(Boolean);
+
+  const REQUEST_STATUS_LABEL = {
+    pendente: "Solicitado — Aguardando aprovação",
+    aprovado: "Aprovado — Faça a retirada do exemplar",
+    ativo: "Empréstimo ativo",
+  };
+  const jasolicitado = Boolean(statusSolicitacao);
+  const botaoLabel = solicitando
+    ? "Enviando…"
+    : statusSolicitacao
+    ? REQUEST_STATUS_LABEL[statusSolicitacao] || "Já Solicitado"
+    : "Solicitar Empréstimo";
 
   return (
     <div className="shared-book-card">
@@ -157,7 +169,7 @@ export default function BookCard({
                 type="button"
                 className={`shared-book-card__button ${
                   jasolicitado
-                    ? "shared-book-card__button--requested"
+                    ? `shared-book-card__button--requested shared-book-card__button--${statusSolicitacao}`
                     : "shared-book-card__button--request"
                 }`}
                 onClick={() => !jasolicitado && !solicitando && onRequestLoan(book)}
@@ -165,9 +177,7 @@ export default function BookCard({
                 aria-label={`Solicitar empréstimo de ${titulo}`}
               >
                 <HiOutlineBookOpen />
-                <span>
-                  {jasolicitado ? "Já Solicitado" : solicitando ? "Enviando…" : "Solicitar Empréstimo"}
-                </span>
+                <span>{botaoLabel}</span>
               </button>
             )}
 
