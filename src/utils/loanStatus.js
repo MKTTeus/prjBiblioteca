@@ -16,16 +16,21 @@ export function resolverStatus(loan) {
   // Negado é definitivo
   if (loan.movStatus === "Negado" || loan.status === "negado") return "negado";
 
+  // Expirado é definitivo — solicitação aprovada cujo prazo de retirada
+  // passou sem o aluno buscar o livro. Precisa vir ANTES do fallback de
+  // "pendente" abaixo, senão fica preso como pendente pra sempre (movTipo
+  // continua "SOLICITACAO" mesmo depois de expirado).
+  if (loan.movStatus === "Expirado" || loan.status === "expirado") return "expirado";
+
   // Aprovado: já aprovado pela biblioteca, aguardando confirmação/retirada
   if (
     loan.movStatus === "Aprovado" ||
     loan.status === "aprovado"
   ) return "aprovado";
 
-  // Pendente: solicitação ainda não aprovada
+  // Pendente: solicitação ainda não decidida pela biblioteca
   if (
     loan.movStatus === "Pendente" ||
-    loan.movTipo === "SOLICITACAO" ||
     loan.status === "pendente"
   ) return "pendente";
 

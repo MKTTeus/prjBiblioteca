@@ -10,6 +10,8 @@ const statusLabelMap = {
   ativo: "Ativo",
   atrasado: "Atrasado",
   devolvido: "Devolvido",
+  expirado: "Expirado",
+  negado: "Negado",
 };
 
 export default function Emprestimos() {
