@@ -776,10 +776,13 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
     """
     Aprovar uma solicitação de empréstimo.
 
-    A aprovação NÃO ativa o empréstimo imediatamente — ela apenas libera a
-    solicitação para a etapa seguinte (confirmar retirada). O empréstimo só
-    fica ativo de fato quando a retirada física é registrada em
-    `/emprestimos/solicitacoes/{id}/retirar`.
+    A aprovação já inicia a contagem do prazo de retirada — não existe mais
+    uma etapa separada de "confirmar retirada". Ao aprovar, o admin está
+    dizendo "o aluno pode vir buscar o exemplar", e o prazo máximo passa a
+    contar a partir daqui. Se o prazo passar sem retirada, a solicitação
+    expira (`/emprestimos/{id}/expirar` ou automaticamente via cron) e o
+    aluno precisa solicitar de novo. Se o aluno retirar a tempo, o admin usa
+    `/emprestimos/solicitacoes/{id}/retirar` para ativar o empréstimo.
     """
     try:
         # Buscar movimentação
@@ -809,18 +812,32 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
 
         id_admin = get_admin_id(admin)
 
-        # Apenas marca como aprovada — o exemplar continua Reservado e o
-        # empréstimo só é ativado quando a retirada for confirmada e registrada.
+        agora = datetime.utcnow()
+        configs = get_config_map()
+        prazo_horas = _get_prazo_confirmacao_horas(configs)
+        data_limite = agora + timedelta(hours=prazo_horas)
+
+        # Marca como aprovada e já inicia o prazo de retirada. O exemplar
+        # continua Reservado e o empréstimo só é ativado de fato quando a
+        # retirada for registrada em /retirar.
         supabase.table("Movimentacao").update({
             "movStatus": "Aprovado",
             "idAdmin": id_admin,
+            "status_confirmacao": "CONFIRMADA",
+            "data_confirmacao": agora.isoformat(),
+            "prazo_horas": prazo_horas,
         }).eq("idMovimentacao", idEmprestimo).execute()
 
         supabase.table("MovimentacaoExemplar").update({
             "itemStatus": "Aprovado",
         }).eq("idMovimentacao", idEmprestimo).execute()
 
-        return {"message": "Solicitação aprovada com sucesso"}
+        return {
+            "message": "Solicitação aprovada com sucesso",
+            "dataConfirmacao": agora.isoformat(),
+            "prazoHoras": prazo_horas,
+            "dataLimite": data_limite.isoformat(),
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -883,60 +900,6 @@ def _get_prazo_confirmacao_horas(configs: dict = None) -> int:
 
 def _get_alerta_expiracao_horas(configs: dict = None) -> int:
     return get_config_int("alerta_expiracao_horas", 2, configs)
-
-
-@router.post("/emprestimos/solicitacoes/{idSolicitacao}/confirmar")
-def confirmar_retirada(idSolicitacao: int, admin=Depends(get_admin)):
-    """
-    Admin confirms that a student may pick up the reserved book.
-    Sets status_confirmacao = CONFIRMADA and records data_confirmacao + prazo.
-
-    Só pode ser chamado depois que a solicitação foi aprovada
-    (`/emprestimos/{id}/aprovar`) — confirmar retirada é o passo seguinte
-    à aprovação, não uma alternativa a ela.
-    """
-    try:
-        mov_resp = (
-            supabase.table("Movimentacao")
-            .select("*")
-            .eq("idMovimentacao", idSolicitacao)
-            .limit(1)
-            .execute()
-        )
-        if not mov_resp.data:
-            raise HTTPException(status_code=404, detail="Solicitação não encontrada")
-
-        mov = mov_resp.data[0]
-
-        # Only approved solicitations can have their withdrawal confirmed
-        if mov.get("movStatus") != "Aprovado":
-            raise HTTPException(status_code=400, detail="Apenas solicitações aprovadas podem ser confirmadas para retirada")
-
-        agora = datetime.utcnow()
-        configs = get_config_map()
-        prazo_horas = _get_prazo_confirmacao_horas(configs)
-        data_limite = agora + timedelta(hours=prazo_horas)
-
-        id_admin = get_admin_id(admin)
-
-        supabase.table("Movimentacao").update({
-            "status_confirmacao": "CONFIRMADA",
-            "data_confirmacao": agora.isoformat(),
-            "prazo_horas": prazo_horas,
-            "idAdmin": id_admin,
-        }).eq("idMovimentacao", idSolicitacao).execute()
-
-        return {
-            "message": "Retirada confirmada com sucesso",
-            "dataConfirmacao": agora.isoformat(),
-            "prazoHoras": prazo_horas,
-            "dataLimite": data_limite.isoformat(),
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("Erro confirmar retirada:", e)
-        raise HTTPException(status_code=500, detail="Erro ao confirmar retirada")
 
 
 @router.post("/emprestimos/solicitacoes/{idSolicitacao}/retirar")

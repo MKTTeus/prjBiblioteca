@@ -8,7 +8,6 @@ import {
   getSolicitacoesEmprestimo,
   aprovarSolicitacaoEmprestimo,
   rejeitarSolicitacaoEmprestimo,
-  confirmarRetirada,
   registrarRetirada,
   expirarSolicitacao,
 } from "../../../services/api";
@@ -234,15 +233,28 @@ export default function SolicitacoesEmprestimo() {
     }
     setProcessando((prev) => ({ ...prev, [id]: true }));
     try {
-      await aprovarSolicitacaoEmprestimo(id);
+      const resultado = await aprovarSolicitacaoEmprestimo(id);
       setSolicitacoes((prev) =>
         prev.map((s) =>
           (s.idEmprestimo || s.idMovimentacao) === id
-            ? { ...s, status: "aprovado", movStatus: "Aprovado" }
+            ? {
+                ...s,
+                status: "aprovado",
+                movStatus: "Aprovado",
+                statusConfirmacao: "CONFIRMADA",
+                dataConfirmacao: resultado?.dataConfirmacao,
+                prazoHoras: resultado?.prazoHoras,
+                dataLimite: resultado?.dataLimite,
+              }
             : s
         )
       );
-      addToast("Solicitação aprovada com sucesso", "success");
+      addToast(
+        resultado?.dataLimite
+          ? `Solicitação aprovada! Prazo para retirada: ${formatDataLimite(resultado.dataLimite)}`
+          : "Solicitação aprovada com sucesso",
+        "success"
+      );
     } catch (error) {
       console.error(error);
       const mensagem = error.data?.detail || error.message || "Erro ao aprovar solicitação";
@@ -271,40 +283,6 @@ export default function SolicitacoesEmprestimo() {
     } catch (error) {
       console.error(error);
       const mensagem = error.data?.detail || error.message || "Erro ao rejeitar solicitação";
-      addToast(mensagem, "error");
-    } finally {
-      setProcessando((prev) => ({ ...prev, [id]: false }));
-    }
-  }
-  async function handleConfirmarRetirada(item) {
-    const id = item.idEmprestimo || item.idMovimentacao;
-    if (!id) {
-      addToast("Erro: ID da solicitação não encontrado", "error");
-      return;
-    }
-    setProcessando((prev) => ({ ...prev, [id]: true }));
-    try {
-      const resultado = await confirmarRetirada(id);
-      setSolicitacoes((prev) =>
-        prev.map((s) =>
-          (s.idEmprestimo || s.idMovimentacao) === id
-            ? {
-                ...s,
-                statusConfirmacao: "CONFIRMADA",
-                dataConfirmacao: resultado.dataConfirmacao,
-                prazoHoras: resultado.prazoHoras,
-                dataLimite: resultado.dataLimite,
-              }
-            : s
-        )
-      );
-      addToast(
-        `Retirada confirmada! Prazo: ${formatDataLimite(resultado.dataLimite)}`,
-        "success"
-      );
-    } catch (error) {
-      console.error(error);
-      const mensagem = error.data?.detail || error.message || "Erro ao confirmar retirada";
       addToast(mensagem, "error");
     } finally {
       setProcessando((prev) => ({ ...prev, [id]: false }));
@@ -473,10 +451,6 @@ export default function SolicitacoesEmprestimo() {
                         </span>
                       ) : status === "negado" || status === "rejeitado" || status === "cancelado" ? (
                         <span className="confirmacao-badge confirmacao-nao-aplica">—</span>
-                      ) : status === "aprovado" ? (
-                        <span className="confirmacao-badge confirmacao-pendente" title="Aprovada — aguardando confirmação de retirada">
-                          Aguardando retirada
-                        </span>
                       ) : (
                         <span className="confirmacao-badge confirmacao-pendente" title="Aguardando decisão do administrador">
                           Aguardando aprovação
@@ -500,7 +474,7 @@ export default function SolicitacoesEmprestimo() {
                               className="emp-btn-light"
                               onClick={() => handleAprovarSolicitacao(item)}
                               disabled={isProcessando}
-                              title="Aprovar solicitação e liberar para confirmar retirada"
+                              title="Aprovar solicitação e iniciar o prazo de retirada"
                             >
                               Aprovar
                             </LoadingButton>
@@ -512,16 +486,6 @@ export default function SolicitacoesEmprestimo() {
                               Negar
                             </LoadingButton>
                           </>
-                        )}
-                        {status === "aprovado" && statusConf === "PENDENTE" && (
-                          <LoadingButton
-                            className="emp-btn-confirm"
-                            onClick={() => handleConfirmarRetirada(item)}
-                            disabled={isProcessando}
-                            title="Confirmar que o aluno pode retirar o livro"
-                          >
-                            Confirmar retirada
-                          </LoadingButton>
                         )}
                         {statusConf === "CONFIRMADA" && (
                           <>

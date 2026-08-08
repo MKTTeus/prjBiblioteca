@@ -512,11 +512,6 @@ export const rejeitarSolicitacaoEmprestimo = (id) =>
     method: "PUT"
   });
 
-export const confirmarRetirada = (id) =>
-  apiFetch(`/emprestimos/solicitacoes/${id}/confirmar`, {
-    method: "POST"
-  });
-
 export const registrarRetirada = (id) =>
   apiFetch(`/emprestimos/solicitacoes/${id}/retirar`, {
     method: "POST"
