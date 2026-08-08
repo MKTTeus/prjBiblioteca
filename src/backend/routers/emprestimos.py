@@ -887,7 +887,6 @@ def rejeitar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
     except Exception as e:
         print("Erro rejeitar solicitacao:", e)
         raise HTTPException(status_code=500, detail="Erro ao rejeitar solicitação")
-        raise HTTPException(status_code=500, detail="Erro ao rejeitar solicitação")
 
 
 # ── Confirmação de retirada (workflow com prazo) ─────────────────────

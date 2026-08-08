@@ -27,7 +27,7 @@ export default function Biblioteca() {
       try {
         const emprestimos = await getEmprestimos();
         const pendentesOuAtivos = emprestimos.filter(
-          (e) => ["pendente", "ativo"].includes((e.movStatus || e.status || "").toLowerCase())
+          (e) => ["pendente", "aprovado", "ativo"].includes((e.movStatus || e.status || "").toLowerCase())
         );
         const mapa = {};
         for (const emp of pendentesOuAtivos) {
