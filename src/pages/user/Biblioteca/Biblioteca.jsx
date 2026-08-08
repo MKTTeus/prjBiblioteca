@@ -20,12 +20,14 @@ export default function Biblioteca() {
   const isAluno = user?.tipo?.toLowerCase() === "aluno";
   const cooldownRef = useRef({});
 
-  // Carrega empréstimos pendentes/ativos para pré-popular solicitados
+  // Carrega empréstimos pendentes/aprovados/ativos para pré-popular solicitados
   useEffect(() => {
     if (!isAluno) return;
+    let cancelado = false;
     async function carregarSolicitados() {
       try {
         const emprestimos = await getEmprestimos();
+        if (cancelado) return;
         const relevantes = emprestimos.filter((e) =>
           ["pendente", "aprovado", "ativo"].includes((e.movStatus || e.status || "").toLowerCase())
         );
@@ -39,7 +41,23 @@ export default function Biblioteca() {
         // silencioso — não bloqueia a página
       }
     }
+
     carregarSolicitados();
+    // Atualiza periodicamente e ao voltar o foco na aba, para refletir
+    // aprovações/negações/expirações feitas pelo admin sem precisar recarregar.
+    const interval = setInterval(carregarSolicitados, 30000);
+    function aoFocar() {
+      if (document.visibilityState === "visible") carregarSolicitados();
+    }
+    document.addEventListener("visibilitychange", aoFocar);
+    window.addEventListener("focus", aoFocar);
+
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", aoFocar);
+      window.removeEventListener("focus", aoFocar);
+    };
   }, [isAluno]);
 
   const handleRequestLoan = async (book) => {

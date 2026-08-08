@@ -18,21 +18,42 @@ export default function Emprestimos() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function fetchLoans() {
-      setIsLoading(true);
-      setError(null);
+    let cancelado = false;
+    async function fetchLoans({ mostrarLoading }) {
+      if (mostrarLoading) {
+        setIsLoading(true);
+        setError(null);
+      }
       try {
         const data = await getEmprestimos();
+        if (cancelado) return;
         setLoans(Array.isArray(data) ? data : []);
+        if (mostrarLoading) setError(null);
       } catch (err) {
         console.error("Erro ao carregar empréstimos:", err);
-        setLoans([]);
-        setError("Erro ao carregar seus empréstimos. Tente novamente.");
+        if (!cancelado && mostrarLoading) {
+          setLoans([]);
+          setError("Erro ao carregar seus empréstimos. Tente novamente.");
+        }
       } finally {
-        setIsLoading(false);
+        if (mostrarLoading && !cancelado) setIsLoading(false);
       }
     }
-    fetchLoans();
+
+    fetchLoans({ mostrarLoading: true });
+    const interval = setInterval(() => fetchLoans({ mostrarLoading: false }), 30000);
+    function aoFocar() {
+      if (document.visibilityState === "visible") fetchLoans({ mostrarLoading: false });
+    }
+    document.addEventListener("visibilitychange", aoFocar);
+    window.addEventListener("focus", aoFocar);
+
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", aoFocar);
+      window.removeEventListener("focus", aoFocar);
+    };
   }, []);
 
   // Aplicar a mesma lógica de status que o admin usa

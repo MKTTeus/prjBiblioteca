@@ -117,25 +117,47 @@ export default function SolicitacoesEmprestimo() {
     { valor: "expirados", label: "Expirados" },
   ];
   useEffect(() => {
-    async function carregarDados() {
-      setCarregando(true);
+    let cancelado = false;
+    async function carregarDados({ mostrarLoading } = { mostrarLoading: false }) {
+      if (mostrarLoading) setCarregando(true);
       try {
         const data = await getSolicitacoesEmprestimo();
+        if (cancelado) return;
         const arr = Array.isArray(data) ? data : [];
         setSolicitacoes(arr);
       } catch (error) {
         console.error(error);
-        setSolicitacoes([]);
+        if (!cancelado) setSolicitacoes([]);
       } finally {
-        setCarregando(false);
+        if (mostrarLoading && !cancelado) setCarregando(false);
       }
     }
-    carregarDados();
+
+    // Carga inicial (com spinner) e depois atualização silenciosa periódica
+    carregarDados({ mostrarLoading: true });
+    const interval = setInterval(() => carregarDados({ mostrarLoading: false }), 30000);
+
+    // Atualiza também assim que a aba volta a ficar visível/em foco
+    function aoFocar() {
+      if (document.visibilityState === "visible") {
+        carregarDados({ mostrarLoading: false });
+      }
+    }
+    document.addEventListener("visibilitychange", aoFocar);
+    window.addEventListener("focus", aoFocar);
+
+    return () => {
+      cancelado = true;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", aoFocar);
+      window.removeEventListener("focus", aoFocar);
+    };
   }, []);
-  // Auto-refresh every 60s to update countdown badges
+  // Re-render a cada 60s para os selos de contagem regressiva ("Xh restantes")
+  // ficarem sempre corretos mesmo sem nenhum novo dado chegar do servidor.
   useEffect(() => {
     const interval = setInterval(() => {
-      setSolicitacoes((prev) => [...prev]); // trigger re-render for badge updates
+      setSolicitacoes((prev) => [...prev]);
     }, 60000);
     return () => clearInterval(interval);
   }, []);
