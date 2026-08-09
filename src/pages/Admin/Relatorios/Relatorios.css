@@ -97,6 +97,24 @@
   color: var(--text-default);
 }
 
+.rel-filtro-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-default);
+  padding-bottom: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rel-filtro-checkbox input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 .rel-btn-filtrar {
   border: none;
   border-radius: 8px;

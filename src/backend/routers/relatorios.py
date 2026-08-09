@@ -15,6 +15,11 @@ def relatorio_emprestimos(
     dataFim: Optional[str] = None,
     status: Optional[str] = "todos",       # todos | ativo | atrasado | devolvido
     tipoUsuario: Optional[str] = "todos",  # todos | Aluno | Comunidade
+    turma: Optional[str] = None,
+    serie: Optional[str] = None,
+    anoLetivo: Optional[int] = None,       # filtra pelo ano de movDataEmprestimo
+    idUsuario: Optional[int] = None,       # histórico de um aluno específico
+    agrupador: Optional[str] = None,       # None | usuario | turma | serie | livro
     admin=Depends(get_admin),
 ):
     try:
@@ -40,7 +45,7 @@ def relatorio_emprestimos(
             consultas.append(lambda: None)
         if usuario_ids:
             consultas.append(
-                lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo").in_("idUsuario", usuario_ids).execute()
+                lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo, usuTurma, usuSerie").in_("idUsuario", usuario_ids).execute()
             )
         else:
             consultas.append(lambda: None)
@@ -75,8 +80,18 @@ def relatorio_emprestimos(
             u = usuario_map.get(mov.get("idUsuario"), {})
             usuario_nome = u.get("usuNome", "Usuário não informado")
             usuario_tipo = u.get("usuTipo", "-")
+            usuario_turma = u.get("usuTurma") or "-"
+            usuario_serie = u.get("usuSerie") or "-"
 
             if tipoUsuario and tipoUsuario != "todos" and usuario_tipo != tipoUsuario:
+                continue
+            if turma and usuario_turma != turma:
+                continue
+            if serie and usuario_serie != serie:
+                continue
+            if idUsuario and mov.get("idUsuario") != idUsuario:
+                continue
+            if anoLetivo and str(mov.get("movDataEmprestimo") or "")[:4] != str(anoLetivo):
                 continue
 
             me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
@@ -128,8 +143,11 @@ def relatorio_emprestimos(
 
             itens.append({
                 "idMovimentacao": mov.get("idMovimentacao"),
+                "idUsuario": mov.get("idUsuario"),
                 "usuario": usuario_nome,
                 "usuarioTipo": usuario_tipo,
+                "turma": usuario_turma,
+                "serie": usuario_serie,
                 "titulo": titulo or "-",
                 "isbn": isbn,
                 "tombo": tombo,
@@ -142,7 +160,40 @@ def relatorio_emprestimos(
 
         itens.sort(key=lambda i: i.get("dataEmprestimo") or "", reverse=True)
 
-        return {"itens": itens, "resumo": resumo}
+        # Ranking opcional: agrega os itens já filtrados por uma dimensão
+        # (aluno, turma, série ou livro) — cobre "livros mais emprestados",
+        # "alunos que mais emprestam", "empréstimos por turma/série" etc.
+        ranking = None
+        if agrupador in ("usuario", "turma", "serie", "livro"):
+            chave_fn = {
+                "usuario": lambda i: (i["idUsuario"], i["usuario"]),
+                "turma": lambda i: (i["turma"], i["turma"]),
+                "serie": lambda i: (i["serie"], i["serie"]),
+                "livro": lambda i: (i["titulo"], i["titulo"]),
+            }[agrupador]
+
+            agregados = {}
+            for i in itens:
+                chave, rotulo = chave_fn(i)
+                bucket = agregados.setdefault(chave, {
+                    "rotulo": rotulo,
+                    "total": 0, "ativos": 0, "atrasados": 0, "devolvidos": 0,
+                })
+                bucket["total"] += 1
+                if i["status"] in ("ativo", "atrasado", "devolvido"):
+                    bucket[i["status"]] += 1
+
+            ranking = sorted(
+                [{"chave": k, **v} for k, v in agregados.items()],
+                key=lambda r: r["total"],
+                reverse=True,
+            )
+
+        resultado = {"itens": itens, "resumo": resumo}
+        if ranking is not None:
+            resultado["ranking"] = ranking
+            resultado["agrupador"] = agrupador
+        return resultado
     except Exception as e:
         print("Erro relatorio emprestimos:", e)
         return {"itens": [], "resumo": {"ativos": 0, "atrasados": 0, "devolvidos": 0, "total": 0}}
@@ -151,10 +202,16 @@ def relatorio_emprestimos(
 @router.get("/relatorios/atrasos")
 def relatorio_atrasos(
     tipoUsuario: Optional[str] = "todos",  # todos | Aluno | Comunidade
+    turma: Optional[str] = None,
+    serie: Optional[str] = None,
+    apenasAtivos: bool = True,             # False = inclui histórico (também os já devolvidos em atraso)
+    agrupador: Optional[str] = None,       # None | usuario | turma
     admin=Depends(get_admin),
 ):
-    """Usuários com empréstimos em atraso (inadimplentes) — um item em atraso
-    por linha, agrupável no front por usuário."""
+    """Empréstimos em atraso. Por padrão só os ainda não devolvidos
+    (inadimplência atual). Com apenasAtivos=false, inclui também os que já
+    foram devolvidos só que fora do prazo — usado para histórico de atrasos
+    por aluno e para identificar reincidentes."""
     try:
         hoje = datetime.utcnow().date()
 
@@ -166,19 +223,32 @@ def relatorio_atrasos(
             or []
         )
 
-        # Só nos interessam os que já passaram da data prevista
         atrasados_raw = []
         for it in todos_itens:
-            if it.get("dataDevolucao"):
-                continue  # já foi devolvido, não é atraso
             data_prevista = it.get("dataPrevistaDevolucao")
             if not data_prevista:
                 continue
             try:
-                if datetime.fromisoformat(data_prevista).date() < hoje:
-                    atrasados_raw.append(it)
+                prevista_date = datetime.fromisoformat(data_prevista).date()
             except Exception:
                 continue
+
+            data_devolucao = it.get("dataDevolucao")
+            if not data_devolucao:
+                # ainda não devolvido: só conta como atraso se já passou do prazo
+                if prevista_date < hoje:
+                    atrasados_raw.append({**it, "_devolvidoEmAtraso": False})
+                continue
+
+            # já devolvido: só entra no relatório se pedirem histórico
+            if apenasAtivos:
+                continue
+            try:
+                devolucao_date = datetime.fromisoformat(data_devolucao).date()
+            except Exception:
+                continue
+            if devolucao_date > prevista_date:
+                atrasados_raw.append({**it, "_devolvidoEmAtraso": True})
 
         if not atrasados_raw:
             return {"itens": [], "resumo": {"usuariosInadimplentes": 0, "itensAtrasados": 0, "diasAtrasoMedio": 0}}
@@ -204,7 +274,7 @@ def relatorio_atrasos(
         livro_ids = list({e.get("idLivro") for e in exemplares if e.get("idLivro")})
 
         consultas2 = [
-            lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo, usuEmail, usuTelefone, usuTelefoneResponsavel").in_("idUsuario", usuario_ids).execute()
+            lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo, usuTurma, usuSerie, usuEmail, usuTelefone, usuTelefoneResponsavel").in_("idUsuario", usuario_ids).execute()
             if usuario_ids else None,
             lambda: supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute()
             if livro_ids else None,
@@ -221,16 +291,27 @@ def relatorio_atrasos(
             mov = mov_map.get(it.get("idMovimentacao"), {})
             usuario = usuario_map.get(mov.get("idUsuario"), {})
             usuario_tipo = usuario.get("usuTipo", "-")
+            usuario_turma = usuario.get("usuTurma") or "-"
+            usuario_serie = usuario.get("usuSerie") or "-"
 
             if tipoUsuario and tipoUsuario != "todos" and usuario_tipo != tipoUsuario:
+                continue
+            if turma and usuario_turma != turma:
+                continue
+            if serie and usuario_serie != serie:
                 continue
 
             exemplar = exemplar_map.get(it.get("idExemplar"), {})
             livro = livro_map.get(exemplar.get("idLivro"), {})
 
             data_prevista = it.get("dataPrevistaDevolucao")
+            devolvido_em_atraso = it.get("_devolvidoEmAtraso")
             try:
-                dias_atraso = (hoje - datetime.fromisoformat(data_prevista).date()).days
+                if devolvido_em_atraso:
+                    fim = datetime.fromisoformat(it.get("dataDevolucao")).date()
+                else:
+                    fim = hoje
+                dias_atraso = (fim - datetime.fromisoformat(data_prevista).date()).days
             except Exception:
                 dias_atraso = 0
 
@@ -242,23 +323,53 @@ def relatorio_atrasos(
                 "idUsuario": mov.get("idUsuario"),
                 "usuario": usuario.get("usuNome", "Usuário não informado"),
                 "usuarioTipo": usuario_tipo,
+                "turma": usuario_turma,
+                "serie": usuario_serie,
                 "contato": contato,
                 "titulo": livro.get("livTitulo", "-"),
                 "tombo": exemplar.get("exeLivTombo", "-"),
                 "dataPrevistaDevolucao": data_prevista,
+                "dataDevolucao": it.get("dataDevolucao"),
                 "diasAtraso": dias_atraso,
+                "situacao": "devolvido_em_atraso" if devolvido_em_atraso else "em_atraso",
             })
 
         itens.sort(key=lambda i: i["diasAtraso"], reverse=True)
 
-        usuarios_inadimplentes = len({i["idUsuario"] for i in itens if i.get("idUsuario")})
+        usuarios_inadimplentes = len({
+            i["idUsuario"] for i in itens if i.get("idUsuario") and i["situacao"] == "em_atraso"
+        })
         resumo = {
             "usuariosInadimplentes": usuarios_inadimplentes,
             "itensAtrasados": len(itens),
             "diasAtrasoMedio": round(soma_dias / len(itens), 1) if itens else 0,
         }
 
-        return {"itens": itens, "resumo": resumo}
+        # Ranking opcional: por aluno (reincidência) ou por turma
+        ranking = None
+        if agrupador in ("usuario", "turma"):
+            chave_fn = (
+                (lambda i: (i["idUsuario"], i["usuario"]))
+                if agrupador == "usuario"
+                else (lambda i: (i["turma"], i["turma"]))
+            )
+            agregados = {}
+            for i in itens:
+                chave, rotulo = chave_fn(i)
+                bucket = agregados.setdefault(chave, {"rotulo": rotulo, "ocorrencias": 0, "diasAtrasoTotal": 0})
+                bucket["ocorrencias"] += 1
+                bucket["diasAtrasoTotal"] += i["diasAtraso"]
+            ranking = sorted(
+                [{"chave": k, **v} for k, v in agregados.items()],
+                key=lambda r: r["ocorrencias"],
+                reverse=True,
+            )
+
+        resultado = {"itens": itens, "resumo": resumo}
+        if ranking is not None:
+            resultado["ranking"] = ranking
+            resultado["agrupador"] = agrupador
+        return resultado
     except Exception as e:
         print("Erro relatorio atrasos:", e)
         return {"itens": [], "resumo": {"usuariosInadimplentes": 0, "itensAtrasados": 0, "diasAtrasoMedio": 0}}

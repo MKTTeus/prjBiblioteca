@@ -4,13 +4,17 @@ import { FiDownload, FiFileText, FiBookOpen, FiAlertTriangle, FiCheckCircle, FiL
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getRelatorioEmprestimos } from "../../../services/api";
 import { exportarPDF, exportarExcel } from "../../../utils/exportarArquivo";
+import { SERIES } from "../../../utils/series";
 import {
   STATUS_OPTIONS,
   TIPO_USUARIO_OPTIONS,
   STATUS_LABEL,
+  AGRUPADOR_EMPRESTIMOS_OPTIONS,
   formatarData,
   linhasParaExport,
   COLUNAS_EXPORT,
+  linhasParaExportRankingEmprestimos,
+  COLUNAS_EXPORT_RANKING_EMPRESTIMOS,
 } from "./utils";
 
 function primeiroDiaDoMes() {
@@ -28,9 +32,13 @@ export default function RelatorioEmprestimos() {
     dataFim: hojeISO(),
     status: "todos",
     tipoUsuario: "todos",
+    turma: "",
+    serie: "",
+    agrupador: "",
   });
 
   const [itens, setItens] = useState([]);
+  const [ranking, setRanking] = useState(null);
   const [resumo, setResumo] = useState({ ativos: 0, atrasados: 0, devolvidos: 0, total: 0 });
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState(null);
@@ -41,6 +49,7 @@ export default function RelatorioEmprestimos() {
     try {
       const resultado = await getRelatorioEmprestimos(filtros);
       setItens(resultado.itens || []);
+      setRanking(resultado.ranking || null);
       setResumo(resultado.resumo || { ativos: 0, atrasados: 0, devolvidos: 0, total: 0 });
     } catch (error) {
       console.error(error);
@@ -60,7 +69,19 @@ export default function RelatorioEmprestimos() {
     return `${formatarData(filtros.dataInicio)} a ${formatarData(filtros.dataFim)}`;
   }, [filtros.dataInicio, filtros.dataFim]);
 
+  const emModoRanking = Boolean(filtros.agrupador) && Array.isArray(ranking);
+
   function handleExportarPDF() {
+    if (emModoRanking) {
+      exportarPDF({
+        titulo: "Relatório de Empréstimos — Ranking",
+        subtitulo: `Período: ${periodoLabel}`,
+        colunas: COLUNAS_EXPORT_RANKING_EMPRESTIMOS,
+        linhas: linhasParaExportRankingEmprestimos(ranking),
+        nomeArquivo: `relatorio-emprestimos-ranking-${hojeISO()}`,
+      });
+      return;
+    }
     exportarPDF({
       titulo: "Relatório de Empréstimos",
       subtitulo: `Período: ${periodoLabel}`,
@@ -71,6 +92,15 @@ export default function RelatorioEmprestimos() {
   }
 
   function handleExportarExcel() {
+    if (emModoRanking) {
+      exportarExcel({
+        nomeAba: "Ranking",
+        colunas: COLUNAS_EXPORT_RANKING_EMPRESTIMOS,
+        linhas: linhasParaExportRankingEmprestimos(ranking),
+        nomeArquivo: `relatorio-emprestimos-ranking-${hojeISO()}`,
+      });
+      return;
+    }
     exportarExcel({
       nomeAba: "Empréstimos",
       colunas: COLUNAS_EXPORT,
@@ -79,17 +109,19 @@ export default function RelatorioEmprestimos() {
     });
   }
 
+  const semResultado = emModoRanking ? ranking.length === 0 : itens.length === 0;
+
   return (
     <div className="rel-tab-content">
       <div className="rel-subheader">
-        <p>Histórico de empréstimos, ativos e atrasados por período.</p>
+        <p>Histórico de empréstimos, ativos e atrasados por período — ou ranking por aluno, turma, série e livro.</p>
 
         <div className="rel-export-actions">
           <button
             type="button"
             className="rel-btn-export"
             onClick={handleExportarExcel}
-            disabled={carregando || itens.length === 0}
+            disabled={carregando || semResultado}
           >
             <FiDownload /> Excel
           </button>
@@ -97,7 +129,7 @@ export default function RelatorioEmprestimos() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarPDF}
-            disabled={carregando || itens.length === 0}
+            disabled={carregando || semResultado}
           >
             <FiFileText /> PDF
           </button>
@@ -158,6 +190,44 @@ export default function RelatorioEmprestimos() {
           </select>
         </div>
 
+        <div className="rel-filtro-campo">
+          <label htmlFor="rel-serie">Série</label>
+          <select
+            id="rel-serie"
+            value={filtros.serie}
+            onChange={(e) => setFiltros((f) => ({ ...f, serie: e.target.value }))}
+          >
+            <option value="">Todas</option>
+            {SERIES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="rel-filtro-campo">
+          <label htmlFor="rel-turma">Turma</label>
+          <input
+            id="rel-turma"
+            type="text"
+            placeholder="Ex: 8º A"
+            value={filtros.turma}
+            onChange={(e) => setFiltros((f) => ({ ...f, turma: e.target.value }))}
+          />
+        </div>
+
+        <div className="rel-filtro-campo">
+          <label htmlFor="rel-agrupador">Agrupar por</label>
+          <select
+            id="rel-agrupador"
+            value={filtros.agrupador}
+            onChange={(e) => setFiltros((f) => ({ ...f, agrupador: e.target.value }))}
+          >
+            {AGRUPADOR_EMPRESTIMOS_OPTIONS.map((opcao) => (
+              <option key={opcao.valor} value={opcao.valor}>{opcao.label}</option>
+            ))}
+          </select>
+        </div>
+
         <button type="button" className="rel-btn-filtrar" onClick={buscar} disabled={carregando}>
           {carregando ? <FiLoader className="rel-spinner" /> : "Filtrar"}
         </button>
@@ -165,52 +235,87 @@ export default function RelatorioEmprestimos() {
 
       {erro && <div className="rel-erro">{erro}</div>}
 
-      <div className="rel-table-box">
-        <table>
-          <thead>
-            <tr>
-              <th>Usuário</th>
-              <th>Tipo</th>
-              <th>Livro</th>
-              <th>ISBN</th>
-              <th>Tombo</th>
-              <th>Empréstimo</th>
-              <th>Prev. Devolução</th>
-              <th>Devolução</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {carregando ? (
+      {emModoRanking ? (
+        <div className="rel-table-box">
+          <table>
+            <thead>
               <tr>
-                <td colSpan="9" className="rel-empty">Carregando...</td>
+                <th>{AGRUPADOR_EMPRESTIMOS_OPTIONS.find((o) => o.valor === filtros.agrupador)?.label || "Item"}</th>
+                <th>Total</th>
+                <th>Ativos</th>
+                <th>Atrasados</th>
+                <th>Devolvidos</th>
               </tr>
-            ) : itens.length === 0 ? (
+            </thead>
+            <tbody>
+              {carregando ? (
+                <tr><td colSpan="5" className="rel-empty">Carregando...</td></tr>
+              ) : ranking.length === 0 ? (
+                <tr><td colSpan="5" className="rel-empty">Nenhum resultado para os filtros informados.</td></tr>
+              ) : (
+                ranking.map((r, index) => (
+                  <tr key={`${r.chave}-${index}`}>
+                    <td>{r.rotulo || "-"}</td>
+                    <td><strong>{r.total}</strong></td>
+                    <td>{r.ativos}</td>
+                    <td>{r.atrasados}</td>
+                    <td>{r.devolvidos}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="rel-table-box">
+          <table>
+            <thead>
               <tr>
-                <td colSpan="9" className="rel-empty">Nenhum empréstimo encontrado para os filtros informados.</td>
+                <th>Usuário</th>
+                <th>Tipo</th>
+                <th>Turma</th>
+                <th>Livro</th>
+                <th>ISBN</th>
+                <th>Tombo</th>
+                <th>Empréstimo</th>
+                <th>Prev. Devolução</th>
+                <th>Devolução</th>
+                <th>Status</th>
               </tr>
-            ) : (
-              itens.map((item) => (
-                <tr key={item.idMovimentacao}>
-                  <td>{item.usuario}</td>
-                  <td>{item.usuarioTipo}</td>
-                  <td>{item.titulo}</td>
-                  <td>{item.isbn || "-"}</td>
-                  <td>{item.tombo || "-"}</td>
-                  <td>{formatarData(item.dataEmprestimo)}</td>
-                  <td>{formatarData(item.dataPrevistaDevolucao)}</td>
-                  <td>{formatarData(item.dataDevolucao)}</td>
-                  <td>
-                    <span className={`rel-status rel-status-${item.status}`}>
-                      {STATUS_LABEL[item.status] || item.status}
-                    </span>
-                  </td>
+            </thead>
+            <tbody>
+              {carregando ? (
+                <tr>
+                  <td colSpan="10" className="rel-empty">Carregando...</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : itens.length === 0 ? (
+                <tr>
+                  <td colSpan="10" className="rel-empty">Nenhum empréstimo encontrado para os filtros informados.</td>
+                </tr>
+              ) : (
+                itens.map((item) => (
+                  <tr key={item.idMovimentacao}>
+                    <td>{item.usuario}</td>
+                    <td>{item.usuarioTipo}</td>
+                    <td>{item.turma || "-"}</td>
+                    <td>{item.titulo}</td>
+                    <td>{item.isbn || "-"}</td>
+                    <td>{item.tombo || "-"}</td>
+                    <td>{formatarData(item.dataEmprestimo)}</td>
+                    <td>{formatarData(item.dataPrevistaDevolucao)}</td>
+                    <td>{formatarData(item.dataDevolucao)}</td>
+                    <td>
+                      <span className={`rel-status rel-status-${item.status}`}>
+                        {STATUS_LABEL[item.status] || item.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

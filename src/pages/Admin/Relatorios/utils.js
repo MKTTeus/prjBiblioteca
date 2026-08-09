@@ -28,6 +28,8 @@ export function linhasParaExport(itens) {
   return itens.map((item) => [
     item.usuario,
     item.usuarioTipo,
+    item.turma || "-",
+    item.serie || "-",
     item.titulo,
     item.isbn || "-",
     item.tombo || "-",
@@ -41,6 +43,8 @@ export function linhasParaExport(itens) {
 export const COLUNAS_EXPORT = [
   "Usuário",
   "Tipo",
+  "Turma",
+  "Série",
   "Livro",
   "ISBN",
   "Tombo",
@@ -55,10 +59,13 @@ export function linhasParaExportAtrasos(itens) {
   return itens.map((item) => [
     item.usuario,
     item.usuarioTipo,
+    item.turma || "-",
+    item.serie || "-",
     item.contato || "-",
     item.titulo,
     item.tombo || "-",
     formatarData(item.dataPrevistaDevolucao),
+    item.situacao === "devolvido_em_atraso" ? formatarData(item.dataDevolucao) : "-",
     item.diasAtraso,
   ]);
 }
@@ -66,11 +73,51 @@ export function linhasParaExportAtrasos(itens) {
 export const COLUNAS_EXPORT_ATRASOS = [
   "Usuário",
   "Tipo",
+  "Turma",
+  "Série",
   "Contato",
   "Livro",
   "Tombo",
   "Previsão Devolução",
+  "Devolvido em",
   "Dias em Atraso",
+];
+
+// ── Ranking (agrupamentos: por aluno, turma, série ou livro) ──────
+export const AGRUPADOR_EMPRESTIMOS_OPTIONS = [
+  { valor: "", label: "Nenhum (lista detalhada)" },
+  { valor: "usuario", label: "Por aluno — quem mais empresta" },
+  { valor: "turma", label: "Por turma" },
+  { valor: "serie", label: "Por série" },
+  { valor: "livro", label: "Por livro — mais emprestados" },
+];
+
+export const AGRUPADOR_ATRASOS_OPTIONS = [
+  { valor: "", label: "Nenhum (lista detalhada)" },
+  { valor: "usuario", label: "Por aluno — reincidentes" },
+  { valor: "turma", label: "Por turma" },
+];
+
+export function linhasParaExportRankingEmprestimos(ranking) {
+  return ranking.map((r) => [r.rotulo || "-", r.total, r.ativos, r.atrasados, r.devolvidos]);
+}
+
+export const COLUNAS_EXPORT_RANKING_EMPRESTIMOS = [
+  "Item",
+  "Total",
+  "Ativos",
+  "Atrasados",
+  "Devolvidos",
+];
+
+export function linhasParaExportRankingAtrasos(ranking) {
+  return ranking.map((r) => [r.rotulo || "-", r.ocorrencias, r.diasAtrasoTotal]);
+}
+
+export const COLUNAS_EXPORT_RANKING_ATRASOS = [
+  "Item",
+  "Ocorrências",
+  "Dias de Atraso (total)",
 ];
 
 // ── Relatório: Acervo por categoria/gênero/autor/editora ───────────
