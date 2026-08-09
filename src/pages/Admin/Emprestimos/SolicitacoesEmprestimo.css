@@ -97,12 +97,11 @@
 /* ── Confirmation workflow styles ─────────────────────────── */
 
 .row-expirada {
-  background: #fef2f2 !important;
-  opacity: 0.8;
+  background: var(--status-danger-bg, #fef2f2) !important;
 }
 
 .row-expirada td {
-  color: #991b1b !important;
+  color: var(--status-danger-text, #991b1b) !important;
 }
 
 /* Confirmation info column */
