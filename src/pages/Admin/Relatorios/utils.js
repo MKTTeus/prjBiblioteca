@@ -98,6 +98,22 @@ export const AGRUPADOR_ATRASOS_OPTIONS = [
   { valor: "turma", label: "Por turma" },
 ];
 
+// ── Relatório: Empréstimos por mês (dentro de um ano letivo) ──────
+export const MESES_LABEL = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+export function anosLetivosPadrao(anoAtualExtra) {
+  const anoAtual = new Date().getFullYear();
+  const anos = new Set([anoAtual, anoAtual - 1, anoAtual - 2, anoAtual - 3]);
+  if (anoAtualExtra) anos.add(anoAtualExtra);
+  return Array.from(anos).sort((a, b) => b - a);
+}
+
+export function linhasParaExportMensal(meses) {
+  return meses.map((m) => [m.label, m.total, m.ativos, m.atrasados, m.devolvidos]);
+}
+
+export const COLUNAS_EXPORT_MENSAL = ["Mês", "Total", "Ativos", "Atrasados", "Devolvidos"];
+
 export function linhasParaExportRankingEmprestimos(ranking) {
   return ranking.map((r) => [r.rotulo || "-", r.total, r.ativos, r.atrasados, r.devolvidos]);
 }

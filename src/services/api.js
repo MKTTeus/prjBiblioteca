@@ -551,6 +551,20 @@ export const getRelatorioEmprestimos = (filtros = {}) => {
   return apiFetch(`/relatorios/emprestimos${query ? `?${query}` : ""}`);
 };
 
+export const getRelatorioEmprestimosMensal = (filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== "" && valor !== "todos") {
+      params.set(chave, valor);
+    }
+  });
+  const query = params.toString();
+  return apiFetch(`/relatorios/emprestimos/mensal${query ? `?${query}` : ""}`);
+};
+
+export const buscarUsuariosRelatorio = (q) =>
+  apiFetch(`/relatorios/usuarios/busca?q=${encodeURIComponent(q || "")}`);
+
 export const getRelatorioAtrasos = (filtros = {}) => {
   const params = new URLSearchParams();
   Object.entries(filtros).forEach(([chave, valor]) => {

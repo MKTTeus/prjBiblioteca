@@ -338,6 +338,257 @@
   font-size: 14px;
 }
 
+/* ── Alternância de visualização (Lista/Ranking vs Mensal) ── */
+.rel-modo-toggle {
+  display: inline-flex;
+  background: var(--surface-muted);
+  border-radius: 10px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.rel-modo-toggle button {
+  border: none;
+  background: none;
+  padding: 8px 14px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.rel-modo-toggle button.rel-modo-toggle-ativo {
+  background: var(--surface-bg);
+  color: var(--primary);
+  box-shadow: var(--shadow-soft);
+}
+
+/* ── Busca de aluno (autocomplete) ── */
+.rel-busca-aluno {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 220px;
+}
+
+.rel-busca-aluno-icone {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.rel-busca-aluno input {
+  width: 100%;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  padding: 9px 12px 9px 34px;
+  font-size: 14px;
+  background: var(--canvas-bg);
+  color: var(--text-default);
+}
+
+.rel-busca-aluno-spinner {
+  position: absolute;
+  right: 10px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.rel-busca-aluno-lista {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-soft);
+  max-height: 240px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.rel-busca-aluno-lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.rel-busca-aluno-lista li:hover {
+  background: var(--surface-muted);
+}
+
+.rel-busca-aluno-vazio {
+  cursor: default !important;
+  color: var(--text-muted);
+  justify-content: center !important;
+}
+
+.rel-busca-aluno-vazio:hover {
+  background: none !important;
+}
+
+.rel-busca-aluno-nome {
+  font-weight: 600;
+  color: var(--text-default);
+}
+
+.rel-busca-aluno-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ── Chip do aluno selecionado ── */
+.rel-aluno-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 220px;
+}
+
+.rel-aluno-chip-nome {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rel-aluno-chip-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.rel-aluno-chip-remover {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--primary);
+  cursor: pointer;
+  display: inline-flex;
+  padding: 2px;
+}
+
+/* ── Gráfico mensal (barras em CSS puro) ── */
+.rel-grafico-mensal {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-soft);
+  padding: 24px 20px 16px;
+  margin-bottom: 24px;
+}
+
+.rel-grafico-mensal-barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 220px;
+}
+
+.rel-grafico-mensal-coluna {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+}
+
+.rel-grafico-mensal-valor {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-default);
+  margin-bottom: 4px;
+  min-height: 16px;
+}
+
+.rel-grafico-mensal-barra-wrap {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rel-grafico-mensal-barra {
+  width: 60%;
+  min-width: 18px;
+  max-width: 42px;
+  border-radius: 5px 5px 0 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column-reverse;
+  transition: height 0.25s ease;
+}
+
+.rel-grafico-mensal-barra-vazia {
+  height: 3px;
+  background: var(--surface-border);
+  border-radius: 2px;
+}
+
+.rel-grafico-mensal-pico .rel-grafico-mensal-barra {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.rel-grafico-mensal-seg-devolvido { background: #22c55e; }
+.rel-grafico-mensal-seg-ativo { background: #3b82f6; }
+.rel-grafico-mensal-seg-atrasado { background: #ef4444; }
+
+.rel-grafico-mensal-label {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rel-grafico-mensal-legenda {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--surface-border);
+}
+
+.rel-grafico-mensal-legenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.rel-legenda-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.rel-legenda-ativo { background: #3b82f6; }
+.rel-legenda-atrasado { background: #ef4444; }
+.rel-legenda-devolvido { background: #22c55e; }
+
 @media (max-width: 768px) {
   .rel-filtros {
     flex-direction: column;
@@ -351,5 +602,14 @@
   .rel-subheader {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .rel-grafico-mensal-barras {
+    height: 170px;
+  }
+
+  .rel-busca-aluno,
+  .rel-aluno-chip {
+    min-width: 100%;
   }
 }
