@@ -43,7 +43,7 @@ export default function Emprestimos() {
     }
 
     fetchLoans({ mostrarLoading: true });
-    const interval = setInterval(() => fetchLoans({ mostrarLoading: false }), 30000);
+    const interval = setInterval(() => fetchLoans({ mostrarLoading: false }), 10000);
     function aoFocar() {
       if (document.visibilityState === "visible") fetchLoans({ mostrarLoading: false });
     }

@@ -45,7 +45,7 @@ export default function Biblioteca() {
     carregarSolicitados();
     // Atualiza periodicamente e ao voltar o foco na aba, para refletir
     // aprovações/negações/expirações feitas pelo admin sem precisar recarregar.
-    const interval = setInterval(carregarSolicitados, 30000);
+    const interval = setInterval(carregarSolicitados, 10000);
     function aoFocar() {
       if (document.visibilityState === "visible") carregarSolicitados();
     }

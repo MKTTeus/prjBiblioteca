@@ -135,7 +135,7 @@ export default function SolicitacoesEmprestimo() {
 
     // Carga inicial (com spinner) e depois atualização silenciosa periódica
     carregarDados({ mostrarLoading: true });
-    const interval = setInterval(() => carregarDados({ mostrarLoading: false }), 30000);
+    const interval = setInterval(() => carregarDados({ mostrarLoading: false }), 10000);
 
     // Atualiza também assim que a aba volta a ficar visível/em foco
     function aoFocar() {
