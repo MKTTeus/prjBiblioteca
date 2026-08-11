@@ -3,6 +3,8 @@ import { formatarCPF } from "../../../../utils/masks";
 
 export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolver, onRenovar }) {
   const statusVisual = getStatusVisual(emprestimo);
+  const status = getStatusEmprestimo(emprestimo);
+  const podeRenovar = status === "ativo" || status === "atrasado";
   const nome = exemplar?.nome || emprestimo.titulo || "-";
   const tombo = exemplar?.tombo || emprestimo.codigo || "-";
   const isbn = exemplar?.isbn || exemplar?.exeLivISBN || emprestimo.isbn || "-";
@@ -40,19 +42,21 @@ export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolve
 
      <td className="emp-actions-cell">
   <div className="emp-actions">
-    <button
-      type="button"
-      className="emp-btn-light"
-      onClick={() => onRenovar(emprestimo.idEmprestimo)}
-    >
-      Renovar
-    </button>
-
-    {getStatusEmprestimo(emprestimo) !== "devolvido" && (
+    {podeRenovar && (
       <button
         type="button"
         className="emp-btn-light"
-        onClick={() => onDevolver(emprestimo.idEmprestimo)}
+        onClick={() => onRenovar(emprestimo)}
+      >
+        Renovar
+      </button>
+    )}
+
+    {status !== "devolvido" && (
+      <button
+        type="button"
+        className="emp-btn-light"
+        onClick={() => onDevolver(emprestimo)}
       >
         Devolver
       </button>

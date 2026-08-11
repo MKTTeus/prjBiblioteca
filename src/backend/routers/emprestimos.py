@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
 from core import get_admin, get_admin_id, get_optional_user, executar_em_paralelo
-from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao
+from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao, RenovarEmprestimo
 
 router = APIRouter()
 
@@ -631,7 +631,7 @@ def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 
 
 @router.put("/emprestimos/{idEmprestimo}/renovar")
-def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
+def renovar_emprestimo(idEmprestimo: int, dados: RenovarEmprestimo, admin=Depends(get_admin)):
     try:
         # Buscar movimentacao_exemplar para este emprestimo
         me_resp = supabase.table("MovimentacaoExemplar").select("*").eq("idMovimentacao", idEmprestimo).limit(1).execute()
@@ -640,25 +640,26 @@ def renovar_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
 
         me = me_resp.data[0]
 
+        # Só é possível renovar empréstimos ativos ou em atraso, nunca já devolvidos
+        item_status = (me.get("itemStatus") or "").lower()
+        if item_status == "devolvido":
+            raise HTTPException(status_code=400, detail="Não é possível renovar um empréstimo já devolvido")
+
         configs = get_config_map()
-        dias = get_config_days(configs)
         max_renovacoes = get_max_renewals(configs)
         renovacoes_atuais = me.get("renovacoes") or 0
         if renovacoes_atuais >= max_renovacoes:
             raise HTTPException(status_code=400, detail=f"Máximo de {max_renovacoes} renovações atingido")
 
-        if me.get("dataPrevistaDevolucao"):
-            try:
-                data_prevista = datetime.fromisoformat(me["dataPrevistaDevolucao"]).date()
-            except Exception:
-                data_prevista = datetime.utcnow().date()
-        else:
-            data_prevista = datetime.utcnow().date()
+        # A nova data de devolução é escolhida pelo admin, não calculada por um prazo fixo
+        try:
+            nova_data = datetime.fromisoformat(dados.novaData).date()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Data inválida")
 
         hoje_date = datetime.utcnow().date()
-        # Se o empréstimo está atrasado, renovar a partir de hoje — não da data vencida
-        base = hoje_date if data_prevista < hoje_date else data_prevista
-        nova_data = base + timedelta(days=dias)
+        if nova_data <= hoje_date:
+            raise HTTPException(status_code=400, detail="A nova data deve ser posterior a hoje")
 
         # Atualizar movimentacao_exemplar
         resultado = supabase.table("MovimentacaoExemplar").update({

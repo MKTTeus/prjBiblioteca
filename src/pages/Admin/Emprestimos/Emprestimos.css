@@ -641,6 +641,22 @@
   font-size: 1rem;
 }
 
+.emp-renovar-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  background: var(--surface-bg);
+  color: var(--text-default);
+  font-size: 0.95rem;
+}
+
+.emp-renovar-erro {
+  margin: 10px 0 0;
+  color: var(--danger, #dc2626);
+  font-size: 0.85rem;
+}
+
 .emp-modal-actions {
   display: flex;
   justify-content: flex-end;

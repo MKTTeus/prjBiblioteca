@@ -123,6 +123,10 @@ class Emprestimo(BaseModel):
     idExemplar: int
 
 
+class RenovarEmprestimo(BaseModel):
+    novaData: str
+
+
 class Categoria(BaseModel):
     catNome: str
 

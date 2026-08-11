@@ -528,9 +528,10 @@ export const devolverEmprestimo = (id) =>
     method: "PUT"
   });
 
-export const renovarEmprestimo = (id) =>
+export const renovarEmprestimo = (id, novaData) =>
   apiFetch(`/emprestimos/${id}/renovar`, {
-    method: "PUT"
+    method: "PUT",
+    body: JSON.stringify({ novaData })
   });
 
 export const getExemplaresDisponiveis = () =>

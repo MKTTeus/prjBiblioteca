@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./Emprestimos.css";
 
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import { useToast } from "../../../contexts/ToastContext";
 import {
   criarEmprestimo,
@@ -15,6 +16,7 @@ import {
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import NovoEmprestimoModal from "./components/NovoEmprestimoModal";
+import RenovarEmprestimoModal from "./components/RenovarEmprestimoModal";
 import TabelaEmprestimos from "./components/TabelaEmprestimos";
 import {
   FILTRO_STATUS_OPTIONS,
@@ -46,6 +48,12 @@ export default function Emprestimos() {
   });
   const [salvando, setSalvando] = useState(false);
   const { addToast } = useToast();
+
+  const [emprestimoRenovar, setEmprestimoRenovar] = useState(null);
+  const [renovando, setRenovando] = useState(false);
+
+  const [emprestimoDevolver, setEmprestimoDevolver] = useState(null);
+  const [devolvendo, setDevolvendo] = useState(false);
 
   useEffect(() => {
     carregarDados();
@@ -108,19 +116,53 @@ export default function Emprestimos() {
     }
   }
 
-  async function devolver(idEmprestimo) {
-    await devolverEmprestimo(idEmprestimo);
-    carregarDados();
+  function abrirDevolver(emprestimo) {
+    setEmprestimoDevolver(emprestimo);
   }
 
-  async function renovar(idEmprestimo) {
+  function fecharDevolver() {
+    if (devolvendo) return;
+    setEmprestimoDevolver(null);
+  }
+
+  async function confirmarDevolucao() {
+    if (!emprestimoDevolver) return;
+    setDevolvendo(true);
     try {
-      await renovarEmprestimo(idEmprestimo);
-      addToast("Empréstimo renovado com sucesso", "success");
+      await devolverEmprestimo(emprestimoDevolver.idEmprestimo);
+      addToast("Empréstimo devolvido com sucesso", "success");
+      setEmprestimoDevolver(null);
       carregarDados();
     } catch (error) {
       console.error(error);
-      addToast("Falha ao renovar o empréstimo", "error");
+      addToast("Falha ao devolver o empréstimo", "error");
+    } finally {
+      setDevolvendo(false);
+    }
+  }
+
+  function abrirRenovar(emprestimo) {
+    setEmprestimoRenovar(emprestimo);
+  }
+
+  function fecharRenovar() {
+    if (renovando) return;
+    setEmprestimoRenovar(null);
+  }
+
+  async function confirmarRenovacao(novaData) {
+    if (!emprestimoRenovar) return;
+    setRenovando(true);
+    try {
+      await renovarEmprestimo(emprestimoRenovar.idEmprestimo, novaData);
+      addToast("Empréstimo renovado com sucesso", "success");
+      setEmprestimoRenovar(null);
+      carregarDados();
+    } catch (error) {
+      console.error(error);
+      addToast(error?.data?.detail || "Falha ao renovar o empréstimo", "error");
+    } finally {
+      setRenovando(false);
     }
   }
 
@@ -175,8 +217,8 @@ export default function Emprestimos() {
         emprestimos={emprestimosFiltrados}
         mapUsuarios={mapUsuarios}
         mapExemplares={mapExemplares}
-        onDevolver={devolver}
-        onRenovar={renovar}
+        onDevolver={abrirDevolver}
+        onRenovar={abrirRenovar}
       />
 
       <NovoEmprestimoModal
@@ -195,6 +237,39 @@ export default function Emprestimos() {
         totalExemplaresDisponiveis={exemplares.length}
         onSalvar={registrarEmprestimo}
         salvando={salvando}
+      />
+
+      <RenovarEmprestimoModal
+        aberto={Boolean(emprestimoRenovar)}
+        emprestimo={emprestimoRenovar}
+        usuario={emprestimoRenovar ? mapUsuarios[emprestimoRenovar.idUsuario] : null}
+        onFechar={fecharRenovar}
+        onConfirmar={confirmarRenovacao}
+        renovando={renovando}
+      />
+
+      <ConfirmModal
+        show={Boolean(emprestimoDevolver)}
+        title="Confirmar devolução"
+        message={
+          emprestimoDevolver ? (
+            <>
+              Confirmar a devolução de{" "}
+              <strong>{emprestimoDevolver.titulo || emprestimoDevolver.empLiv_Titulo || "este livro"}</strong>
+              {mapUsuarios[emprestimoDevolver.idUsuario]
+                ? ` por ${mapUsuarios[emprestimoDevolver.idUsuario].nome}`
+                : ""}
+              ?
+            </>
+          ) : (
+            ""
+          )
+        }
+        confirmText="Devolver"
+        cancelText="Cancelar"
+        confirming={devolvendo}
+        onConfirm={confirmarDevolucao}
+        onCancel={fecharDevolver}
       />
     </div>
   );
