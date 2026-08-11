@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Users, UserCheck, UserX, BookOpen, GraduationCap, Pencil, Trash2, Upload } from "lucide-react";
+import { Users, UserCheck, UserX, GraduationCap, Pencil, Trash2, Upload } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno, excluirAlunosLote, atualizarStatusLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -432,7 +432,6 @@ const handleSalvar = async () => {
   const totalAlunos = alunosNaoFormados.length;
   const alunosAtivos = alunosNaoFormados.filter((a) => a.status === "Ativo").length;
   const alunosInativos = alunosNaoFormados.filter((a) => a.status === "Inativo").length;
-  const totalLivros = alunosNaoFormados.reduce((acc, aluno) => acc + aluno.livros, 0);
   const totalFormados = alunosFormados.length;
 
   const alunosFiltrados = (verFormados ? alunosFormados : alunosNaoFormados).filter((aluno) => {
