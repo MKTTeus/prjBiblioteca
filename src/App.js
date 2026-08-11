@@ -18,6 +18,7 @@ import Biblioteca from "./pages/Admin/Biblioteca/Biblioteca";
 import Signup from "./pages/Signup";
 import EsqueciSenha from "./pages/EsqueciSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
+import PrimeiroAcesso from "./pages/PrimeiroAcesso";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Configuracoes from "./pages/Admin/Configuracoes/Configuracoes";
 import Geral from "./pages/Admin/Configuracoes/components/Geral/Geral";
@@ -84,6 +85,14 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />
       <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+      <Route
+        path="/primeiro-acesso"
+        element={
+          <ProtectedRoute nonAdminOnly>
+            <PrimeiroAcesso />
+          </ProtectedRoute>
+        }
+      />
 
       <Route path="/" element={<RoleHomeRedirect />} />
       <Route

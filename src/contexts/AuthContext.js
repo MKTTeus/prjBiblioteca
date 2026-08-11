@@ -112,6 +112,7 @@ export function AuthProvider({ children }) {
         email: normalizedEmail,
         tipo: data.tipo,
         token: data.access_token,
+        senhaProvisoria: !!data.senhaProvisoria,
       };
 
       setUser(newUser);
@@ -245,6 +246,17 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Chamado após o usuário definir uma nova senha no primeiro acesso (ou em
+  // Configurações), pra tirar o cadeado sem precisar de um novo login.
+  const marcarSenhaDefinida = useCallback(() => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const atualizado = { ...prev, senhaProvisoria: false };
+      localStorage.setItem("user", JSON.stringify(atualizado));
+      return atualizado;
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -255,6 +267,7 @@ export function AuthProvider({ children }) {
         esqueciSenha,
         validarTokenRedefinicao,
         redefinirSenha,
+        marcarSenhaDefinida,
         getToken,
         loadingUser,
         isAuthenticated: !!user,

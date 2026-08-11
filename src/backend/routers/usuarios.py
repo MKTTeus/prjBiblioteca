@@ -157,6 +157,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTipo": "Aluno",
         "usuStatus": parse_status(data.status),
         "usuExcluido": False,
+        "usuSenhaProvisoria": True,
     }
     try:
         criado = supabase.table("Usuario").insert(novo).execute()
@@ -194,6 +195,7 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTipo": "Aluno",
         "usuStatus": True,
         "usuExcluido": False,
+        "usuSenhaProvisoria": True,
     }
     try:
         reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
@@ -257,6 +259,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             "usuTipo": "Aluno",
             "usuStatus": True,
             "usuExcluido": False,
+            "usuSenhaProvisoria": True,
         }
         try:
             supabase.table("Usuario").insert(novo).execute()
@@ -318,6 +321,7 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
         payload["usuEmail"] = normalize_email(data.email)
     if data.senha is not None:
         payload["usuSenha"] = hash_password(data.senha)
+        payload["usuSenhaProvisoria"] = True
     if data.telefone is not None:
         payload["usuTelefone"] = data.telefone
     if data.telefoneResponsavel is not None:
@@ -421,6 +425,7 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTipo": "Comunidade",
         "usuStatus": parse_status(data.status),
         "usuExcluido": False,
+        "usuSenhaProvisoria": True,
     }
     try:
         criado = supabase.table("Usuario").insert(novo).execute()
@@ -462,6 +467,7 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuTurma": None,
         "usuAnoLetivo": None,
         "usuFormado": False,
+        "usuSenhaProvisoria": True,
     }
     try:
         reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
@@ -524,6 +530,7 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             "usuTipo": "Comunidade",
             "usuStatus": True,
             "usuExcluido": False,
+            "usuSenhaProvisoria": True,
         }
         try:
             supabase.table("Usuario").insert(novo).execute()
@@ -587,6 +594,7 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
         payload["usuEmail"] = normalize_email(data.email)
     if data.senha is not None:
         payload["usuSenha"] = hash_password(data.senha)
+        payload["usuSenhaProvisoria"] = True
     if data.telefone is not None:
         payload["usuTelefone"] = data.telefone
     if data.telefoneResponsavel is not None:
@@ -692,6 +700,7 @@ def get_perfil(user=Depends(get_optional_user)):
         "telefoneResponsavel":  u.get("usuTelefoneResponsavel"),
         "tipo":                 u.get("usuTipo"),
         "tema":                 _tema_para_app(u.get("usuTema")),
+        "senhaProvisoria":      bool(u.get("usuSenhaProvisoria")),
     }
 
 @router.patch("/usuario/me")
@@ -728,6 +737,7 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
         if not verify_password(data.senhaAtual, u.get("usuSenha", "")):
             raise HTTPException(status_code=400, detail="Senha atual incorreta")
         payload["usuSenha"] = hash_password(data.novaSenha)
+        payload["usuSenhaProvisoria"] = False
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
@@ -749,4 +759,5 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
         "telefoneResponsavel":  updated.get("usuTelefoneResponsavel"),
         "tipo":                 updated.get("usuTipo"),
         "tema":                 _tema_para_app(updated.get("usuTema")),
+        "senhaProvisoria":      bool(updated.get("usuSenhaProvisoria")),
     }

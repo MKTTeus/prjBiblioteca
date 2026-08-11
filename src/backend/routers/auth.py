@@ -81,7 +81,7 @@ def login(data: Login, request: Request):
         # Primeiro verifica se existe usuário independente do tipo
         usuario_resp = (
             supabase.table("Usuario")
-            .select("usuEmail, usuSenha, usuNome, usuTipo, usuStatus")
+            .select("usuEmail, usuSenha, usuNome, usuTipo, usuStatus, usuSenhaProvisoria")
             .eq("usuEmail", email)
             .limit(1)
             .execute()
@@ -110,7 +110,8 @@ def login(data: Login, request: Request):
         return {
             "access_token": token,
             "tipo": u["usuTipo"],
-            "nome": u["usuNome"]
+            "nome": u["usuNome"],
+            "senhaProvisoria": bool(u.get("usuSenhaProvisoria"))
         }
 
     else:
@@ -246,7 +247,8 @@ def redefinir_senha(data: RedefinirSenha, request: Request):
     registro = _validar_token_redefinicao(data.token)
 
     supabase.table("Usuario").update({
-        "usuSenha": hash_password(data.novaSenha)
+        "usuSenha": hash_password(data.novaSenha),
+        "usuSenhaProvisoria": False
     }).eq("usuEmail", registro["usuEmail"]).execute()
 
     supabase.table("RedefinicaoSenha").update({
