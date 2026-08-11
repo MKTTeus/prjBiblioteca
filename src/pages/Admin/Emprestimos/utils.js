@@ -171,3 +171,28 @@ export function formatarData(data) {
   if (!data) return "-";
   return new Date(data).toLocaleDateString("pt-BR");
 }
+
+export function paraInputDate(data) {
+  if (!data) return "";
+  const valor = new Date(data);
+  if (Number.isNaN(valor.getTime())) return "";
+  return valor.toISOString().slice(0, 10);
+}
+
+export function dataMinimaRenovacao() {
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+  return paraInputDate(amanha);
+}
+
+export function dataSugeridaRenovacao(emprestimo, diasPadrao = 14) {
+  const hoje = new Date();
+  const dataAtual = emprestimo?.empLiv_DataPrevistaDevolucao
+    ? new Date(emprestimo.empLiv_DataPrevistaDevolucao)
+    : hoje;
+
+  const base = dataAtual < hoje ? hoje : dataAtual;
+  const sugerida = new Date(base);
+  sugerida.setDate(sugerida.getDate() + diasPadrao);
+  return paraInputDate(sugerida);
+}
