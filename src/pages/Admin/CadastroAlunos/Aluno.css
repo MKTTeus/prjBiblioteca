@@ -140,7 +140,7 @@
 
 .aluno-page table {
   width: 100%;
-  min-width: 0;
+  min-width: 980px;
   border-collapse: collapse;
 }
 
@@ -149,6 +149,7 @@
   padding: 12px;
   border-bottom: 1px solid var(--surface-border);
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .aluno-page .badge-ativo {
@@ -180,6 +181,7 @@
 
 .aluno-page .acoes {
   gap: 10px;
+  white-space: nowrap;
 }
 
 .aluno-page .btn-edit {
