@@ -140,7 +140,7 @@
 
 .aluno-page table {
   width: 100%;
-  min-width: 980px;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
@@ -149,7 +149,57 @@
   padding: 12px;
   border-bottom: 1px solid var(--surface-border);
   font-size: 14px;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aluno-page th:nth-child(1),
+.aluno-page td:nth-child(1) {
+  width: 36px;
+}
+
+.aluno-page th:nth-child(2),
+.aluno-page td:nth-child(2) {
+  width: 22%;
+}
+
+.aluno-page th:nth-child(3),
+.aluno-page td:nth-child(3) {
+  width: 100px;
+}
+
+.aluno-page th:nth-child(4),
+.aluno-page td:nth-child(4) {
+  width: 80px;
+}
+
+.aluno-page th:nth-child(5),
+.aluno-page td:nth-child(5) {
+  width: 64px;
+}
+
+.aluno-page th:nth-child(6),
+.aluno-page td:nth-child(6) {
+  width: 22%;
+}
+
+.aluno-page th:nth-child(7),
+.aluno-page td:nth-child(7) {
+  width: 60px;
+}
+
+.aluno-page th:nth-child(8),
+.aluno-page td:nth-child(8) {
+  width: 130px;
+  overflow: visible;
+}
+
+.aluno-page th:nth-child(9),
+.aluno-page td:nth-child(9) {
+  width: 140px;
   white-space: nowrap;
+  overflow: visible;
 }
 
 .aluno-page .badge-ativo {
@@ -180,7 +230,10 @@
 }
 
 .aluno-page .acoes {
-  gap: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
   white-space: nowrap;
 }
 
@@ -190,6 +243,7 @@
   padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .aluno-page .btn-delete {
@@ -198,6 +252,7 @@
   padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .aluno-page .btn-status {
@@ -206,6 +261,7 @@
   padding: 6px 8px;
   border-radius: 6px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .aluno-page .aluno-editor-modal {
