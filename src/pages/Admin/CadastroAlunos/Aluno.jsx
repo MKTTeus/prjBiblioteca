@@ -496,13 +496,6 @@ const handleSalvar = async () => {
           color="red"
         />
 
-        <StatsCard
-          title="Livros Emprestados"
-          value={totalLivros}
-          subtitle="Em posse dos alunos"
-          icon={<BookOpen size={18} />}
-          color="orange"
-        />
 
         <StatsCard
           title="Formados"
