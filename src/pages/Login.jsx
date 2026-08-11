@@ -151,15 +151,6 @@ export default function Login() {
             >
               Entrar
             </LoadingButton>
-
-            {userType !== "admin" && (
-              <p className="signup-link">
-                Não tem cadastro?{" "}
-                <span onClick={() => navigate("/signup")}>
-                  Clique aqui
-                </span>
-              </p>
-            )}
           </form>
         </main>
       </div>

@@ -10,18 +10,6 @@ class Login(BaseModel):
     UserType: str
 
 
-class Signup(BaseModel):
-    nome: str = Field(min_length=1)
-    email: EmailStr
-    senha: str = Field(min_length=8)
-    telefone: str
-    endereco: str
-    telefoneResponsavel: Optional[str] = None
-    ra: Optional[str] = None
-    cpf: Optional[str] = None
-    tipo: str
-
-
 class EsqueciSenha(BaseModel):
     email: EmailStr
 

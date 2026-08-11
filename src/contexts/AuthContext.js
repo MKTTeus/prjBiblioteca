@@ -183,31 +183,6 @@ export function AuthProvider({ children }) {
 
   const logout = doLogout;
 
-  const signup = async (form) => {
-    try {
-      const normalizedForm = {
-        ...form,
-        email: form.email?.trim().toLowerCase(),
-      };
-
-      const response = await fetch(`${API_URL}/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(normalizedForm),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { ok: false, message: extrairMensagemErro(data, "Erro ao criar conta") };
-      }
-
-      return { ok: true, message: data.message || "Conta criada com sucesso" };
-    } catch (error) {
-      return { ok: false, message: "Erro de conexão com o servidor" };
-    }
-  };
-
   const getToken = () => user?.token || localStorage.getItem("token");
 
   const esqueciSenha = async (email) => {
@@ -287,7 +262,6 @@ export function AuthProvider({ children }) {
         user,
         login,
         logout,
-        signup,
         esqueciSenha,
         validarTokenRedefinicao,
         redefinirSenha,

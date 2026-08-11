@@ -41,12 +41,6 @@ def limitar_login(request: Request, email: str) -> None:
     checar_rate_limit(chave, max_tentativas=5, janela_segundos=5 * 60)
 
 
-def limitar_signup(request: Request) -> None:
-    """No máximo 5 cadastros por IP a cada 1 hora."""
-    chave = f"signup:{_client_ip(request)}"
-    checar_rate_limit(chave, max_tentativas=5, janela_segundos=60 * 60)
-
-
 def limitar_esqueci_senha(request: Request, email: str) -> None:
     """No máximo 3 solicitações de redefinição por (IP + e-mail) a cada 15 minutos."""
     chave = f"esqueci-senha:{_client_ip(request)}:{(email or '').strip().lower()}"
