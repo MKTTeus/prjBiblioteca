@@ -76,12 +76,36 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem("token");
 
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
       fetchTimeoutMs().then((ms) => {
         timeoutMsRef.current = ms;
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(doLogout, ms);
       });
+
+      // Sessões abertas antes da senha ser marcada como provisória (ex.:
+      // admin trocou a senha do aluno enquanto ele já estava logado, ou a
+      // sessão é de antes desse recurso existir) não têm esse dado no
+      // localStorage. Reconfere direto no backend pra não depender de um
+      // novo login.
+      if (parsedUser.tipo && parsedUser.tipo !== "admin") {
+        fetch(`${API_URL}/usuario/me`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((perfil) => {
+            if (perfil && typeof perfil.senhaProvisoria === "boolean") {
+              setUser((prev) => {
+                if (!prev || prev.senhaProvisoria === perfil.senhaProvisoria) return prev;
+                const atualizado = { ...prev, senhaProvisoria: perfil.senhaProvisoria };
+                localStorage.setItem("user", JSON.stringify(atualizado));
+                return atualizado;
+              });
+            }
+          })
+          .catch(() => {});
+      }
     }
 
     setLoadingUser(false);
