@@ -93,6 +93,26 @@
   gap: 20px;
 }
 
+.aluno-page .topo-lista-titulo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.aluno-page .btn-voltar-lista {
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  color: var(--text-default, inherit);
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.aluno-page .btn-voltar-lista:hover {
+  background: var(--surface-muted, var(--surface-bg));
+}
+
 .aluno-page .search-wrapper {
   display: flex;
   align-items: center;
@@ -216,17 +236,6 @@
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
-}
-
-.aluno-page .badge-formado {
-  display: inline-block;
-  margin-left: 6px;
-  background: #f59e0b;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  white-space: nowrap;
 }
 
 .aluno-page .acoes {

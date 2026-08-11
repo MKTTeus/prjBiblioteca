@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
+import { Users, UserCheck, UserX, BookOpen, GraduationCap, Pencil, Trash2, Upload } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno, excluirAlunosLote, atualizarStatusLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -51,6 +51,7 @@ export default function Aluno() {
   const [selecionados, setSelecionados] = useState([]);
   const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
   const [pendingBatchStatus, setPendingBatchStatus] = useState(null); // "Ativo" | "Inativo"
+  const [verFormados, setVerFormados] = useState(false);
   const { addToast } = useToast();
 
 const fetchAlunos = async () => {
@@ -425,11 +426,16 @@ const handleSalvar = async () => {
     }
   };
 
-  const totalAlunos = alunos.length;
-  const alunosAtivos = alunos.filter((a) => a.status === "Ativo").length;
-  const alunosInativos = alunos.filter((a) => a.status === "Inativo").length;
-  const totalLivros = alunos.reduce((acc, aluno) => acc + aluno.livros, 0);
-  const alunosFiltrados = alunos.filter((aluno) => {
+  const alunosNaoFormados = alunos.filter((a) => !a.formado);
+  const alunosFormados = alunos.filter((a) => a.formado);
+
+  const totalAlunos = alunosNaoFormados.length;
+  const alunosAtivos = alunosNaoFormados.filter((a) => a.status === "Ativo").length;
+  const alunosInativos = alunosNaoFormados.filter((a) => a.status === "Inativo").length;
+  const totalLivros = alunosNaoFormados.reduce((acc, aluno) => acc + aluno.livros, 0);
+  const totalFormados = alunosFormados.length;
+
+  const alunosFiltrados = (verFormados ? alunosFormados : alunosNaoFormados).filter((aluno) => {
     const termo = pesquisa.toLowerCase();
     return (
       aluno.nome.toLowerCase().includes(termo) ||
@@ -439,6 +445,12 @@ const handleSalvar = async () => {
       aluno.turma.toLowerCase().includes(termo)
     );
   });
+
+  function alternarVisualizacao() {
+    setVerFormados((atual) => !atual);
+    setSelecionados([]);
+    setPesquisa("");
+  }
 
   return (
     <div className="aluno-page page-shell">
@@ -491,10 +503,26 @@ const handleSalvar = async () => {
           icon={<BookOpen size={18} />}
           color="orange"
         />
+
+        <StatsCard
+          title="Formados"
+          value={totalFormados}
+          subtitle={verFormados ? "Ver alunos ativos" : "Ver alunos formados"}
+          icon={<GraduationCap size={18} />}
+          color="purple"
+          onClick={alternarVisualizacao}
+        />
       </div>
 
       <div className="topo-lista">
-        <h2>Lista de Alunos</h2>
+        <div className="topo-lista-titulo">
+          <h2>{verFormados ? "Alunos Formados" : "Lista de Alunos"}</h2>
+          {verFormados && (
+            <button type="button" className="btn-voltar-lista" onClick={alternarVisualizacao}>
+              ← Voltar para alunos
+            </button>
+          )}
+        </div>
         <SearchBar
           value={pesquisa}
           onChange={setPesquisa}
@@ -565,9 +593,6 @@ const handleSalvar = async () => {
                   <span className={aluno.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {aluno.status}
                   </span>
-                  {aluno.formado && (
-                    <span className="badge-formado">Formado</span>
-                  )}
                 </td>
 
                 <td className="acoes">
