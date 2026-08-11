@@ -434,7 +434,9 @@ const handleSalvar = async () => {
     return (
       aluno.nome.toLowerCase().includes(termo) ||
       aluno.email.toLowerCase().includes(termo) ||
-      aluno.ra.toLowerCase().includes(termo)
+      aluno.ra.toLowerCase().includes(termo) ||
+      aluno.serie.toLowerCase().includes(termo) ||
+      aluno.turma.toLowerCase().includes(termo)
     );
   });
 
@@ -496,7 +498,7 @@ const handleSalvar = async () => {
         <SearchBar
           value={pesquisa}
           onChange={setPesquisa}
-          placeholder="Buscar por nome, e-mail ou RA..."
+          placeholder="Buscar por nome, e-mail, RA, série ou turma..."
         />
       </div>
 
@@ -534,6 +536,8 @@ const handleSalvar = async () => {
               </th>
               <th>Nome</th>
               <th>RA</th>
+              <th>Série</th>
+              <th>Turma</th>
               <th>E-mail</th>
               <th>Livros</th>
               <th>Status</th>
@@ -553,6 +557,8 @@ const handleSalvar = async () => {
                 </td>
                 <td>{aluno.nome}</td>
                 <td>{aluno.ra}</td>
+                <td>{aluno.serie || "-"}</td>
+                <td>{aluno.turma || "-"}</td>
                 <td>{aluno.email}</td>
                 <td>{aluno.livros}</td>
                 <td>
