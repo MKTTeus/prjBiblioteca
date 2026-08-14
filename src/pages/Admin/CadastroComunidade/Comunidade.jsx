@@ -431,7 +431,7 @@ const handleSalvar = async () => {
                 />
               </th>
               <th>Nome</th>
-              <th>CPF</th>
+              <th>CPF/CIN</th>
               <th>E-mail</th>
               <th>Telefone</th>
               <th>Livros</th>

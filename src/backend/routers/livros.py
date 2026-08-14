@@ -305,16 +305,16 @@ def listar_livros(
                 continue
             lid = ex["idLivro"]
             if lid not in mapa_ex:
-                mapa_ex[lid] = {"total": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0}
-            mapa_ex[lid]["total"] += 1
+                mapa_ex[lid] = {"total_exemplares": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0}
+            mapa_ex[lid]["total_exemplares"] += 1
             if "dispon" in s:   mapa_ex[lid]["disponiveis"] += 1
             elif "emprest" in s: mapa_ex[lid]["emprestados"] += 1
             elif "reserv" in s:  mapa_ex[lid]["reservados"] += 1
 
         livros_ativos = [
-            {**l, **mapa_ex.get(l["idLivro"], {"total": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0})}
+            {**l, **mapa_ex.get(l["idLivro"], {"total_exemplares": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0})}
             for l in livros
-            if mapa_ex.get(l["idLivro"], {}).get("total", 0) > 0
+            if mapa_ex.get(l["idLivro"], {}).get("total_exemplares", 0) > 0
         ]
 
         # Enriquecer com autor, editora, categoria, gênero
