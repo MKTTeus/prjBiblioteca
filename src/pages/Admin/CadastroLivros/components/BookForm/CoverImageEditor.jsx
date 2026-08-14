@@ -1,47 +1,78 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
+import { HiOutlineCheck, HiOutlineXMark, HiOutlineArrowsPointingOut } from "react-icons/hi2";
 import "./CoverImageEditor.css";
 
-// Só a exibição do preview — não afeta o tamanho do arquivo final gerado.
-const LARGURA_PREVIEW_MAX = 320;
+// Tamanho máximo do palco de recorte na tela — só afeta a exibição, não o
+// tamanho do arquivo final gerado (o recorte é sempre calculado em cima da
+// imagem original, em resolução cheia).
+const PALCO_LARGURA_MAX = 420;
+const PALCO_ALTURA_MAX = 440;
 const LARGURA_MINIMA_PX = 50;
+const RECORTE_MINIMO_PX = 30; // tamanho mínimo da seleção, em pixels da imagem original
+
+const TIPOS_ALCA = ["nw", "n", "ne", "e", "se", "s", "sw", "w"];
+
+function clamp(valor, min, max) {
+  return Math.min(Math.max(valor, min), max);
+}
 
 /**
  * CoverImageEditor
  *
  * Modal de ajuste da imagem de capa antes do upload: permite girar em passos
- * de 90° e redimensionar mantendo a proporção original (sem distorcer a
- * capa). O resultado é gerado em PNG (sem perda) e devolvido via
- * onConfirm(arquivoEditado) — a otimização/compressão final (WebP, limite de
- * 1600px) continua acontecendo no backend, no upload.
+ * de 90° e recortar/redimensionar arrastando uma seleção com grade (como um
+ * cortador de foto), mantendo a proporção escolhida na seleção. O resultado
+ * é gerado em PNG (sem perda) e devolvido via onConfirm(arquivoEditado) — a
+ * otimização/compressão final (WebP, limite de 1600px) continua acontecendo
+ * no backend, no upload.
  *
  * Props:
- *  - file: File original selecionado pelo usuário
+ *  - file: File original selecionado pelo usuário (upload local, link da
+ *    web já baixado pelo backend, ou capa já salva no livro)
  *  - onCancel(): fecha sem aplicar nada
- *  - onConfirm(file: File): chamado com o arquivo já girado/redimensionado
+ *  - onConfirm(file: File): chamado com o arquivo já girado/recortado
  */
 export default function CoverImageEditor({ file, onCancel, onConfirm }) {
-  const canvasRef = useRef(null);
   const imgElRef = useRef(null);
+  const arrastoRef = useRef(null);
 
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const [dataUrl, setDataUrl] = useState("");
   const [rotacao, setRotacao] = useState(0); // 0 | 90 | 180 | 270
   const [naturalW, setNaturalW] = useState(0);
   const [naturalH, setNaturalH] = useState(0);
+  const [recorte, setRecorte] = useState(null); // { x, y, w, h } no espaço da imagem já girada
   const [largura, setLargura] = useState("");
   const [processando, setProcessando] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
 
   // Dimensões do arquivo original já considerando o giro atual — 90°/270°
   // trocam largura e altura.
   const rotW = useMemo(() => (rotacao % 180 === 0 ? naturalW : naturalH), [rotacao, naturalW, naturalH]);
   const rotH = useMemo(() => (rotacao % 180 === 0 ? naturalH : naturalW), [rotacao, naturalW, naturalH]);
 
+  // Escala do palco na tela — sempre cabe dentro do limite máximo, então a
+  // imagem nunca "vaza" do quadro, independentemente do tamanho original.
+  const escala = useMemo(() => {
+    if (!rotW || !rotH) return 1;
+    return Math.min(1, PALCO_LARGURA_MAX / rotW, PALCO_ALTURA_MAX / rotH);
+  }, [rotW, rotH]);
+
+  const palcoW = Math.max(1, Math.round(rotW * escala));
+  const palcoH = Math.max(1, Math.round(rotH * escala));
+  // Tamanho da <img> ANTES do giro via CSS — o giro (múltiplo de 90°) troca
+  // largura/altura visualmente, então a caixa da imagem precisa ser
+  // desenhada na orientação original para que, depois de girada, sua caixa
+  // delimitadora bata exatamente com o palco (naturalH×naturalW == rotW×rotH).
+  const imgTelaW = Math.max(1, Math.round(naturalW * escala));
+  const imgTelaH = Math.max(1, Math.round(naturalH * escala));
+
   const altura = useMemo(() => {
     const larguraNum = Number(largura);
-    if (!rotW || !larguraNum) return 0;
-    return Math.round((larguraNum / rotW) * rotH);
-  }, [largura, rotW, rotH]);
+    if (!recorte || !recorte.w || !larguraNum) return 0;
+    return Math.round((larguraNum / recorte.w) * recorte.h);
+  }, [largura, recorte]);
 
   // Carrega a imagem original a partir do File selecionado. Usa FileReader
   // (data: URL) em vez de URL.createObjectURL (blob: URL) porque a CSP do
@@ -51,6 +82,7 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
     let cancelado = false;
     setCarregando(true);
     setErro(null);
+    setRecorte(null);
 
     const leitor = new FileReader();
     leitor.onload = () => {
@@ -59,8 +91,10 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
       img.onload = () => {
         if (cancelado) return;
         imgElRef.current = img;
+        setDataUrl(leitor.result);
         setNaturalW(img.naturalWidth);
         setNaturalH(img.naturalHeight);
+        setRecorte({ x: 0, y: 0, w: img.naturalWidth, h: img.naturalHeight });
         setLargura(String(img.naturalWidth));
         setCarregando(false);
       };
@@ -83,24 +117,23 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
     };
   }, [file]);
 
-  // Ao girar, volta a largura para o tamanho cheio na nova orientação —
-  // evita manter um valor que só fazia sentido na orientação anterior.
-  useEffect(() => {
-    if (rotW) setLargura(String(rotW));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rotacao]);
-
-  // Redesenha o preview sempre que giro ou tamanho mudam.
-  useEffect(() => {
-    if (carregando || erro || !canvasRef.current || !imgElRef.current || !rotW || !rotH) return;
-    const escalaPreview = Math.min(1, LARGURA_PREVIEW_MAX / rotW);
-    const previewW = Math.max(1, Math.round(rotW * escalaPreview));
-    const previewH = Math.max(1, Math.round(rotH * escalaPreview));
-    desenharNoCanvas(canvasRef.current, imgElRef.current, rotacao, naturalW, naturalH, previewW, previewH);
-  }, [carregando, erro, rotacao, naturalW, naturalH, rotW, rotH]);
-
+  // Ao girar, a seleção anterior não faz mais sentido na nova orientação —
+  // volta a cobrir a imagem inteira, como ao carregar pela primeira vez.
   function girar(delta) {
-    setRotacao((r) => (((r + delta) % 360) + 360) % 360);
+    setRotacao((r) => {
+      const nova = (((r + delta) % 360) + 360) % 360;
+      const novoRotW = nova % 180 === 0 ? naturalW : naturalH;
+      const novoRotH = nova % 180 === 0 ? naturalH : naturalW;
+      setRecorte({ x: 0, y: 0, w: novoRotW, h: novoRotH });
+      setLargura(String(novoRotW));
+      return nova;
+    });
+  }
+
+  function redefinirSelecao() {
+    if (!rotW || !rotH) return;
+    setRecorte({ x: 0, y: 0, w: rotW, h: rotH });
+    setLargura(String(rotW));
   }
 
   function handleLarguraChange(e) {
@@ -111,16 +144,74 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
     }
     const valor = Number(bruto);
     if (Number.isNaN(valor)) return;
-    setLargura(String(Math.min(Math.max(valor, LARGURA_MINIMA_PX), rotW)));
+    const maximo = recorte ? recorte.w : rotW;
+    setLargura(String(Math.min(Math.max(valor, LARGURA_MINIMA_PX), maximo || LARGURA_MINIMA_PX)));
+  }
+
+  // ── Arrastar a seleção (mover) ou suas alças (redimensionar) ────────
+  function iniciarArrasto(tipo, evento) {
+    if (!recorte || !rotW || !rotH) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+
+    const ponteiroInicial = { x: evento.clientX, y: evento.clientY };
+    const recorteInicial = { ...recorte };
+    arrastoRef.current = { tipo, ponteiroInicial, recorteInicial };
+    setArrastando(true);
+
+    function mover(e) {
+      const a = arrastoRef.current;
+      if (!a) return;
+      const dx = (e.clientX - a.ponteiroInicial.x) / escala;
+      const dy = (e.clientY - a.ponteiroInicial.y) / escala;
+      setRecorte(calcularNovoRecorte(a.tipo, a.recorteInicial, dx, dy, rotW, rotH, RECORTE_MINIMO_PX));
+    }
+
+    function finalizar() {
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", finalizar);
+      arrastoRef.current = null;
+      setArrastando(false);
+      // Depois de redimensionar a seleção, a largura de saída volta a
+      // acompanhar o tamanho cheio do recorte — evita manter um valor de
+      // downscale que já não faz mais sentido pra área nova.
+      setRecorte((atual) => {
+        if (atual) setLargura(String(Math.round(atual.w)));
+        return atual;
+      });
+    }
+
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", finalizar);
   }
 
   async function handleAplicar() {
     const larguraNum = Number(largura);
-    if (!imgElRef.current || !larguraNum || !altura) return;
+    if (!imgElRef.current || !recorte || !larguraNum || !altura) return;
     setProcessando(true);
     try {
+      // 1) desenha a imagem inteira já girada, em resolução original.
+      const canvasGirado = document.createElement("canvas");
+      desenharNoCanvas(canvasGirado, imgElRef.current, rotacao, naturalW, naturalH, rotW, rotH);
+
+      // 2) recorta só a área selecionada e redimensiona para a largura de
+      // saída escolhida, sem distorcer (a altura é sempre proporcional).
       const canvasFinal = document.createElement("canvas");
-      desenharNoCanvas(canvasFinal, imgElRef.current, rotacao, naturalW, naturalH, larguraNum, altura);
+      canvasFinal.width = larguraNum;
+      canvasFinal.height = altura;
+      const ctx = canvasFinal.getContext("2d");
+      ctx.drawImage(
+        canvasGirado,
+        recorte.x,
+        recorte.y,
+        recorte.w,
+        recorte.h,
+        0,
+        0,
+        larguraNum,
+        altura
+      );
+
       const blob = await new Promise((resolve) => canvasFinal.toBlob(resolve, "image/png"));
       if (!blob) throw new Error("Falha ao gerar a imagem.");
       const nomeBase = (file.name || "capa").replace(/\.[^.]+$/, "");
@@ -134,7 +225,24 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
     }
   }
 
-  const semAlteracao = rotacao === 0 && Number(largura) === naturalW;
+  const semAlteracao =
+    rotacao === 0 &&
+    !!recorte &&
+    recorte.x === 0 &&
+    recorte.y === 0 &&
+    recorte.w === naturalW &&
+    recorte.h === naturalH &&
+    Number(largura) === naturalW;
+
+  // Posição/tamanho da seleção já convertidos para pixels de tela.
+  const selecaoTela = recorte
+    ? {
+        left: recorte.x * escala,
+        top: recorte.y * escala,
+        width: recorte.w * escala,
+        height: recorte.h * escala,
+      }
+    : null;
 
   return (
     <div className="cover-editor-overlay" onClick={onCancel}>
@@ -154,7 +262,83 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
         ) : (
           <>
             <div className="cover-editor-preview-frame">
-              <canvas ref={canvasRef} className="cover-editor-canvas" />
+              <div
+                className="cover-editor-stage"
+                style={{ width: palcoW, height: palcoH }}
+              >
+                <img
+                  src={dataUrl}
+                  alt=""
+                  draggable={false}
+                  className="cover-editor-stage-img"
+                  style={{
+                    width: imgTelaW,
+                    height: imgTelaH,
+                    transform: `translate(-50%, -50%) rotate(${rotacao}deg)`,
+                  }}
+                />
+
+                {selecaoTela && (
+                  <>
+                    {/* Máscara escura fora da seleção, em 4 tiras */}
+                    <div
+                      className="cover-editor-mask"
+                      style={{ left: 0, top: 0, right: 0, height: selecaoTela.top }}
+                    />
+                    <div
+                      className="cover-editor-mask"
+                      style={{
+                        left: 0,
+                        top: selecaoTela.top + selecaoTela.height,
+                        right: 0,
+                        bottom: 0,
+                      }}
+                    />
+                    <div
+                      className="cover-editor-mask"
+                      style={{
+                        left: 0,
+                        top: selecaoTela.top,
+                        width: selecaoTela.left,
+                        height: selecaoTela.height,
+                      }}
+                    />
+                    <div
+                      className="cover-editor-mask"
+                      style={{
+                        left: selecaoTela.left + selecaoTela.width,
+                        top: selecaoTela.top,
+                        right: 0,
+                        height: selecaoTela.height,
+                      }}
+                    />
+
+                    <div
+                      className={`cover-editor-selection${arrastando ? " is-dragging" : ""}`}
+                      style={{
+                        left: selecaoTela.left,
+                        top: selecaoTela.top,
+                        width: selecaoTela.width,
+                        height: selecaoTela.height,
+                      }}
+                      onPointerDown={(e) => iniciarArrasto("mover", e)}
+                    >
+                      <div className="cover-editor-grid-line v" style={{ left: "33.333%" }} />
+                      <div className="cover-editor-grid-line v" style={{ left: "66.666%" }} />
+                      <div className="cover-editor-grid-line h" style={{ top: "33.333%" }} />
+                      <div className="cover-editor-grid-line h" style={{ top: "66.666%" }} />
+
+                      {TIPOS_ALCA.map((tipo) => (
+                        <div
+                          key={tipo}
+                          className={`cover-editor-handle handle-${tipo}`}
+                          onPointerDown={(e) => iniciarArrasto(tipo, e)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="cover-editor-controls">
@@ -167,24 +351,35 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
                   <button type="button" onClick={() => girar(90)} title="Girar 90° à direita">
                     90° ↻
                   </button>
+                  <button
+                    type="button"
+                    className="cover-editor-reset-button"
+                    onClick={redefinirSelecao}
+                    title="Selecionar a imagem inteira novamente"
+                  >
+                    <HiOutlineArrowsPointingOut /> Redefinir seleção
+                  </button>
                 </div>
+                <span className="cover-editor-dimensoes-hint">
+                  Arraste o centro da seleção para mover, ou as bordas/cantos para redimensionar.
+                </span>
               </div>
 
               <div className="cover-editor-control-group">
                 <label className="cover-editor-control-label" htmlFor="cover-editor-largura">
-                  Largura (px)
+                  Largura de saída (px)
                 </label>
                 <input
                   id="cover-editor-largura"
                   type="number"
                   min={LARGURA_MINIMA_PX}
-                  max={rotW}
+                  max={recorte ? recorte.w : rotW}
                   value={largura}
                   onChange={handleLarguraChange}
                 />
                 <span className="cover-editor-dimensoes-hint">
                   Resultado: {Number(largura) || 0} × {altura || 0} px
-                  {" "}(original nesta orientação: {rotW} × {rotH} px)
+                  {" "}(seleção atual: {recorte ? Math.round(recorte.w) : 0} × {recorte ? Math.round(recorte.h) : 0} px)
                 </span>
               </div>
             </div>
@@ -204,7 +399,7 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
             type="button"
             className="cover-editor-confirm"
             onClick={handleAplicar}
-            disabled={carregando || !!erro || processando || !largura}
+            disabled={carregando || !!erro || processando || !largura || !recorte}
           >
             {processando ? (
               <span className="isbn-spinner" />
@@ -223,6 +418,36 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
       </div>
     </div>
   );
+}
+
+// Calcula a nova seleção de recorte a partir do tipo de arrasto ("mover" ou
+// um dos 8 pontos cardeais das alças), do estado da seleção no início do
+// arrasto e do deslocamento do ponteiro (já convertido para pixels da
+// imagem original). Sempre mantém a seleção dentro de [0,rw] × [0,rh] e
+// nunca deixa w/h ficarem menores que o mínimo.
+function calcularNovoRecorte(tipo, base, dx, dy, rw, rh, minimo) {
+  if (tipo === "mover") {
+    return {
+      x: clamp(base.x + dx, 0, Math.max(0, rw - base.w)),
+      y: clamp(base.y + dy, 0, Math.max(0, rh - base.h)),
+      w: base.w,
+      h: base.h,
+    };
+  }
+
+  const x2base = base.x + base.w;
+  const y2base = base.y + base.h;
+  let x1 = base.x;
+  let y1 = base.y;
+  let x2 = x2base;
+  let y2 = y2base;
+
+  if (tipo.includes("w")) x1 = clamp(base.x + dx, 0, x2base - minimo);
+  if (tipo.includes("e")) x2 = clamp(x2base + dx, x1 + minimo, rw);
+  if (tipo.includes("n")) y1 = clamp(base.y + dy, 0, y2base - minimo);
+  if (tipo.includes("s")) y2 = clamp(y2base + dy, y1 + minimo, rh);
+
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
 }
 
 // Desenha a imagem original girada (múltiplo de 90°) e redimensionada para

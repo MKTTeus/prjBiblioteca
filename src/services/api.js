@@ -185,6 +185,41 @@ export async function uploadCover(file) {
   return res.json();
 }
 
+// Baixa (via backend, para não esbarrar em CORS) a imagem de um link
+// externo — ou da própria capa já salva — e devolve como File, pronto para
+// abrir no CoverImageEditor exatamente como um arquivo escolhido localmente.
+export async function fetchCoverFromUrl(url) {
+  const token = getToken();
+
+  const res = await fetch(`${API_URL}/buscar-capa-por-url?url=${encodeURIComponent(url)}`, {
+    cache: "no-store",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      localStorage.removeItem("tipo");
+      window.location.href = "/#/login";
+      throw new Error("Sessão expirada");
+    }
+    const text = await res.text();
+    let mensagem = text || "Não foi possível carregar essa imagem";
+    try {
+      const data = JSON.parse(text);
+      mensagem = data.detail || data.message || mensagem;
+    } catch (_) {}
+    throw new Error(mensagem);
+  }
+
+  const blob = await res.blob();
+  const extensao = (blob.type.split("/")[1] || "jpg").split("+")[0].slice(0, 5);
+  return new File([blob], `capa-link.${extensao}`, { type: blob.type });
+}
+
 // ========================
 // CATEGORIAS / GENEROS
 // ========================

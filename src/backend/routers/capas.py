@@ -1,8 +1,13 @@
+import ipaddress
 import os
+import socket
 import uuid
 from io import BytesIO
+from urllib.parse import urlparse
 
+import httpx
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import Response
 from PIL import Image
 
 from core import get_admin
@@ -138,3 +143,71 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail=f"Falha ao enviar a capa: {e}")
 
     return {"url": _montar_public_url(nome_arquivo)}
+
+
+# ── Buscar capa a partir de um link externo ──────────────────────────────
+# Usado pelo editor de capa (CoverImageEditor) para permitir ajustar
+# (girar/recortar) tanto uma imagem informada por URL quanto a capa já
+# salva no livro. O download acontece aqui no backend — e não direto no
+# navegador — porque a maioria dos sites não libera CORS para suas imagens,
+# o que deixaria o <canvas> "tainted" e impediria exportar o recorte.
+
+TAMANHO_MAXIMO_URL_MB = 8
+TIMEOUT_BUSCA_URL_SEGUNDOS = 10.0
+
+
+def _host_e_seguro(hostname: str) -> bool:
+    """Bloqueia hosts que resolvem para endereços privados/locais, para
+    reduzir o risco de SSRF através desse proxy de imagens. Não é uma
+    proteção completa (não revalida o host a cada redirecionamento), mas
+    cobre o caso comum de alguém apontar para localhost/rede interna."""
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            continue
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+            return False
+    return True
+
+
+@router.get("/buscar-capa-por-url")
+async def buscar_capa_por_url(url: str, admin=Depends(get_admin)):
+    """Baixa a imagem apontada por `url` e devolve os bytes (com o
+    content-type original) para o frontend montar um File e abrir no
+    CoverImageEditor, como se o usuário tivesse escolhido um arquivo."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise HTTPException(status_code=400, detail="URL inválida.")
+    if not _host_e_seguro(parsed.hostname):
+        raise HTTPException(status_code=400, detail="Esse endereço não pode ser acessado.")
+
+    try:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=TIMEOUT_BUSCA_URL_SEGUNDOS, max_redirects=3
+        ) as client:
+            resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (BibliotecaEscolar)"})
+    except httpx.HTTPError:
+        raise HTTPException(status_code=400, detail="Não foi possível baixar a imagem desse link.")
+
+    if resp.status_code != 200:
+        raise HTTPException(status_code=400, detail="Não foi possível baixar a imagem desse link.")
+
+    content_type = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+    if not content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Esse link não aponta para uma imagem.")
+
+    conteudo = resp.content
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Não foi possível baixar a imagem desse link.")
+    if len(conteudo) > TAMANHO_MAXIMO_URL_MB * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A imagem desse link deve ter no máximo {TAMANHO_MAXIMO_URL_MB}MB.",
+        )
+
+    return Response(content=conteudo, media_type=content_type)

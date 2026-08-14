@@ -15,7 +15,7 @@
   border: 1px solid var(--surface-border);
   border-radius: 20px;
   padding: 24px;
-  width: min(460px, 100%);
+  width: min(540px, 100%);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -72,16 +72,92 @@
   border: 1px solid var(--surface-border);
   border-radius: 14px;
   padding: 16px;
-  min-height: 200px;
+  /* O tamanho real vem do palco (calculado em JS para nunca ultrapassar o
+     limite máximo) — sem altura fixa aqui, para o quadro nunca "sobrar"
+     nem ser menor que o conteúdo e a imagem vazar por cima de outros
+     elementos do modal. */
+  box-sizing: content-box;
 }
 
-.cover-editor-canvas {
-  max-width: 100%;
-  max-height: 340px;
+/* Palco de recorte: tamanho exato (definido inline via JS) da imagem já
+   girada e escalada para caber no limite máximo — overflow:hidden é uma
+   rede de segurança, mas o cálculo em JS já garante que nada deveria
+   ultrapassar essa caixa. */
+.cover-editor-stage {
+  position: relative;
+  overflow: hidden;
   border-radius: 6px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
-  display: block;
+  background: #111827;
+  touch-action: none;
 }
+
+.cover-editor-stage-img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Máscara escura sobre a área fora da seleção — dá o contraste típico de
+   um cortador de foto. */
+.cover-editor-mask {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.55);
+  pointer-events: none;
+}
+
+.cover-editor-selection {
+  position: absolute;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
+  cursor: move;
+  touch-action: none;
+}
+
+.cover-editor-selection.is-dragging {
+  cursor: grabbing;
+}
+
+.cover-editor-grid-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+.cover-editor-grid-line.v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.cover-editor-grid-line.h {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.cover-editor-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 1px solid #60a5fa;
+  border-radius: 3px;
+  transform: translate(-50%, -50%);
+}
+
+.handle-nw { left: 0; top: 0; cursor: nwse-resize; }
+.handle-ne { left: 100%; top: 0; cursor: nesw-resize; }
+.handle-sw { left: 0; top: 100%; cursor: nesw-resize; }
+.handle-se { left: 100%; top: 100%; cursor: nwse-resize; }
+.handle-n { left: 50%; top: 0; cursor: ns-resize; }
+.handle-s { left: 50%; top: 100%; cursor: ns-resize; }
+.handle-e { left: 100%; top: 50%; cursor: ew-resize; }
+.handle-w { left: 0; top: 50%; cursor: ew-resize; }
 
 .cover-editor-controls {
   display: flex;
@@ -105,11 +181,13 @@
 
 .cover-editor-rotate-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .cover-editor-rotate-buttons button {
   flex: 1;
+  min-width: 110px;
   background: var(--surface-muted);
   border: 1px solid var(--surface-border);
   border-radius: 10px;
@@ -122,6 +200,14 @@
 }
 .cover-editor-rotate-buttons button:hover { background: var(--surface-border); }
 .cover-editor-rotate-buttons button:active { transform: scale(0.97); }
+
+.cover-editor-reset-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1.4;
+}
 
 .cover-editor-control-group input[type="number"] {
   background: var(--surface-muted);

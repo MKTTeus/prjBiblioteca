@@ -1,10 +1,17 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
-import { HiOutlineQrCode, HiOutlineMagnifyingGlass, HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
+import {
+  HiOutlineQrCode,
+  HiOutlineMagnifyingGlass,
+  HiOutlineSparkles,
+  HiOutlineCheck,
+  HiOutlineXMark,
+  HiOutlinePencil,
+} from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
 import CoverImageEditor from "./CoverImageEditor";
 import SearchableSelect from "./SearchableSelect";
-import { completarLivroComIA } from "../../../../../services/api";
+import { completarLivroComIA, fetchCoverFromUrl } from "../../../../../services/api";
 
 function normalizeText(value = "") {
   return String(value ?? "")
@@ -315,6 +322,8 @@ export default function BasicInfoSection({
 
   const [scannerAberto, setScannerAberto] = useState(false);
   const [arquivoCapaParaEditar, setArquivoCapaParaEditar] = useState(null);
+  const [carregandoCapaParaEditar, setCarregandoCapaParaEditar] = useState(false);
+  const [erroCapaUrl, setErroCapaUrl] = useState(null);
   const [buscandoISBN, setBuscandoISBN] = useState(false);
   const [erroISBN, setErroISBN] = useState(null);
   const isbnInputRef = useRef(null);
@@ -659,6 +668,27 @@ export default function BasicInfoSection({
   // onCriarCategoria/onCriarGenero/onCriarAutor agora só enfileiram o item
   // localmente (ver BookFormModal) — nunca chamam a API nem lançam 409, então
   // não há mais nada para tratar aqui além de aplicar o resultado ao form.
+
+  // Abre o editor de capa (girar/recortar) para uma imagem que já está num
+  // link — tanto o link recém-digitado no campo "URL da capa" quanto a capa
+  // que já está salva no livro (upload anterior ou preenchida pelo ISBN). O
+  // download acontece no backend (fetchCoverFromUrl) para não esbarrar em
+  // CORS ao desenhar uma imagem de outra origem no canvas.
+  async function handleEditarCapaPorUrl(url) {
+    const alvo = (url || "").trim();
+    if (!alvo) return;
+    setErroCapaUrl(null);
+    setCarregandoCapaParaEditar(true);
+    try {
+      const arquivo = await fetchCoverFromUrl(alvo);
+      setArquivoCapaParaEditar(arquivo);
+    } catch (err) {
+      setErroCapaUrl(err?.message || "Não foi possível carregar essa imagem para editar.");
+    } finally {
+      setCarregandoCapaParaEditar(false);
+    }
+  }
+
   async function handleCriarCategoria() {
     const nome = novaCategoria.trim();
     if (!nome) return;
@@ -1205,17 +1235,49 @@ export default function BasicInfoSection({
 
             <label className={fieldClass("livCapaURL", highlightedFields)}>
               <span>URL da capa <AutoTag name="livCapaURL" highlightedFields={highlightedFields} /></span>
-              <input
-                name="livCapaURL"
-                value={form.livCapaURL}
-                onChange={(e) => onFieldChange("livCapaURL", e.target.value)}
-                placeholder="https://..."
-              />
+              <div className="cover-url-row">
+                <input
+                  name="livCapaURL"
+                  value={form.livCapaURL}
+                  onChange={(e) => onFieldChange("livCapaURL", e.target.value)}
+                  placeholder="https://..."
+                />
+                <button
+                  type="button"
+                  className="cover-url-edit-button"
+                  onClick={() => handleEditarCapaPorUrl(form.livCapaURL)}
+                  disabled={!form.livCapaURL.trim() || carregandoCapaParaEditar}
+                  title="Girar ou recortar a imagem desse link antes de usar"
+                >
+                  {carregandoCapaParaEditar ? (
+                    <span className="isbn-spinner" />
+                  ) : (
+                    <HiOutlinePencil />
+                  )}
+                  <span>Editar</span>
+                </button>
+              </div>
             </label>
+            {erroCapaUrl && <span className="isbn-error-msg">{erroCapaUrl}</span>}
 
             <div className="cover-preview-frame">
               {form.livCapaURL ? (
-                <img src={form.livCapaURL} alt={form.livTitulo || "Capa do livro"} />
+                <>
+                  <img src={form.livCapaURL} alt={form.livTitulo || "Capa do livro"} />
+                  <button
+                    type="button"
+                    className="cover-preview-edit-button"
+                    onClick={() => handleEditarCapaPorUrl(form.livCapaURL)}
+                    disabled={carregandoCapaParaEditar}
+                    title="Editar a capa atual (girar/recortar)"
+                  >
+                    {carregandoCapaParaEditar ? (
+                      <span className="isbn-spinner" />
+                    ) : (
+                      <HiOutlinePencil />
+                    )}
+                  </button>
+                </>
               ) : (
                 <div className="cover-preview-empty">
                   <HiOutlinePhotograph />
