@@ -15,7 +15,6 @@ import SolicitacoesEmprestimo from "./pages/Admin/Emprestimos/SolicitacoesEmpres
 import Admin from "./pages/Admin/CadastroAdmins/Admin";
 import Login from "./pages/Login";
 import Biblioteca from "./pages/Admin/Biblioteca/Biblioteca";
-import Signup from "./pages/Signup";
 import EsqueciSenha from "./pages/EsqueciSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import PrimeiroAcesso from "./pages/PrimeiroAcesso";
@@ -82,7 +81,6 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />
       <Route path="/redefinir-senha" element={<RedefinirSenha />} />
       <Route
