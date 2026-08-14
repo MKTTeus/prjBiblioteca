@@ -43,28 +43,43 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
     return Math.round((larguraNum / rotW) * rotH);
   }, [largura, rotW, rotH]);
 
-  // Carrega a imagem original a partir do File selecionado.
+  // Carrega a imagem original a partir do File selecionado. Usa FileReader
+  // (data: URL) em vez de URL.createObjectURL (blob: URL) porque a CSP do
+  // projeto libera "img-src 'self' data: https:" — sem blob:, uma imagem
+  // carregada via createObjectURL seria bloqueada pelo navegador.
   useEffect(() => {
     let cancelado = false;
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
+    setCarregando(true);
+    setErro(null);
+
+    const leitor = new FileReader();
+    leitor.onload = () => {
       if (cancelado) return;
-      imgElRef.current = img;
-      setNaturalW(img.naturalWidth);
-      setNaturalH(img.naturalHeight);
-      setLargura(String(img.naturalWidth));
+      const img = new Image();
+      img.onload = () => {
+        if (cancelado) return;
+        imgElRef.current = img;
+        setNaturalW(img.naturalWidth);
+        setNaturalH(img.naturalHeight);
+        setLargura(String(img.naturalWidth));
+        setCarregando(false);
+      };
+      img.onerror = () => {
+        if (cancelado) return;
+        setErro("Não foi possível abrir essa imagem.");
+        setCarregando(false);
+      };
+      img.src = leitor.result;
+    };
+    leitor.onerror = () => {
+      if (cancelado) return;
+      setErro("Não foi possível ler o arquivo selecionado.");
       setCarregando(false);
     };
-    img.onerror = () => {
-      if (cancelado) return;
-      setErro("Não foi possível abrir essa imagem.");
-      setCarregando(false);
-    };
-    img.src = url;
+    leitor.readAsDataURL(file);
+
     return () => {
       cancelado = true;
-      URL.revokeObjectURL(url);
     };
   }, [file]);
 
