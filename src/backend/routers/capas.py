@@ -1,7 +1,9 @@
 import os
 import uuid
+from io import BytesIO
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from PIL import Image
 
 from core import get_admin
 from database import supabase
@@ -21,11 +23,65 @@ EXTENSOES_PERMITIDAS = {"jpg", "jpeg", "png", "webp", "gif"}
 TAMANHO_MAXIMO_MB = 5
 
 
+DIMENSAO_MAXIMA_PX = 1600
+
+QUALIDADE_WEBP = 88
+
+
 def _extensao_valida(nome_arquivo: str) -> str | None:
     if "." not in nome_arquivo:
         return None
     ext = nome_arquivo.rsplit(".", 1)[-1].lower()
     return ext if ext in EXTENSOES_PERMITIDAS else None
+
+
+def _comprimir_capa(conteudo: bytes, ext: str, content_type: str) -> tuple[bytes, str, str]:
+    """Recomprime a imagem da capa sem perda visual perceptível, convertendo
+    para WebP. Se a imagem não puder ser processada (arquivo corrompido,
+    GIF animado, ou o resultado não ficar menor que o original), devolve o
+    conteúdo original sem alterações."""
+    try:
+        imagem = Image.open(BytesIO(conteudo))
+        imagem.load()
+    except Exception:
+        # Não conseguimos abrir como imagem (arquivo corrompido/formato
+        # exótico) — melhor manter o original do que falhar o upload.
+        return conteudo, ext, content_type
+
+    # GIFs animados: preserva como está, para não perder a animação.
+    if getattr(imagem, "is_animated", False):
+        return conteudo, ext, content_type
+
+    # Reduz apenas se a imagem for maior do que o necessário — mantém a
+    # proporção e não amplia imagens menores.
+    if max(imagem.size) > DIMENSAO_MAXIMA_PX:
+        imagem.thumbnail((DIMENSAO_MAXIMA_PX, DIMENSAO_MAXIMA_PX), Image.LANCZOS)
+
+    tem_transparencia = imagem.mode in ("RGBA", "LA") or (
+        imagem.mode == "P" and "transparency" in imagem.info
+    )
+
+    buffer = BytesIO()
+    try:
+        if tem_transparencia:
+            imagem.convert("RGBA").save(
+                buffer, format="WEBP", quality=QUALIDADE_WEBP, method=6
+            )
+        else:
+            imagem.convert("RGB").save(
+                buffer, format="WEBP", quality=QUALIDADE_WEBP, method=6
+            )
+    except Exception:
+        return conteudo, ext, content_type
+
+    novo_conteudo = buffer.getvalue()
+
+    # Só troca pelo resultado comprimido se ele realmente for menor —
+    # evita "compressão" que aumenta o arquivo em casos raros.
+    if novo_conteudo and len(novo_conteudo) < len(conteudo):
+        return novo_conteudo, "webp", "image/webp"
+
+    return conteudo, ext, content_type
 
 
 def _montar_public_url(path: str) -> str:
@@ -63,8 +119,14 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
             detail="SUPABASE_URL não configurada no backend — não é possível montar a URL pública da capa.",
         )
 
-    nome_arquivo = f"{uuid.uuid4().hex}.{ext}"
     content_type = file.content_type or "application/octet-stream"
+
+    # Recomprime a imagem (sem perda visual perceptível) antes de subir para
+    # o Storage — reduz o espaço ocupado no bucket e acelera o carregamento
+    # das capas na listagem de livros.
+    conteudo, ext, content_type = _comprimir_capa(conteudo, ext, content_type)
+
+    nome_arquivo = f"{uuid.uuid4().hex}.{ext}"
 
     try:
         supabase.storage.from_(CAPA_BUCKET).upload(
