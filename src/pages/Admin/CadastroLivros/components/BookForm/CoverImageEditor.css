@@ -1,0 +1,188 @@
+.cover-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2100;
+  padding: 16px;
+}
+
+.cover-editor-box {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 20px;
+  padding: 24px;
+  width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+.cover-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cover-editor-header span {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-default);
+}
+
+.cover-editor-close {
+  background: var(--surface-muted);
+  border: none;
+  border-radius: 8px;
+  color: var(--text-default);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px 10px;
+  line-height: 1.6;
+  transition: background 0.15s;
+}
+.cover-editor-close:hover { background: var(--surface-border); }
+
+.cover-editor-loading,
+.cover-editor-error {
+  background: var(--surface-muted);
+  border-radius: 14px;
+  color: var(--text-default);
+  font-size: 0.9rem;
+  padding: 32px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.cover-editor-preview-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-muted);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 16px;
+  min-height: 200px;
+}
+
+.cover-editor-canvas {
+  max-width: 100%;
+  max-height: 340px;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+  display: block;
+}
+
+.cover-editor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cover-editor-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cover-editor-control-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tabs-text);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cover-editor-rotate-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.cover-editor-rotate-buttons button {
+  flex: 1;
+  background: var(--surface-muted);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  color: var(--text-default);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 12px;
+  transition: background 0.15s, transform 0.1s;
+}
+.cover-editor-rotate-buttons button:hover { background: var(--surface-border); }
+.cover-editor-rotate-buttons button:active { transform: scale(0.97); }
+
+.cover-editor-control-group input[type="number"] {
+  background: var(--surface-muted);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  color: var(--text-default);
+  font-size: 0.9rem;
+  padding: 9px 12px;
+  width: 100%;
+}
+.cover-editor-control-group input[type="number"]:focus {
+  outline: none;
+  border-color: #60a5fa;
+}
+
+.cover-editor-dimensoes-hint {
+  color: var(--tabs-text);
+  font-size: 0.78rem;
+}
+
+.cover-editor-hint {
+  text-align: center;
+  color: var(--tabs-text);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.cover-editor-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.cover-editor-cancel,
+.cover-editor-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.cover-editor-cancel {
+  background: var(--surface-muted);
+  border-color: var(--surface-border);
+  color: var(--text-default);
+}
+.cover-editor-cancel:hover { background: var(--surface-border); }
+
+.cover-editor-confirm {
+  background: var(--primary);
+  color: #fff;
+}
+.cover-editor-confirm:hover { opacity: 0.9; }
+.cover-editor-confirm:disabled,
+.cover-editor-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

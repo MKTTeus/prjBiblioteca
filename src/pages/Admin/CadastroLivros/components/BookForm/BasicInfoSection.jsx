@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { HiOutlinePhotograph, HiOutlineUpload, HiOutlinePlus } from "react-icons/hi";
 import { HiOutlineQrCode, HiOutlineMagnifyingGlass, HiOutlineSparkles, HiOutlineCheck, HiOutlineXMark } from "react-icons/hi2";
 import ISBNScanner from "./ISBNScanner";
+import CoverImageEditor from "./CoverImageEditor";
 import SearchableSelect from "./SearchableSelect";
 import { completarLivroComIA } from "../../../../../services/api";
 
@@ -313,6 +314,7 @@ export default function BasicInfoSection({
   }, [form.autorAnoFalecimento]);
 
   const [scannerAberto, setScannerAberto] = useState(false);
+  const [arquivoCapaParaEditar, setArquivoCapaParaEditar] = useState(null);
   const [buscandoISBN, setBuscandoISBN] = useState(false);
   const [erroISBN, setErroISBN] = useState(null);
   const isbnInputRef = useRef(null);
@@ -852,6 +854,17 @@ export default function BasicInfoSection({
         />
       )}
 
+      {arquivoCapaParaEditar && (
+        <CoverImageEditor
+          file={arquivoCapaParaEditar}
+          onCancel={() => setArquivoCapaParaEditar(null)}
+          onConfirm={(arquivoEditado) => {
+            setArquivoCapaParaEditar(null);
+            onUpload(arquivoEditado);
+          }}
+        />
+      )}
+
       <div className="editor-section-grid basic-grid">
         <div className="editor-form-panel basic-column">
           <div className="basic-column-header">
@@ -1176,7 +1189,16 @@ export default function BasicInfoSection({
               <label className="upload-cover-button">
                 <HiOutlineUpload />
                 <span>Enviar capa</span>
-                <input type="file" accept="image/*" onChange={onUpload} hidden />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const arquivo = e.target.files?.[0];
+                    e.target.value = "";
+                    if (arquivo) setArquivoCapaParaEditar(arquivo);
+                  }}
+                  hidden
+                />
               </label>
               <span className="cover-or-divider">ou</span>
             </div>

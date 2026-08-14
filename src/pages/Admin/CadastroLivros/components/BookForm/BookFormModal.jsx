@@ -533,8 +533,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     marcarCamposPreenchidosAutomaticamente(entradas.map(([campo]) => campo));
   }
 
-  async function handleUpload(e) {
-    const file = e.target.files?.[0];
+  // Recebe o arquivo já ajustado (giro/redimensionamento) pelo
+  // CoverImageEditor — a otimização final (WebP, limite de 1600px)
+  // continua acontecendo no backend, no endpoint de upload.
+  async function handleUpload(file) {
     if (!file) return;
     try {
       setLoading(true);
@@ -545,7 +547,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       addToast(err?.message || "Falha ao enviar a capa", "error");
     } finally {
       setLoading(false);
-      e.target.value = "";
     }
   }
 
