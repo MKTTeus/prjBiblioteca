@@ -115,6 +115,27 @@ class RenovarEmprestimo(BaseModel):
     novaData: str
 
 
+class ItemEmprestimoProfessor(BaseModel):
+    idLivro: int
+    quantidade: int = Field(gt=0)
+
+
+class EmprestimoProfessorCreate(BaseModel):
+    finalidade: str  # "PESSOAL" | "TURMA"
+    turma: Optional[str] = None
+    serie: Optional[str] = None
+    itens: list[ItemEmprestimoProfessor]
+
+
+class ItemDevolucaoProfessor(BaseModel):
+    idLivro: int
+    quantidade: int = Field(gt=0)
+
+
+class DevolucaoProfessor(BaseModel):
+    itens: list[ItemDevolucaoProfessor]
+
+
 class Categoria(BaseModel):
     catNome: str
 

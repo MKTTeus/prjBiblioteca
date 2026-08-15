@@ -19,6 +19,7 @@ from routers.ia import router as ia_router
 from routers.capas import router as capas_router
 from routers.ficha_catalografica import router as ficha_catalografica_router
 from routers.relatorios import router as relatorios_router
+from routers.professor import router as professor_router
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -62,6 +63,7 @@ ROUTERS = [
     capas_router,
     ficha_catalografica_router,
     relatorios_router,
+    professor_router,
 ]
 
 

@@ -1,31 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import AppShell from "../../components/AppShell/AppShell";
-import { useAuth } from "../../contexts/AuthContext";
+import DashboardProfessor from "./Dashboard/DashboardProfessor";
+import NovoEmprestimo from "./NovoEmprestimo/NovoEmprestimo";
+import MeusEmprestimos from "./MeusEmprestimos/MeusEmprestimos";
 import "./PainelProfessor.css";
 
-// Área restrita do professor. Nesta fase é apenas um painel inicial:
-// o professor já tem login e permissões isolados do painel
-// administrativo, mas o fluxo de empréstimo (para si/turma, carrinho de
-// livros, etc.) ainda será implementado em uma fase seguinte.
+// Área restrita do professor. Segue o mesmo padrão de orquestração de
+// páginas usado em UserDashboard: cada item do menu troca a página
+// exibida dentro do mesmo AppShell, sem depender de rotas próprias.
+const pages = {
+  dashboard: DashboardProfessor,
+  "novo-emprestimo": NovoEmprestimo,
+  emprestimos: MeusEmprestimos,
+};
+
 export default function PainelProfessor() {
-  const { user } = useAuth();
+  const [activePage, setActivePage] = useState("dashboard");
+  const CurrentPage = pages[activePage] || DashboardProfessor;
 
   return (
-    <AppShell sidebarType="professor" activePage="dashboard">
-      <div className="painel-professor">
-        <h1>Olá, {user?.nome || "professor(a)"}!</h1>
-        <p className="painel-professor-subtitulo">
-          Esta é a sua área na Biblioteca.
-        </p>
-
-        <div className="painel-professor-card">
-          <h2>Empréstimos</h2>
-          <p>
-            A funcionalidade de empréstimo para você e para suas turmas
-            está em desenvolvimento e ficará disponível em breve por aqui.
-          </p>
-        </div>
-      </div>
+    <AppShell sidebarType="professor" activePage={activePage} setActivePage={setActivePage}>
+      <CurrentPage onNavigate={setActivePage} />
     </AppShell>
   );
 }
