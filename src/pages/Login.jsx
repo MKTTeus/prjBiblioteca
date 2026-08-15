@@ -50,7 +50,11 @@ export default function Login() {
         return;
       }
 
-      navigate(result.tipo === "admin" ? "/admin" : "/user", { replace: true });
+      const destino =
+        result.tipo === "admin"
+          ? (result.professor ? "/professor" : "/admin")
+          : "/user";
+      navigate(destino, { replace: true });
     } catch (error) {
       console.error("Erro login:", error);
       setError("Erro inesperado ao fazer login.");
@@ -86,8 +90,8 @@ export default function Login() {
             >
               <FiShield className="user-icon" />
               <div>
-                <strong>Administrador</strong>
-                <span>Acesso completo ao sistema</span>
+                <strong>Equipe Escolar</strong>
+                <span>Equipe gestora e professores</span>
               </div>
             </div>
 

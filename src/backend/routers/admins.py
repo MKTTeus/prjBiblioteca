@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional as Opt
 
 from database import supabase
-from core import get_admin, hash_password, normalize_email, parse_status
+from core import get_admin, get_admin_ou_professor, hash_password, normalize_email, parse_status
 from schemas import AdminCreate, AdminUpdate, BatchIds, BatchStatus
 
 router = APIRouter()
@@ -43,7 +43,8 @@ def criar_admin(data: AdminCreate, admin=Depends(get_admin)):
         "admNome": data.nome,
         "admEmail": email,
         "admSenha": hash_senha,
-        "admStatus": parse_status(data.status)
+        "admStatus": parse_status(data.status),
+        "admProfessor": bool(data.professor)
     }).execute()
     return criado.data[0]
 
@@ -81,6 +82,8 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
         payload["admSenha"] = hash_password(data.senha)
     if data.status is not None:
         payload["admStatus"] = parse_status(data.status)
+    if data.professor is not None:
+        payload["admProfessor"] = bool(data.professor)
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
@@ -104,7 +107,7 @@ class AdminPerfilUpdate(BaseModel):
 
 
 @router.get("/admin/me")
-def get_perfil_admin(admin=Depends(get_admin)):
+def get_perfil_admin(admin=Depends(get_admin_ou_professor)):
     resp = supabase.table("Administrador").select("*").eq("admEmail", admin["sub"]).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
@@ -114,11 +117,12 @@ def get_perfil_admin(admin=Depends(get_admin)):
         "nome":    a.get("admNome"),
         "email":   a.get("admEmail"),
         "tema":    _tema_para_app(a.get("admTema")),
+        "professor": bool(a.get("admProfessor")),
     }
 
 
 @router.patch("/admin/me")
-def atualizar_perfil_admin(data: AdminPerfilUpdate, admin=Depends(get_admin)):
+def atualizar_perfil_admin(data: AdminPerfilUpdate, admin=Depends(get_admin_ou_professor)):
     resp = supabase.table("Administrador").select("*").eq("admEmail", admin["sub"]).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
@@ -147,4 +151,5 @@ def atualizar_perfil_admin(data: AdminPerfilUpdate, admin=Depends(get_admin)):
         "nome":    updated.get("admNome"),
         "email":   updated.get("admEmail"),
         "tema":    _tema_para_app(updated.get("admTema")),
+        "professor": bool(updated.get("admProfessor")),
     }

@@ -137,6 +137,7 @@ export function AuthProvider({ children }) {
         tipo: data.tipo,
         token: data.access_token,
         senhaProvisoria: !!data.senhaProvisoria,
+        professor: !!data.professor,
       };
 
       setUser(newUser);
@@ -174,6 +175,7 @@ export function AuthProvider({ children }) {
         access_token: data.access_token,
         tipo: data.tipo,
         nome: data.nome,
+        professor: !!data.professor,
       };
     } catch (error) {
       console.error("Erro no login:", error);

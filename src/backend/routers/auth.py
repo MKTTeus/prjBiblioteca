@@ -49,7 +49,7 @@ def login(data: Login, request: Request):
     if data.UserType == "Administrador":
         resp = (
             supabase.table("Administrador")
-            .select("admEmail, admSenha, admNome, admStatus")
+            .select("admEmail, admSenha, admNome, admStatus, admProfessor")
             .eq("admEmail", email)
             .limit(1)
             .execute()
@@ -66,15 +66,19 @@ def login(data: Login, request: Request):
         if not verify_password(data.senha, a["admSenha"]):
             raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
+        eh_professor = bool(a.get("admProfessor"))
+
         token = create_token({
             "sub": a["admEmail"],
-            "tipo": "admin"
+            "tipo": "admin",
+            "admProfessor": eh_professor
         })
 
         return {
             "access_token": token,
             "tipo": "admin",
-            "nome": a["admNome"]
+            "nome": a["admNome"],
+            "professor": eh_professor
         }
 
     elif data.UserType in ["Aluno", "Comunidade"]:

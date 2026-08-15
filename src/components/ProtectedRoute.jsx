@@ -5,10 +5,15 @@ export default function ProtectedRoute({
   children,
   adminOnly = false,
   nonAdminOnly = false,
+  gestorOnly = false,
+  professorOnly = false,
 }) {
   const { user, loadingUser } = useAuth();
   const location = useLocation();
-  const homePath = user?.tipo === "admin" ? "/admin" : "/user";
+  const isAdminTipo = user?.tipo === "admin";
+  const isProfessor = isAdminTipo && !!user?.professor;
+  const isGestor = isAdminTipo && !isProfessor;
+  const homePath = isProfessor ? "/professor" : isAdminTipo ? "/admin" : "/user";
 
   if (loadingUser) {
     return <div>Carregando...</div>;
@@ -18,12 +23,23 @@ export default function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && user.tipo !== "admin") {
+  if (adminOnly && !isAdminTipo) {
     return <Navigate to={homePath} replace />;
   }
 
-  if (nonAdminOnly && user.tipo === "admin") {
-    return <Navigate to="/admin" replace />;
+  if (nonAdminOnly && isAdminTipo) {
+    return <Navigate to={homePath} replace />;
+  }
+
+  // Painel administrativo: somente equipe gestora (admProfessor = false).
+  // Professor é redirecionado para sua própria área restrita.
+  if (gestorOnly && !isGestor) {
+    return <Navigate to={homePath} replace />;
+  }
+
+  // Área do professor: somente admProfessor = true.
+  if (professorOnly && !isProfessor) {
+    return <Navigate to={homePath} replace />;
   }
 
   // Primeiro acesso: aluno/comunidade com senha da importação ou definida

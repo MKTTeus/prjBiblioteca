@@ -195,6 +195,7 @@ class AdminCreate(BaseModel):
     email: EmailStr
     senha: str = Field(min_length=8)
     status: Optional[Union[bool, str]] = "Ativo"
+    professor: Optional[bool] = False
 
 
 class AdminUpdate(BaseModel):
@@ -202,3 +203,4 @@ class AdminUpdate(BaseModel):
     email: Optional[EmailStr] = None
     senha: Optional[str] = Field(default=None, min_length=8)
     status: Optional[Union[bool, str]] = None
+    professor: Optional[bool] = None

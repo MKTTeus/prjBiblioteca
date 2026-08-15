@@ -107,6 +107,41 @@ def create_token(data: dict) -> str:
 
 
 def get_admin(token: str = Depends(oauth2_scheme)):
+    """Exige um administrador da equipe gestora (admProfessor = false).
+
+    Usada em todas as rotas administrativas existentes. Um professor
+    (admProfessor = true) autentica com tipo "admin" mas é bloqueado aqui,
+    o que restringe automaticamente todo o painel administrativo a ele
+    sem precisar alterar rota por rota.
+    """
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("tipo") != "admin":
+            raise HTTPException(status_code=403, detail="Acesso restrito a admins")
+        if payload.get("admProfessor"):
+            raise HTTPException(status_code=403, detail="Acesso restrito à equipe gestora")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+
+
+def get_professor(token: str = Depends(oauth2_scheme)):
+    """Exige um administrador marcado como professor (admProfessor = true)."""
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("tipo") != "admin" or not payload.get("admProfessor"):
+            raise HTTPException(status_code=403, detail="Acesso restrito a professores")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+
+
+def get_admin_ou_professor(token: str = Depends(oauth2_scheme)):
+    """Aceita qualquer administrador (equipe gestora OU professor).
+
+    Uso restrito a endpoints que ambos os perfis podem acessar, como o
+    próprio perfil (/admin/me). Não usar em rotas administrativas gerais.
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("tipo") != "admin":

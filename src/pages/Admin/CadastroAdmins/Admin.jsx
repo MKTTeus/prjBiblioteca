@@ -16,6 +16,7 @@ const EMPTY_ADMIN = {
   senha: "",
   email: "",
   status: "Ativo",
+  perfil: "Gestor",
 };
  
 
@@ -50,6 +51,7 @@ export default function Admin() {
                   ? "Ativo"
                   : "Inativo"
                 : a.admStatus || "Ativo",
+            perfil: a.admProfessor ? "Professor" : "Gestor",
           }))
         );
       } catch (err) {
@@ -87,6 +89,7 @@ export default function Admin() {
           nome: novoAdmin.nome,
           email: novoAdmin.email,
           status: novoAdmin.status === "Ativo",
+          professor: novoAdmin.perfil === "Professor",
         };
 
         const updated = await updateAdmin(alvo.idAdmin, payload);
@@ -103,6 +106,7 @@ export default function Admin() {
                         ? "Ativo"
                         : "Inativo"
                       : updated.admStatus || novoAdmin.status,
+                  perfil: updated.admProfessor ? "Professor" : "Gestor",
                 }
               : admin
           )
@@ -114,6 +118,7 @@ export default function Admin() {
           senha: novoAdmin.senha,
           email: novoAdmin.email,
           status: novoAdmin.status === "Ativo",
+          professor: novoAdmin.perfil === "Professor",
         });
 
         setAdmins((prev) => [
@@ -130,6 +135,7 @@ export default function Admin() {
                   ? "Ativo"
                   : "Inativo"
                 : created.admStatus || novoAdmin.status,
+            perfil: created.admProfessor ? "Professor" : "Gestor",
           },
         ]);
         addToast("Cadastro realizado com sucesso", "success");
@@ -166,6 +172,7 @@ export default function Admin() {
       senha: "",
       email: admin.email || "",
       status: admin.status || "Ativo",
+      perfil: admin.perfil || "Gestor",
     });
     setIndexEditando(index);
     setModoEdicao(true);
@@ -372,6 +379,7 @@ export default function Admin() {
               </th>
               <th>Nome</th>
               <th>E-mail</th>
+              <th>Perfil</th>
               <th>Status</th>
               <th className="acoes-coluna">Ações</th>
             </tr>
@@ -389,6 +397,7 @@ export default function Admin() {
                 </td>
                 <td>{admin.nome}</td>
                 <td>{admin.email}</td>
+                <td>{admin.perfil}</td>
                 <td>
                   <span className={admin.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {admin.status}

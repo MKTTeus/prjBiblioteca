@@ -26,13 +26,14 @@ function Header() {
     };
   }, []);
 
-  const roleLabel =
-    {
-      admin: "Administrador",
-      aluno: "Aluno",
-      comunidade: "Comunidade",
-      user: "Usuário",
-    }[user?.tipo] || "Usuário";
+  const roleLabel = user?.professor
+    ? "Professor"
+    : {
+        admin: "Administrador",
+        aluno: "Aluno",
+        comunidade: "Comunidade",
+        user: "Usuário",
+      }[user?.tipo] || "Usuário";
 
   const handleLogout = () => logout();
 

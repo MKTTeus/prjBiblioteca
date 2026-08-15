@@ -30,6 +30,7 @@ import Backups from "./pages/Admin/Configuracoes/components/Backup/Backups";
 import AnoLetivo from "./pages/Admin/Configuracoes/components/AnoLetivo/AnoLetivo";
 import UserDashboard from "./pages/user/UserDashboard";
 import Relatorios from "./pages/Admin/Relatorios/Relatorios";
+import PainelProfessor from "./pages/Professor/PainelProfessor";
 
 function RoleHomeRedirect() {
   const { user, loadingUser } = useAuth();
@@ -42,7 +43,10 @@ function RoleHomeRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to={user.tipo === "admin" ? "/admin" : "/user"} replace />;
+  if (user.tipo === "admin") {
+    return <Navigate to={user.professor ? "/professor" : "/admin"} replace />;
+  }
+  return <Navigate to="/user" replace />;
 }
 
 function LegacyAdminRedirect() {
@@ -61,7 +65,10 @@ function LegacyBibliotecaRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to={user.tipo === "admin" ? "/admin/biblioteca" : "/user"} replace />;
+  if (user.tipo === "admin") {
+    return <Navigate to={user.professor ? "/professor" : "/admin/biblioteca"} replace />;
+  }
+  return <Navigate to="/user" replace />;
 }
 
 function AdminLayout() {
@@ -103,9 +110,18 @@ function App() {
       />
 
       <Route
+        path="/professor"
+        element={
+          <ProtectedRoute professorOnly>
+            <PainelProfessor />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/admin"
         element={
-          <ProtectedRoute adminOnly>
+          <ProtectedRoute gestorOnly>
             <AdminLayout />
           </ProtectedRoute>
         }

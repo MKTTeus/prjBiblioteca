@@ -1,0 +1,32 @@
+.painel-professor {
+  padding: 24px;
+}
+
+.painel-professor h1 {
+  color: var(--text-default);
+  margin-bottom: 4px;
+}
+
+.painel-professor-subtitulo {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.painel-professor-card {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 480px;
+}
+
+.painel-professor-card h2 {
+  color: var(--text-default);
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+
+.painel-professor-card p {
+  color: var(--text-soft);
+  margin: 0;
+}

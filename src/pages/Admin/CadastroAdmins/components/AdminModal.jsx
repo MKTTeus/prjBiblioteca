@@ -118,6 +118,14 @@ export default function AdminModal({
                       <option value="Inativo">Inativo</option>
                     </select>
                   </label>
+
+                  <label className="editor-field">
+                    <span>Perfil</span>
+                    <select name="perfil" value={admin.perfil} onChange={onChange}>
+                      <option value="Gestor">Gestor (acesso administrativo completo)</option>
+                      <option value="Professor">Professor (acesso restrito)</option>
+                    </select>
+                  </label>
                 </div>
               </div>
 

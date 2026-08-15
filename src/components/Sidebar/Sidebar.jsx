@@ -23,6 +23,13 @@ const userMenuItems = [
   { key: "configuracoes", label: "Configurações", icon: FiSettings },
 ];
 
+// Área do professor: menu propositalmente restrito, sem nenhuma opção
+// administrativa. O fluxo de empréstimo do professor ainda será
+// implementado em uma próxima fase.
+const professorMenuItems = [
+  { key: "dashboard", label: "Início", icon: FiHome },
+];
+
 function Sidebar({ type = "admin", activePage, setActivePage }) {
   const { user } = useAuth();
   const { isOpen, close } = useSidebar();
@@ -32,7 +39,8 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
   const isAdmin = type === "admin" || (!type && user?.tipo === "admin");
 
-  if (type === "user") {
+  if (type === "user" || type === "professor") {
+    const items = type === "professor" ? professorMenuItems : userMenuItems;
     return (
       <>
         <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
@@ -40,7 +48,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
           <div className="sidebar-section">
             <p className="sidebar-title">Principal</p>
             <ul>
-              {userMenuItems.map(({ key, label, icon: Icon }) => (
+              {items.map(({ key, label, icon: Icon }) => (
                 <li key={key}>
                   <button
                     type="button"
