@@ -10,6 +10,9 @@ import {
   HiOutlineRefresh,
   HiOutlineTrash,
   HiOutlineDocumentText,
+  HiOutlineShoppingCart,
+  HiOutlineMinus,
+  HiOutlinePlus,
 } from "react-icons/hi";
 import "./BookCard.css";
 
@@ -76,6 +79,12 @@ export default function BookCard({
   statusSolicitacao = null,
   solicitando = false,
   isComunidade = false,
+  // ── Modo carrinho (usado pelo professor ao montar um empréstimo) ──
+  cartMode = false,
+  pendingQuantity = 0,
+  onPendingQuantityChange,
+  onAddToCart,
+  cartQuantity = 0,
 }) {
   const titulo = book?.livTitulo ?? book?.titulo ?? "Sem título";
   const autor = book?.livAutor ?? book?.autor ?? "Autor desconhecido";
@@ -162,8 +171,48 @@ export default function BookCard({
           </div>
         </div>
 
-        {(isAdmin || onRequestLoan || isComunidade) && (
+        {(isAdmin || onRequestLoan || isComunidade || cartMode) && (
           <div className="shared-book-card__actions">
+            {cartMode && (
+              <div className="shared-book-card__cart">
+                {cartQuantity > 0 && (
+                  <p className="shared-book-card__cart-current">
+                    {cartQuantity} no carrinho
+                  </p>
+                )}
+                <div className="shared-book-card__qty-row">
+                  <button
+                    type="button"
+                    className="shared-book-card__qty-btn"
+                    onClick={() => onPendingQuantityChange && onPendingQuantityChange(Math.max(0, pendingQuantity - 1))}
+                    disabled={disponiveis <= 0 || pendingQuantity <= 0}
+                    aria-label="Diminuir quantidade"
+                  >
+                    <HiOutlineMinus />
+                  </button>
+                  <span className="shared-book-card__qty-value">{pendingQuantity}</span>
+                  <button
+                    type="button"
+                    className="shared-book-card__qty-btn"
+                    onClick={() => onPendingQuantityChange && onPendingQuantityChange(Math.min(disponiveis, pendingQuantity + 1))}
+                    disabled={disponiveis <= 0 || pendingQuantity >= disponiveis}
+                    aria-label="Aumentar quantidade"
+                  >
+                    <HiOutlinePlus />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="shared-book-card__button shared-book-card__button--request"
+                  onClick={() => onAddToCart && pendingQuantity > 0 && onAddToCart(pendingQuantity)}
+                  disabled={disponiveis <= 0 || pendingQuantity <= 0}
+                >
+                  <HiOutlineShoppingCart />
+                  <span>{disponiveis <= 0 ? "Indisponível" : "Adicionar ao carrinho"}</span>
+                </button>
+              </div>
+            )}
+
             {onRequestLoan && (
               <button
                 type="button"

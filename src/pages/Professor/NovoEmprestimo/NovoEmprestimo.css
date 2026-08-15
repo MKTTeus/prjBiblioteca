@@ -1,0 +1,294 @@
+.professor-finalidade-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .professor-finalidade-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.professor-finalidade-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 28px 24px;
+  border-radius: 16px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.professor-finalidade-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
+}
+
+.professor-finalidade-card svg {
+  font-size: 28px;
+  color: var(--primary);
+}
+
+.professor-finalidade-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-default);
+}
+
+.professor-finalidade-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+}
+
+.professor-link-voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  margin: 4px 0 16px;
+}
+
+.professor-turma-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+}
+
+.professor-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-default);
+}
+
+.professor-form-field select,
+.professor-form-field input {
+  border: 1px solid var(--input-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  background: var(--surface-bg);
+  color: var(--text-default);
+}
+
+.professor-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.professor-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.professor-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.professor-btn--primary {
+  background: var(--primary);
+  color: var(--btn-primary-text);
+}
+
+.professor-btn--secondary {
+  background: var(--surface-bg);
+  color: var(--text-default);
+  border: 1px solid var(--surface-border);
+}
+
+.professor-emprestimo-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1080px) {
+  .professor-emprestimo-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.professor-emprestimo-livros {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.professor-search-toolbar {
+  padding: 14px 16px;
+}
+
+.professor-carrinho {
+  position: sticky;
+  top: 16px;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.professor-carrinho h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-default);
+}
+
+.professor-carrinho__vazio {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+.professor-carrinho__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.professor-carrinho__item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.professor-carrinho__item:last-child {
+  border-bottom: none;
+}
+
+.professor-carrinho__item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.professor-carrinho__item-info strong {
+  font-size: 0.85rem;
+  color: var(--text-default);
+}
+
+.professor-carrinho__item-info span {
+  font-size: 0.72rem;
+  color: var(--text-soft);
+}
+
+.professor-carrinho__item-controles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.professor-carrinho__remover {
+  border: none;
+  background: none;
+  color: var(--danger);
+  cursor: pointer;
+  padding: 6px;
+  display: inline-flex;
+}
+
+.professor-carrinho__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-default);
+  padding-top: 6px;
+  border-top: 1px solid var(--surface-border);
+}
+
+.professor-carrinho__total strong {
+  font-size: 1.1rem;
+}
+
+.professor-carrinho__confirmar {
+  width: 100%;
+}
+
+.professor-sucesso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 40px 24px;
+}
+
+.professor-sucesso__icon {
+  font-size: 48px;
+  color: var(--success);
+}
+
+.professor-sucesso h2 {
+  margin: 0;
+  color: var(--text-default);
+}
+
+.professor-sucesso dl {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.professor-sucesso dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.88rem;
+  border-bottom: 1px dashed var(--surface-border);
+  padding-bottom: 6px;
+}
+
+.professor-sucesso dt {
+  color: var(--text-soft);
+  font-weight: 600;
+}
+
+.professor-sucesso dd {
+  margin: 0;
+  color: var(--text-default);
+  font-weight: 700;
+  text-align: right;
+}
+
+.professor-sucesso__acoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}

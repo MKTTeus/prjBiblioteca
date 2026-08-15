@@ -10,6 +10,7 @@ import {
   FiBookmark,
   FiBell,
   FiPieChart,
+  FiPlusCircle,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
@@ -24,10 +25,12 @@ const userMenuItems = [
 ];
 
 // Área do professor: menu propositalmente restrito, sem nenhuma opção
-// administrativa. O fluxo de empréstimo do professor ainda será
-// implementado em uma próxima fase.
+// administrativa — só o essencial para pesquisar livros e gerenciar os
+// próprios empréstimos (para si ou para uma turma).
 const professorMenuItems = [
   { key: "dashboard", label: "Início", icon: FiHome },
+  { key: "novo-emprestimo", label: "Novo empréstimo", icon: FiPlusCircle },
+  { key: "emprestimos", label: "Meus empréstimos", icon: FiRepeat },
 ];
 
 function Sidebar({ type = "admin", activePage, setActivePage }) {

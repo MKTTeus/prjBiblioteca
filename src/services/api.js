@@ -642,3 +642,28 @@ export const atualizarMeuPerfilAdmin = (payload) =>
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
+// ========================
+// PROFESSOR — Empréstimos
+// ========================
+
+export const getTurmasProfessor = () =>
+  apiFetch("/professor/turmas");
+
+export const getEmprestimosProfessor = () =>
+  apiFetch("/professor/emprestimos");
+
+export const getDetalheEmprestimoProfessor = (idMovimentacao) =>
+  apiFetch(`/professor/emprestimos/${idMovimentacao}`);
+
+export const criarEmprestimoProfessor = (payload) =>
+  apiFetch("/professor/emprestimos", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const devolverEmprestimoProfessor = (idMovimentacao, itens) =>
+  apiFetch(`/professor/emprestimos/${idMovimentacao}/devolucao`, {
+    method: "POST",
+    body: JSON.stringify({ itens }),
+  });
