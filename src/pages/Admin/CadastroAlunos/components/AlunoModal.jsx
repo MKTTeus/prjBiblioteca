@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { IMaskInput } from "react-imask";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
 import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
@@ -17,6 +18,7 @@ export default function AlunoModal({
   onSave,
 }) {
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
+  const [showSenha, setShowSenha] = useState(false);
 
   if (!aberto) return null;
 
@@ -151,19 +153,31 @@ export default function AlunoModal({
 
                   <label className="editor-field">
                     <span>Senha *</span>
-                    <input
-                      type="password"
-                      name="senha"
-                      value={aluno.senha}
-                      onChange={onChange}
-                      disabled={modoEdicao}
-                      min={6}
-                      placeholder={
-                        modoEdicao
-                          ? "Senha bloqueada durante a edição"
-                          : "Mínimo de 6 caracteres"
-                      }
-                    />
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showSenha ? "text" : "password"}
+                        name="senha"
+                        value={aluno.senha}
+                        onChange={onChange}
+                        disabled={modoEdicao}
+                        min={6}
+                        placeholder={
+                          modoEdicao
+                            ? "Senha bloqueada durante a edição"
+                            : "Mínimo de 6 caracteres"
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowSenha((v) => !v)}
+                        disabled={modoEdicao}
+                        aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
+                        tabIndex={-1}
+                      >
+                        {showSenha ? <FiEyeOff /> : <FiEye />}
+                      </button>
+                    </div>
                   </label>
                 </div>
               </div>

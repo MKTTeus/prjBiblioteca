@@ -3,7 +3,7 @@ import Select from "react-select";
 import {
   FiDownload, FiTrash2, FiRefreshCw, FiSave,
   FiDatabase, FiFileText, FiAlertCircle,
-  FiRotateCcw, FiChevronDown, FiChevronUp, FiLock,
+  FiRotateCcw, FiChevronDown, FiChevronUp, FiLock, FiEye, FiEyeOff,
 } from "react-icons/fi";
 import {
   listarBackups, salvarBackup, 
@@ -61,6 +61,7 @@ export default function Backups() {
   // Restore modal state
   const [confirmRestore, setConfirmRestore] = useState(null); // nome do arquivo
   const [restoreSenha, setRestoreSenha]     = useState("");
+  const [showRestoreSenha, setShowRestoreSenha] = useState(false);
   const [restoreErro, setRestoreErro]       = useState("");
   const [restaurando, setRestaurando]       = useState(false);
 
@@ -390,7 +391,7 @@ export default function Backups() {
             <div className="bk-password-field">
               <FiLock className="bk-lock-icon" />
               <input
-                type="password"
+                type={showRestoreSenha ? "text" : "password"}
                 placeholder="Senha do administrador"
                 value={restoreSenha}
                 onChange={e => { setRestoreSenha(e.target.value); setRestoreErro(""); }}
@@ -398,6 +399,16 @@ export default function Backups() {
                 autoFocus
                 disabled={restaurando}
               />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowRestoreSenha(v => !v)}
+                disabled={restaurando}
+                aria-label={showRestoreSenha ? "Ocultar senha" : "Mostrar senha"}
+                tabIndex={-1}
+              >
+                {showRestoreSenha ? <FiEyeOff /> : <FiEye />}
+              </button>
             </div>
             {restoreErro && <div className="bk-field-error"><FiAlertCircle size={13}/> {restoreErro}</div>}
             <div className="bk-modal-actions">

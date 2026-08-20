@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { atualizarMeuPerfil } from "../services/api";
-import { FiLock } from "react-icons/fi";
+import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
 import "../styles/Login.css";
 
@@ -14,6 +14,9 @@ export default function PrimeiroAcesso() {
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [showSenhaAtual, setShowSenhaAtual] = useState(false);
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -76,38 +79,71 @@ export default function PrimeiroAcesso() {
           <form onSubmit={handleSubmit}>
             <div className="input-group">
               <label>Senha provisória</label>
-              <input
-                type="password"
-                value={senhaAtual}
-                onChange={(e) => setSenhaAtual(e.target.value)}
-                placeholder="Senha recebida na importação ou do admin"
-                autoComplete="current-password"
-                required
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showSenhaAtual ? "text" : "password"}
+                  value={senhaAtual}
+                  onChange={(e) => setSenhaAtual(e.target.value)}
+                  placeholder="Senha recebida na importação ou do admin"
+                  autoComplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowSenhaAtual((v) => !v)}
+                  aria-label={showSenhaAtual ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                >
+                  {showSenhaAtual ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
 
             <div className="input-group">
               <label>Nova senha</label>
-              <input
-                type="password"
-                value={novaSenha}
-                onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Mínimo de 8 caracteres"
-                autoComplete="new-password"
-                required
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showNovaSenha ? "text" : "password"}
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  placeholder="Mínimo de 8 caracteres"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowNovaSenha((v) => !v)}
+                  aria-label={showNovaSenha ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                >
+                  {showNovaSenha ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
 
             <div className="input-group">
               <label>Confirmar nova senha</label>
-              <input
-                type="password"
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
-                placeholder="Repita a nova senha"
-                autoComplete="new-password"
-                required
-              />
+              <div className="password-input-wrapper">
+                <input
+                  type={showConfirmarSenha ? "text" : "password"}
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  placeholder="Repita a nova senha"
+                  autoComplete="new-password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowConfirmarSenha((v) => !v)}
+                  aria-label={showConfirmarSenha ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                >
+                  {showConfirmarSenha ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
             </div>
 
             {error && <div className="error">{error}</div>}
