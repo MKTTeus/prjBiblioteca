@@ -17,6 +17,7 @@ import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
 import { useAuth } from "../../../contexts/AuthContext";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getErrorMessage } from "../../../utils/apiError";
+import NoticeBanner from "../../../components/NoticeBanner/NoticeBanner";
 
 import "./cadastroLivros.css";
 
@@ -35,7 +36,6 @@ export default function CadastroLivros() {
   const [fichaBook, setFichaBook] = useState(null);
   const [filters, setFilters] = useState({
     q: "",
-    categoria: "todas",
     status: "todas",
   });
 
@@ -51,11 +51,6 @@ export default function CadastroLivros() {
       const matchTombo = String(b.tombo || b.idLivro || "").toLowerCase().includes(q);
 
       if (!(matchTitulo || matchAutor || matchIsbn || matchTombo)) return false;
-    }
-
-    if (filters.categoria && filters.categoria !== "todas") {
-      const catId = String(b.idCategoria ?? b.idCategoria);
-      if (catId !== String(filters.categoria)) return false;
     }
 
     if (filters.status && filters.status !== "todas") {
@@ -158,6 +153,12 @@ export default function CadastroLivros() {
 
   return (
     <div className="cadastro page-shell">
+      <NoticeBanner
+        id="categoria-removida-2026-08"
+        message="A aba Categorias foi removida. Agora apenas Gênero é utilizado para organizar o acervo — os dados antigos de categoria não foram apagados, só deixaram de ser exibidos."
+        expiresAt="2026-10-01"
+      />
+
       <div className="cadastro-header">
         <div>
           <h1>Bem-vindo ao Cadastro de Livros</h1>

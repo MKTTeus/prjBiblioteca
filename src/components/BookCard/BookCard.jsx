@@ -68,7 +68,6 @@ function getBookCode(book) {
 
 export default function BookCard({
   book,
-  categoryName,
   genreName,
   isAdmin = false,
   onEdit,
@@ -99,7 +98,7 @@ export default function BookCard({
   const status = getBookStatus(book);
   const locationText = getLocationText(book);
   const tombo = getBookCode(book);
-  const tags = [categoryName || book?.categoria, genreName || book?.genero].filter(Boolean);
+  const tags = [genreName || book?.genero].filter(Boolean);
 
   const REQUEST_STATUS_LABEL = {
     pendente: "Solicitado — Aguardando aprovação",

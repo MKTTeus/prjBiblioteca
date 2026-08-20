@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { FiFilter, FiSearch, FiTag, FiX } from "react-icons/fi";
 import "./FiltroBusca.css";
-import SelectCategoria from "../SelectCategoria/SelectCategoria";
 import SelectStatus from "../SelectStatus/SelectStatus";
 
 function FiltroBusca({ onFilter }) {
   const [filters, setFilters] = useState({
     q: "",
-    categoria: "todas",
     status: "todas",
   });
 
@@ -25,7 +23,6 @@ function FiltroBusca({ onFilter }) {
   function clearAll() {
     setFilters({
       q: "",
-      categoria: "todas",
       status: "todas",
     });
   }
@@ -59,15 +56,6 @@ function FiltroBusca({ onFilter }) {
               type="text"
               placeholder="Buscar por título, autor, ISBN ou tombo..."
             />
-          </div>
-        </div>
-
-        <div className="campo">
-          <label>Categoria</label>
-
-          <div className="select-icon">
-            <FiTag className="campo-icone" />
-            <SelectCategoria value={filters.categoria} onChange={(v) => updateField("categoria", v)} />
           </div>
         </div>
 

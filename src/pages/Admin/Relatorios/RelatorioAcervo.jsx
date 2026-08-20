@@ -17,7 +17,7 @@ function hojeISO() {
 }
 
 export default function RelatorioAcervo() {
-  const [agrupador, setAgrupador] = useState("categoria");
+  const [agrupador, setAgrupador] = useState("genero");
   const [itens, setItens] = useState([]);
   const [resumo, setResumo] = useState({ totalLivros: 0, totalExemplares: 0, totalGrupos: 0 });
   const [carregando, setCarregando] = useState(false);
@@ -79,10 +79,10 @@ export default function RelatorioAcervo() {
     setErroTitulos(null);
   }
 
-  const LABEL_GRUPO = { genero: "Gênero", autor: "Autor", editora: "Editora", categoria: "Categoria" };
-  const LABEL_GRUPO_PLURAL = { genero: "Gêneros", autor: "Autores", editora: "Editoras", categoria: "Categorias" };
-  const labelGrupo = LABEL_GRUPO[agrupador] || "Categoria";
-  const labelGrupoPlural = LABEL_GRUPO_PLURAL[agrupador] || "Categorias";
+  const LABEL_GRUPO = { genero: "Gênero", autor: "Autor", editora: "Editora" };
+  const LABEL_GRUPO_PLURAL = { genero: "Gêneros", autor: "Autores", editora: "Editoras" };
+  const labelGrupo = LABEL_GRUPO[agrupador] || "Gênero";
+  const labelGrupoPlural = LABEL_GRUPO_PLURAL[agrupador] || "Gêneros";
 
   function handleExportarPDF() {
     exportarPDF({
