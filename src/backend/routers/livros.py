@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, gerar_tombos, executar_em_paralelo, buscar_todos
+from core import get_admin, gerar_tombos, executar_em_paralelo
 from schemas import Livro, LivroCreate, ExemplarUpdate, LivroStatusUpdate
 
 router = APIRouter()
@@ -272,27 +272,19 @@ def listar_livros(
             q_str = f"%{q}%"
 
             def buscar_por_titulo():
-                return buscar_todos(
-                    lambda: supabase.table("Livro").select("idLivro").ilike("livTitulo", q_str)
-                )
+                return supabase.table("Livro").select("idLivro").ilike("livTitulo", q_str).execute()
 
             def buscar_por_tombo():
-                return buscar_todos(
-                    lambda: supabase.table("Exemplar").select("idLivro").ilike("exeLivTombo", q_str)
-                )
+                return supabase.table("Exemplar").select("idLivro").ilike("exeLivTombo", q_str).execute()
 
             def buscar_por_autor():
                 # Passo interno em 2 etapas (autor → LivroAutor), mas essa
                 # cadeia inteira roda em paralelo com as outras duas buscas.
-                autores = buscar_todos(
-                    lambda: supabase.table("Autor").select("idAutor").ilike("autNome", q_str)
-                )
+                autores = supabase.table("Autor").select("idAutor").ilike("autNome", q_str).execute().data or []
                 if not autores:
                     return []
                 autor_ids = [a["idAutor"] for a in autores]
-                la = buscar_todos(
-                    lambda: supabase.table("LivroAutor").select("idLivro").in_("idAutor", autor_ids)
-                )
+                la = supabase.table("LivroAutor").select("idLivro").in_("idAutor", autor_ids).execute().data or []
                 return [r["idLivro"] for r in la]
 
             resp_titulo, resp_tombo, ids_por_autor = executar_em_paralelo(
@@ -300,8 +292,8 @@ def listar_livros(
             )
 
             ids = set()
-            ids.update(l["idLivro"] for l in (resp_titulo or []))
-            ids.update(e["idLivro"] for e in (resp_tombo or []))
+            ids.update(l["idLivro"] for l in (resp_titulo.data or []))
+            ids.update(e["idLivro"] for e in (resp_tombo.data or []))
             ids.update(ids_por_autor)
 
             allowed_ids = ids
@@ -310,9 +302,7 @@ def listar_livros(
             try:
                 cat_id = int(categoria)
                 # Filtrar por categoria via LivroCategoria
-                lc = buscar_todos(
-                    lambda: supabase.table("LivroCategoria").select("idLivro").eq("idCategoria", cat_id)
-                )
+                lc = supabase.table("LivroCategoria").select("idLivro").eq("idCategoria", cat_id).execute().data or []
                 cat_ids = {r["idLivro"] for r in lc}
                 allowed_ids = cat_ids if allowed_ids is None else allowed_ids & cat_ids
             except Exception:
@@ -327,12 +317,8 @@ def listar_livros(
             }
             cond = mapa.get(status.lower())
             if cond:
-                r = buscar_todos(
-                    lambda: supabase.table("Exemplar")
-                    .select("idLivro")
-                    .ilike("exeLivStatus", f"%{cond}%")
-                )
-                status_ids = {e["idLivro"] for e in (r or [])}
+                r = supabase.table("Exemplar").select("idLivro").ilike("exeLivStatus", f"%{cond}%").execute()
+                status_ids = {e["idLivro"] for e in (r.data or [])}
                 allowed_ids = status_ids if allowed_ids is None else allowed_ids & status_ids
 
         if isinstance(allowed_ids, set) and len(allowed_ids) == 0:
@@ -375,26 +361,14 @@ def listar_livros(
             elif "emprest" in s: mapa_ex[lid]["emprestados"] += 1
             elif "reserv" in s:  mapa_ex[lid]["reservados"] += 1
 
-        # Um registro de Livro não deve desaparecer da listagem só porque
-        # ainda não possui Exemplar. Isso causava uma divergência importante:
-        # o dashboard contava o Livro, mas o acervo filtrava o registro e
-        # exigia pelo menos um exemplar. Também tornava impossível conferir
-        # no cadastro um livro inserido diretamente no banco.
-        #
-        # Os contadores de exemplares continuam sendo calculados normalmente
-        # e ficam zerados quando o livro ainda não tem cópias físicas.
-        livros_com_totais = [
-            {**l, **mapa_ex.get(l["idLivro"], {
-                "total_exemplares": 0,
-                "disponiveis": 0,
-                "emprestados": 0,
-                "reservados": 0,
-            })}
+        livros_ativos = [
+            {**l, **mapa_ex.get(l["idLivro"], {"total_exemplares": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0})}
             for l in livros
+            if mapa_ex.get(l["idLivro"], {}).get("total_exemplares", 0) > 0
         ]
 
         # Enriquecer com autor, editora, categoria, gênero
-        return enriquecer_livros(livros_com_totais)
+        return enriquecer_livros(livros_ativos)
 
     except Exception as e:
         print("ERRO listar_livros:", e)
@@ -417,7 +391,6 @@ def detalhes_livro(idLivro: int):
 
 @router.post("/livros")
 def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
-    id_livro_criado = None
     try:
         payload = data.livro.model_dump()
 
@@ -450,7 +423,6 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
         if not livro_resp.data:
             raise HTTPException(status_code=500, detail="Não foi possível criar o livro")
         id_livro = livro_resp.data[0]["idLivro"]
-        id_livro_criado = id_livro
 
         # Autor(es) → LivroAutor (um livro pode ter vários autores; o campo
         # aceita nomes separados por vírgula)
@@ -481,24 +453,6 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
     except HTTPException:
         raise
     except Exception as e:
-        # A criação envolve Livro + relações + Exemplares. Como o PostgREST
-        # executa cada INSERT separadamente, um erro no fim do fluxo poderia
-        # deixar um Livro órfão no banco: o dashboard o contaria, enquanto o
-        # acervo não o encontraria por depender de seus exemplares.
-        #
-        # Se o Livro já foi criado, removemos o que foi criado neste fluxo.
-        # Autor/Editora são deliberadamente preservados porque podem ser
-        # compartilhados por outros livros.
-        if id_livro_criado is not None:
-            try:
-                supabase.table("LivroAutor").delete().eq("idLivro", id_livro_criado).execute()
-                supabase.table("LivroCategoria").delete().eq("idLivro", id_livro_criado).execute()
-                supabase.table("LivroGenero").delete().eq("idLivro", id_livro_criado).execute()
-                supabase.table("Exemplar").delete().eq("idLivro", id_livro_criado).execute()
-                supabase.table("Livro").delete().eq("idLivro", id_livro_criado).execute()
-            except Exception as cleanup_error:
-                print("Erro ao desfazer criação incompleta do livro:", cleanup_error)
-
         print("Erro ao criar livro:", e)
         error_msg = str(e)
         if "null value in column" in error_msg or "23502" in error_msg:

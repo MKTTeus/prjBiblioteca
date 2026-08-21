@@ -72,7 +72,10 @@ export default function CadastroLivros() {
     try {
       setLoading(true);
       const data = await getBooks({ incluir_inativos: true, ...params });
-      setBooks(data || []);
+      console.log("[ACERVO] resposta API",data);
+      console.log("[ACERVO] qtd recebida",(data||[]).length);
+      console.log("[ACERVO] livro134",(data||[]).find(b=>b.idLivro===134));
+      setBooks(data||[]);
     } catch (err) {
       console.error(err);
       addToast("Falha ao carregar livros", "error");
@@ -157,7 +160,9 @@ export default function CadastroLivros() {
     }
   }
 
-  return (
+  
+useEffect(()=>{console.log('[ACERVO] após filtros',filteredBooks.length,filteredBooks.find(b=>b.idLivro===134));},[filteredBooks]);
+return (
     <div className="cadastro page-shell">
       <NoticeBanner
         id="categoria-removida-2026-08"
@@ -181,8 +186,8 @@ export default function CadastroLivros() {
       <div className="stats-cards-grid">
         <StatsCard
           title="Total de Livros"
-          value={books.filter((b) => b.livAtivo !== false).length}
-          subtitle="Livros ativos no acervo"
+          value={books.length}
+          subtitle="Acervo cadastrado"
           icon={<HiOutlineBookOpen />}
           color="blue"
         />
