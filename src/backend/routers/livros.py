@@ -6,6 +6,17 @@ from schemas import Livro, LivroCreate, ExemplarUpdate, LivroStatusUpdate
 
 router = APIRouter()
 
+TAMANHO_LOTE_SUPABASE = 100
+
+
+def consultar_em_lotes(criar_consulta, ids: list[int]) -> list[dict]:
+    registros = []
+    for inicio in range(0, len(ids), TAMANHO_LOTE_SUPABASE):
+        lote = ids[inicio:inicio + TAMANHO_LOTE_SUPABASE]
+        resposta = criar_consulta(lote).execute()
+        registros.extend(resposta.data or [])
+    return registros
+
 
 # ── Helpers de JOIN ───────────────────────────────────────────────
 
@@ -27,18 +38,32 @@ def enriquecer_livros(livros: list) -> list:
     # atrás da outra — é o principal ponto de lentidão ao carregar livros,
     # já que esta função é chamada em toda listagem/detalhe/salvamento.
     consultas = [
-        lambda: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autAnoNascimento, autAnoFalecimento)").in_("idLivro", ids).execute(),
-        lambda: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids).execute(),
-        lambda: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids).execute(),
+        lambda lote: consultar_em_lotes(
+            lambda ids_lote: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autAnoNascimento, autAnoFalecimento)").in_("idLivro", ids_lote),
+            lote,
+        ),
+        lambda lote: consultar_em_lotes(
+            lambda ids_lote: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids_lote),
+            lote,
+        ),
+        lambda lote: consultar_em_lotes(
+            lambda ids_lote: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids_lote),
+            lote,
+        ),
     ]
     if ed_ids:
         consultas.append(
-            lambda: supabase.table("Editora").select("idEditora, ediNome, ediCidade, ediEstado, ediPais").in_("idEditora", ed_ids).execute()
+            lambda lote: consultar_em_lotes(
+                lambda ids_lote: supabase.table("Editora").select("idEditora, ediNome, ediCidade, ediEstado, ediPais").in_("idEditora", ids_lote),
+                lote,
+            )
         )
 
-    resp_autor, resp_categoria, resp_genero, *resto = executar_em_paralelo(*consultas)
+    respostas = executar_em_paralelo(
+        *(lambda consulta=consulta: consulta(ids) for consulta in consultas)
+    )
+    la, lc, lg, *resto = respostas
 
-    la = resp_autor.data or []
     autores_por_livro: dict[int, list[dict]] = {}
     for r in la:
         autor = r.get("Autor")
@@ -46,11 +71,9 @@ def enriquecer_livros(livros: list) -> list:
             continue
         autores_por_livro.setdefault(r["idLivro"], []).append(autor)
 
-    lc = resp_categoria.data or []
     cat_map    = {r["idLivro"]: r["Categoria"]["catNome"]    for r in lc if r.get("Categoria")}
     cat_id_map = {r["idLivro"]: r["Categoria"]["idCategoria"] for r in lc if r.get("Categoria")}
 
-    lg = resp_genero.data or []
     gen_map    = {r["idLivro"]: r["Genero"]["genNome"]    for r in lg if r.get("Genero")}
     gen_id_map = {r["idLivro"]: r["Genero"]["idGenero"]   for r in lg if r.get("Genero")}
 
@@ -60,7 +83,7 @@ def enriquecer_livros(livros: list) -> list:
     ed_pais_map = {}
     
     if resto:
-        eds = resto[0].data or []
+        eds = resto[0]
         ed_map = {e["idEditora"]: e["ediNome"] for e in eds}
         ed_cidade_map = {e["idEditora"]: e.get("ediCidade") or "" for e in eds}
         ed_estado_map = {e["idEditora"]: e.get("ediEstado") or "" for e in eds}
@@ -291,12 +314,22 @@ def listar_livros(
             query = query.in_("idLivro", list(allowed_ids))
 
         start = (page - 1) * per_page
-        livros = query.range(start, start + per_page - 1).execute().data or []
+        livros = []
+        while len(livros) < per_page:
+            inicio_lote = start + len(livros)
+            tamanho_lote = min(TAMANHO_LOTE_SUPABASE, per_page - len(livros))
+            lote = query.range(inicio_lote, inicio_lote + tamanho_lote - 1).execute().data or []
+            livros.extend(lote)
+            if len(lote) < tamanho_lote:
+                break
 
         livro_ids = [l["idLivro"] for l in livros]
         exemplares = []
         if livro_ids:
-            exemplares = supabase.table("Exemplar").select("*").in_("idLivro", livro_ids).execute().data or []
+            exemplares = consultar_em_lotes(
+                lambda ids_lote: supabase.table("Exemplar").select("*").in_("idLivro", ids_lote),
+                livro_ids,
+            )
 
         mapa_ex = {}
         for ex in exemplares:
