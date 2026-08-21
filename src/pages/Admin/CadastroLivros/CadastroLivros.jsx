@@ -181,8 +181,8 @@ export default function CadastroLivros() {
       <div className="stats-cards-grid">
         <StatsCard
           title="Total de Livros"
-          value={books.length}
-          subtitle="Acervo cadastrado"
+          value={books.filter((b) => b.livAtivo !== false).length}
+          subtitle="Livros ativos no acervo"
           icon={<HiOutlineBookOpen />}
           color="blue"
         />
