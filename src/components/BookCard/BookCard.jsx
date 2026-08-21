@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   HiOutlineBookOpen,
   HiOutlineCalendar,
@@ -14,6 +14,7 @@ import {
   HiOutlineMinus,
   HiOutlinePlus,
 } from "react-icons/hi";
+import Modal from "../Modal/Modal";
 import "./BookCard.css";
 
 function getBookStatus(book) {
@@ -99,6 +100,7 @@ export default function BookCard({
   const locationText = getLocationText(book);
   const tombo = getBookCode(book);
   const tags = [genreName || book?.genero].filter(Boolean);
+  const [mostrarDescricao, setMostrarDescricao] = useState(false);
 
   const REQUEST_STATUS_LABEL = {
     pendente: "Solicitado — Aguardando aprovação",
@@ -137,7 +139,16 @@ export default function BookCard({
             </p>
           </div>
 
-          <p className="shared-book-card__description">{descricao}</p>
+          <div className="shared-book-card__description-wrap">
+            <p className="shared-book-card__description">{descricao}</p>
+            <button
+              type="button"
+              className="shared-book-card__desc-link"
+              onClick={() => setMostrarDescricao(true)}
+            >
+              Ler descrição completa
+            </button>
+          </div>
 
           {tags.length > 0 && (
             <div className="shared-book-card__tags">
@@ -282,6 +293,26 @@ export default function BookCard({
           </div>
         )}
       </div>
+
+      <Modal
+        show={mostrarDescricao}
+        onClose={() => setMostrarDescricao(false)}
+        className="book-description-modal"
+      >
+        <div className="book-description-modal__header">
+          <img src={capa} alt={titulo} onError={(e) => { e.target.src = "/placeholder.png"; }} />
+          <div>
+            <h3>{titulo}</h3>
+            <p className="book-description-modal__author">{autor}</p>
+            {tags.length > 0 && (
+              <div className="book-description-modal__tags">
+                {tags.map((tag) => <span key={tag}>{tag}</span>)}
+              </div>
+            )}
+          </div>
+        </div>
+        <p className="book-description-modal__text">{descricao}</p>
+      </Modal>
     </div>
   );
 }
