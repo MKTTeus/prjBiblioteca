@@ -301,9 +301,13 @@ export default function BookCard({
       >
         <div className="book-description-modal__header">
           <img src={capa} alt={titulo} onError={(e) => { e.target.src = "/placeholder.png"; }} />
-          <div>
+          <div className="book-description-modal__info">
             <h3>{titulo}</h3>
             <p className="book-description-modal__author">{autor}</p>
+            <p className="book-description-modal__meta">
+              <HiOutlineCalendar />
+              <span>{ano}{paginas ? ` · ${paginas} págs.` : ""}</span>
+            </p>
             {tags.length > 0 && (
               <div className="book-description-modal__tags">
                 {tags.map((tag) => <span key={tag}>{tag}</span>)}
@@ -311,7 +315,10 @@ export default function BookCard({
             )}
           </div>
         </div>
-        <p className="book-description-modal__text">{descricao}</p>
+        <div className="book-description-modal__divider" />
+        <div className="book-description-modal__body">
+          <p className="book-description-modal__text">{descricao}</p>
+        </div>
       </Modal>
     </div>
   );
