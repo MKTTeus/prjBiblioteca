@@ -222,7 +222,7 @@ def listar_livros(
     categoria: str | None = "todas",
     status: str | None = "todos",
     page: int = 1,
-    per_page: int = 100,
+    per_page: int = 10000,
     incluir_inativos: bool = False
 ):
     try:
