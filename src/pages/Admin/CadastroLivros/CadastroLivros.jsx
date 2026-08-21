@@ -36,6 +36,7 @@ export default function CadastroLivros() {
   const [fichaBook, setFichaBook] = useState(null);
   const [filters, setFilters] = useState({
     q: "",
+    genero: "todos",
     status: "todas",
   });
 
@@ -51,6 +52,11 @@ export default function CadastroLivros() {
       const matchTombo = String(b.tombo || b.idLivro || "").toLowerCase().includes(q);
 
       if (!(matchTitulo || matchAutor || matchIsbn || matchTombo)) return false;
+    }
+
+    if (filters.genero && filters.genero !== "todos") {
+      const genId = String(b.idGenero ?? "");
+      if (genId !== String(filters.genero)) return false;
     }
 
     if (filters.status && filters.status !== "todas") {
