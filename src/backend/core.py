@@ -24,6 +24,36 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 6
 
 
+TAMANHO_LOTE_SUPABASE = 100
+
+
+def buscar_todos(criar_consulta) -> list:
+    """Busca TODAS as linhas de uma consulta Supabase, paginando em blocos de
+    TAMANHO_LOTE_SUPABASE via .range().
+
+    Necessário porque o projeto Supabase tem um limite de linhas por
+    requisição (Max Rows, configurado no painel do Supabase em
+    Settings > API): qualquer .execute() sem paginação explícita é truncado
+    nesse limite, mesmo que existam mais linhas atendendo ao filtro — sem
+    erro nenhum, o `.data` simplesmente vem incompleto.
+
+    `criar_consulta` deve ser uma função sem argumentos que retorna um query
+    builder do Supabase ainda não executado (ex.: lambda: supabase.table(...)
+    .select(...).eq(...)), para que possamos encadear `.range()` nele antes
+    de chamar `.execute()`.
+    """
+    registros = []
+    inicio = 0
+    while True:
+        resposta = criar_consulta().range(inicio, inicio + TAMANHO_LOTE_SUPABASE - 1).execute()
+        pagina = resposta.data or []
+        registros.extend(pagina)
+        if len(pagina) < TAMANHO_LOTE_SUPABASE:
+            break
+        inicio += TAMANHO_LOTE_SUPABASE
+    return registros
+
+
 def executar_em_paralelo(*funcoes):
     if not funcoes:
         return []

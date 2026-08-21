@@ -10,11 +10,28 @@ TAMANHO_LOTE_SUPABASE = 100
 
 
 def consultar_em_lotes(criar_consulta, ids: list[int]) -> list[dict]:
+    """Consulta o Supabase em lotes de IDs, paginando também o RESULTADO de
+    cada lote via .range().
+
+    Importante: dividir os `ids` em lotes de TAMANHO_LOTE_SUPABASE evita
+    listas de IN(...) grandes demais, mas não garante que cada consulta
+    retorne no máximo TAMANHO_LOTE_SUPABASE linhas (ex.: 100 livros podem ter
+    300 Exemplares). O projeto Supabase tem um limite de linhas por
+    requisição (Max Rows) que corta silenciosamente qualquer resultado maior
+    que isso — por isso cada lote de IDs também precisa ser paginado com
+    .range() até esgotar as linhas, e não apenas executado uma vez.
+    """
     registros = []
     for inicio in range(0, len(ids), TAMANHO_LOTE_SUPABASE):
         lote = ids[inicio:inicio + TAMANHO_LOTE_SUPABASE]
-        resposta = criar_consulta(lote).execute()
-        registros.extend(resposta.data or [])
+        offset = 0
+        while True:
+            resposta = criar_consulta(lote).range(offset, offset + TAMANHO_LOTE_SUPABASE - 1).execute()
+            pagina = resposta.data or []
+            registros.extend(pagina)
+            if len(pagina) < TAMANHO_LOTE_SUPABASE:
+                break
+            offset += TAMANHO_LOTE_SUPABASE
     return registros
 
 
