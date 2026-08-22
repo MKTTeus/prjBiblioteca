@@ -324,18 +324,20 @@ def listar_livros(
         if isinstance(allowed_ids, set) and len(allowed_ids) == 0:
             return []
 
-        query = supabase.table("Livro").select("*")
-        if not incluir_inativos:
-            query = query.eq("livAtivo", True)
-        if isinstance(allowed_ids, set):
-            query = query.in_("idLivro", list(allowed_ids))
+        def criar_consulta_livros():
+            q = supabase.table("Livro").select("*")
+            if not incluir_inativos:
+                q = q.eq("livAtivo", True)
+            if isinstance(allowed_ids, set):
+                q = q.in_("idLivro", list(allowed_ids))
+            return q
 
         start = (page - 1) * per_page
         livros = []
         while len(livros) < per_page:
             inicio_lote = start + len(livros)
             tamanho_lote = min(TAMANHO_LOTE_SUPABASE, per_page - len(livros))
-            lote = query.range(inicio_lote, inicio_lote + tamanho_lote - 1).execute().data or []
+            lote = criar_consulta_livros().range(inicio_lote, inicio_lote + tamanho_lote - 1).execute().data or []
             livros.extend(lote)
             if len(lote) < tamanho_lote:
                 break
