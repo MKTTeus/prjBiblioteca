@@ -5,6 +5,8 @@ import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
 import { getAdmins, createAdmin, updateAdmin, deleteAdmin, excluirAdminsLote, atualizarStatusAdminsLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
+import Pagination from "../../../components/Pagination/Pagination";
+import usePagination from "../../../hooks/usePagination";
 import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -300,6 +302,8 @@ export default function Admin() {
     return admin.nome.toLowerCase().includes(termo) || admin.email.toLowerCase().includes(termo);
   });
 
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(adminsFiltrados);
+
   return (
     <div className="admin-page page-shell">
       <div className="titulo">
@@ -386,7 +390,7 @@ export default function Admin() {
           </thead>
 
           <tbody>
-            {adminsFiltrados.map((admin) => (
+            {paginaItens.map((admin) => (
               <tr key={admin.idAdmin} className={selecionados.includes(admin.idAdmin) ? "row-selecionada" : ""}>
                 <td className="col-check">
                   <input
@@ -428,6 +432,13 @@ export default function Admin() {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onChange={irParaPagina}
+        totalItens={adminsFiltrados.length}
+      />
 
       <AdminModal
         aberto={modalAberto}

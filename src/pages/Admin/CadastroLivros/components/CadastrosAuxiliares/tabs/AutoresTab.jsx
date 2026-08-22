@@ -3,6 +3,8 @@ import { IoMdAdd } from "react-icons/io";
 import { Pencil, Trash2 } from "lucide-react";
 import { useToast } from "../../../../../../contexts/ToastContext";
 import ConfirmModal from "../../../../../../components/ConfirmModal/ConfirmModal";
+import Pagination from "../../../../../../components/Pagination/Pagination";
+import usePagination from "../../../../../../hooks/usePagination";
 import MergeModal from "../MergeModal";
 import AutorModal from "./AutorModal";
 import {
@@ -53,6 +55,8 @@ export default function AutoresTab() {
   const autoresFiltrados = autores.filter((a) =>
     (a.autNome || "").toLowerCase().includes(busca.toLowerCase().trim())
   );
+
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(autoresFiltrados);
 
   function abrirCriacao() {
     setAutorEditando(null);
@@ -191,7 +195,7 @@ export default function AutoresTab() {
                 </td>
               </tr>
             ) : (
-              autoresFiltrados.map((autor) => (
+              paginaItens.map((autor) => (
                 <tr key={autor.idAutor}>
                   <td>{autor.autNome}</td>
                   <td>{autor.autAnoNascimento || "—"}</td>
@@ -222,6 +226,13 @@ export default function AutoresTab() {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onChange={irParaPagina}
+        totalItens={autoresFiltrados.length}
+      />
 
       <AutorModal
         show={modalOpen}
