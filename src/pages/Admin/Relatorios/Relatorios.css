@@ -278,7 +278,7 @@
   color: #b91c1c;
 }
 
-/* ── Link de grupo (categoria/gênero) que abre o modal de títulos ── */
+/* ── Link de grupo (gênero/autor/editora) que abre o modal de títulos ── */
 .rel-link-grupo {
   background: none;
   border: none;

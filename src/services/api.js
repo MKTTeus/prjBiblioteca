@@ -52,7 +52,6 @@ async function apiFetch(endpoint, options = {}) {
 export const getBooks = (params = {}) => {
   const query = new URLSearchParams();
   if (params.q) query.append("q", params.q);
-  if (params.categoria) query.append("categoria", params.categoria);
   if (params.status) query.append("status", params.status);
   if (params.page) query.append("page", params.page);
   if (params.per_page) query.append("per_page", params.per_page);
@@ -119,12 +118,6 @@ export const updateExemplar = (idExemplar, payload) =>
   apiFetch(`/exemplares/${idExemplar}`, {
     method: "PUT",
     body: JSON.stringify(payload)
-  });
-
-export const createCategoria = (payload) =>
-  apiFetch("/categorias", {
-    method: "POST",
-    body: JSON.stringify(payload),
   });
 
 export const createGenero = (payload) =>
@@ -221,37 +214,14 @@ export async function fetchCoverFromUrl(url) {
 }
 
 // ========================
-// CATEGORIAS / GENEROS
+// GENEROS
 // ========================
-
-export const getCategorias = () =>
-  apiFetch("/categorias");
 
 export const getGeneros = () =>
   apiFetch("/generos");
 
 export const getEditoras = () =>
   apiFetch("/editoras");
-
-export const updateCategoria = (idCategoria, payload) =>
-  apiFetch(`/categorias/${idCategoria}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-
-export const deleteCategoria = (idCategoria) =>
-  apiFetch(`/categorias/${idCategoria}`, {
-    method: "DELETE",
-  });
-
-export const getCategoriaUso = (idCategoria) =>
-  apiFetch(`/categorias/${idCategoria}/uso`);
-
-export const mesclarCategoria = (idCategoria, idDestino) =>
-  apiFetch(`/categorias/${idCategoria}/mesclar`, {
-    method: "POST",
-    body: JSON.stringify({ idDestino }),
-  });
 
 export const updateGenero = (idGenero, payload) =>
   apiFetch(`/generos/${idGenero}`, {
@@ -612,7 +582,7 @@ export const getRelatorioAtrasos = (filtros = {}) => {
   return apiFetch(`/relatorios/atrasos${query ? `?${query}` : ""}`);
 };
 
-export const getRelatorioAcervo = (agrupador = "categoria") =>
+export const getRelatorioAcervo = (agrupador = "genero") =>
   apiFetch(`/relatorios/acervo?agrupador=${agrupador}`);
 
 export const getRelatorioAcervoTitulos = (idLivros = []) =>

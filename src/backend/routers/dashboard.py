@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends
 
 from database import supabase
-from core import get_optional_user
+from core import get_optional_user, buscar_todos
 
 router = APIRouter()
 
@@ -12,13 +12,18 @@ def dashboard_stats(user=Depends(get_optional_user)):
     try:
         hoje = datetime.utcnow().date()
 
-        livros = supabase.table("Livro").select("idLivro").eq("livAtivo", True).execute().data or []
-        usuarios = supabase.table("Usuario").select("idUsuario").eq("usuExcluido", False).execute().data or []
-        movimentacoes = supabase.table("Movimentacao").select("*").execute().data or []
-        movimentacao_exemplares = supabase.table("MovimentacaoExemplar").select("*").execute().data or []
+        # As consultas abaixo usam buscar_todos() (paginação via .range()) em vez de
+        # .execute() direto, porque o projeto Supabase tem um limite de linhas por
+        # requisição (Max Rows) que corta silenciosamente qualquer resultado maior
+        # que esse limite — foi isso que fazia "totalLivros" travar em 100 mesmo
+        # com mais livros cadastrados no banco.
+        livros = buscar_todos(lambda: supabase.table("Livro").select("idLivro").eq("livAtivo", True))
+        usuarios = buscar_todos(lambda: supabase.table("Usuario").select("idUsuario").eq("usuExcluido", False))
+        movimentacoes = buscar_todos(lambda: supabase.table("Movimentacao").select("*"))
+        movimentacao_exemplares = buscar_todos(lambda: supabase.table("MovimentacaoExemplar").select("*"))
 
-        exemplares_reservados = (
-            supabase.table("Exemplar").select("idExemplar").eq("exeLivStatus", "Reservado").execute().data or []
+        exemplares_reservados = buscar_todos(
+            lambda: supabase.table("Exemplar").select("idExemplar").eq("exeLivStatus", "Reservado")
         )
         reservados = len(exemplares_reservados)
 

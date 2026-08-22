@@ -153,6 +153,15 @@
   padding-left: 2rem;
 }
 
+.al-input-wrap input[type="password"],
+.al-input-wrap input[data-has-toggle="true"] {
+  padding-right: 2.2rem;
+}
+
+.al-input-wrap .password-toggle-btn {
+  right: 0.6rem;
+}
+
 .al-modal-actions {
   display: flex;
   justify-content: flex-end;

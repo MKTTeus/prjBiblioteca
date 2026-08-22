@@ -379,7 +379,6 @@ export default function NovoEmprestimo({ onNavigate }) {
                   <BookCard
                     key={idLivro}
                     book={book}
-                    categoryName={book.livCategoria}
                     genreName={book.livGenero}
                     cartMode
                     pendingQuantity={pendingQty[idLivro] || 0}

@@ -5,7 +5,7 @@ import LoadingButton from "../../../../../components/LoadingButton/LoadingButton
 /**
  * MergeModal
  *
- * Exibido quando o administrador tenta excluir uma categoria/gênero/autor
+ * Exibido quando o administrador tenta excluir um gênero/autor
  * que ainda está vinculado a livros. Em vez de bloquear a exclusão, oferece
  * a opção de transferir ("mesclar") todos os livros para outro item já
  * existente e, em seguida, excluir o item original.

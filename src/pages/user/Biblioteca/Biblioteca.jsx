@@ -113,7 +113,7 @@ export default function Biblioteca() {
       <section className="user-page__hero">
         <div className="user-page__hero-content">
           <h2>Biblioteca</h2>
-          <p>Pesquise livros por título, autor ou categoria usando dados reais do banco.</p>
+          <p>Pesquise livros por título, autor ou gênero usando dados reais do banco.</p>
         </div>
       </section>
 
@@ -121,7 +121,7 @@ export default function Biblioteca() {
         <SearchBar
           value={search}
           onChange={setSearch}
-          placeholder="Buscar por livro, autor ou categoria..."
+          placeholder="Buscar por livro, autor ou gênero..."
         />
       </section>
 
@@ -138,7 +138,6 @@ export default function Biblioteca() {
                 <BookCard
                   key={id}
                   book={book}
-                  categoryName={book.livCategoria || book.categoria}
                   genreName={book.livGenero || book.genero}
                   onRequestLoan={isAluno ? handleRequestLoan : undefined}
                   statusSolicitacao={solicitados[id] || null}

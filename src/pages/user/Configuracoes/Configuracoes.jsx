@@ -28,6 +28,7 @@ export default function ConfiguracoesUser() {
   const [confirmSenha, setConfirmSenha] = useState("");
   const [showSenhaAtual, setShowSenhaAtual] = useState(false);
   const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [showConfirmSenha, setShowConfirmSenha] = useState(false);
   const [savingSenha, setSavingSenha] = useState(false);
 
   // Tema
@@ -292,15 +293,25 @@ export default function ConfiguracoesUser() {
                 </div>
               </div>
 
-              <div className="form-group full">
+              <div className="form-group full password-group">
                 <label>Confirmar nova senha</label>
-                <input
-                  type="password"
-                  value={confirmSenha}
-                  onChange={(e) => setConfirmSenha(e.target.value)}
-                  placeholder="Repita a nova senha"
-                  autoComplete="new-password"
-                />
+                <div className="password-wrapper">
+                  <input
+                    type={showConfirmSenha ? "text" : "password"}
+                    value={confirmSenha}
+                    onChange={(e) => setConfirmSenha(e.target.value)}
+                    placeholder="Repita a nova senha"
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    className="toggle-password"
+                    onClick={() => setShowConfirmSenha(!showConfirmSenha)}
+                    aria-label="Mostrar senha"
+                  >
+                    {showConfirmSenha ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
               </div>
             </div>
 

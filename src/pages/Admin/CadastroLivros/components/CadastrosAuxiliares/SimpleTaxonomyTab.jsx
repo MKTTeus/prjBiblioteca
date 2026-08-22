@@ -10,14 +10,14 @@ import { getErrorMessage } from "../../../../../utils/apiError";
  * SimpleTaxonomyTab
  *
  * Tela genérica de gestão para taxonomias simples (nome único), usada tanto
- * por Categorias quanto por Gêneros. Cobre: criar, renomear (edição inline),
+ * por Gêneros quanto por Autores. Cobre: criar, renomear (edição inline),
  * excluir (bloqueado quando há livros vinculados) e mesclar/reatribuir
  * (transferir os livros de um item para outro antes de excluir).
  *
  * Props:
  *   titulo, singular, artigo ("a"/"o"), placeholderNovo
- *   nomeField — nome do campo de texto (ex.: "catNome")
- *   idField   — nome do campo de id (ex.: "idCategoria")
+ *   nomeField — nome do campo de texto (ex.: "genNome")
+ *   idField   — nome do campo de id (ex.: "idGenero")
  *   api       — { listar, criar, atualizar, excluir, getUso, mesclar }
  */
 export default function SimpleTaxonomyTab({

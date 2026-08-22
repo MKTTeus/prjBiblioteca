@@ -5,7 +5,6 @@ import AppShell from "./components/AppShell/AppShell";
 import Dashboard from "./pages/Admin/Dashboard/Dashboard";
 import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
 import CadastrosAuxiliares from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/CadastrosAuxiliares";
-import CategoriasTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/CategoriasTab";
 import GenerosTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/GenerosTab";
 import AutoresTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/AutoresTab";
 import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
@@ -129,8 +128,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="livros" element={<Livros />} />
         <Route path="livros/cadastros-auxiliares" element={<CadastrosAuxiliares />}>
-          <Route index element={<Navigate to="categorias" replace />} />
-          <Route path="categorias" element={<CategoriasTab />} />
+          <Route index element={<Navigate to="generos" replace />} />
           <Route path="generos" element={<GenerosTab />} />
           <Route path="autores" element={<AutoresTab />} />
         </Route>

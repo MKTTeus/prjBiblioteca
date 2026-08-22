@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { FiLock } from "react-icons/fi";
+import { FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
 import "../styles/Login.css";
 
@@ -20,6 +20,8 @@ export default function RedefinirSenha() {
   const [statusToken, setStatusToken] = useState("verificando");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sucesso, setSucesso] = useState(false);
@@ -141,24 +143,46 @@ export default function RedefinirSenha() {
               <form onSubmit={handleSubmit}>
                 <div className="input-group">
                   <label>Nova senha</label>
-                  <input
-                    type="password"
-                    value={novaSenha}
-                    onChange={(e) => setNovaSenha(e.target.value)}
-                    placeholder="Mínimo de 8 caracteres"
-                    required
-                  />
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showNovaSenha ? "text" : "password"}
+                      value={novaSenha}
+                      onChange={(e) => setNovaSenha(e.target.value)}
+                      placeholder="Mínimo de 8 caracteres"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowNovaSenha((v) => !v)}
+                      aria-label={showNovaSenha ? "Ocultar senha" : "Mostrar senha"}
+                      tabIndex={-1}
+                    >
+                      {showNovaSenha ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="input-group">
                   <label>Confirmar nova senha</label>
-                  <input
-                    type="password"
-                    value={confirmarSenha}
-                    onChange={(e) => setConfirmarSenha(e.target.value)}
-                    placeholder="Repita a nova senha"
-                    required
-                  />
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showConfirmarSenha ? "text" : "password"}
+                      value={confirmarSenha}
+                      onChange={(e) => setConfirmarSenha(e.target.value)}
+                      placeholder="Repita a nova senha"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowConfirmarSenha((v) => !v)}
+                      aria-label={showConfirmarSenha ? "Ocultar senha" : "Mostrar senha"}
+                      tabIndex={-1}
+                    >
+                      {showConfirmarSenha ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
                 </div>
 
                 {error && <div className="error">{error}</div>}
