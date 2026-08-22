@@ -178,7 +178,7 @@ export default function NovoEmprestimo({ onNavigate }) {
       const resultado = await criarEmprestimoProfessor(payload);
       setResumoFinal(resultado);
       setCart({});
-      addToast("Empréstimo realizado com sucesso!", "success");
+      addToast("Solicitação enviada. Aguarde a aprovação do administrador.", "success");
     } catch (err) {
       addToast(getErrorMessage(err, "Erro ao criar empréstimo"), "error");
       // Se a disponibilidade mudou entre a montagem do carrinho e a
@@ -200,7 +200,8 @@ export default function NovoEmprestimo({ onNavigate }) {
       <div className="user-page page-shell professor-novo-emprestimo">
         <section className="user-section-card professor-sucesso">
           <FiCheckCircle className="professor-sucesso__icon" />
-          <h2>Empréstimo realizado com sucesso!</h2>
+          <h2>Solicitação enviada com sucesso</h2>
+          <p>O empréstimo ficará disponível após a aprovação do administrador e o registro da retirada.</p>
           <dl>
             <div>
               <dt>Professor</dt>
@@ -221,7 +222,7 @@ export default function NovoEmprestimo({ onNavigate }) {
               <dd>{resumoFinal.totalLivros}</dd>
             </div>
             <div>
-              <dt>Total de exemplares retirados</dt>
+              <dt>Total de exemplares solicitados</dt>
               <dd>{resumoFinal.totalExemplares}</dd>
             </div>
             <div>
@@ -230,9 +231,9 @@ export default function NovoEmprestimo({ onNavigate }) {
             </div>
           </dl>
           <div className="professor-sucesso__acoes">
-            <button type="button" className="professor-btn professor-btn--primary" onClick={resetFluxo}>
-              Novo empréstimo
-            </button>
+              <button type="button" className="professor-btn professor-btn--primary" onClick={resetFluxo}>
+                Nova solicitação
+              </button>
             <button
               type="button"
               className="professor-btn professor-btn--secondary"

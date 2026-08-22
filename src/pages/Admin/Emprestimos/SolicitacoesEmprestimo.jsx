@@ -444,7 +444,12 @@ export default function SolicitacoesEmprestimo() {
                     <td className="emp-id-cell">{id || "-"}</td>
                     <td className="emp-main-cell">
                       <strong>{usuario}</strong>
-                      <small>{item.usuarioTipo || item.tipo || "-"}</small>
+                      <small>
+                        {item.usuarioTipo || item.tipo || "-"}
+                        {item.professor && item.finalidade
+                          ? ` · ${item.finalidade === "TURMA" ? `Turma ${[item.serie, item.turma].filter(Boolean).join(" - ")}` : "Pessoal"}`
+                          : ""}
+                      </small>
                     </td>
                     <td className="emp-main-cell">
                       <strong>{titulo}</strong>
