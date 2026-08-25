@@ -1,25 +1,60 @@
+import gzip
+import hashlib
 import json
 import os
+import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from core import get_admin, verify_password
+from core import buscar_todos, get_admin, verify_password
 from database import supabase
 
 router = APIRouter()
 
 CRON_SECRET = os.getenv("CRON_SECRET")
 BACKUP_BUCKET = "backups"
+MAX_BACKUPS = 7
 
+# Versão do formato do payload de backup. Incrementar sempre que a lista de
+# tabelas ou a estrutura do payload mudar de forma incompatível com
+# restaurações antigas — /backup/restaurar usa isso para recusar backups de
+# um formato mais novo do que o que este código sabe restaurar.
+BACKUP_VERSAO = 2
+
+# Tabelas de dados que TÊM que estar presentes e íntegras em todo backup.
+# Revisada em conjunto com supabase/migrations/ — se uma nova tabela de
+# dados for criada, ela precisa entrar aqui (e na função SQL
+# restaurar_backup_completo) para não ficar de fora do backup silenciosamente.
 TABELAS = [
     "Usuario", "Administrador", "Livro", "Exemplar",
     "Autor", "Editora", "Categoria", "Genero",
     "LivroAutor", "LivroCategoria", "LivroGenero",
     "Movimentacao", "MovimentacaoExemplar", "Configuracoes",
+    "FichaCatalografica",
 ]
+
+# RedefinicaoSenha: decisão — INCLUIR no backup.
+# Motivo: a tabela guarda apenas hash de token (nunca o token em claro) e
+# timestamps; já hoje o backup inclui Usuario.usuSenha e Administrador.admSenha
+# (hashes de senha), então excluir só o hash de token de redefinição não
+# traria proteção adicional relevante, e incluir mantém o comportamento de
+# "restauração exata" também para o fluxo de esqueci-minha-senha. O valor do
+# token nunca é exposto na interface (/backup/listar só soma contagens).
+# Tokens expirados/usados são restaurados como estavam no momento do backup —
+# eles não concedem acesso por si só (a validação de expiração acontece em
+# tempo de uso, no endpoint /redefinir-senha/validar).
+INCLUIR_REDEFINICAO_SENHA = True
+if INCLUIR_REDEFINICAO_SENHA:
+    TABELAS = TABELAS + ["RedefinicaoSenha"]
+
+
+class BackupIncompletoError(Exception):
+    """Levantada quando qualquer tabela obrigatória falha ao ser lida.
+    Um backup parcial nunca deve ser tratado como válido nem enviado ao
+    Storage."""
 
 
 def verificar_cron(
@@ -34,34 +69,124 @@ def verificar_cron(
 
 
 def _gerar_dados_backup() -> dict:
+    """Lê todas as TABELAS por completo (com paginação, via buscar_todos —
+    um select sem paginação é truncado silenciosamente pelo limite de Max
+    Rows do Supabase). Se qualquer tabela obrigatória falhar, interrompe
+    imediatamente: nunca produz um backup parcial."""
     dados = {}
     for tabela in TABELAS:
         try:
-            resp = supabase.table(tabela).select("*").execute()
-            dados[tabela] = resp.data or []
+            dados[tabela] = buscar_todos(lambda t=tabela: supabase.table(t).select("*"))
         except Exception as e:
-            dados[tabela] = {"erro": str(e)}
+            print(f"Erro ao ler tabela '{tabela}' para backup:", e)
+            raise BackupIncompletoError(
+                f"Falha ao ler a tabela '{tabela}': {e}"
+            ) from e
+
+    contagem_registros = {t: len(v) for t, v in dados.items()}
+    hash_dados = hashlib.sha256(
+        json.dumps(dados, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
+    ).hexdigest()
 
     return {
+        "versao_backup": BACKUP_VERSAO,
+        "identificador": str(uuid.uuid4()),
         "gerado_em": datetime.utcnow().isoformat(),
         "tabelas": TABELAS,
+        "contagem_registros": contagem_registros,
+        "hash_dados": hash_dados,
         "dados": dados,
     }
 
 
-def _salvar_no_storage(payload: dict) -> str:
-    """Serializa o payload como JSON e faz upload no Supabase Storage.
-    Retorna o nome do arquivo salvo."""
-    nome_arquivo = f"backup_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-    conteudo = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+def _salvar_no_storage(payload: dict, prefixo: str = "backup") -> str:
+    """Serializa o payload como JSON, comprime com gzip e faz upload no
+    Supabase Storage. Retorna o nome do arquivo salvo."""
+    nome_arquivo = f"{prefixo}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json.gz"
+    conteudo_json = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    conteudo = gzip.compress(conteudo_json)
 
     supabase.storage.from_(BACKUP_BUCKET).upload(
         path=nome_arquivo,
         file=conteudo,
-        file_options={"content-type": "application/json"},
+        file_options={"content-type": "application/gzip"},
     )
 
     return nome_arquivo
+
+
+def _conteudo_backup_descompactado(conteudo: bytes, nome_arquivo: str) -> bytes:
+    """Descompacta backups novos (.json.gz) e mantém compatibilidade com
+    backups antigos (.json)."""
+    if nome_arquivo.lower().endswith(".gz"):
+        return gzip.decompress(conteudo)
+    return conteudo
+
+
+def _validar_backup(payload: dict) -> None:
+    """Valida a integridade estrutural de um backup antes de permitir que
+    ele seja usado em uma restauração destrutiva. Levanta ValueError com
+    uma mensagem clara em caso de qualquer problema."""
+    if not isinstance(payload, dict):
+        raise ValueError("Arquivo de backup inválido: formato inesperado")
+
+    dados = payload.get("dados")
+    if not isinstance(dados, dict):
+        raise ValueError("Arquivo de backup inválido: seção 'dados' ausente ou corrompida")
+
+    versao = payload.get("versao_backup", 1)  # backups antigos não tinham este campo
+    if not isinstance(versao, int) or versao > BACKUP_VERSAO:
+        raise ValueError(
+            f"Backup em uma versão não suportada (versao_backup={versao!r}); "
+            f"este servidor sabe restaurar até a versão {BACKUP_VERSAO}"
+        )
+
+    for tabela in TABELAS:
+        registros = dados.get(tabela)
+        if registros is None:
+            # Compatibilidade com backups antigos: uma tabela adicionada
+            # depois (ex.: FichaCatalografica, RedefinicaoSenha) pode não
+            # existir em um backup feito antes de ela existir — a RPC de
+            # restauração trata isso preservando os dados atuais dessa
+            # tabela. Só é erro se a tabela é obrigatória E o backup diz
+            # ser da versão atual (então deveria tê-la).
+            if versao >= BACKUP_VERSAO and tabela not in ("RedefinicaoSenha",):
+                raise ValueError(f"Backup incompleto: tabela obrigatória '{tabela}' ausente")
+            continue
+        if not isinstance(registros, list):
+            # Cobre também o formato antigo com falha (dados[tabela] = {"erro": ...}),
+            # que nunca deve ser aceito como backup válido.
+            raise ValueError(f"Backup corrompido ou incompleto: tabela '{tabela}' não é uma lista de registros")
+        for registro in registros[:1]:
+            if not isinstance(registro, dict):
+                raise ValueError(f"Backup corrompido: registros de '{tabela}' com estrutura inválida")
+
+
+def _rotacionar_backups() -> None:
+    """Mantém somente os MAX_BACKUPS mais recentes do bucket de backups."""
+    arquivos = supabase.storage.from_(BACKUP_BUCKET).list()
+    backups = []
+
+    for arq in (arquivos or []):
+        nome = arq.get("name", "")
+        if not nome or nome.startswith("."):
+            continue
+        if not (nome.lower().endswith(".json") or nome.lower().endswith(".json.gz")):
+            continue
+
+        # O Storage normalmente fornece created_at; o nome também contém a
+        # data/hora do backup e serve como fallback determinístico.
+        criado_em = arq.get("created_at") or arq.get("updated_at") or ""
+        backups.append((criado_em, nome))
+
+    backups.sort(key=lambda item: (item[0], item[1]), reverse=True)
+
+    for _, nome in backups[MAX_BACKUPS:]:
+        try:
+            supabase.storage.from_(BACKUP_BUCKET).remove([nome])
+        except Exception as e:
+            # A rotação não deve invalidar o backup recém-criado.
+            print(f"Erro ao remover backup antigo {nome}: {e}")
 
 
 def _extrair_signed_url(resp) -> str | None:
@@ -86,7 +211,11 @@ def cron_backup_diario(_=Depends(verificar_cron)):
     try:
         payload = _gerar_dados_backup()
         nome_arquivo = _salvar_no_storage(payload)
+        _rotacionar_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
+    except BackupIncompletoError as e:
+        print("Backup diário abortado (dados incompletos):", e)
+        raise HTTPException(status_code=500, detail=f"Backup não gerado: {e}")
     except Exception as e:
         print("Erro no backup diário:", e)
         raise HTTPException(status_code=500, detail=f"Erro ao salvar backup: {e}")
@@ -100,7 +229,11 @@ def backup_salvar(admin=Depends(get_admin)):
     try:
         payload = _gerar_dados_backup()
         nome_arquivo = _salvar_no_storage(payload)
+        _rotacionar_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
+    except BackupIncompletoError as e:
+        print("Backup manual abortado (dados incompletos):", e)
+        raise HTTPException(status_code=500, detail=f"Backup não gerado: {e}")
     except Exception as e:
         print("Erro ao salvar backup:", e)
         raise HTTPException(status_code=500, detail=f"Erro ao salvar backup: {e}")
@@ -125,10 +258,13 @@ def backup_listar(admin=Depends(get_admin)):
             # Tenta ler o JSON para contar registros por tabela
             total_registros = None
             contagem_tabelas = None
+            versao_backup = None
             try:
                 conteudo = supabase.storage.from_(BACKUP_BUCKET).download(nome)
-                dados = json.loads(conteudo)
-                tabelas_dados = dados.get("dados", {})
+                conteudo = _conteudo_backup_descompactado(conteudo, nome)
+                dados_payload = json.loads(conteudo)
+                versao_backup = dados_payload.get("versao_backup")
+                tabelas_dados = dados_payload.get("dados", {})
                 contagem_tabelas = {
                     t: len(v) if isinstance(v, list) else 0
                     for t, v in tabelas_dados.items()
@@ -142,6 +278,7 @@ def backup_listar(admin=Depends(get_admin)):
                 "tamanho": arq.get("metadata", {}).get("size"),
                 "criado_em": arq.get("created_at"),
                 "atualizado_em": arq.get("updated_at"),
+                "versao_backup": versao_backup,
                 "total_registros": total_registros,
                 "contagem_tabelas": contagem_tabelas,
             })
@@ -188,7 +325,10 @@ def backup_excluir(nome_arquivo: str, admin=Depends(get_admin)):
 
 @router.get("/backup/completo")
 def backup_completo(admin=Depends(get_admin)):
-    dados = _gerar_dados_backup()
+    try:
+        dados = _gerar_dados_backup()
+    except BackupIncompletoError as e:
+        raise HTTPException(status_code=500, detail=f"Backup não gerado: {e}")
     return JSONResponse(
         content=dados,
         headers={
@@ -206,49 +346,18 @@ class RestaurarRequest(BaseModel):
     senha: str
 
 
-# Tabelas e suas PKs para upsert (na ordem correta de dependência).
-# LivroAutor/LivroCategoria/LivroGenero têm chave composta (sem coluna de
-# identidade própria) — on_conflict precisa listar as duas colunas da PK.
-TABELAS_PK = {
-    "Usuario":              "idUsuario",
-    "Administrador":        "idAdmin",
-    "Livro":                "idLivro",
-    "Exemplar":             "idExemplar",
-    "Autor":                "idAutor",
-    "Editora":              "idEditora",
-    "Categoria":            "idCategoria",
-    "Genero":               "idGenero",
-    "LivroAutor":           "idLivro,idAutor",
-    "LivroCategoria":       "idCategoria,idLivro",
-    "LivroGenero":          "idGenero,idLivro",
-    "Movimentacao":         None,  # GENERATED ALWAYS AS IDENTITY → via RPC
-    "MovimentacaoExemplar": None,  # depende de Movimentacao → via RPC
-    "Configuracoes":        "chave",
-}
-
-# Tabelas com coluna de identidade própria (GENERATED ALWAYS AS IDENTITY)
-# cuja sequência precisa ser reajustada depois do upsert com ID explícito.
-# Movimentacao/MovimentacaoExemplar já fazem isso dentro das próprias RPCs;
-# Configuracoes e as tabelas de junção (chave composta) não têm sequência.
-TABELAS_RESYNC = {
-    "Usuario":       "idUsuario",
-    "Administrador": "idAdmin",
-    "Livro":         "idLivro",
-    "Exemplar":      "idExemplar",
-    "Autor":         "idAutor",
-    "Editora":       "idEditora",
-    "Categoria":     "idCategoria",
-    "Genero":        "idGenero",
-}
-
-# Ordem de deleção invertida (filho antes do pai) para respeitar FK
-ORDEM_DELETE = ["MovimentacaoExemplar", "Movimentacao"]
-
-
 @router.post("/backup/restaurar")
 def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
-    """Restaura todos os dados do sistema a partir de um arquivo de backup.
-    Exige confirmação com a senha do administrador autenticado."""
+    """Restaura o banco para o estado exato de um backup: registros criados
+    depois do backup são removidos. Fluxo:
+      1) valida a senha do admin;
+      2) baixa e valida estruturalmente o backup escolhido;
+      3) cria um backup de segurança do estado ATUAL (aborta se isso falhar —
+         nunca restaura sem uma via de recuperação);
+      4) chama a função SQL restaurar_backup_completo em uma única RPC, que
+         apaga e reinsere tudo dentro de uma transação real do Postgres —
+         se qualquer parte falhar, o banco inteiro volta ao estado anterior
+         automaticamente (ROLLBACK implícito da função)."""
 
     # 1. Verificar senha do admin
     email = admin.get("sub")
@@ -264,57 +373,55 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
     if not verify_password(body.senha, adm_db.data[0]["admSenha"]):
         raise HTTPException(status_code=401, detail="Senha incorreta")
 
-    # 2. Baixar o arquivo do Storage
+    # 2. Baixar e validar o arquivo do Storage
     try:
         conteudo = supabase.storage.from_(BACKUP_BUCKET).download(body.nome_arquivo)
+        conteudo = _conteudo_backup_descompactado(conteudo, body.nome_arquivo)
         payload = json.loads(conteudo)
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {e}")
 
-    dados = payload.get("dados", {})
-    erros = []
-    restauradas = {}
+    try:
+        _validar_backup(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=f"Backup inválido, restauração não iniciada: {e}")
 
-    # 3. Limpar tabelas de movimentação na ordem inversa (respeita FK)
-    for tabela in ORDEM_DELETE:
-        pk_col = "idMovimentacao"
-        try:
-            supabase.table(tabela).delete().neq(pk_col, -1).execute()
-        except Exception as e:
-            erros.append({"tabela": tabela, "erro": f"Erro ao limpar antes de inserir: {str(e)}"})
+    # 3. Backup de segurança do estado atual — obrigatório antes de qualquer
+    #    operação destrutiva. Se falhar, a restauração é abortada.
+    try:
+        payload_seguranca = _gerar_dados_backup()
+        nome_seguranca = _salvar_no_storage(payload_seguranca, prefixo="seguranca_pre_restauracao")
+        _rotacionar_backups()
+    except Exception as e:
+        print("Restauração abortada: falha ao criar backup de segurança:", e)
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Restauração abortada: não foi possível criar um backup de segurança "
+                f"do estado atual antes de prosseguir ({e}). Nenhum dado foi alterado."
+            ),
+        )
 
-    # 4. Restaurar tabela a tabela
-    for tabela, pk in TABELAS_PK.items():
-        registros = dados.get(tabela)
-        if not isinstance(registros, list) or not registros:
-            restauradas[tabela] = 0
-            continue
-        try:
-            if tabela == "Movimentacao":
-                # GENERATED ALWAYS AS IDENTITY: usa RPC com OVERRIDING SYSTEM VALUE
-                supabase.rpc("restaurar_movimentacao", {"registros": registros}).execute()
-            elif tabela == "MovimentacaoExemplar":
-                # Depende de Movimentacao já inserida; usa RPC para consistência
-                supabase.rpc("restaurar_movimentacao_exemplar", {"registros": registros}).execute()
-            else:
-                supabase.table(tabela).upsert(registros, on_conflict=pk).execute()
-                if tabela in TABELAS_RESYNC:
-                    try:
-                        supabase.rpc(
-                            "resync_identity_sequence",
-                            {"nome_tabela": tabela, "nome_coluna": TABELAS_RESYNC[tabela]},
-                        ).execute()
-                    except Exception as e:
-                        erros.append({"tabela": tabela, "erro": f"upsert ok, falha ao reajustar sequência: {str(e)}"})
-            restauradas[tabela] = len(registros)
-        except Exception as e:
-            erros.append({"tabela": tabela, "erro": str(e)})
-            restauradas[tabela] = 0
+    # 4. Restauração exata, atômica, via RPC única
+    try:
+        resp = supabase.rpc(
+            "restaurar_backup_completo", {"dados": payload.get("dados", {})}
+        ).execute()
+        restauradas = resp.data or {}
+    except Exception as e:
+        print("Erro na restauração (revertida automaticamente pelo Postgres):", e)
+        return JSONResponse(status_code=500, content={
+            "ok": False,
+            "arquivo": body.nome_arquivo,
+            "erro": str(e),
+            "rollback": True,
+            "backup_seguranca": nome_seguranca,
+        })
 
     return {
-        "ok": len(erros) == 0,
+        "ok": True,
         "arquivo": body.nome_arquivo,
         "restauradas": restauradas,
-        "erros": erros,
         "gerado_em": payload.get("gerado_em"),
+        "backup_seguranca": nome_seguranca,
     }
