@@ -4,6 +4,8 @@ import "./SolicitacoesEmprestimo.css";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
+import Pagination from "../../../components/Pagination/Pagination";
+import usePagination from "../../../hooks/usePagination";
 import { 
   getSolicitacoesEmprestimo,
   aprovarSolicitacaoEmprestimo,
@@ -247,6 +249,9 @@ export default function SolicitacoesEmprestimo() {
     }
     return list;
   }, [solicitacoes, busca, filtroStatus]);
+
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(solicitacoesFiltradas);
+
   async function handleAprovarSolicitacao(item) {
     const id = item.idEmprestimo || item.idMovimentacao;
     if (!id) {
@@ -429,7 +434,7 @@ export default function SolicitacoesEmprestimo() {
                 </td>
               </tr>
             ) : (
-              solicitacoesFiltradas.map((item) => {
+              paginaItens.map((item) => {
                 let status = String(item.status || item.movStatus || "").toLowerCase();
                 const statusConf = item.statusConfirmacao || "PENDENTE";
                 const usuario = item.usuario || item.nome || item.usuNome || "Usuário não informado";
@@ -444,7 +449,12 @@ export default function SolicitacoesEmprestimo() {
                     <td className="emp-id-cell">{id || "-"}</td>
                     <td className="emp-main-cell">
                       <strong>{usuario}</strong>
-                      <small>{item.usuarioTipo || item.tipo || "-"}</small>
+                      <small>
+                        {item.usuarioTipo || item.tipo || "-"}
+                        {item.professor && item.finalidade
+                          ? ` · ${item.finalidade === "TURMA" ? `Turma ${[item.serie, item.turma].filter(Boolean).join(" - ")}` : "Pessoal"}`
+                          : ""}
+                      </small>
                     </td>
                     <td className="emp-main-cell">
                       <strong>{titulo}</strong>
@@ -537,6 +547,13 @@ export default function SolicitacoesEmprestimo() {
             )}
           </tbody>
         </table>
+
+        <Pagination
+          paginaAtual={paginaAtual}
+          totalPaginas={totalPaginas}
+          onChange={irParaPagina}
+          totalItens={solicitacoesFiltradas.length}
+        />
       </section>
     </div>
   );

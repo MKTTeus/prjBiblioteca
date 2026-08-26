@@ -1,5 +1,6 @@
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
@@ -112,6 +113,7 @@ def listar_solicitacoes(admin=Depends(get_admin)):
 
         movimentacao_ids = [m["idMovimentacao"] for m in movimentacoes if m.get("idMovimentacao")]
         usuario_ids = list({m.get("idUsuario") for m in movimentacoes if m.get("idUsuario")})
+        professor_ids = list({m.get("idAdminProfessor") for m in movimentacoes if m.get("idAdminProfessor")})
 
         # Independentes entre si — rodam em paralelo.
         consultas = []
@@ -129,6 +131,13 @@ def listar_solicitacoes(admin=Depends(get_admin)):
             consultas.append(lambda: None)
 
         resp_mov_ex, resp_usuarios = executar_em_paralelo(*consultas)
+        resp_professores = (
+            supabase.table("Administrador")
+            .select("idAdmin, admNome, admEmail")
+            .in_("idAdmin", professor_ids)
+            .execute()
+            if professor_ids else None
+        )
 
         mov_ex_map = {}
         exemplar_ids = []
@@ -161,14 +170,24 @@ def listar_solicitacoes(admin=Depends(get_admin)):
                 livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
 
         usuario_map = {u["idUsuario"]: u for u in (resp_usuarios.data or [])} if resp_usuarios else {}
+        professor_map = {p["idAdmin"]: p for p in (resp_professores.data or [])} if resp_professores else {}
 
         for mov in movimentacoes:
             me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
             exemplar = me_list[0] if me_list else None
 
             u = usuario_map.get(mov.get("idUsuario"), {})
-            mov["usuario"] = u.get("usuNome", "Usuário não informado")
-            mov["usuarioTipo"] = u.get("usuTipo", "-")
+            professor = professor_map.get(mov.get("idAdminProfessor"), {})
+            if professor:
+                mov["usuario"] = professor.get("admNome") or professor.get("admEmail") or "Professor não informado"
+                mov["usuarioTipo"] = "Professor"
+                mov["professor"] = True
+                mov["finalidade"] = mov.get("movFinalidade")
+                mov["turma"] = mov.get("movTurma")
+                mov["serie"] = mov.get("movSerie")
+            else:
+                mov["usuario"] = u.get("usuNome", "Usuário não informado")
+                mov["usuarioTipo"] = u.get("usuTipo", "-")
 
             if exemplar:
                 ex = exemplar_map.get(exemplar.get("idExemplar"))

@@ -72,10 +72,7 @@ export default function CadastroLivros() {
     try {
       setLoading(true);
       const data = await getBooks({ incluir_inativos: true, ...params });
-      console.log("[ACERVO] resposta API",data);
-      console.log("[ACERVO] qtd recebida",(data||[]).length);
-      console.log("[ACERVO] livro134",(data||[]).find(b=>b.idLivro===134));
-      setBooks(data||[]);
+      setBooks(data || []);
     } catch (err) {
       console.error(err);
       addToast("Falha ao carregar livros", "error");
@@ -160,9 +157,7 @@ export default function CadastroLivros() {
     }
   }
 
-  
-useEffect(()=>{console.log('[ACERVO] após filtros',filteredBooks.length,filteredBooks.find(b=>b.idLivro===134));},[filteredBooks]);
-return (
+  return (
     <div className="cadastro page-shell">
       <NoticeBanner
         id="categoria-removida-2026-08"

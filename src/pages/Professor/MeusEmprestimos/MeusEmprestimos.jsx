@@ -10,12 +10,20 @@ import "./MeusEmprestimos.css";
 const STATUS_LABEL = {
   Ativo: "Ativo",
   Atrasado: "Atrasado",
+  Pendente: "Aguardando aprovação",
+  "Aguardando retirada": "Aguardando retirada",
+  Negado: "Negado",
+  Expirada: "Expirada",
   Devolvido: "Devolvido",
 };
 
 const STATUS_CLASSE = {
   Ativo: "ativo",
   Atrasado: "atrasado",
+  Pendente: "pendente",
+  "Aguardando retirada": "pendente",
+  Negado: "negado",
+  Expirada: "expirada",
   Devolvido: "devolvido",
 };
 
@@ -54,7 +62,8 @@ export default function MeusEmprestimos() {
 
   const ativos = emprestimos.filter((e) => e.status === "Ativo");
   const atrasados = emprestimos.filter((e) => e.status === "Atrasado");
-  const devolvidos = emprestimos.filter((e) => e.status === "Devolvido");
+  const aguardando = emprestimos.filter((e) => e.status === "Pendente" || e.status === "Aguardando retirada");
+  const devolvidos = emprestimos.filter((e) => e.status === "Devolvido" || e.status === "Negado" || e.status === "Expirada");
 
   const abrirDetalhes = (emprestimo) => {
     setSelecionado(emprestimo);
@@ -173,12 +182,23 @@ export default function MeusEmprestimos() {
         <div className="user-section-card user-loans-column">
           <div className="user-section-card__header user-section-card__header--pendente">
             <FiClock className="user-section-card__header-icon" />
-            <h3>Devolvidos</h3>
+            <h3>Aguardando aprovação</h3>
+            {!isLoading && aguardando.length > 0 && (
+              <span className="user-section-count user-section-count--pendente">{aguardando.length}</span>
+            )}
+          </div>
+          {renderLista(aguardando, "Nenhuma solicitação aguardando aprovação ou retirada.")}
+        </div>
+
+        <div className="user-section-card user-loans-column">
+          <div className="user-section-card__header user-section-card__header--pendente">
+            <FiClock className="user-section-card__header-icon" />
+            <h3>Histórico</h3>
             {!isLoading && devolvidos.length > 0 && (
               <span className="user-section-count user-section-count--pendente">{devolvidos.length}</span>
             )}
           </div>
-          {renderLista(devolvidos, "Nenhum empréstimo devolvido ainda.")}
+          {renderLista(devolvidos, "Nenhum empréstimo finalizado ainda.")}
         </div>
       </section>
 
@@ -242,7 +262,7 @@ export default function MeusEmprestimos() {
               ))}
             </div>
 
-            {selecionado.status !== "Devolvido" && (
+            {(selecionado.status === "Ativo" || selecionado.status === "Atrasado") && (
               <button
                 type="button"
                 className="professor-btn professor-btn--primary"
