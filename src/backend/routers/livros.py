@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from routers.capas import excluir_capa_do_storage
 from core import get_admin, gerar_tombos, executar_em_paralelo
 from schemas import Livro, LivroCreate, ExemplarUpdate, LivroStatusUpdate
 
@@ -325,20 +324,18 @@ def listar_livros(
         if isinstance(allowed_ids, set) and len(allowed_ids) == 0:
             return []
 
-        def criar_consulta_livros():
-            q = supabase.table("Livro").select("*")
-            if not incluir_inativos:
-                q = q.eq("livAtivo", True)
-            if isinstance(allowed_ids, set):
-                q = q.in_("idLivro", list(allowed_ids))
-            return q
+        query = supabase.table("Livro").select("*")
+        if not incluir_inativos:
+            query = query.eq("livAtivo", True)
+        if isinstance(allowed_ids, set):
+            query = query.in_("idLivro", list(allowed_ids))
 
         start = (page - 1) * per_page
         livros = []
         while len(livros) < per_page:
             inicio_lote = start + len(livros)
             tamanho_lote = min(TAMANHO_LOTE_SUPABASE, per_page - len(livros))
-            lote = criar_consulta_livros().range(inicio_lote, inicio_lote + tamanho_lote - 1).execute().data or []
+            lote = query.range(inicio_lote, inicio_lote + tamanho_lote - 1).execute().data or []
             livros.extend(lote)
             if len(lote) < tamanho_lote:
                 break
@@ -476,11 +473,6 @@ def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
 @router.put("/livros/{idLivro}")
 def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
     try:
-        livro_atual_resp = supabase.table("Livro").select("livCapaURL").eq("idLivro", idLivro).limit(1).execute()
-        if not livro_atual_resp.data:
-            raise HTTPException(status_code=404, detail="Livro não encontrado")
-        capa_url_anterior = livro_atual_resp.data[0].get("livCapaURL")
-
         payload = livro.model_dump()
         # Mesmo mapeamento de criar_livro: o ISBN do formulário (exemplarISBN)
         # é gravado na coluna livISBN do Livro. Aqui, diferente da criação,
@@ -509,10 +501,6 @@ def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
         resp = supabase.table("Livro").update(payload).eq("idLivro", idLivro).execute()
         if not resp.data:
             raise HTTPException(status_code=404, detail="Livro não encontrado")
-
-        capa_url_nova = resp.data[0].get("livCapaURL")
-        if capa_url_anterior and capa_url_anterior != capa_url_nova:
-            excluir_capa_do_storage(capa_url_anterior)
 
         # Autor(es) — mesmo tratamento da criação: aceita vários nomes
         # separados por vírgula e substitui todos os vínculos do livro.
@@ -587,13 +575,9 @@ def deletar_livro(idLivro: int, admin=Depends(get_admin)):
     o histórico nem violar as chaves estrangeiras (Movimentacao/MovimentacaoExemplar
     continuam existindo e apontando para o Exemplar/Livro).
     """
-    livro = supabase.table("Livro").select("idLivro, livCapaURL").eq("idLivro", idLivro).execute()
+    livro = supabase.table("Livro").select("idLivro").eq("idLivro", idLivro).execute()
     if not livro.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado")
-
-    capa_url = livro.data[0].get("livCapaURL")
-    if capa_url:
-        excluir_capa_do_storage(capa_url)
 
     exemplares = supabase.table("Exemplar").select("idExemplar").eq("idLivro", idLivro).execute().data or []
     exemplar_ids = [e["idExemplar"] for e in exemplares]

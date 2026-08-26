@@ -3,7 +3,7 @@ import hashlib
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
@@ -17,6 +17,22 @@ router = APIRouter()
 CRON_SECRET = os.getenv("CRON_SECRET")
 BACKUP_BUCKET = "backups"
 MAX_BACKUPS = 7
+PREFIXO_BACKUP_SEGURANCA = "seguranca_pre_restauracao"
+
+
+def _ler_horas_retencao_seguranca() -> int:
+    """Retorna a janela de recuperação em horas.
+
+    O valor pode ser configurado com BACKUP_SEGURANCA_RETENCAO_HORAS; quando
+    ausente ou inválido, mantém backups de segurança por 48 horas.
+    """
+    try:
+        return max(1, int(os.getenv("BACKUP_SEGURANCA_RETENCAO_HORAS", "48")))
+    except ValueError:
+        return 48
+
+
+BACKUP_SEGURANCA_RETENCAO_HORAS = _ler_horas_retencao_seguranca()
 
 # Versão do formato do payload de backup. Incrementar sempre que a lista de
 # tabelas ou a estrutura do payload mudar de forma incompatível com
@@ -163,7 +179,11 @@ def _validar_backup(payload: dict) -> None:
 
 
 def _rotacionar_backups() -> None:
-    """Mantém somente os MAX_BACKUPS mais recentes do bucket de backups."""
+    """Mantém somente os MAX_BACKUPS backups normais mais recentes.
+
+    Backups de segurança criados antes de restaurações seguem uma política
+    separada, por tempo, para garantir uma janela de recuperação previsível.
+    """
     arquivos = supabase.storage.from_(BACKUP_BUCKET).list()
     backups = []
 
@@ -171,7 +191,10 @@ def _rotacionar_backups() -> None:
         nome = arq.get("name", "")
         if not nome or nome.startswith("."):
             continue
-        if not (nome.lower().endswith(".json") or nome.lower().endswith(".json.gz")):
+        if (
+            nome.startswith(PREFIXO_BACKUP_SEGURANCA)
+            or not (nome.lower().endswith(".json") or nome.lower().endswith(".json.gz"))
+        ):
             continue
 
         # O Storage normalmente fornece created_at; o nome também contém a
@@ -187,6 +210,56 @@ def _rotacionar_backups() -> None:
         except Exception as e:
             # A rotação não deve invalidar o backup recém-criado.
             print(f"Erro ao remover backup antigo {nome}: {e}")
+
+
+def _data_backup_seguranca(arquivo: dict) -> datetime | None:
+    """Lê a data do Storage, usando o nome do arquivo somente como fallback."""
+    data = arquivo.get("created_at") or arquivo.get("updated_at")
+    if data:
+        try:
+            return datetime.fromisoformat(data.replace("Z", "+00:00")).astimezone(timezone.utc)
+        except (TypeError, ValueError):
+            pass
+
+    nome = arquivo.get("name", "")
+    try:
+        trecho = nome.removeprefix(f"{PREFIXO_BACKUP_SEGURANCA}_").split(".", 1)[0]
+        return datetime.strptime(trecho, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def _expirar_backups_seguranca() -> None:
+    """Remove backups de recuperação fora da janela configurada.
+
+    Esta limpeza roda depois de qualquer criação de backup. Arquivos sem uma
+    data verificável são preservados por segurança e registrados para análise.
+    """
+    limite = datetime.now(timezone.utc) - timedelta(hours=BACKUP_SEGURANCA_RETENCAO_HORAS)
+    try:
+        arquivos = supabase.storage.from_(BACKUP_BUCKET).list()
+    except Exception as e:
+        print("Erro ao listar backups de segurança para expiração:", e)
+        return
+
+    for arquivo in arquivos or []:
+        nome = arquivo.get("name", "")
+        if not nome.startswith(f"{PREFIXO_BACKUP_SEGURANCA}_"):
+            continue
+        criado_em = _data_backup_seguranca(arquivo)
+        if criado_em is None:
+            print(f"Backup de segurança sem data verificável, preservado: {nome}")
+            continue
+        if criado_em < limite:
+            try:
+                supabase.storage.from_(BACKUP_BUCKET).remove([nome])
+            except Exception as e:
+                print(f"Erro ao expirar backup de segurança {nome}: {e}")
+
+
+def _aplicar_retencao_backups() -> None:
+    _rotacionar_backups()
+    _expirar_backups_seguranca()
 
 
 def _extrair_signed_url(resp) -> str | None:
@@ -211,7 +284,7 @@ def cron_backup_diario(_=Depends(verificar_cron)):
     try:
         payload = _gerar_dados_backup()
         nome_arquivo = _salvar_no_storage(payload)
-        _rotacionar_backups()
+        _aplicar_retencao_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
     except BackupIncompletoError as e:
         print("Backup diário abortado (dados incompletos):", e)
@@ -229,7 +302,7 @@ def backup_salvar(admin=Depends(get_admin)):
     try:
         payload = _gerar_dados_backup()
         nome_arquivo = _salvar_no_storage(payload)
-        _rotacionar_backups()
+        _aplicar_retencao_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
     except BackupIncompletoError as e:
         print("Backup manual abortado (dados incompletos):", e)
@@ -275,6 +348,20 @@ def backup_listar(admin=Depends(get_admin)):
 
             resultado.append({
                 "nome": nome,
+                "tipo": (
+                    "recuperacao"
+                    if nome.startswith(f"{PREFIXO_BACKUP_SEGURANCA}_")
+                    else "normal"
+                ),
+                "expira_em": (
+                    (
+                        _data_backup_seguranca(arq)
+                        + timedelta(hours=BACKUP_SEGURANCA_RETENCAO_HORAS)
+                    ).isoformat()
+                    if nome.startswith(f"{PREFIXO_BACKUP_SEGURANCA}_")
+                    and _data_backup_seguranca(arq)
+                    else None
+                ),
                 "tamanho": arq.get("metadata", {}).get("size"),
                 "criado_em": arq.get("created_at"),
                 "atualizado_em": arq.get("updated_at"),
@@ -282,7 +369,10 @@ def backup_listar(admin=Depends(get_admin)):
                 "total_registros": total_registros,
                 "contagem_tabelas": contagem_tabelas,
             })
-        return {"backups": resultado}
+        return {
+            "backups": resultado,
+            "retencao_seguranca_horas": BACKUP_SEGURANCA_RETENCAO_HORAS,
+        }
     except Exception as e:
         print("Erro ao listar backups:", e)
         raise HTTPException(status_code=500, detail=f"Erro ao listar backups: {e}")
@@ -390,8 +480,8 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
     #    operação destrutiva. Se falhar, a restauração é abortada.
     try:
         payload_seguranca = _gerar_dados_backup()
-        nome_seguranca = _salvar_no_storage(payload_seguranca, prefixo="seguranca_pre_restauracao")
-        _rotacionar_backups()
+        nome_seguranca = _salvar_no_storage(payload_seguranca, prefixo=PREFIXO_BACKUP_SEGURANCA)
+        _aplicar_retencao_backups()
     except Exception as e:
         print("Restauração abortada: falha ao criar backup de segurança:", e)
         raise HTTPException(
