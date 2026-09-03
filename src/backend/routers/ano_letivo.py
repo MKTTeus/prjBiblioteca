@@ -1,9 +1,7 @@
-from datetime import datetime
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, verify_password
+from core import get_admin, utc_now, verify_password
 from schemas import EncerrarAnoLetivo
 
 router = APIRouter()
@@ -32,11 +30,11 @@ def get_ano_letivo_atual() -> int:
             return int(resp.data[0]["valor"])
     except Exception:
         pass
-    return datetime.utcnow().year
+    return utc_now().year
 
 
 def set_ano_letivo_atual(ano: int) -> None:
-    payload = {"valor": str(ano), "atualizado_em": datetime.utcnow().isoformat()}
+    payload = {"valor": str(ano), "atualizado_em": utc_now().isoformat()}
     upd = supabase.table("Configuracoes").update(payload).eq("chave", "ano_letivo_atual").execute()
     if not upd.data:
         insert_payload = payload.copy()
@@ -45,7 +43,7 @@ def set_ano_letivo_atual(ano: int) -> None:
             "descricao": "Ano letivo corrente do sistema",
             "categoria": "academico",
             "ativo": True,
-            "criado_em": datetime.utcnow().isoformat(),
+            "criado_em": utc_now().isoformat(),
         })
         supabase.table("Configuracoes").insert(insert_payload).execute()
 

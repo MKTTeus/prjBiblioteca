@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import BookCard from "../../../components/BookCard/BookCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import { useToast } from "../../../contexts/ToastContext";
-import { getBooks, solicitarEmprestimo, getExemplaresDisponiveis, getEmprestimos } from "../../../services/api";
+import { getBooks, solicitarLivro, getEmprestimos } from "../../../services/api";
 import "../UserArea.css";
 import "./Biblioteca.css";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -70,15 +70,7 @@ export default function Biblioteca() {
 
     setSolicitando((prev) => ({ ...prev, [idLivro]: true }));
     try {
-      const exemplares = await getExemplaresDisponiveis();
-      const exemplarDisponivel = exemplares.find((ex) => ex.idLivro === idLivro);
-
-      if (!exemplarDisponivel) {
-        addToast("Nenhum exemplar disponível para este livro no momento", "error");
-        return;
-      }
-
-      await solicitarEmprestimo({ idExemplar: exemplarDisponivel.id });
+      await solicitarLivro({ idLivro });
       setSolicitados((prev) => ({ ...prev, [idLivro]: "pendente" }));
       addToast("Solicitação enviada! Aguarde aprovação do administrador.", "success");
     } catch (err) {

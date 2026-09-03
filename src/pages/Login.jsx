@@ -121,12 +121,12 @@ export default function Login() {
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>RA ou E-mail</label>
+              <label>{userType === "aluno" ? "RA ou E-mail" : userType === "comunidade" ? "CPF ou E-mail" : "E-mail"}</label>
               <input
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="2024001 ou email@email.com"
+                placeholder={userType === "aluno" ? "2024001 ou email@email.com" : userType === "comunidade" ? "000.000.000-00 ou email@email.com" : "email@email.com"}
                 required
               />
             </div>

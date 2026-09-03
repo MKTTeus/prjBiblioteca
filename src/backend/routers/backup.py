@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from core import buscar_todos, get_admin, verify_password
+from core import buscar_todos, get_admin, utc_now, verify_password
 from database import supabase
 
 router = APIRouter()
@@ -107,7 +107,7 @@ def _gerar_dados_backup() -> dict:
     return {
         "versao_backup": BACKUP_VERSAO,
         "identificador": str(uuid.uuid4()),
-        "gerado_em": datetime.utcnow().isoformat(),
+        "gerado_em": utc_now().isoformat(),
         "tabelas": TABELAS,
         "contagem_registros": contagem_registros,
         "hash_dados": hash_dados,
@@ -118,7 +118,7 @@ def _gerar_dados_backup() -> dict:
 def _salvar_no_storage(payload: dict, prefixo: str = "backup") -> str:
     """Serializa o payload como JSON, comprime com gzip e faz upload no
     Supabase Storage. Retorna o nome do arquivo salvo."""
-    nome_arquivo = f"{prefixo}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json.gz"
+    nome_arquivo = f"{prefixo}_{utc_now().strftime('%Y%m%d_%H%M%S')}.json.gz"
     conteudo_json = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
     conteudo = gzip.compress(conteudo_json)
 
@@ -423,7 +423,7 @@ def backup_completo(admin=Depends(get_admin)):
         content=dados,
         headers={
             "Content-Disposition": (
-                f'attachment; filename="backup_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.json"'
+                f'attachment; filename="backup_{utc_now().strftime("%Y%m%d_%H%M%S")}.json"'
             )
         },
     )

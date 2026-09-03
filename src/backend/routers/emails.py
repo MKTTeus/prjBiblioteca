@@ -1,10 +1,11 @@
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 import httpx
 
 from database import supabase
+from core import datetime_utc, utc_now
 from routers.emprestimos import get_config_bool, get_config_int
 
 router = APIRouter()
@@ -14,8 +15,14 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "Biblioteca <onboarding@resend.dev>")
 
 
-def verificar_cron(authorization: str = Header(None)):
-    if not CRON_SECRET or authorization != f"Bearer {CRON_SECRET}":
+def verificar_cron(
+    authorization: str | None = Header(default=None),
+    x_vercel_cron_signature: str | None = Header(default=None),
+):
+    """Aceita o header padrão do Vercel ou Authorization Bearer."""
+    autorizado_bearer = authorization == f"Bearer {CRON_SECRET}"
+    autorizado_vercel = x_vercel_cron_signature == CRON_SECRET
+    if not CRON_SECRET or not (autorizado_bearer or autorizado_vercel):
         raise HTTPException(status_code=401, detail="Acesso não autorizado")
 
 
@@ -74,7 +81,7 @@ def _base_template(conteudo: str) -> str:
                 Esta é uma mensagem automática. Por favor, não responda este e-mail.
               </p>
               <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">
-                © {datetime.utcnow().year} Sistema de Biblioteca
+                © {utc_now().year} Sistema de Biblioteca
               </p>
             </td>
           </tr>
@@ -179,8 +186,8 @@ def lembretes_atraso_email(_=Depends(verificar_cron)):
         return {"enviados": 0, "motivo": "notificações desativadas nas configurações"}
 
     try:
-        hoje = datetime.utcnow().date()
-        limite_renotificacao = datetime.utcnow() - timedelta(hours=24)
+        hoje = utc_now().date()
+        limite_renotificacao = utc_now() - timedelta(hours=24)
 
         movimentacoes = supabase.table("Movimentacao").select("idMovimentacao, idUsuario").eq("movStatus", "Ativo").execute().data or []
         movimentacao_map = {m["idMovimentacao"]: m for m in movimentacoes}
@@ -196,7 +203,7 @@ def lembretes_atraso_email(_=Depends(verificar_cron)):
             if not me.get("dataPrevistaDevolucao"):
                 continue
             try:
-                data_prevista = datetime.fromisoformat(me["dataPrevistaDevolucao"]).date()
+                data_prevista = datetime_utc(me["dataPrevistaDevolucao"]).date()
             except Exception:
                 continue
             if data_prevista >= hoje:
@@ -205,7 +212,7 @@ def lembretes_atraso_email(_=Depends(verificar_cron)):
             notificado_em = me.get("emailAtrasoNotificadoEm")
             if notificado_em:
                 try:
-                    if datetime.fromisoformat(notificado_em.replace("Z", "+00:00")).replace(tzinfo=None) >= limite_renotificacao:
+                    if datetime_utc(notificado_em) >= limite_renotificacao:
                         continue
                 except Exception:
                     pass
@@ -228,7 +235,7 @@ def lembretes_atraso_email(_=Depends(verificar_cron)):
         livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
 
         enviados = 0
-        agora = datetime.utcnow().isoformat()
+        agora = utc_now().isoformat()
 
         for p in pendentes:
             usuario = usuario_map.get(p["idUsuario"], {})
@@ -259,7 +266,7 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
 
     try:
         dias_antecedencia = get_config_int("dias_antecedencia_lembrete", 2)
-        hoje = datetime.utcnow().date()
+        hoje = utc_now().date()
         data_alvo = hoje + timedelta(days=dias_antecedencia)
 
         movimentacoes = (
@@ -289,7 +296,7 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
             if not me.get("dataPrevistaDevolucao"):
                 continue
             try:
-                data_prevista = datetime.fromisoformat(me["dataPrevistaDevolucao"]).date()
+                data_prevista = datetime_utc(me["dataPrevistaDevolucao"]).date()
             except Exception:
                 continue
 
@@ -299,8 +306,8 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
             notificado_em = me.get("emailDevolucaoNotificadoEm")
             if notificado_em:
                 try:
-                    limite = datetime.utcnow() - timedelta(hours=24)
-                    if datetime.fromisoformat(notificado_em.replace("Z", "+00:00")).replace(tzinfo=None) >= limite:
+                    limite = utc_now() - timedelta(hours=24)
+                    if datetime_utc(notificado_em) >= limite:
                         continue
                 except Exception:
                     pass
@@ -337,7 +344,7 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
         livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
 
         enviados = 0
-        agora = datetime.utcnow().isoformat()
+        agora = utc_now().isoformat()
 
         for p in pendentes:
             usuario = usuario_map.get(p["idUsuario"], {})
@@ -362,7 +369,6 @@ def lembretes_devolucao_email(_=Depends(verificar_cron)):
         return {"enviados": enviados, "total_pendentes": len(pendentes)}
     except Exception as e:
         print("Erro lembretes devolucao email:", e)
-        raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
         raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
 
 def _email_redefinir_senha(nome: str, link: str, ttl_minutos: int) -> str:
@@ -562,7 +568,7 @@ def cron_verificar_expiracoes(_=Depends(verificar_cron)):
         return {"expirados": len(expirados), "emails_enviados": 0}
 
     # First, find confirmed ones about to expire (to send pre-expiration alerts)
-    agora = datetime.utcnow()
+    agora = utc_now()
     alerta_horas = get_config_int("alerta_expiracao_horas", 2)
 
     pre_alert_enviados = 0
@@ -581,7 +587,7 @@ def cron_verificar_expiracoes(_=Depends(verificar_cron)):
             if not data_conf_str:
                 continue
             try:
-                dt_conf = datetime.fromisoformat(data_conf_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                dt_conf = datetime_utc(data_conf_str)
                 data_limite = dt_conf + timedelta(hours=prazo)
                 horas_restantes = (data_limite - agora).total_seconds() / 3600
 
@@ -650,7 +656,7 @@ def lembretes_confirmacao_email(_=Depends(verificar_cron)):
         return {"enviados": 0, "motivo": "notificações desativadas"}
 
     try:
-        agora = datetime.utcnow()
+        agora = utc_now()
         alerta_horas = 2
 
         # Busca apenas movimentações confirmadas
@@ -675,9 +681,7 @@ def lembretes_confirmacao_email(_=Depends(verificar_cron)):
                 continue
 
             try:
-                dt_conf = datetime.fromisoformat(
-                    data_conf_str.replace("Z", "+00:00")
-                ).replace(tzinfo=None)
+                dt_conf = datetime_utc(data_conf_str)
             except Exception:
                 continue
 

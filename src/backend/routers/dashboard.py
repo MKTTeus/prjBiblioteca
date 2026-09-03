@@ -1,72 +1,69 @@
-from datetime import datetime
 from fastapi import APIRouter, Depends
 
 from database import supabase
-from core import get_optional_user, buscar_todos
+from core import get_optional_user, utc_now
 
 router = APIRouter()
 
 
+def _contar(query) -> int:
+    """Executa uma contagem no PostgREST sem transferir as linhas ao Python."""
+    resposta = query.execute()
+    count = getattr(resposta, "count", None)
+    if count is not None:
+        return int(count)
+    # Compatibilidade com fakes usados em testes e clientes antigos.
+    return len(getattr(resposta, "data", None) or [])
+
+
+def _contar_itens_ativos(data: str, *, atrasados: bool) -> int:
+    query = (
+        supabase.table("Movimentacao")
+        .select(
+            "idMovimentacao, MovimentacaoExemplar!inner(idExemplar)",
+            count="exact",
+            head=True,
+        )
+        .eq("movStatus", "Ativo")
+        .eq("MovimentacaoExemplar.itemStatus", "Ativo")
+        .is_("MovimentacaoExemplar.dataDevolucao", "null")
+    )
+    query = (
+        query.lt("MovimentacaoExemplar.dataPrevistaDevolucao", data)
+        if atrasados
+        else query.eq("MovimentacaoExemplar.dataPrevistaDevolucao", data)
+    )
+    resposta = query.execute()
+    count = getattr(resposta, "count", None)
+    if count is not None:
+        return int(count)
+    return len(getattr(resposta, "data", None) or [])
+
+
 @router.get("/dashboard-stats")
 def dashboard_stats(user=Depends(get_optional_user)):
+    """Retorna os indicadores do painel com contagens executadas no banco."""
     try:
-        hoje = datetime.utcnow().date()
-
-        # As consultas abaixo usam buscar_todos() (paginação via .range()) em vez de
-        # .execute() direto, porque o projeto Supabase tem um limite de linhas por
-        # requisição (Max Rows) que corta silenciosamente qualquer resultado maior
-        # que esse limite — foi isso que fazia "totalLivros" travar em 100 mesmo
-        # com mais livros cadastrados no banco.
-        livros = buscar_todos(lambda: supabase.table("Livro").select("idLivro").eq("livAtivo", True))
-        usuarios = buscar_todos(lambda: supabase.table("Usuario").select("idUsuario").eq("usuExcluido", False))
-        movimentacoes = buscar_todos(lambda: supabase.table("Movimentacao").select("*"))
-        movimentacao_exemplares = buscar_todos(lambda: supabase.table("MovimentacaoExemplar").select("*"))
-
-        exemplares_reservados = buscar_todos(
-            lambda: supabase.table("Exemplar").select("idExemplar").eq("exeLivStatus", "Reservado")
-        )
-        reservados = len(exemplares_reservados)
-
-        ativos = 0
-        pendentes = 0
-        atrasados = 0
-        vencem_hoje = 0
-
-        # map movimentacao -> exemplares
-        mov_ex_map = {}
-        for me in movimentacao_exemplares:
-            mov_ex_map.setdefault(me.get("idMovimentacao"), []).append(me)
-
-        for mov in movimentacoes:
-            status = (mov.get("movStatus") or "").lower()
-            me_list = mov_ex_map.get(mov.get("idMovimentacao"), [])
-
-            if "ativo" in status:
-                ativos += 1
-                mov_atrasado = False
-                mov_vence_hoje = False
-                for me in me_list:
-                    if me.get("dataDevolucao"):
-                        continue
-                    data_prev = me.get("dataPrevistaDevolucao")
-                    if not data_prev:
-                        continue
-                    try:
-                        data_dev = datetime.fromisoformat(data_prev).date()
-                    except Exception:
-                        continue
-                    if data_dev < hoje:
-                        mov_atrasado = True
-                    elif data_dev == hoje:
-                        mov_vence_hoje = True
-                if mov_atrasado:
-                    atrasados += 1
-                elif mov_vence_hoje:
-                    vencem_hoje += 1
-
-            if status == "pendente":
-                pendentes += 1
-
+        hoje = utc_now().date().isoformat()
+        return {
+            "totalLivros": _contar(
+                supabase.table("Livro").select("*", count="exact", head=True).eq("livAtivo", True)
+            ),
+            "totalUsuarios": _contar(
+                supabase.table("Usuario").select("*", count="exact", head=True).eq("usuExcluido", False)
+            ),
+            "emprestimosAtivos": _contar(
+                supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Ativo")
+            ),
+            "devolucoesPendentes": _contar(
+                supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Pendente")
+            ),
+            "reservados": _contar(
+                supabase.table("Exemplar").select("*", count="exact", head=True).eq("exeLivStatus", "Reservado")
+            ),
+            "atrasados": _contar_itens_ativos(hoje, atrasados=True),
+            "devolucoesHoje": _contar_itens_ativos(hoje, atrasados=False),
+        }
     except Exception as e:
         print("Erro dashboard:", e)
         return {
@@ -76,15 +73,5 @@ def dashboard_stats(user=Depends(get_optional_user)):
             "devolucoesPendentes": 0,
             "reservados": 0,
             "atrasados": 0,
-            "devolucoesHoje": 0
+            "devolucoesHoje": 0,
         }
-
-    return {
-        "totalLivros": len(livros),
-        "totalUsuarios": len(usuarios),
-        "emprestimosAtivos": ativos,
-        "devolucoesPendentes": pendentes,
-        "reservados": reservados,
-        "atrasados": atrasados,
-        "devolucoesHoje": vencem_hoje
-    }

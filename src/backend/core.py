@@ -1,6 +1,6 @@
 import os
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException
@@ -25,6 +25,19 @@ ACCESS_TOKEN_EXPIRE_HOURS = 6
 
 
 TAMANHO_LOTE_SUPABASE = 100
+
+
+def utc_now() -> datetime:
+    """Retorna o instante atual como datetime aware em UTC."""
+    return datetime.now(timezone.utc)
+
+
+def datetime_utc(value: str | datetime) -> datetime:
+    """Normaliza timestamps do banco (com ou sem timezone) para UTC aware."""
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00")) if isinstance(value, str) else value
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
 
 
 def buscar_todos(criar_consulta) -> list:
@@ -131,7 +144,7 @@ def validar_cpf(cpf: Optional[str]) -> bool:
 
 def create_token(data: dict) -> str:
     minutes = get_session_timeout_minutes()
-    expire = datetime.utcnow() + timedelta(minutes=minutes)
+    expire = utc_now() + timedelta(minutes=minutes)
     data.update({"exp": expire})
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 

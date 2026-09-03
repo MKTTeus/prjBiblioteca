@@ -508,6 +508,12 @@ export const solicitarEmprestimo = (payload) =>
     body: JSON.stringify(payload)
   });
 
+export const solicitarLivro = (payload) =>
+  apiFetch("/emprestimos/solicitar-livro", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
 export const aprovarSolicitacaoEmprestimo = (id) =>
   apiFetch(`/emprestimos/${id}/aprovar`, {
     method: "PUT"

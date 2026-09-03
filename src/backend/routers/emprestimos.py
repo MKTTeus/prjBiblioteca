@@ -1,11 +1,11 @@
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, get_admin_id, get_optional_user, executar_em_paralelo
-from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao, RenovarEmprestimo
+from core import datetime_utc, get_admin, get_admin_id, get_optional_user, executar_em_paralelo, parse_status, utc_now
+from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao, RenovarEmprestimo, SolicitacaoLivro
 
 router = APIRouter()
 
@@ -72,7 +72,7 @@ def atualizar_configuracao(config: Configuracao, admin=Depends(get_admin)):
         if not config.chave:
             raise HTTPException(status_code=400, detail="Chave obrigatória")
 
-        payload = {"valor": config.valor, "atualizado_em": datetime.utcnow().isoformat()}
+        payload = {"valor": config.valor, "atualizado_em": utc_now().isoformat()}
         if config.descricao is not None:
             payload["descricao"] = config.descricao
         if config.categoria is not None:
@@ -85,7 +85,7 @@ def atualizar_configuracao(config: Configuracao, admin=Depends(get_admin)):
             insert_payload = payload.copy()
             insert_payload.update({
                 "chave": config.chave,
-                "criado_em": datetime.utcnow().isoformat(),
+                "criado_em": utc_now().isoformat(),
             })
             ins = supabase.table("Configuracoes").insert(insert_payload).execute()
             if not ins.data:
@@ -208,7 +208,7 @@ def listar_solicitacoes(admin=Depends(get_admin)):
             prazo = mov.get("prazo_horas")
             if data_conf and prazo:
                 try:
-                    dt_conf = datetime.fromisoformat(data_conf.replace("Z", "+00:00")).replace(tzinfo=None)
+                    dt_conf = datetime_utc(data_conf.replace("Z", "+00:00"))
                     mov["dataLimite"] = (dt_conf + timedelta(hours=prazo)).isoformat()
                 except Exception:
                     mov["dataLimite"] = None
@@ -224,7 +224,7 @@ def listar_solicitacoes(admin=Depends(get_admin)):
 @router.get("/emprestimos")
 def listar_emprestimos(user=Depends(get_optional_user)):
     try:
-        hoje = datetime.utcnow().date()
+        hoje = utc_now().date()
         query = supabase.table("Movimentacao").select("*")
 
         if user and user.get("tipo") in ["Aluno", "Comunidade"]:
@@ -315,7 +315,7 @@ def listar_emprestimos(user=Depends(get_optional_user)):
             is_ativo = item_status_lower == "ativo" or (not exemplar and mov_status_lower == "ativo")
             if is_ativo and data_prev:
                 try:
-                    data_prevista = datetime.fromisoformat(data_prev).date()
+                    data_prevista = datetime_utc(data_prev).date()
                     if data_prevista < hoje:
                         mov["itemStatus"] = "Atrasado"
                         mov["status"]     = "atrasado"
@@ -354,7 +354,7 @@ def listar_emprestimos(user=Depends(get_optional_user)):
 @router.get("/emprestimos/notificacoes-admin")
 def notificacoes_admin(admin=Depends(get_admin)):
     try:
-        agora = datetime.utcnow()
+        agora = utc_now()
         hoje = agora.date()
         limite_24h = (agora - timedelta(hours=24)).isoformat()
 
@@ -443,19 +443,19 @@ def notificacoes_admin(admin=Depends(get_admin)):
 
             if emp.get("dataPrevistaDevolucao"):
                 try:
-                    data_prevista = datetime.fromisoformat(emp["dataPrevistaDevolucao"])
+                    data_prevista = datetime_utc(emp["dataPrevistaDevolucao"])
                 except:
                     data_prevista = None
 
             if emp.get("movDataEmprestimo"):
                 try:
-                    data_emprestimo = datetime.fromisoformat(emp["movDataEmprestimo"])
+                    data_emprestimo = datetime_utc(emp["movDataEmprestimo"])
                 except:
                     data_emprestimo = None
 
             if emp.get("dataDevolucao"):
                 try:
-                    data_devolucao = datetime.fromisoformat(emp["dataDevolucao"])
+                    data_devolucao = datetime_utc(emp["dataDevolucao"])
                 except:
                     data_devolucao = None
 
@@ -466,10 +466,10 @@ def notificacoes_admin(admin=Depends(get_admin)):
                 else:
                     atrasados_alunos.append(entry)
 
-            if data_emprestimo and data_emprestimo >= datetime.fromisoformat(limite_24h) and not data_devolucao:
+            if data_emprestimo and data_emprestimo >= datetime_utc(limite_24h) and not data_devolucao:
                 recentes.append(build_entry(emp))
 
-            if data_devolucao and data_devolucao >= datetime.fromisoformat(limite_24h):
+            if data_devolucao and data_devolucao >= datetime_utc(limite_24h):
                 devolucoes_recentes.append(build_entry(emp))
 
         recentes.sort(
@@ -507,7 +507,7 @@ def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin)):
         if not status or status != "Disponível" or "desativado" in status.lower():
             raise HTTPException(status_code=400, detail="Exemplar desativado ou não disponível para empréstimo")
 
-        hoje = datetime.utcnow().date()
+        hoje = utc_now().date()
 
         configs = get_config_map()
         dias = get_config_days(configs)
@@ -574,15 +574,21 @@ def exemplares_disponiveis():
             .eq("exeLivStatus", "Disponível")  # "Reservado" não entra aqui
             .execute().data or []
         )
-
-        livros = supabase.table("Livro").select("idLivro, livTitulo").execute().data or []
-        mapa_livros = {l["idLivro"]: l["livTitulo"] for l in livros}
-
+        livro_ids = list({e["idLivro"] for e in exemplares if e.get("idLivro")})
+        livros = (
+            supabase.table("Livro")
+            .select("idLivro, livTitulo, livISBN")
+            .in_("idLivro", livro_ids)
+            .execute()
+            .data or []
+        ) if livro_ids else []
+        mapa_livros = {l["idLivro"]: l for l in livros}
         return [
             {
                 "id": ex["idExemplar"],
                 "tombo": ex["exeLivTombo"],
-                "nome": mapa_livros.get(ex["idLivro"], "Livro"),
+                "nome": mapa_livros.get(ex["idLivro"], {}).get("livTitulo", "Livro"),
+                "isbn": mapa_livros.get(ex["idLivro"], {}).get("livISBN"),
                 "idLivro": ex["idLivro"],
             }
             for ex in exemplares
@@ -598,15 +604,22 @@ def listar_exemplares():
         exemplares = supabase.table("Exemplar") \
             .select("idExemplar, exeLivTombo, idLivro") \
             .execute().data or []
-
-        livros = supabase.table("Livro").select("idLivro, livTitulo").execute().data or []
-        mapa = {l["idLivro"]: l["livTitulo"] for l in livros}
-
+        livro_ids = list({e["idLivro"] for e in exemplares if e.get("idLivro")})
+        livros = (
+            supabase.table("Livro")
+            .select("idLivro, livTitulo, livISBN")
+            .in_("idLivro", livro_ids)
+            .execute()
+            .data or []
+        ) if livro_ids else []
+        mapa = {l["idLivro"]: l for l in livros}
         return [
             {
                 "id": e["idExemplar"],
                 "tombo": e["exeLivTombo"],
-                "nome": mapa.get(e["idLivro"], "Livro"),
+                "nome": mapa.get(e["idLivro"], {}).get("livTitulo", "Livro"),
+                "isbn": mapa.get(e["idLivro"], {}).get("livISBN"),
+                "idLivro": e["idLivro"],
             }
             for e in exemplares
         ]
@@ -618,7 +631,7 @@ def listar_exemplares():
 @router.put("/emprestimos/{idEmprestimo}/devolver")
 def devolver_emprestimo(idEmprestimo: int, admin=Depends(get_admin)):
     try:
-        hoje = datetime.utcnow().date()
+        hoje = utc_now().date()
         # marcar movimentacao como devolvida e atualizar movimentacao_exemplar
         mov_resp = supabase.table("Movimentacao").update({
             "movStatus": "Devolvido"
@@ -672,11 +685,11 @@ def renovar_emprestimo(idEmprestimo: int, dados: RenovarEmprestimo, admin=Depend
 
         # A nova data de devolução é escolhida pelo admin, não calculada por um prazo fixo
         try:
-            nova_data = datetime.fromisoformat(dados.novaData).date()
+            nova_data = datetime_utc(dados.novaData).date()
         except Exception:
             raise HTTPException(status_code=400, detail="Data inválida")
 
-        hoje_date = datetime.utcnow().date()
+        hoje_date = utc_now().date()
         if nova_data <= hoje_date:
             raise HTTPException(status_code=400, detail="A nova data deve ser posterior a hoje")
 
@@ -697,99 +710,196 @@ def renovar_emprestimo(idEmprestimo: int, dados: RenovarEmprestimo, admin=Depend
         raise HTTPException(status_code=500, detail="Erro ao renovar empréstimo")
 
 
-@router.post("/emprestimos/solicitacao")
-def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_optional_user)):
+def _obter_usuario_solicitante(user: dict) -> int:
+    if not user or user.get("tipo") not in ["Aluno", "Comunidade"]:
+        raise HTTPException(status_code=401, detail="Apenas usuários podem fazer solicitações de empréstimo")
+
+    usuario_resp = (
+        supabase.table("Usuario")
+        .select("idUsuario, usuStatus, usuExcluido")
+        .eq("usuEmail", user["sub"])
+        .eq("usuTipo", user["tipo"])
+        .limit(1)
+        .execute()
+    )
+    if not usuario_resp.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    usuario = usuario_resp.data[0]
+    if usuario.get("usuExcluido") or not parse_status(usuario.get("usuStatus")):
+        raise HTTPException(status_code=400, detail="Usuário inativo não pode fazer solicitações de empréstimo")
+    return usuario["idUsuario"]
+
+
+def _validar_limite_solicitacoes(id_usuario: int, limite: int) -> None:
+    resposta = (
+        supabase.table("Movimentacao")
+        .select("idMovimentacao", count="exact", head=True)
+        .eq("idUsuario", id_usuario)
+        .in_("movStatus", ["Ativo", "Pendente", "Aprovado"])
+        .execute()
+    )
+    quantidade = getattr(resposta, "count", None)
+    if quantidade is None:
+        quantidade = len(resposta.data or [])
+    if int(quantidade) >= limite:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Você já possui {limite} empréstimos ou solicitações em curso",
+        )
+
+
+def _reservar_primeiro_exemplar_disponivel(id_livro: int) -> dict | None:
+    """Reserva uma única cópia usando RPC com FOR UPDATE SKIP LOCKED.
+
+    O fallback mantém compatibilidade durante a aplicação da migração, mas
+    também usa compare-and-swap no UPDATE para nunca confirmar uma cópia que
+    já tenha sido reservada por outra requisição.
+    """
     try:
-        # Validar se é um usuário comum (não admin)
-        if not user or user.get("tipo") not in ["Aluno", "Comunidade"]:
-            raise HTTPException(status_code=401, detail="Apenas usuários podem fazer solicitações de empréstimo")
+        resposta = supabase.rpc(
+            "reservar_primeiro_exemplar_disponivel",
+            {"p_id_livro": id_livro},
+        ).execute()
+        dados = resposta.data or []
+        return dados[0] if dados else None
+    except Exception:
+        candidato = (
+            supabase.table("Exemplar")
+            .select("idExemplar, idLivro, exeLivTombo")
+            .eq("idLivro", id_livro)
+            .eq("exeLivStatus", "Disponível")
+            .order("idExemplar")
+            .limit(1)
+            .execute()
+        )
+        if not candidato.data:
+            return None
+        exemplar = candidato.data[0]
+        reservado = (
+            supabase.table("Exemplar")
+            .update({"exeLivStatus": "Reservado"})
+            .eq("idExemplar", exemplar["idExemplar"])
+            .eq("exeLivStatus", "Disponível")
+            .execute()
+        )
+        return (reservado.data or [None])[0]
 
-        # Obter ID do usuário
-        usuario_resp = supabase.table("Usuario").select("idUsuario, usuStatus").eq("usuEmail", user["sub"]).limit(1).execute()
-        if not usuario_resp.data:
-            raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
-        id_usuario = usuario_resp.data[0]["idUsuario"]
-        if not usuario_resp.data[0].get("usuStatus"):
-            raise HTTPException(status_code=400, detail="Usuário inativo não pode fazer solicitações de empréstimo")
+def _reservar_exemplar(id_exemplar: int) -> dict | None:
+    resposta = (
+        supabase.table("Exemplar")
+        .update({"exeLivStatus": "Reservado"})
+        .eq("idExemplar", id_exemplar)
+        .eq("exeLivStatus", "Disponível")
+        .execute()
+    )
+    return (resposta.data or [None])[0]
 
-        # Validar exemplar disponível — só aceita "Disponível", não "Reservado" nem "Emprestado"
-        exemplar_resp = supabase.table("Exemplar").select("exeLivStatus").eq("idExemplar", data.idExemplar).limit(1).execute()
-        if not exemplar_resp.data:
-            raise HTTPException(status_code=404, detail="Exemplar não encontrado")
 
-        status = exemplar_resp.data[0].get("exeLivStatus")
-        if status != "Disponível":
-            raise HTTPException(status_code=400, detail="Exemplar não está disponível para solicitação")
+def _registrar_solicitacao(id_usuario: int, exemplar: dict) -> dict:
+    hoje = utc_now().date().isoformat()
+    admin_placeholder = supabase.table("Administrador").select("idAdmin").limit(1).execute()
+    if not admin_placeholder.data:
+        supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq(
+            "idExemplar", exemplar["idExemplar"]
+        ).eq("exeLivStatus", "Reservado").execute()
+        raise HTTPException(status_code=500, detail="Nenhum administrador cadastrado no sistema")
 
-        hoje = datetime.utcnow().date()
-        configs = get_config_map()
-        max_por_usuario = get_max_books_per_user(configs)
-
-        # Verificar limite: contar movimentações Ativas ou Pendentes diretamente
-        # (sem filtrar por itemStatus, pois pendentes ainda não têm itemStatus = "Ativo")
-        movimentacoes_em_curso = supabase.table("Movimentacao") \
-            .select("idMovimentacao") \
-            .eq("idUsuario", id_usuario) \
-            .in_("movStatus", ["Ativo", "Pendente", "Aprovado"]) \
-            .execute().data or []
-
-        if len(movimentacoes_em_curso) >= max_por_usuario:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Você já possui {max_por_usuario} empréstimos ou solicitações em curso"
-            )
-
-        # Reservar exemplar imediatamente para evitar race condition:
-        # outro aluno não pode solicitar o mesmo exemplar enquanto esta solicitação existe
-        reserva = supabase.table("Exemplar").update({
-            "exeLivStatus": "Reservado"
-        }).eq("idExemplar", data.idExemplar).eq("exeLivStatus", "Disponível").execute()
-
-        # Se a reserva não alterou nenhuma linha, outro aluno chegou primeiro
-        if not reserva.data:
-            raise HTTPException(status_code=409, detail="Exemplar acabou de ser reservado por outro usuário. Tente novamente.")
-
-        admin_placeholder = supabase.table("Administrador").select("idAdmin").limit(1).execute()
-        if not admin_placeholder.data:
-            # Reverter reserva antes de lançar erro
-            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", data.idExemplar).execute()
-            raise HTTPException(status_code=500, detail="Nenhum administrador cadastrado no sistema")
-        id_admin_placeholder = admin_placeholder.data[0]["idAdmin"]
-
-        nova_mov = {
-            "idUsuario": id_usuario,
-            "idAdmin": id_admin_placeholder,
-            "movTipo": "SOLICITACAO",
-            "movStatus": "Pendente",
-            "movDataSolicitacao": hoje.isoformat(),
-            "movDataEmprestimo": hoje.isoformat(),
-        }
-
+    nova_mov = {
+        "idUsuario": id_usuario,
+        "idAdmin": admin_placeholder.data[0]["idAdmin"],
+        "movTipo": "SOLICITACAO",
+        "movStatus": "Pendente",
+        "movDataSolicitacao": hoje,
+        "movDataEmprestimo": hoje,
+    }
+    try:
         mov_resp = supabase.table("Movimentacao").insert(nova_mov).execute()
         if not mov_resp.data:
-            # Reverter reserva se não conseguiu inserir a movimentação
-            supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq("idExemplar", data.idExemplar).execute()
-            raise HTTPException(status_code=500, detail="Erro ao criar solicitação")
-
-        id_mov = mov_resp.data[0].get("idMovimentacao")
-
-        novo_me = {
+            raise RuntimeError("Movimentação não foi criada")
+        id_mov = mov_resp.data[0]["idMovimentacao"]
+        me_resp = supabase.table("MovimentacaoExemplar").insert({
             "idMovimentacao": id_mov,
-            "idExemplar": data.idExemplar,
+            "idExemplar": exemplar["idExemplar"],
             "itemStatus": "Pendente",
             "renovacoes": 0,
-        }
+        }).execute()
+        if not me_resp.data:
+            raise RuntimeError("Exemplar não foi vinculado à movimentação")
+    except Exception:
+        supabase.table("Movimentacao").delete().eq("idMovimentacao", locals().get("id_mov", -1)).execute()
+        supabase.table("Exemplar").update({"exeLivStatus": "Disponível"}).eq(
+            "idExemplar", exemplar["idExemplar"]
+        ).eq("exeLivStatus", "Reservado").execute()
+        raise
 
-        supabase.table("MovimentacaoExemplar").insert(novo_me).execute()
+    return {
+        "idMovimentacao": id_mov,
+        "idExemplar": exemplar["idExemplar"],
+        "idLivro": exemplar.get("idLivro"),
+        "status": "Solicitação criada com sucesso",
+    }
 
-        return {"idMovimentacao": id_mov, "status": "Solicitação criada com sucesso"}
+
+@router.post("/emprestimos/solicitar-livro")
+@router.post("/emprestimos/solicitacao-livro")
+def solicitar_livro(data: SolicitacaoLivro, user=Depends(get_optional_user)):
+    try:
+        id_usuario = _obter_usuario_solicitante(user)
+        livro_resp = (
+            supabase.table("Livro")
+            .select("idLivro, livTitulo")
+            .eq("idLivro", data.idLivro)
+            .eq("livAtivo", True)
+            .limit(1)
+            .execute()
+        )
+        if not livro_resp.data:
+            raise HTTPException(status_code=404, detail="Livro não encontrado")
+
+        _validar_limite_solicitacoes(id_usuario, get_max_books_per_user())
+        exemplar = _reservar_primeiro_exemplar_disponivel(data.idLivro)
+        if not exemplar:
+            raise HTTPException(status_code=409, detail="Não há exemplares disponíveis para este livro")
+        return _registrar_solicitacao(id_usuario, exemplar)
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("Erro solicitar livro:", e)
+        raise HTTPException(status_code=500, detail="Erro ao criar solicitação de empréstimo")
+
+
+@router.post("/emprestimos/solicitacao")
+def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_optional_user)):
+    """Mantém o contrato legado, usando a mesma reserva segura do endpoint por livro."""
+    try:
+        id_usuario = _obter_usuario_solicitante(user)
+        exemplar_resp = (
+            supabase.table("Exemplar")
+            .select("idExemplar, idLivro, exeLivStatus, exeLivTombo")
+            .eq("idExemplar", data.idExemplar)
+            .limit(1)
+            .execute()
+        )
+        if not exemplar_resp.data:
+            raise HTTPException(status_code=404, detail="Exemplar não encontrado")
+        exemplar = exemplar_resp.data[0]
+        if exemplar.get("exeLivStatus") != "Disponível":
+            raise HTTPException(status_code=400, detail="Exemplar não está disponível para solicitação")
+
+        _validar_limite_solicitacoes(id_usuario, get_max_books_per_user())
+        reservado = _reservar_exemplar(data.idExemplar)
+        if not reservado:
+            raise HTTPException(
+                status_code=409,
+                detail="Exemplar acabou de ser reservado por outro usuário. Tente novamente.",
+            )
+        return _registrar_solicitacao(id_usuario, {**exemplar, **reservado})
     except HTTPException:
         raise
     except Exception as e:
         print("Erro criar solicitacao:", e)
         raise HTTPException(status_code=500, detail="Erro ao criar solicitação de empréstimo")
-
 
 @router.put("/emprestimos/{idEmprestimo}/aprovar")
 def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
@@ -832,7 +942,7 @@ def aprovar_solicitacao(idEmprestimo: int, admin=Depends(get_admin)):
 
         id_admin = get_admin_id(admin)
 
-        agora = datetime.utcnow()
+        agora = utc_now()
         configs = get_config_map()
         prazo_horas = _get_prazo_confirmacao_horas(configs)
         data_limite = agora + timedelta(hours=prazo_horas)
@@ -951,15 +1061,15 @@ def registrar_retirada(idSolicitacao: int, admin=Depends(get_admin)):
         prazo = mov.get("prazo_horas") or 48
         if data_conf:
             try:
-                dt_conf = datetime.fromisoformat(data_conf.replace("Z", "+00:00")).replace(tzinfo=None)
-                if datetime.utcnow() > dt_conf + timedelta(hours=prazo):
+                dt_conf = datetime_utc(data_conf.replace("Z", "+00:00"))
+                if utc_now() > dt_conf + timedelta(hours=prazo):
                     raise HTTPException(status_code=400, detail="Prazo de retirada expirado")
             except HTTPException:
                 raise
             except Exception:
                 pass
 
-        agora = datetime.utcnow()
+        agora = utc_now()
         hoje = agora.date()
         configs = get_config_map()
         dias = get_config_days(configs)
@@ -1070,7 +1180,7 @@ def verificar_expiracoes():
     Returns the list of expired movimentacao IDs.
     """
     try:
-        agora = datetime.utcnow()
+        agora = utc_now()
 
         movs = (
             supabase.table("Movimentacao")
@@ -1087,9 +1197,9 @@ def verificar_expiracoes():
             if not data_conf:
                 continue
             try:
-                dt_conf = datetime.fromisoformat(
+                dt_conf = datetime_utc(
                     data_conf.replace("Z", "+00:00")
-                ).replace(tzinfo=None)
+                )
                 if agora > dt_conf + timedelta(hours=prazo):
                     _expirar_solicitacao(mov["idMovimentacao"], mov)
                     expirados.append(mov["idMovimentacao"])

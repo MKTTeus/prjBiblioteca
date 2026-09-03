@@ -618,34 +618,3 @@ def atualizar_exemplar(idExemplar: int, data: ExemplarUpdate, admin=Depends(get_
     updated = supabase.table("Exemplar").update(update_data).eq("idExemplar", idExemplar).execute()
     return updated.data[0]
 
-
-@router.get("/exemplares")
-def listar_exemplares():
-    resp = supabase.table("Exemplar").select("*").execute()
-    return resp.data or []
-
-
-@router.get("/exemplares/disponiveis")
-def exemplares_disponiveis():
-    try:
-        exemplares = supabase.table("Exemplar").select("idExemplar, exeLivTombo, idLivro") \
-            .eq("exeLivStatus", "Disponível").execute().data or []
-
-        livro_ids = list({ex["idLivro"] for ex in exemplares})
-        mapa_livros = {}
-        if livro_ids:
-            livros = supabase.table("Livro").select("idLivro, livTitulo, livISBN").in_("idLivro", livro_ids).execute().data or []
-            mapa_livros = {l["idLivro"]: l for l in livros}
-
-        return [
-            {
-                "id":      ex["idExemplar"],
-                "tombo":   ex["exeLivTombo"],
-                "nome":    mapa_livros.get(ex["idLivro"], {}).get("livTitulo", "Livro"),
-                "isbn":    mapa_livros.get(ex["idLivro"], {}).get("livISBN"),
-                "idLivro": ex["idLivro"],
-            }
-            for ex in exemplares
-        ]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

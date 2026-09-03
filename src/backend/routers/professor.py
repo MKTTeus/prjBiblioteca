@@ -1,11 +1,9 @@
-from datetime import datetime, timedelta
-
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_professor, get_admin_id
+from core import datetime_utc, get_professor, get_admin_id, utc_now
 from schemas import EmprestimoProfessorCreate, DevolucaoProfessor
 from routers.emprestimos import get_config_map, get_config_days
 
@@ -43,7 +41,7 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
     if not movimentacoes:
         return []
 
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
     mov_ids = [m["idMovimentacao"] for m in movimentacoes]
 
     itens = supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", mov_ids).execute().data or []
@@ -103,7 +101,7 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
                 tem_ativo = True
                 if data_prev:
                     try:
-                        if datetime.fromisoformat(data_prev).date() < hoje:
+                        if datetime_utc(data_prev).date() < hoje:
                             tem_atrasado = True
                     except Exception:
                         pass
@@ -219,7 +217,7 @@ def criar_emprestimo_professor(data: EmprestimoProfessorCreate, professor=Depend
     if not id_admin:
         raise HTTPException(status_code=404, detail="Professor não encontrado")
 
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
     configs = get_config_map()
     dias = get_config_days(configs)
     vencimento = (hoje + timedelta(days=dias)).isoformat()
@@ -387,7 +385,7 @@ def devolver_emprestimo_professor(idMovimentacao: int, data: DevolucaoProfessor,
             )
         ids_para_devolver.extend(disponiveis_ativos[:quantidade])
 
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
 
     supabase.table("MovimentacaoExemplar").update({
         "dataDevolucao": hoje.isoformat(),
