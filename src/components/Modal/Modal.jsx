@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import "./Modal.css";
 
@@ -6,43 +6,41 @@ const Modal = ({ show, onClose, children, className = "" }) => {
   const [mounted, setMounted] = useState(false);
   const [exiting, setExiting] = useState(false);
 
-  // Monta/desmonta no portal para evitar problemas de stacking context
+  // useEffect de montagem/desmontagem do portal.
   useEffect(() => {
     if (show) {
       setExiting(false);
       setMounted(true);
-      // Previne scroll do body quando modal aberto
       document.body.style.overflow = "hidden";
-    } else if (mounted) {
-      // Inicia animação de saída
+    } else if (mounted && !show) {
       setExiting(true);
-      // Aguarda animação de saída antes de desmontar
       const timer = setTimeout(() => {
         setMounted(false);
         setExiting(false);
         document.body.style.overflow = "";
-      }, 200); // mesmo tempo da animação CSS
-      return () => clearTimeout(timer);
+      }, 200);
     }
   }, [show, mounted]);
 
-  if (!mounted) return null;
-
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") onClose();
-  };
-
+  // Effect para fechamento com tecla Escape
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") onClose();
+    });
+    return () => document.removeEventListener("keydown", (e) => {
+      if (e.key === "Escape") onClose();
+    });
   }, [onClose]);
 
+  // Sem early return que pule hooks - sempre renderizamos o portal.
+  // A visibilidade é controlada por CSS/state, não por pular o retorno.
   const modalContent = (
-    <div className={`modal-overlay${exiting ? " exiting" : ""}`} onClick={handleOverlayClick} role="dialog" aria-modal="true">
+    <div
+      className={`modal-overlay${exiting ? " exiting" : ""}`}
+      onClick={(e) => (e.target === e.currentTarget ? onClose() : null)}
+      role="dialog"
+      aria-modal="true"
+    >
       <div
         className={`modal-content ${className}`.trim() + (exiting ? " exiting" : "")}
         onClick={(e) => e.stopPropagation()}
