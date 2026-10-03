@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Request
 
 from database import supabase
-from core import hash_password, normalize_email, parse_status, verify_password, create_token
+from core import hash_password, normalize_email, parse_status, verify_password, create_token, get_token_version, invalidate_token_version_cache
 from rate_limit import limitar_login, limitar_esqueci_senha, limitar_redefinir_senha
 from routers.emails import enviar_email, _email_redefinir_senha
 from schemas import Login, EsqueciSenha, RedefinirSenha
@@ -68,11 +68,12 @@ def login(data: Login, request: Request):
 
         eh_professor = bool(a.get("admProfessor"))
 
+        token_version = a.get("admTokenVersion", 1)
         token = create_token({
             "sub": a["admEmail"],
             "tipo": "admin",
             "admProfessor": eh_professor
-        })
+        }, token_version=token_version)
 
         return {
             "access_token": token,
@@ -106,10 +107,11 @@ def login(data: Login, request: Request):
         if not verify_password(data.senha, u["usuSenha"]):
             raise HTTPException(status_code=400, detail=CREDENCIAIS_INVALIDAS)
 
+        token_version = u.get("usuTokenVersion", 1)
         token = create_token({
             "sub": u["usuEmail"],
             "tipo": u["usuTipo"]
-        })
+        }, token_version=token_version)
 
         return {
             "access_token": token,
@@ -210,10 +212,22 @@ def redefinir_senha(data: RedefinirSenha, request: Request):
 
     registro = _validar_token_redefinicao(data.token)
 
-    supabase.table("Usuario").update({
-        "usuSenha": hash_password(data.novaSenha),
-        "usuSenhaProvisoria": False
-    }).eq("usuEmail", registro["usuEmail"]).execute()
+    # Incrementa token_version para invalidar tokens existentes
+    resp = supabase.table("Usuario").select("idUsuario, usuTokenVersion").eq("usuEmail", registro["usuEmail"]).execute()
+    if resp.data:
+        user = resp.data[0]
+        new_version = user.get("usuTokenVersion", 1) + 1
+        supabase.table("Usuario").update({
+            "usuSenha": hash_password(data.novaSenha),
+            "usuSenhaProvisoria": False,
+            "usuTokenVersion": new_version
+        }).eq("usuEmail", registro["usuEmail"]).execute()
+        invalidate_token_version_cache("Usuario", registro["usuEmail"])
+    else:
+        supabase.table("Usuario").update({
+            "usuSenha": hash_password(data.novaSenha),
+            "usuSenhaProvisoria": False
+        }).eq("usuEmail", registro["usuEmail"]).execute()
 
     supabase.table("RedefinicaoSenha").update({
         "usadoEm": datetime.utcnow().isoformat()

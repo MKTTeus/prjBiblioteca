@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, get_admin_id, get_optional_user, executar_em_paralelo
+from core import get_admin, get_admin_id, get_optional_user, get_user, executar_em_paralelo
 from schemas import Emprestimo, Configuracao, EmprestimoSolicitacao, RenovarEmprestimo
 
 router = APIRouter()
@@ -203,7 +203,7 @@ def listar_solicitacoes(admin=Depends(get_admin)):
 
 
 @router.get("/emprestimos")
-def listar_emprestimos(user=Depends(get_optional_user)):
+def listar_emprestimos(user=Depends(get_user)):
     try:
         hoje = datetime.utcnow().date()
         query = supabase.table("Movimentacao").select("*")
@@ -679,10 +679,10 @@ def renovar_emprestimo(idEmprestimo: int, dados: RenovarEmprestimo, admin=Depend
 
 
 @router.post("/emprestimos/solicitacao")
-def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_optional_user)):
+def criar_solicitacao_emprestimo(data: EmprestimoSolicitacao, user=Depends(get_user)):
     try:
         # Validar se é um usuário comum (não admin)
-        if not user or user.get("tipo") not in ["Aluno", "Comunidade"]:
+        if user.get("tipo") not in ["Aluno", "Comunidade"]:
             raise HTTPException(status_code=401, detail="Apenas usuários podem fazer solicitações de empréstimo")
 
         # Obter ID do usuário

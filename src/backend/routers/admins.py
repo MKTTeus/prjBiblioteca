@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional as Opt
 
 from database import supabase
-from core import get_admin, get_admin_ou_professor, hash_password, normalize_email, parse_status
+from core import get_admin, get_admin_ou_professor, hash_password, normalize_email, parse_status, invalidate_token_version_cache
 from schemas import AdminCreate, AdminUpdate, BatchIds, BatchStatus
 
 router = APIRouter()
@@ -49,11 +49,27 @@ def criar_admin(data: AdminCreate, admin=Depends(get_admin)):
     return criado.data[0]
 
 
+def _increment_admin_token_version(id_admin: int) -> int:
+    """Incrementa token_version do admin e retorna o novo valor."""
+    resp = supabase.table("Administrador").select("admTokenVersion, admEmail").eq("idAdmin", id_admin).execute()
+    if not resp.data:
+        return 1
+    current = resp.data[0].get("admTokenVersion", 1)
+    new_version = current + 1
+    supabase.table("Administrador").update({"admTokenVersion": new_version}).eq("idAdmin", id_admin).execute()
+    # Invalida cache
+    email = resp.data[0].get("admEmail")
+    if email:
+        invalidate_token_version_cache("Administrador", email)
+    return new_version
+
+
 @router.post("/admins/batch/excluir")
 def excluir_admins_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
     for id in data.ids:
+        _increment_admin_token_version(id)
         supabase.table("Administrador").update({"admStatus": False}).eq("idAdmin", id).execute()
     return {"message": f"{len(data.ids)} admin(s) desativado(s) com sucesso"}
 
@@ -63,6 +79,7 @@ def atualizar_status_admins_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
     for id in data.ids:
+        _increment_admin_token_version(id)
         supabase.table("Administrador").update({"admStatus": data.status}).eq("idAdmin", id).execute()
     return {"message": f"{len(data.ids)} admin(s) atualizados com sucesso"}
 
@@ -74,19 +91,26 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
         raise HTTPException(status_code=404, detail="Admin não encontrado")
 
     payload = {}
+    increment_token = False
     if data.nome is not None:
         payload["admNome"] = data.nome
     if data.email is not None:
         payload["admEmail"] = normalize_email(data.email)
     if data.senha is not None:
         payload["admSenha"] = hash_password(data.senha)
+        increment_token = True
     if data.status is not None:
         payload["admStatus"] = parse_status(data.status)
+        increment_token = True
     if data.professor is not None:
         payload["admProfessor"] = bool(data.professor)
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    if increment_token:
+        new_version = _increment_admin_token_version(idAdmin)
+        payload["admTokenVersion"] = new_version
 
     resp = supabase.table("Administrador").update(payload).eq("idAdmin", idAdmin).execute()
     if not resp.data:
@@ -95,6 +119,7 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
 
 @router.delete("/admins/{idAdmin}")
 def deletar_admin(idAdmin: int, admin=Depends(get_admin)):
+    _increment_admin_token_version(idAdmin)
     supabase.table("Administrador").update({"admStatus": False}).eq("idAdmin", idAdmin).execute()
     return {"message": "Admin desativado com sucesso"}
 

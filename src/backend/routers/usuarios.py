@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from database import supabase
-from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, verify_password, validar_cpf, normalize_cpf
+from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, get_user, verify_password, validar_cpf, normalize_cpf, invalidate_token_version_cache
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 from routers.ano_letivo import get_ano_letivo_atual
 import io
@@ -9,6 +9,21 @@ import openpyxl
 import csv
 from pydantic import BaseModel
 from typing import Optional as Opt
+
+def _increment_usuario_token_version(id_usuario: int) -> int:
+    """Incrementa token_version do usuário e retorna o novo valor."""
+    resp = supabase.table("Usuario").select("usuTokenVersion, usuEmail").eq("idUsuario", id_usuario).execute()
+    if not resp.data:
+        return 1
+    current = resp.data[0].get("usuTokenVersion", 1)
+    new_version = current + 1
+    supabase.table("Usuario").update({"usuTokenVersion": new_version}).eq("idUsuario", id_usuario).execute()
+    # Invalida cache
+    email = resp.data[0].get("usuEmail")
+    if email:
+        invalidate_token_version_cache("Usuario", email)
+    return new_version
+
 
 def _validar_campos_obrigatorios(valores: dict, campos: list[tuple[str, str]]):
     for chave, rotulo in campos:
@@ -180,6 +195,7 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
+    new_version = _increment_usuario_token_version(usuario["idUsuario"])
     payload = {
         "usuNome": data.nome,
         "usuEmail": email,
@@ -196,6 +212,7 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuStatus": True,
         "usuExcluido": False,
         "usuSenhaProvisoria": True,
+        "usuTokenVersion": new_version,
     }
     try:
         reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
@@ -275,6 +292,8 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
 def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        _increment_usuario_token_version(id)
     resp = (
         supabase.table("Usuario")
         .update({"usuExcluido": True})
@@ -294,6 +313,8 @@ def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
 def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        _increment_usuario_token_version(id)
     resp = (
         supabase.table("Usuario")
         .update({"usuStatus": data.status})
@@ -315,6 +336,7 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
 
     payload = {}
+    increment_token = False
     if data.nome is not None:
         payload["usuNome"] = data.nome
     if data.email is not None:
@@ -322,6 +344,7 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
     if data.senha is not None:
         payload["usuSenha"] = hash_password(data.senha)
         payload["usuSenhaProvisoria"] = True
+        increment_token = True
     if data.telefone is not None:
         payload["usuTelefone"] = data.telefone
     if data.telefoneResponsavel is not None:
@@ -336,9 +359,14 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
         payload["usuTurma"] = data.turma
     if data.status is not None:
         payload["usuStatus"] = parse_status(data.status)
+        increment_token = True
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    if increment_token:
+        new_version = _increment_usuario_token_version(idUsuario)
+        payload["usuTokenVersion"] = new_version
 
     mapa_campos = [
         ("usuNome", "nome", "Nome Completo"),
@@ -374,6 +402,7 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
 
 @router.delete("/alunos/{idUsuario}")
 def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
+    _increment_usuario_token_version(idUsuario)
     resp = (
         supabase.table("Usuario")
         .update({"usuExcluido": True})
@@ -451,6 +480,7 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
 
+    new_version = _increment_usuario_token_version(usuario["idUsuario"])
     payload = {
         "usuNome": data.nome,
         "usuEmail": email,
@@ -468,6 +498,7 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         "usuAnoLetivo": None,
         "usuFormado": False,
         "usuSenhaProvisoria": True,
+        "usuTokenVersion": new_version,
     }
     try:
         reativado = supabase.table("Usuario").update(payload).eq("idUsuario", usuario["idUsuario"]).execute()
@@ -548,6 +579,8 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
 def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        _increment_usuario_token_version(id)
     resp = (
         supabase.table("Usuario")
         .update({"usuExcluido": True})
@@ -567,6 +600,8 @@ def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
 def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
+    for id in data.ids:
+        _increment_usuario_token_version(id)
     resp = (
         supabase.table("Usuario")
         .update({"usuStatus": data.status})
@@ -588,6 +623,7 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
         raise HTTPException(status_code=404, detail="Membro não encontrado")
 
     payload = {}
+    increment_token = False
     if data.nome is not None:
         payload["usuNome"] = data.nome
     if data.email is not None:
@@ -595,6 +631,7 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
     if data.senha is not None:
         payload["usuSenha"] = hash_password(data.senha)
         payload["usuSenhaProvisoria"] = True
+        increment_token = True
     if data.telefone is not None:
         payload["usuTelefone"] = data.telefone
     if data.telefoneResponsavel is not None:
@@ -608,9 +645,14 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
         payload["usuCPF"] = cpf
     if data.status is not None:
         payload["usuStatus"] = parse_status(data.status)
+        increment_token = True
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    if increment_token:
+        new_version = _increment_usuario_token_version(idUsuario)
+        payload["usuTokenVersion"] = new_version
 
     mapa_campos = [
         ("usuNome", "nome", "Nome Completo"),
@@ -646,6 +688,7 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
 
 @router.delete("/comunidade/{idUsuario}")
 def deletar_comunidade(idUsuario: int, admin=Depends(get_admin)):
+    _increment_usuario_token_version(idUsuario)
     resp = (
         supabase.table("Usuario")
         .update({"usuExcluido": True})
@@ -681,9 +724,7 @@ def _tema_para_db(valor_app: str) -> str:
     return valor_app.upper()
 
 @router.get("/usuario/me")
-def get_perfil(user=Depends(get_optional_user)):
-    if not user:
-        raise HTTPException(status_code=401, detail="Não autenticado")
+def get_perfil(user=Depends(get_user)):
     resp = supabase.table("Usuario").select("*").eq("usuEmail", user["sub"]).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
@@ -704,9 +745,7 @@ def get_perfil(user=Depends(get_optional_user)):
     }
 
 @router.patch("/usuario/me")
-def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
-    if not user:
-        raise HTTPException(status_code=401, detail="Não autenticado")
+def atualizar_perfil(data: PerfilUpdate, user=Depends(get_user)):
 
     resp = supabase.table("Usuario").select("*").eq("usuEmail", user["sub"]).execute()
     if not resp.data:
@@ -714,6 +753,7 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
     u = resp.data[0]
 
     payload = {}
+    increment_token = False
 
     # Contato
     if data.telefone is not None:
@@ -738,9 +778,14 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_optional_user)):
             raise HTTPException(status_code=400, detail="Senha atual incorreta")
         payload["usuSenha"] = hash_password(data.novaSenha)
         payload["usuSenhaProvisoria"] = False
+        increment_token = True
 
     if not payload:
         raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+
+    if increment_token:
+        new_version = _increment_usuario_token_version(u["idUsuario"])
+        payload["usuTokenVersion"] = new_version
 
     atual = supabase.table("Usuario").update(payload).eq("idUsuario", u["idUsuario"]).execute()
     if not atual.data:
