@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
 
 export default function AdminModal({
@@ -12,6 +13,8 @@ export default function AdminModal({
   onClose,
   onSave,
 }) {
+  const [showSenha, setShowSenha] = useState(false);
+
   if (!aberto) return null;
 
   return (
@@ -96,19 +99,31 @@ export default function AdminModal({
                 <div className="editor-field-grid basic-column-grid">
                   <label className="editor-field">
                     <span>Senha *</span>
-                    <input
-                      type="password"
-                      name="senha"
-                      value={admin.senha}
-                      onChange={onChange}
-                      disabled={modoEdicao}
-                      min={6}
-                      placeholder={
-                        modoEdicao
-                          ? "Senha bloqueada durante a edição"
-                          : "Mínimo de 6 caracteres"
-                      }
-                    />
+                    <div className="password-input-wrapper">
+                      <input
+                        type={showSenha ? "text" : "password"}
+                        name="senha"
+                        value={admin.senha}
+                        onChange={onChange}
+                        disabled={modoEdicao}
+                        min={6}
+                        placeholder={
+                          modoEdicao
+                            ? "Senha bloqueada durante a edição"
+                            : "Mínimo de 6 caracteres"
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowSenha((v) => !v)}
+                        disabled={modoEdicao}
+                        aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
+                        tabIndex={-1}
+                      >
+                        {showSenha ? <FiEyeOff /> : <FiEye />}
+                      </button>
+                    </div>
                   </label>
 
                   <label className="editor-field">

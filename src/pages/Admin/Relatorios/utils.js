@@ -136,16 +136,14 @@ export const COLUNAS_EXPORT_RANKING_ATRASOS = [
   "Dias de Atraso (total)",
 ];
 
-// ── Relatório: Acervo por categoria/gênero/autor/editora ───────────
+// ── Relatório: Acervo por gênero/autor/editora ───────────
 export const AGRUPADOR_OPTIONS = [
-  { valor: "categoria", label: "Categoria" },
   { valor: "genero", label: "Gênero" },
   { valor: "autor", label: "Autor" },
   { valor: "editora", label: "Editora" },
 ];
 
 const LABEL_AGRUPADOR = {
-  categoria: "Categoria",
   genero: "Gênero",
   autor: "Autor",
   editora: "Editora",
@@ -163,7 +161,7 @@ export function linhasParaExportAcervo(itens) {
 
 export function colunasExportAcervo(agrupador) {
   return [
-    LABEL_AGRUPADOR[agrupador] || "Categoria",
+    LABEL_AGRUPADOR[agrupador] || "Gênero",
     "Títulos",
     "Exemplares (cópias)",
     "Disponíveis",

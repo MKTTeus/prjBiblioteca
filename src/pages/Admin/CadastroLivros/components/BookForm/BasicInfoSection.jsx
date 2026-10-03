@@ -182,7 +182,7 @@ function AutorMultiInput({ value, autores, onChangeTexto, onSelecionarSugestao, 
   );
 }
 
-export function buildISBNAutoFillData({ livro, categorias = [], generos = [], autores = [], isbn = "" }) {
+export function buildISBNAutoFillData({ livro, generos = [], autores = [], isbn = "" }) {
   const authors = Array.isArray(livro?.authors)
     ? livro.authors
         .map((author) => (typeof author === "string" ? author : author?.name))
@@ -208,7 +208,6 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
   const authorName = authors[0] || "";
   const categoryName = categories[0] || subjects[0] || "";
   const matchingAutor = findMatchingOption(autores, authorName, "autNome");
-  const matchingCategoria = findMatchingOption(categorias, categoryName, "catNome");
   const matchingGenero = findMatchingOption(generos, categoryName, "genNome");
 
   // Um livro pode ter vários autores (BrasilAPI e Open Library normalmente
@@ -279,9 +278,7 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
     ediCidade: editoraCidade,
     ediEstado: editoraEstado,
     ediPais: editoraPais,
-    idCategoria: matchingCategoria?.idCategoria ?? "",
     idGenero: matchingGenero?.idGenero ?? "",
-    categoriaNome: categoryName,
     generoNome: categoryName,
     autorNome: authorName,
     autorKey: authorKey,
@@ -291,23 +288,19 @@ export function buildISBNAutoFillData({ livro, categorias = [], generos = [], au
 
 export default function BasicInfoSection({
   form,
-  categorias,
   generos,
   autores,
   onFieldChange,
   onUpload,
   onISBNAutoFill,
   onCamposAutoFillIA,
-  onCriarCategoria,
   onCriarGenero,
   onCriarAutor,
   highlightedFields,
   isbnFilledFields,
 }) {
-  const [novaCategoria, setNovaCategoria] = useState("");
   const [novoGenero, setNovoGenero] = useState("");
   const [novoAutor, setNovoAutor] = useState("");
-  const [criandoCategoria, setCriandoCategoria] = useState(false);
   const [criandoGenero, setCriandoGenero] = useState(false);
   const [criandoAutor, setCriandoAutor] = useState(false);
   const [mostrarFalecimento, setMostrarFalecimento] = useState(false);
@@ -352,31 +345,8 @@ export default function BasicInfoSection({
     }
   }, [iaSugestao]);
 
-  // Encontra uma categoria/gênero já cadastrado pelo nome ou cria um novo.
+  // Encontra um gênero já cadastrado pelo nome ou cria um novo.
   // Compartilhado entre a busca por ISBN e a sugestão da IA para não duplicar a lógica.
-  const resolverCategoria = useCallback(
-    async (nomeCategoria) => {
-      if (!nomeCategoria || !nomeCategoria.trim()) return "";
-      const existente = categorias.find(
-        (item) => normalizeText(item.catNome) === normalizeText(nomeCategoria)
-      );
-      if (existente) return existente.idCategoria;
-      try {
-        const criada = await onCriarCategoria(nomeCategoria);
-        return criada?.idCategoria ?? "";
-      } catch (err) {
-        if (err.status === 409) {
-          const achada = categorias.find(
-            (item) => normalizeText(item.catNome) === normalizeText(nomeCategoria)
-          );
-          if (achada) return achada.idCategoria;
-        }
-        return "";
-      }
-    },
-    [categorias, onCriarCategoria]
-  );
-
   const resolverGenero = useCallback(
     async (nomeGenero) => {
       if (!nomeGenero || !nomeGenero.trim()) return "";
@@ -400,7 +370,7 @@ export default function BasicInfoSection({
     [generos, onCriarGenero]
   );
 
-  // Igual a resolverCategoria/resolverGenero: reaproveita o autor já cadastrado
+  // Igual a resolverGenero: reaproveita o autor já cadastrado
   // pelo nome ou cria uma entrada "pendente" (mesmo mecanismo do botão "+ Novo
   // autor"), para que o nome apareça de fato selecionado no campo — e não fique
   // em branco por não bater com nenhuma opção do select.
@@ -526,12 +496,11 @@ export default function BasicInfoSection({
 
         // Reaproveita os autores já cadastrados pelo nome ou cria uma entrada
         // pendente pra cada um (mesmo mecanismo do botão "+ Novo autor" e do
-        // que já é feito aqui para categoria/gênero) — um livro pode ter
+        // que já é feito aqui para gênero) — um livro pode ter
         // vários autores, então resolve a lista inteira, não só o primeiro.
         const autorTexto = await resolverAutores(
           dados.autoresNomes && dados.autoresNomes.length > 0 ? dados.autoresNomes : dados.autorNome
         );
-        const categoriaId = await resolverCategoria(dados.categoriaNome);
         const generoId = await resolverGenero(dados.generoNome);
 
         onISBNAutoFill({
@@ -539,7 +508,6 @@ export default function BasicInfoSection({
           livAutor: autorTexto,
           autorAnoNascimento: anosAutor.nascimento,
           autorAnoFalecimento: anosAutor.falecimento,
-          idCategoria: categoriaId,
           idGenero: generoId,
         });
       } catch (err) {
@@ -549,7 +517,7 @@ export default function BasicInfoSection({
         setBuscandoISBN(false);
       }
     },
-    [onISBNAutoFill, resolverAutores, resolverCategoria, resolverGenero, autores]
+    [onISBNAutoFill, resolverAutores, resolverGenero, autores]
   );
 
   const handleISBNDetectado = useCallback(
@@ -665,7 +633,7 @@ export default function BasicInfoSection({
     };
   }, [onFieldChange, buscarPorISBN]);
 
-  // onCriarCategoria/onCriarGenero/onCriarAutor agora só enfileiram o item
+  // onCriarGenero/onCriarAutor agora só enfileiram o item
   // localmente (ver BookFormModal) — nunca chamam a API nem lançam 409, então
   // não há mais nada para tratar aqui além de aplicar o resultado ao form.
 
@@ -686,17 +654,6 @@ export default function BasicInfoSection({
       setErroCapaUrl(err?.message || "Não foi possível carregar essa imagem para editar.");
     } finally {
       setCarregandoCapaParaEditar(false);
-    }
-  }
-
-  async function handleCriarCategoria() {
-    const nome = novaCategoria.trim();
-    if (!nome) return;
-    const criada = await onCriarCategoria(nome);
-    if (criada) {
-      onFieldChange("idCategoria", criada.idCategoria);
-      setNovaCategoria("");
-      setCriandoCategoria(false);
     }
   }
 
@@ -751,7 +708,6 @@ export default function BasicInfoSection({
       return;
     }
 
-    const categoriaAtual = categorias.find((c) => String(c.idCategoria) === String(form.idCategoria));
     const generoAtual = generos.find((g) => String(g.idGenero) === String(form.idGenero));
 
     setIaCarregando(true);
@@ -764,9 +720,7 @@ export default function BasicInfoSection({
         livAnoPublicacao: form.livAnoPublicacao ? Number(form.livAnoPublicacao) : undefined,
         livPaginas: form.livPaginas ? Number(form.livPaginas) : undefined,
         livDescricao: form.livDescricao || undefined,
-        categoriaNome: categoriaAtual?.catNome,
         generoNome: generoAtual?.genNome,
-        categorias_existentes: categorias.map((c) => c.catNome),
         generos_existentes: generos.map((g) => g.genNome),
       });
 
@@ -785,7 +739,6 @@ export default function BasicInfoSection({
         paginas: marcarPorPadrao("paginas"),
         idioma: marcarPorPadrao("idioma"),
         descricao: marcarPorPadrao("descricao"),
-        categoria_sugerida: marcarPorPadrao("categoria_sugerida"),
         genero_sugerido: marcarPorPadrao("genero_sugerido"),
         faixa_etaria: marcarPorPadrao("faixa_etaria"),
         palavras_chave: marcarPorPadrao("palavras_chave"),
@@ -801,7 +754,7 @@ export default function BasicInfoSection({
     } finally {
       setIaCarregando(false);
     }
-  }, [form, categorias, generos]);
+  }, [form, generos]);
 
   const handleToggleCampoIA = (campo) => {
     setIaCamposMarcados((prev) => ({ ...prev, [campo]: !prev[campo] }));
@@ -858,9 +811,6 @@ export default function BasicInfoSection({
       atualizacoes.ediPais = iaSugestao.editora_pais;
     }
 
-    if (marcados.categoria_sugerida && iaSugestao.categoria_sugerida) {
-      atualizacoes.idCategoria = await resolverCategoria(iaSugestao.categoria_sugerida);
-    }
     if (marcados.genero_sugerido && iaSugestao.genero_sugerido) {
       atualizacoes.idGenero = await resolverGenero(iaSugestao.genero_sugerido);
     }
@@ -873,7 +823,7 @@ export default function BasicInfoSection({
 
     setIaSugestao(null);
     setIaCamposMarcados({});
-  }, [iaSugestao, iaCamposMarcados, resolverAutor, resolverCategoria, resolverGenero, onFieldChange, onCamposAutoFillIA, form.livAutor]);
+  }, [iaSugestao, iaCamposMarcados, resolverAutor, resolverGenero, onFieldChange, onCamposAutoFillIA, form.livAutor]);
 
   return (
     <>
@@ -1138,46 +1088,6 @@ export default function BasicInfoSection({
             )}
           </div>
 
-          {/* CATEGORIA */}
-          <div className={fieldClass("idCategoria", highlightedFields)} style={{ marginTop: "12px" }}>
-            <span>Categoria <AutoTag name="idCategoria" highlightedFields={highlightedFields} /></span>
-            {criandoCategoria ? (
-              <div className="inline-create-row">
-                <input
-                  autoFocus
-                  value={novaCategoria}
-                  onChange={(e) => setNovaCategoria(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCriarCategoria()}
-                  placeholder="Nome da nova categoria"
-                />
-                <button type="button" className="inline-create-confirm" onClick={handleCriarCategoria}>
-                  Confirmar
-                </button>
-                <button type="button" className="inline-create-cancel" onClick={() => setCriandoCategoria(false)}>
-                  Cancelar
-                </button>
-              </div>
-            ) : (
-              <div className="inline-select-row">
-                <SearchableSelect
-                  name="idCategoria"
-                  value={form.idCategoria}
-                  options={categorias.map((cat) => ({ value: cat.idCategoria, label: cat.catNome }))}
-                  onChange={(val) => onFieldChange("idCategoria", val)}
-                  placeholder="Selecione uma categoria"
-                />
-                <button
-                  type="button"
-                  className="inline-create-btn"
-                  title="Criar nova categoria"
-                  onClick={() => { setNovaCategoria(""); setCriandoCategoria(true); }}
-                >
-                  <HiOutlinePlus />
-                </button>
-              </div>
-            )}
-          </div>
-
           <label className={fieldClass("livDescricao", highlightedFields)} style={{ marginTop: "12px" }}>
             <span>Descrição <AutoTag name="livDescricao" highlightedFields={highlightedFields} /></span>
             <textarea
@@ -1324,7 +1234,6 @@ export default function BasicInfoSection({
               { campo: "ano_publicacao", label: "Ano", valor: iaSugestao.ano_publicacao, campoFormulario: "livAnoPublicacao" },
               { campo: "paginas", label: "Páginas", valor: iaSugestao.paginas, campoFormulario: "livPaginas" },
               { campo: "idioma", label: "Idioma", valor: iaSugestao.idioma, campoFormulario: "livIdioma" },
-              { campo: "categoria_sugerida", label: "Categoria", valor: iaSugestao.categoria_sugerida, campoFormulario: "idCategoria" },
               { campo: "genero_sugerido", label: "Gênero", valor: iaSugestao.genero_sugerido, campoFormulario: "idGenero" },
               { campo: "faixa_etaria", label: "Faixa etária", valor: iaSugestao.faixa_etaria },
               {

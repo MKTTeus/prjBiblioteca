@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_professor, get_admin_id
+from core import datetime_utc, get_professor, get_admin_id, utc_now
 from schemas import EmprestimoProfessorCreate, DevolucaoProfessor
 from routers.emprestimos import get_config_map, get_config_days
 
@@ -28,16 +28,20 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
     query = (
         supabase.table("Movimentacao")
         .select("*")
-        .eq("idAdmin", id_admin_professor)
         .not_.is_("movFinalidade", "null")
     )
     if id_movimentacao is not None:
         query = query.eq("idMovimentacao", id_movimentacao)
     movimentacoes = query.execute().data or []
+    movimentacoes = [
+        m for m in movimentacoes
+        if m.get("idAdminProfessor") == id_admin_professor
+        or (not m.get("idAdminProfessor") and m.get("idAdmin") == id_admin_professor)
+    ]
     if not movimentacoes:
         return []
 
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
     mov_ids = [m["idMovimentacao"] for m in movimentacoes]
 
     itens = supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", mov_ids).execute().data or []
@@ -64,6 +68,8 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
         data_prevista_mov = None
         tem_ativo = False
         tem_atrasado = False
+        tem_pendente = False
+        tem_aprovado = False
         total_devolvidos = 0
 
         for it in mov_itens:
@@ -78,23 +84,38 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
             })
             status_item = (it.get("itemStatus") or "").lower()
             data_prev = it.get("dataPrevistaDevolucao")
+            if status_item in ("pendente", "aprovado"):
+                tem_pendente = tem_pendente or status_item == "pendente"
+                tem_aprovado = tem_aprovado or status_item == "aprovado"
             if data_prev and not data_prevista_mov:
                 data_prevista_mov = data_prev
 
             if status_item == "devolvido":
                 entrada["devolvidos"] += 1
                 total_devolvidos += 1
+            elif status_item in ("pendente", "aprovado"):
+                entrada.setdefault("pendentes", 0)
+                entrada["pendentes"] += 1
             else:
                 entrada["ativos"] += 1
                 tem_ativo = True
                 if data_prev:
                     try:
-                        if datetime.fromisoformat(data_prev).date() < hoje:
+                        if datetime_utc(data_prev).date() < hoje:
                             tem_atrasado = True
                     except Exception:
                         pass
 
-        if mov.get("movStatus") == "Devolvido" or not tem_ativo:
+        mov_status = (mov.get("movStatus") or "").lower()
+        if mov_status == "pendente" or tem_pendente:
+            status = "Pendente"
+        elif mov_status == "aprovado" or tem_aprovado:
+            status = "Aguardando retirada"
+        elif mov_status in ("negado", "rejeitado"):
+            status = "Negado"
+        elif mov_status == "expirado":
+            status = "Expirada"
+        elif mov.get("movStatus") == "Devolvido" or not tem_ativo:
             status = "Devolvido"
         elif tem_atrasado:
             status = "Atrasado"
@@ -102,7 +123,10 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
             status = "Ativo"
 
         livros_list = list(por_livro.values())
-        total_exemplares = sum(l["ativos"] + l["devolvidos"] for l in livros_list)
+        total_exemplares = sum(
+            l["ativos"] + l["devolvidos"] + l.get("pendentes", 0)
+            for l in livros_list
+        )
 
         resultado.append({
             "idMovimentacao": mov["idMovimentacao"],
@@ -115,6 +139,8 @@ def _montar_emprestimos_professor(id_admin_professor: int, id_movimentacao: int 
             "totalLivros": len(livros_list),
             "totalExemplares": total_exemplares,
             "totalDevolvidos": total_devolvidos,
+            "statusConfirmacao": mov.get("status_confirmacao") or "PENDENTE",
+            "dataConfirmacao": mov.get("data_confirmacao"),
             "livros": livros_list,
         })
 
@@ -191,7 +217,7 @@ def criar_emprestimo_professor(data: EmprestimoProfessorCreate, professor=Depend
     if not id_admin:
         raise HTTPException(status_code=404, detail="Professor não encontrado")
 
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
     configs = get_config_map()
     dias = get_config_days(configs)
     vencimento = (hoje + timedelta(days=dias)).isoformat()
@@ -228,7 +254,7 @@ def criar_emprestimo_professor(data: EmprestimoProfessorCreate, professor=Depend
             ids_a_reservar = disponiveis_ids[:quantidade]
             reservado_resp = (
                 supabase.table("Exemplar")
-                .update({"exeLivStatus": "Emprestado"})
+                .update({"exeLivStatus": "Reservado"})
                 .in_("idExemplar", ids_a_reservar)
                 .eq("exeLivStatus", "Disponível")
                 .execute()
@@ -244,16 +270,25 @@ def criar_emprestimo_professor(data: EmprestimoProfessorCreate, professor=Depend
             claimed_ids.extend(ids_a_reservar)
             itens_confirmados.append({"idLivro": id_livro, "exemplares": ids_a_reservar})
 
+        # Professor não recebe o empréstimo diretamente: a operação nasce como
+        # solicitação pendente e só vira empréstimo ativo após aprovação e retirada
+        # registradas por um administrador da equipe gestora.
+        admin_placeholder = supabase.table("Administrador").select("idAdmin").limit(1).execute()
+        if not admin_placeholder.data:
+            raise HTTPException(status_code=500, detail="Nenhum administrador cadastrado no sistema")
+
         novo_mov = {
-            "idAdmin": id_admin,
+            "idAdmin": admin_placeholder.data[0]["idAdmin"],
+            "idAdminProfessor": id_admin,
             "idUsuario": None,
-            "movTipo": "EMPRESTIMO",
-            "movStatus": "Ativo",
+            "movTipo": "SOLICITACAO",
+            "movStatus": "Pendente",
             "movDataSolicitacao": hoje.isoformat(),
-            "movDataEmprestimo": hoje.isoformat(),
+            "movDataEmprestimo": None,
             "movFinalidade": finalidade,
             "movTurma": data.turma.strip() if finalidade == "TURMA" and data.turma else None,
             "movSerie": data.serie.strip() if finalidade == "TURMA" and data.serie else None,
+            "status_confirmacao": "PENDENTE",
         }
         mov_resp = supabase.table("Movimentacao").insert(novo_mov).execute()
         if not mov_resp.data:
@@ -265,7 +300,7 @@ def criar_emprestimo_professor(data: EmprestimoProfessorCreate, professor=Depend
                 "idMovimentacao": id_mov,
                 "idExemplar": id_exemplar,
                 "dataPrevistaDevolucao": vencimento,
-                "itemStatus": "Ativo",
+                "itemStatus": "Pendente",
                 "renovacoes": 0,
             }
             for item in itens_confirmados
@@ -284,6 +319,8 @@ def criar_emprestimo_professor(data: EmprestimoProfessorCreate, professor=Depend
             "totalLivros": len(itens_confirmados),
             "totalExemplares": len(claimed_ids),
             "dataDevolucao": vencimento,
+            "status": "Pendente",
+            "statusConfirmacao": "PENDENTE",
         }
     except HTTPException:
         _liberar_exemplares(claimed_ids)
@@ -304,7 +341,7 @@ def devolver_emprestimo_professor(idMovimentacao: int, data: DevolucaoProfessor,
     if not mov_resp.data:
         raise HTTPException(status_code=404, detail="Empréstimo não encontrado")
     mov = mov_resp.data[0]
-    if mov.get("idAdmin") != id_admin or not mov.get("movFinalidade"):
+    if (mov.get("idAdminProfessor") or mov.get("idAdmin")) != id_admin or not mov.get("movFinalidade"):
         raise HTTPException(status_code=403, detail="Este empréstimo não pertence a você")
 
     if not data.itens:
@@ -348,7 +385,7 @@ def devolver_emprestimo_professor(idMovimentacao: int, data: DevolucaoProfessor,
             )
         ids_para_devolver.extend(disponiveis_ativos[:quantidade])
 
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
 
     supabase.table("MovimentacaoExemplar").update({
         "dataDevolucao": hoje.isoformat(),

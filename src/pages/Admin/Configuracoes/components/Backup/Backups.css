@@ -176,6 +176,24 @@
 
 .bk-col-size  { white-space: nowrap; color: var(--text-label); }
 .bk-col-date  { white-space: nowrap; }
+.bk-col-type  { white-space: nowrap; }
+
+.bk-badge-type {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--surface-border, #e5e7eb);
+  border-radius: 20px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-label, #6b7280);
+  background: var(--main-bg, #f9fafb);
+}
+.bk-badge-type--recovery {
+  color: #b45309;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
 
 .bk-col-nome span {
   overflow: hidden;
@@ -487,11 +505,13 @@
 /* ── Largura das colunas ─────────────────────────────────────────────────── */
 .bk-table colgroup col:nth-child(1) { width: auto; }
 .bk-table th:nth-child(2),
-.bk-table td:nth-child(2) { width: 90px; }
+.bk-table td:nth-child(2) { width: 110px; }
 .bk-table th:nth-child(3),
-.bk-table td:nth-child(3) { width: 130px; }
+.bk-table td:nth-child(3) { width: 90px; }
 .bk-table th:nth-child(4),
-.bk-table td:nth-child(4) { width: 170px; }
+.bk-table td:nth-child(4) { width: 130px; }
+.bk-table th:nth-child(5),
+.bk-table td:nth-child(5) { width: 170px; }
 
 .bk-col-nome span {
   overflow: hidden;

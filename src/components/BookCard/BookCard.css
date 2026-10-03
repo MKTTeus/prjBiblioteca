@@ -151,6 +151,28 @@
   min-height: 3.5em;
 }
 
+.shared-book-card__description-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shared-book-card__desc-link {
+  align-self: flex-start;
+  margin: 2px 0 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shared-book-card__desc-link:hover {
+  text-decoration: underline;
+}
+
 .shared-book-card__tags {
   display: flex;
   flex-wrap: wrap;
@@ -401,4 +423,137 @@
   color: #047857;
   border-color: #6ee7b7;
   opacity: 1;
+}
+
+/* ── Modal de descrição completa ─────────────────────────────────── */
+/* z-index bem acima de tudo no app (Toast: 9999, ConfirmModal: 10000) */
+.modal-overlay:has(.book-description-modal) {
+  z-index: 10050;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.book-description-modal.modal-content {
+  width: 560px;
+  max-width: 100%;
+  max-height: min(640px, 88vh);
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.book-description-modal__header {
+  display: flex;
+  gap: 16px;
+  padding-right: 22px;
+}
+
+.book-description-modal__header img {
+  width: 84px;
+  height: 126px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+  flex-shrink: 0;
+}
+
+.book-description-modal__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.book-description-modal__info h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.35;
+  color: var(--text-default);
+}
+
+.book-description-modal__author {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.book-description-modal__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: var(--text-subtle, #6b7280);
+  font-size: 0.8rem;
+}
+
+.book-description-modal__meta svg {
+  flex-shrink: 0;
+  font-size: 14px;
+}
+
+.book-description-modal__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.book-description-modal__tags span {
+  background: var(--primary-muted);
+  color: var(--primary-strong);
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.book-description-modal__divider {
+  height: 1px;
+  background: var(--surface-border);
+  margin: 18px 0 16px;
+  flex-shrink: 0;
+}
+
+.book-description-modal__body {
+  overflow-y: auto;
+  padding-right: 6px;
+  margin-right: -6px;
+}
+
+.book-description-modal__body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.book-description-modal__body::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.14);
+  border-radius: 999px;
+}
+
+.book-description-modal__text {
+  margin: 0;
+  color: var(--text-default);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+  .book-description-modal.modal-content {
+    padding: 22px 18px 18px;
+  }
+
+  .book-description-modal__header {
+    padding-right: 16px;
+  }
+
+  .book-description-modal__header img {
+    width: 64px;
+    height: 96px;
+  }
+
+  .book-description-modal__info h3 {
+    font-size: 1rem;
+  }
 }

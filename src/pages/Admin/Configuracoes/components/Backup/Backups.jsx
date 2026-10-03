@@ -3,7 +3,7 @@ import Select from "react-select";
 import {
   FiDownload, FiTrash2, FiRefreshCw, FiSave,
   FiDatabase, FiFileText, FiAlertCircle,
-  FiRotateCcw, FiChevronDown, FiChevronUp, FiLock,
+  FiRotateCcw, FiChevronDown, FiChevronUp, FiLock, FiEye, FiEyeOff,
 } from "react-icons/fi";
 import {
   listarBackups, salvarBackup, 
@@ -57,10 +57,12 @@ export default function Backups() {
   const [downloadingId, setDownloadingId] = useState(null);
   const [expandedRow, setExpandedRow]   = useState(null);
   const [frequenciaBackup, setFrequenciaBackup] = useState("diario");
+  const [retencaoSegurancaHoras, setRetencaoSegurancaHoras] = useState(48);
 
   // Restore modal state
   const [confirmRestore, setConfirmRestore] = useState(null); // nome do arquivo
   const [restoreSenha, setRestoreSenha]     = useState("");
+  const [showRestoreSenha, setShowRestoreSenha] = useState(false);
   const [restoreErro, setRestoreErro]       = useState("");
   const [restaurando, setRestaurando]       = useState(false);
 
@@ -75,6 +77,7 @@ export default function Backups() {
     try {
       const res = await listarBackups();
       setBackups(res.backups || []);
+      setRetencaoSegurancaHoras(res.retencao_seguranca_horas || 48);
     } catch {
       setErro("Não foi possível carregar a lista de backups.");
     } finally {
@@ -203,6 +206,17 @@ export default function Backups() {
         </div>
       )}
 
+      <div className="bk-info-banner">
+        <FiAlertCircle className="bk-info-icon" />
+        <div>
+          <strong>Backup normal:</strong> é criado pelo agendamento ou pelo botão “Gerar Backup” e fica disponível para restauração.
+          <br />
+          <strong>Backup de recuperação:</strong> é criado automaticamente antes de uma restauração para proteger o estado atual; fica recuperável por {retencaoSegurancaHoras} horas e é removido automaticamente na próxima rotina de backup após esse prazo.
+          <br />
+          <strong>Atenção:</strong> restaurar substitui o banco pelo estado escolhido e pode apagar dados criados depois daquele backup.
+        </div>
+      </div>
+
       {/* Header */}
       <div className="bk-header">
         <div className="bk-header-text">
@@ -271,6 +285,7 @@ export default function Backups() {
               <thead>
                 <tr>
                   <th>Arquivo</th>
+                  <th>Tipo</th>
                   <th>Tamanho</th>
                   <th>Registros</th>
                   <th>Gerado em</th>
@@ -281,11 +296,20 @@ export default function Backups() {
                 {backups.map((b) => (
                   <React.Fragment key={b.nome}>
                     <tr className="bk-row">
-                      <td className="bk-col-nome">
+                       <td className="bk-col-nome">
                         <FiFileText className="bk-file-icon" />
                         <span>{b.nome}</span>
-                      </td>
-                      <td className="bk-col-size">{formatBytes(b.tamanho)}</td>
+                       </td>
+                       <td className="bk-col-type">
+                         {b.tipo === "recuperacao" ? (
+                           <span className="bk-badge-type bk-badge-type--recovery" title={`Expira em ${formatDate(b.expira_em)}`}>
+                             Recuperação
+                           </span>
+                         ) : (
+                           <span className="bk-badge-type">Normal</span>
+                         )}
+                       </td>
+                       <td className="bk-col-size">{formatBytes(b.tamanho)}</td>
                       <td className="bk-col-records">
                         {b.total_registros != null ? (
                           <span className="bk-badge-records">
@@ -337,7 +361,7 @@ export default function Backups() {
                     {/* Expanded: contagem por tabela */}
                     {expandedRow === b.nome && b.contagem_tabelas && (
                       <tr className="bk-row-expanded">
-                        <td colSpan={5}>
+                        <td colSpan={6}>
                           <div className="bk-tabelas-grid">
                             {Object.entries(b.contagem_tabelas)
                               .filter(([, v]) => v > 0)
@@ -381,16 +405,16 @@ export default function Backups() {
             <FiRotateCcw className="bk-modal-icon bk-modal-icon--restore" size={30} />
             <h3>Restaurar banco de dados?</h3>
             <p>
-              Todos os dados atuais serão <strong>sobrescritos</strong> pelos dados do arquivo:
+              Todos os dados atuais serão <strong>substituídos</strong> pelos dados do arquivo. Registros criados após este backup podem ser apagados:
             </p>
             <div className="bk-restore-filename">{confirmRestore}</div>
             <p className="bk-restore-warning">
-              <FiAlertCircle size={14} /> Esta ação não pode ser desfeita. Confirme com sua senha de administrador.
+              <FiAlertCircle size={14} /> Um backup de recuperação será criado antes de continuar, mas esta ação pode apagar dados. Confirme com sua senha de administrador.
             </p>
             <div className="bk-password-field">
               <FiLock className="bk-lock-icon" />
               <input
-                type="password"
+                type={showRestoreSenha ? "text" : "password"}
                 placeholder="Senha do administrador"
                 value={restoreSenha}
                 onChange={e => { setRestoreSenha(e.target.value); setRestoreErro(""); }}
@@ -398,6 +422,16 @@ export default function Backups() {
                 autoFocus
                 disabled={restaurando}
               />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowRestoreSenha(v => !v)}
+                disabled={restaurando}
+                aria-label={showRestoreSenha ? "Ocultar senha" : "Mostrar senha"}
+                tabIndex={-1}
+              >
+                {showRestoreSenha ? <FiEyeOff /> : <FiEye />}
+              </button>
             </div>
             {restoreErro && <div className="bk-field-error"><FiAlertCircle size={13}/> {restoreErro}</div>}
             <div className="bk-modal-actions">

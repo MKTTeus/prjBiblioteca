@@ -101,7 +101,6 @@ const BookList = () => {
               />
               <h3>{book.livTitulo}</h3>
               <p>{book.livAutor}</p>
-              <p><strong>Categoria:</strong> {book.idCategoria}</p>
               <p><strong>Gênero:</strong> {book.idGenero}</p>
               <div className="card-actions">
                 <button className="btn-edit" onClick={() => handleEdit(book)}>Editar</button>

@@ -1,7 +1,7 @@
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import Depends, HTTPException
@@ -84,6 +84,49 @@ def invalidate_token_version_cache(table: str, email: str) -> None:
         del _TOKEN_VERSION_CACHE[key]
 
 
+TAMANHO_LOTE_SUPABASE = 100
+
+
+def utc_now() -> datetime:
+    """Retorna o instante atual como datetime aware em UTC."""
+    return datetime.now(timezone.utc)
+
+
+def datetime_utc(value: str | datetime) -> datetime:
+    """Normaliza timestamps do banco (com ou sem timezone) para UTC aware."""
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00")) if isinstance(value, str) else value
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def buscar_todos(criar_consulta) -> list:
+    """Busca TODAS as linhas de uma consulta Supabase, paginando em blocos de
+    TAMANHO_LOTE_SUPABASE via .range().
+
+    Necessário porque o projeto Supabase tem um limite de linhas por
+    requisição (Max Rows, configurado no painel do Supabase em
+    Settings > API): qualquer .execute() sem paginação explícita é truncado
+    nesse limite, mesmo que existam mais linhas atendendo ao filtro — sem
+    erro nenhum, o `.data` simplesmente vem incompleto.
+
+    `criar_consulta` deve ser uma função sem argumentos que retorna um query
+    builder do Supabase ainda não executado (ex.: lambda: supabase.table(...)
+    .select(...).eq(...)), para que possamos encadear `.range()` nele antes
+    de chamar `.execute()`.
+    """
+    registros = []
+    inicio = 0
+    while True:
+        resposta = criar_consulta().range(inicio, inicio + TAMANHO_LOTE_SUPABASE - 1).execute()
+        pagina = resposta.data or []
+        registros.extend(pagina)
+        if len(pagina) < TAMANHO_LOTE_SUPABASE:
+            break
+        inicio += TAMANHO_LOTE_SUPABASE
+    return registros
+
+
 def executar_em_paralelo(*funcoes):
     if not funcoes:
         return []
@@ -161,7 +204,7 @@ def validar_cpf(cpf: Optional[str]) -> bool:
 
 def create_token(data: dict, token_version: int = 1) -> str:
     minutes = get_session_timeout_minutes()
-    expire = datetime.utcnow() + timedelta(minutes=minutes)
+    expire = utc_now() + timedelta(minutes=minutes)
     data.update({"exp": expire, "tv": token_version})
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -241,16 +284,6 @@ def get_admin_ou_professor(token: str = Depends(oauth2_scheme)):
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Token inválido ou expirado")
-
-
-def get_optional_user(token: Optional[str] = Depends(oauth2_scheme)):
-    if not token:
-        return None
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except JWTError:
-        return None
 
 
 def get_user(token: str = Depends(oauth2_scheme)):

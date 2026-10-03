@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   HiOutlineBookOpen,
   HiOutlineCalendar,
@@ -14,6 +14,7 @@ import {
   HiOutlineMinus,
   HiOutlinePlus,
 } from "react-icons/hi";
+import Modal from "../Modal/Modal";
 import "./BookCard.css";
 
 function getBookStatus(book) {
@@ -68,7 +69,6 @@ function getBookCode(book) {
 
 export default function BookCard({
   book,
-  categoryName,
   genreName,
   isAdmin = false,
   onEdit,
@@ -99,7 +99,8 @@ export default function BookCard({
   const status = getBookStatus(book);
   const locationText = getLocationText(book);
   const tombo = getBookCode(book);
-  const tags = [categoryName || book?.categoria, genreName || book?.genero].filter(Boolean);
+  const tags = [genreName || book?.genero].filter(Boolean);
+  const [mostrarDescricao, setMostrarDescricao] = useState(false);
 
   const REQUEST_STATUS_LABEL = {
     pendente: "Solicitado — Aguardando aprovação",
@@ -138,7 +139,16 @@ export default function BookCard({
             </p>
           </div>
 
-          <p className="shared-book-card__description">{descricao}</p>
+          <div className="shared-book-card__description-wrap">
+            <p className="shared-book-card__description">{descricao}</p>
+            <button
+              type="button"
+              className="shared-book-card__desc-link"
+              onClick={() => setMostrarDescricao(true)}
+            >
+              Ler descrição completa
+            </button>
+          </div>
 
           {tags.length > 0 && (
             <div className="shared-book-card__tags">
@@ -283,6 +293,33 @@ export default function BookCard({
           </div>
         )}
       </div>
+
+      <Modal
+        show={mostrarDescricao}
+        onClose={() => setMostrarDescricao(false)}
+        className="book-description-modal"
+      >
+        <div className="book-description-modal__header">
+          <img src={capa} alt={titulo} onError={(e) => { e.target.src = "/placeholder.png"; }} />
+          <div className="book-description-modal__info">
+            <h3>{titulo}</h3>
+            <p className="book-description-modal__author">{autor}</p>
+            <p className="book-description-modal__meta">
+              <HiOutlineCalendar />
+              <span>{ano}{paginas ? ` · ${paginas} págs.` : ""}</span>
+            </p>
+            {tags.length > 0 && (
+              <div className="book-description-modal__tags">
+                {tags.map((tag) => <span key={tag}>{tag}</span>)}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="book-description-modal__divider" />
+        <div className="book-description-modal__body">
+          <p className="book-description-modal__text">{descricao}</p>
+        </div>
+      </Modal>
     </div>
   );
 }

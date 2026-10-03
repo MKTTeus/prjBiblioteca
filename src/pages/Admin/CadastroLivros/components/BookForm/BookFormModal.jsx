@@ -3,14 +3,12 @@ import {
   addExemplares,
   createBook,
   getBook,
-  getCategorias,
   getGeneros,
   getAutores,
   getEditoras,
   updateBook,
   updateExemplar,
   uploadCover,
-  createCategoria,
   createGenero,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX, HiOutlineBookOpen, HiOutlineOfficeBuilding, HiOutlineClipboardList } from "react-icons/hi";
@@ -33,7 +31,7 @@ function normalizeText(value = "") {
 
 // Distância de Levenshtein simples (número mínimo de inserções/remoções/
 // substituições para transformar uma string na outra) — usada para detectar
-// nomes de autor/gênero/categoria parecidos (não idênticos) e sugerir ao
+// nomes de autor/gênero parecidos (não idênticos) e sugerir ao
 // admin reaproveitar o já cadastrado em vez de criar uma entrada duplicada.
 function levenshtein(a, b) {
   const m = a.length;
@@ -73,7 +71,7 @@ function similaridadeTexto(a, b) {
 // qualquer palavra curta tende a "parecer" com outra por acaso.
 const LIMIAR_SIMILARIDADE = 0.72;
 
-// Procura, numa lista de categorias/gêneros/autores já cadastrados, um item
+// Procura, numa lista de gêneros/autores já cadastrados, um item
 // cujo nome seja parecido (mas não idêntico — isso já é tratado à parte)
 // com o nome informado. Devolve o item mais parecido acima do limiar, ou
 // null se nenhum for parecido o bastante.
@@ -97,13 +95,11 @@ function encontrarNomeParecido(nome, lista, chaveNome) {
 }
 
 const CAMPO_NOME_POR_TIPO = {
-  categoria: "catNome",
   genero: "genNome",
   autor: "autNome",
 };
 
 const LABEL_POR_TIPO = {
-  categoria: "categoria",
   genero: "gênero",
   autor: "autor",
 };
@@ -151,7 +147,6 @@ const DEFAULT_FORM = {
   livIdioma: "",
   livFaixaEtaria: "",
   livPalavrasChave: "",
-  idCategoria: "",
   idGenero: "",
   exemplarISBN: "",
   livCDD: "",
@@ -167,7 +162,7 @@ const DEFAULT_FORM = {
 
 // Campos de texto que podem vir de uma busca por ISBN (usado para limpar
 // dados de uma busca anterior quando uma nova busca não os retorna — ver
-// handlePreencherISBN). idCategoria/idGenero são tratados à parte, pois têm
+// handlePreencherISBN). idGenero é tratado à parte, pois tem
 // lógica de conversão numérica própria.
 const ISBN_FILLABLE_FIELDS = [
   "livTitulo",
@@ -204,7 +199,6 @@ const CAMPOS_OPCIONAIS_PARA_CONFIRMACAO = [
   { key: "livIdioma", label: "Idioma" },
   { key: "livFaixaEtaria", label: "Faixa etária" },
   { key: "livPalavrasChave", label: "Palavras-chave" },
-  { key: "idCategoria", label: "Categoria" },
   { key: "idGenero", label: "Gênero" },
   { key: "exemplarISBN", label: "ISBN" },
   { key: "livEdicao", label: "Edição" },
@@ -221,7 +215,7 @@ function obterCamposEmBranco(form) {
   });
 }
 
-// Prefixo usado para identificar, dentro do próprio form, uma categoria/gênero
+// Prefixo usado para identificar, dentro do próprio form, um gênero
 // que ainda não existe no banco — só é persistido de fato ao salvar o livro.
 const PENDING_PREFIX = "novo:";
 
@@ -249,7 +243,6 @@ const DEFAULT_EDIT_ADD_CONFIG = {
 
 export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const { addToast } = useToast();
-  const [categorias, setCategorias] = useState([]);
   const [generos, setGeneros] = useState([]);
   const [autores, setAutores] = useState([]);
   const [editoras, setEditoras] = useState([]);
@@ -265,7 +258,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   const [confirmandoCamposEmBranco, setConfirmandoCamposEmBranco] = useState(false);
   const [camposEmBrancoDetectados, setCamposEmBrancoDetectados] = useState([]);
 
-  // Guarda a sugestão de possível duplicata (autor/gênero/categoria) em
+  // Guarda a sugestão de possível duplicata (autor/gênero) em
   // análise no momento, para exibir o modal de confirmação pedindo ao admin
   // que decida entre reaproveitar o item já existente ou manter o novo.
   const [duplicidadeSugestao, setDuplicidadeSugestao] = useState(null);
@@ -360,7 +353,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         livIdioma: livro.livIdioma || "",
         livFaixaEtaria: livro.livFaixaEtaria || "",
         livPalavrasChave: livro.livPalavrasChave || "",
-        idCategoria: livro.idCategoria || 1,
         idGenero: livro.idGenero || 1,
         exemplarISBN: livro.livISBN || livro.exemplarISBN || livro.exeLivISBN || "",
         livCDD: livro.livCDD || "",
@@ -390,8 +382,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 
   const carregarMetadados = useCallback(async () => {
     try {
-      const [cats, gens, auts, eds] = await Promise.all([getCategorias(), getGeneros(), getAutores(), getEditoras()]);
-      setCategorias(cats || []);
+      const [gens, auts, eds] = await Promise.all([getGeneros(), getAutores(), getEditoras()]);
       setGeneros(gens || []);
       setAutores(auts || []);
       setEditoras(eds || []);
@@ -413,7 +404,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     setForm((prev) => ({
       ...prev,
       [name]:
-        (name === "idCategoria" || name === "idGenero") && !isPendingId(value)
+        name === "idGenero" && !isPendingId(value)
           ? value === "" || value === null || value === undefined
             ? ""
             : Number(value)
@@ -491,20 +482,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     setSeHouver("ediPais", dados.ediPais);
     setSeHouver("exemplarISBN", dados.exemplarISBN);
 
-    if (isbnFilledFields.has("idCategoria") && (dados.idCategoria === "" || dados.idCategoria === null || dados.idCategoria === undefined)) {
-      next.idCategoria = DEFAULT_FORM.idCategoria;
-    }
     if (isbnFilledFields.has("idGenero") && (dados.idGenero === "" || dados.idGenero === null || dados.idGenero === undefined)) {
       next.idGenero = DEFAULT_FORM.idGenero;
     }
 
-    if (dados.idCategoria !== "" && dados.idCategoria !== null && dados.idCategoria !== undefined) {
-      const valorCategoria = isPendingId(dados.idCategoria) ? dados.idCategoria : Number(dados.idCategoria);
-      if (valorCategoria !== form.idCategoria) {
-        next.idCategoria = valorCategoria;
-        camposAlterados.push("idCategoria");
-      }
-    }
     if (dados.idGenero !== "" && dados.idGenero !== null && dados.idGenero !== undefined) {
       const valorGenero = isPendingId(dados.idGenero) ? dados.idGenero : Number(dados.idGenero);
       if (valorGenero !== form.idGenero) {
@@ -563,40 +544,13 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     return erros;
   }
 
-  // Persiste de fato, no backend, qualquer categoria/gênero que ainda esteja
+  // Persiste de fato, no backend, qualquer gênero que ainda esteja
   // pendente (id no formato "novo:Nome"), e devolve o form já com os ids
-  // reais. É só aqui — no momento de salvar o livro — que esses registros
-  // passam a existir no banco; se o usuário cancelar antes disso, nada foi
+  // reais. É só aqui — no momento de salvar o livro — que esse registro
+  // passa a existir no banco; se o usuário cancelar antes disso, nada foi
   // gravado por causa de um nome digitado errado.
   async function resolverPendencias(formAtual) {
     const resolvido = { ...formAtual };
-
-    if (isPendingId(resolvido.idCategoria)) {
-      const nome = pendingNomeFrom(resolvido.idCategoria);
-      try {
-        const criada = await createCategoria({ catNome: nome });
-        setCategorias((prev) => [
-          ...prev.filter((item) => item.idCategoria !== resolvido.idCategoria),
-          criada,
-        ]);
-        resolvido.idCategoria = criada.idCategoria;
-      } catch (err) {
-        if (err?.status === 409) {
-          const catsAtualizadas = await getCategorias();
-          setCategorias(catsAtualizadas || []);
-          const existente = (catsAtualizadas || []).find(
-            (item) => normalizeText(item.catNome) === normalizeText(nome)
-          );
-          if (existente) {
-            resolvido.idCategoria = existente.idCategoria;
-          } else {
-            throw err;
-          }
-        } else {
-          throw err;
-        }
-      }
-    }
 
     if (isPendingId(resolvido.idGenero)) {
       const nome = pendingNomeFrom(resolvido.idGenero);
@@ -700,8 +654,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       try {
         formResolvido = await resolverPendencias(form);
       } catch (err) {
-        console.error("Erro ao criar categoria/gênero pendente:", err);
-        addToast("Falha ao criar categoria/gênero pendente. Tente novamente.", "error");
+        console.error("Erro ao criar gênero pendente:", err);
+        addToast("Falha ao criar gênero pendente. Tente novamente.", "error");
         return;
       }
       if (formResolvido !== form) {
@@ -802,7 +756,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   // cadastrado (parecido com o que está sendo digitado/preenchido via ISBN
   // ou IA) em vez de criar uma entrada nova possivelmente duplicada.
   // Devolve uma Promise<boolean> que só resolve quando o admin responder —
-  // as funções handleCriarCategoria/Genero/Autor abaixo já são async e
+  // as funções handleCriarGenero/Autor abaixo já são async e
   // aguardam essa resposta antes de decidir o que fazer.
   function perguntarSubstituicao(tipo, nomeDigitado, itemExistente) {
     return new Promise((resolve) => {
@@ -823,39 +777,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     setDuplicidadeSugestao(null);
   }
 
-  // Não cria nada no backend ainda — apenas registra a categoria como
-  // "pendente" localmente, com um id temporário. Ela só é persistida de
+  // Não cria nada no backend ainda — apenas registra o gênero como
+  // "pendente" localmente, com um id temporário. Ele só é persistido de
   // verdade em resolverPendencias(), disparado ao clicar em Salvar/Finalizar.
-  async function handleCriarCategoria(nome) {
-    const nomeLimpo = nome.trim();
-    const existente = categorias.find(
-      (item) => normalizeText(item.catNome) === normalizeText(nomeLimpo)
-    );
-    if (existente) return existente;
-
-    // Antes de criar algo novo, verifica se já existe uma categoria com
-    // nome parecido (possível duplicata/erro de digitação) e, se houver,
-    // pergunta ao admin se prefere reaproveitar a já cadastrada.
-    const parecida = encontrarNomeParecido(nomeLimpo, categorias, "catNome");
-    if (parecida) {
-      const usarExistente = await perguntarSubstituicao("categoria", nomeLimpo, parecida);
-      if (usarExistente) {
-        addToast(`Usando a categoria já cadastrada "${parecida.catNome}"`, "success");
-        return parecida;
-      }
-    }
-
-    const idCategoria = pendingIdFor(nomeLimpo);
-    const jaPendente = categorias.find((item) => item.idCategoria === idCategoria);
-    if (jaPendente) return jaPendente;
-
-    const pendente = { idCategoria, catNome: nomeLimpo, pendente: true };
-    setCategorias((prev) => [...prev, pendente]);
-    addToast(`Categoria "${nomeLimpo}" adicionada`, "success");
-    return pendente;
-  }
-
-  // Mesma lógica de pendência local da categoria, aplicada ao gênero.
+  // Mesma lógica de pendência local, aplicada ao gênero.
   async function handleCriarGenero(nome) {
     const nomeLimpo = nome.trim();
     const existente = generos.find(
@@ -960,7 +885,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                   </h3>
                   <BasicInfoSection
                     form={form}
-                    categorias={categorias}
                     generos={generos}
                     autores={autores}
                     highlightedFields={highlightedFields}
@@ -969,7 +893,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
                     onUpload={handleUpload}
                     onISBNAutoFill={handlePreencherISBN}
                     onCamposAutoFillIA={handleCamposAutoFillIA}
-                    onCriarCategoria={handleCriarCategoria}
                     onCriarGenero={handleCriarGenero}
                     onCriarAutor={handleCriarAutor}
                   />
@@ -1083,7 +1006,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
 export function normalizeBookForm(form = {}) {
   return {
     ...form,
-    idCategoria: form.idCategoria !== "" && form.idCategoria != null ? Number(form.idCategoria) : null,
     idGenero: form.idGenero !== "" && form.idGenero != null ? Number(form.idGenero) : null,
     livPaginas: form.livPaginas ? Number(form.livPaginas) : null,
     livAnoPublicacao: form.livAnoPublicacao ? Number(form.livAnoPublicacao) : null,

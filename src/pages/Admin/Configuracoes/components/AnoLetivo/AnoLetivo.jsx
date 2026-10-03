@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Calendar, Users, GraduationCap, AlertTriangle, Lock } from "lucide-react";
+import { Calendar, Users, GraduationCap, AlertTriangle, Lock, Eye, EyeOff } from "lucide-react";
 import { useToast } from "../../../../../contexts/ToastContext";
 import StatsCard from "../../../../../components/StatsCard/StatsCard";
 import { getAnoLetivo, encerrarAnoLetivo } from "../../../../../services/api";
@@ -14,6 +14,7 @@ export default function AnoLetivo() {
 
   const [showModal, setShowModal] = useState(false);
   const [senha, setSenha] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
   const [confirmacao, setConfirmacao] = useState("");
   const [processando, setProcessando] = useState(false);
 
@@ -139,13 +140,24 @@ export default function AnoLetivo() {
               <div className="al-input-wrap">
                 <Lock className="al-input-icon" size={15} />
                 <input
-                  type="password"
+                  type={showSenha ? "text" : "password"}
+                  data-has-toggle="true"
                   placeholder="Sua senha atual"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
                   disabled={processando}
                   autoFocus
                 />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowSenha((v) => !v)}
+                  disabled={processando}
+                  aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
+                  tabIndex={-1}
+                >
+                  {showSenha ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
               </div>
             </div>
 

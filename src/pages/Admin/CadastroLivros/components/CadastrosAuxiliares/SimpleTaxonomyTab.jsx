@@ -3,6 +3,8 @@ import { IoMdAdd } from "react-icons/io";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { useToast } from "../../../../../contexts/ToastContext";
 import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
+import Pagination from "../../../../../components/Pagination/Pagination";
+import usePagination from "../../../../../hooks/usePagination";
 import MergeModal from "./MergeModal";
 import { getErrorMessage } from "../../../../../utils/apiError";
 
@@ -10,14 +12,14 @@ import { getErrorMessage } from "../../../../../utils/apiError";
  * SimpleTaxonomyTab
  *
  * Tela genérica de gestão para taxonomias simples (nome único), usada tanto
- * por Categorias quanto por Gêneros. Cobre: criar, renomear (edição inline),
+ * por Gêneros quanto por Autores. Cobre: criar, renomear (edição inline),
  * excluir (bloqueado quando há livros vinculados) e mesclar/reatribuir
  * (transferir os livros de um item para outro antes de excluir).
  *
  * Props:
  *   titulo, singular, artigo ("a"/"o"), placeholderNovo
- *   nomeField — nome do campo de texto (ex.: "catNome")
- *   idField   — nome do campo de id (ex.: "idCategoria")
+ *   nomeField — nome do campo de texto (ex.: "genNome")
+ *   idField   — nome do campo de id (ex.: "idGenero")
  *   api       — { listar, criar, atualizar, excluir, getUso, mesclar }
  */
 export default function SimpleTaxonomyTab({
@@ -70,6 +72,8 @@ export default function SimpleTaxonomyTab({
   const itensFiltrados = itens.filter((item) =>
     (item[nomeField] || "").toLowerCase().includes(busca.toLowerCase().trim())
   );
+
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(itensFiltrados);
 
   function abrirCriacao() {
     setCriando(true);
@@ -270,7 +274,7 @@ export default function SimpleTaxonomyTab({
                 </td>
               </tr>
             ) : (
-              itensFiltrados.map((item) => {
+              paginaItens.map((item) => {
                 const isEditing = editandoId === item[idField];
                 return (
                   <tr key={item[idField]}>
@@ -344,6 +348,13 @@ export default function SimpleTaxonomyTab({
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onChange={irParaPagina}
+        totalItens={itensFiltrados.length}
+      />
 
       <ConfirmModal
         show={Boolean(pendingDelete)}

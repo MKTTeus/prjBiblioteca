@@ -12,6 +12,8 @@ import {
 } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
+import Pagination from "../../../components/Pagination/Pagination";
+import usePagination from "../../../hooks/usePagination";
 import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -327,6 +329,8 @@ const handleSalvar = async () => {
     );
   });
 
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(membrosFiltrados);
+
   return (
     <div className="comunidade-page page-shell">
       <div className="titulo">
@@ -441,7 +445,7 @@ const handleSalvar = async () => {
           </thead>
 
           <tbody>
-            {membrosFiltrados.map((membro) => (
+            {paginaItens.map((membro) => (
               <tr key={membro.idUsuario} className={selecionados.includes(membro.idUsuario) ? "row-selecionada" : ""}>
                 <td className="col-check">
                   <input
@@ -485,6 +489,13 @@ const handleSalvar = async () => {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onChange={irParaPagina}
+        totalItens={membrosFiltrados.length}
+      />
 
       <ComunidadeModal
         aberto={modalAberto}

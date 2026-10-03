@@ -315,9 +315,6 @@ export default function BookInfoModal({ book, onClose }) {
             <p><b>Editora:</b> {book.livEditora}</p>
             <p><b>Ano:</b> {book.livAnoPublicacao}</p>
             <p><b>Páginas:</b> {book.livPaginas}</p>
-            {book.livCategoria && (
-              <p><b>Categoria:</b> {book.livCategoria}</p>
-            )}
             {book.livGenero && (
               <p><b>Gênero:</b> {book.livGenero}</p>
             )}

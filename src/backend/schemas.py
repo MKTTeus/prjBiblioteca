@@ -5,7 +5,8 @@ from pydantic import BaseModel, EmailStr, Field
 
 
 class Login(BaseModel):
-    email: EmailStr
+    # Apesar do nome histórico do campo, ele também recebe RA ou CPF.
+    email: str = Field(min_length=1)
     senha: str
     UserType: str
 
@@ -105,6 +106,10 @@ class CompletarIARequest(BaseModel):
 
 class EmprestimoSolicitacao(BaseModel):
     idExemplar: int
+
+
+class SolicitacaoLivro(BaseModel):
+    idLivro: int
 
 class Emprestimo(BaseModel):
     idUsuario: int

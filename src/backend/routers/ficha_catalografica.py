@@ -1,13 +1,12 @@
 import json
 import os
-from datetime import datetime
 from typing import Optional, List
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from google import genai
 from google.genai import types
 from database import supabase
-from core import get_admin, executar_em_paralelo
+from core import executar_em_paralelo, get_admin, utc_now
 from routers.livros import enriquecer_livros
 from schemas import FichaCatalograficaUpdate
 
@@ -414,7 +413,7 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
         "ficCDDOrigem": cdd_origem,
         "ficGeradaPorIA": (cdd_origem == "ia"),
         "ficRevisada": False,
-        "ficDataGeracao": datetime.utcnow().isoformat(),
+        "ficDataGeracao": utc_now().isoformat(),
         "ficDataRevisao": None,
     }
     if ex_ficha.data:
@@ -452,7 +451,7 @@ def atualizar_ficha_catalografica(idLivro: int, data: FichaCatalograficaUpdate, 
     payload_upd = {
         "ficTexto": data.ficTexto,
         "ficRevisada": data.ficRevisada,
-        "ficDataRevisao": datetime.utcnow().isoformat()
+        "ficDataRevisao": utc_now().isoformat()
     }
     if data.ficCDD:
         payload_upd["ficCDD"] = data.ficCDD

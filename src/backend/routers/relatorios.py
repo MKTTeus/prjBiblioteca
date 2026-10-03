@@ -1,10 +1,9 @@
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Depends
 
 from database import supabase
-from core import get_admin, executar_em_paralelo
+from core import datetime_utc, get_admin, executar_em_paralelo, utc_now
 
 router = APIRouter()
 
@@ -25,7 +24,7 @@ def _buscar_itens_emprestimos(
     Compartilhada entre /relatorios/emprestimos (lista/ranking) e
     /relatorios/emprestimos/mensal (agregação por mês), pra manter a mesma
     regra de cálculo de status ('ativo'/'atrasado'/'devolvido') nos dois."""
-    hoje = datetime.utcnow().date()
+    hoje = utc_now().date()
 
     query = supabase.table("Movimentacao").select("*").eq("movTipo", "EMPRESTIMO")
     if dataInicio:
@@ -124,7 +123,7 @@ def _buscar_itens_emprestimos(
         elif item_status_lower == "ativo" or (not exemplar and mov_status_lower == "ativo"):
             if data_prevista:
                 try:
-                    if datetime.fromisoformat(data_prevista).date() < hoje:
+                    if datetime_utc(data_prevista).date() < hoje:
                         status_calc = "atrasado"
                     else:
                         status_calc = "ativo"
@@ -236,21 +235,30 @@ def relatorio_emprestimos_mensal(
     identificação do mês de pico. Também devolve os anos que têm
     movimentação registrada, para popular o seletor de ano letivo."""
     try:
-        ano = anoLetivo or datetime.utcnow().year
+        ano = anoLetivo or utc_now().year
 
-        todas_datas = (
-            supabase.table("Movimentacao")
-            .select("movDataEmprestimo")
-            .eq("movTipo", "EMPRESTIMO")
-            .execute()
-            .data
-            or []
-        )
-        anos_disponiveis = sorted({
-            int(str(d["movDataEmprestimo"])[:4])
-            for d in todas_datas
-            if d.get("movDataEmprestimo") and str(d["movDataEmprestimo"])[:4].isdigit()
-        }, reverse=True)
+        try:
+            anos_resp = supabase.rpc("listar_anos_emprestimos").execute()
+            anos_disponiveis = sorted({
+                int(row.get("ano"))
+                for row in (anos_resp.data or [])
+                if row.get("ano") is not None
+            }, reverse=True)
+        except Exception:
+            # Compatibilidade durante a implantação da migração 0018.
+            todas_datas = (
+                supabase.table("Movimentacao")
+                .select("movDataEmprestimo")
+                .eq("movTipo", "EMPRESTIMO")
+                .execute()
+                .data
+                or []
+            )
+            anos_disponiveis = sorted({
+                int(str(d["movDataEmprestimo"])[:4])
+                for d in todas_datas
+                if d.get("movDataEmprestimo") and str(d["movDataEmprestimo"])[:4].isdigit()
+            }, reverse=True)
         if ano not in anos_disponiveis:
             anos_disponiveis = sorted(set(anos_disponiveis + [ano]), reverse=True)
 
@@ -300,7 +308,7 @@ def relatorio_emprestimos_mensal(
     except Exception as e:
         print("Erro relatorio emprestimos mensal:", e)
         return {
-            "anoLetivo": anoLetivo or datetime.utcnow().year,
+            "anoLetivo": anoLetivo or utc_now().year,
             "anosDisponiveis": [],
             "meses": [{"mes": m, "label": MESES_LABEL[m - 1], "total": 0, "ativos": 0, "atrasados": 0, "devolvidos": 0} for m in range(1, 13)],
             "resumo": {"totalAno": 0, "mediaMensal": 0, "mesPico": None, "mesesComMovimento": 0},
@@ -351,15 +359,21 @@ def relatorio_atrasos(
     foram devolvidos só que fora do prazo — usado para histórico de atrasos
     por aluno e para identificar reincidentes."""
     try:
-        hoje = datetime.utcnow().date()
+        hoje = utc_now().date()
 
-        todos_itens = (
+        consulta_atrasos = (
             supabase.table("MovimentacaoExemplar")
-            .select("*")
-            .execute()
-            .data
-            or []
+            .select(
+                "idMovimentacao, idExemplar, dataPrevistaDevolucao, "
+                "dataDevolucao, itemStatus, renovacoes"
+            )
+            .lt("dataPrevistaDevolucao", hoje.isoformat())
         )
+        # O caminho padrão já elimina itens devolvidos no banco. O modo
+        # histórico mantém devoluções tardias para a comparação entre datas.
+        if apenasAtivos:
+            consulta_atrasos = consulta_atrasos.is_("dataDevolucao", "null")
+        todos_itens = consulta_atrasos.execute().data or []
 
         atrasados_raw = []
         for it in todos_itens:
@@ -367,7 +381,7 @@ def relatorio_atrasos(
             if not data_prevista:
                 continue
             try:
-                prevista_date = datetime.fromisoformat(data_prevista).date()
+                prevista_date = datetime_utc(data_prevista).date()
             except Exception:
                 continue
 
@@ -382,7 +396,7 @@ def relatorio_atrasos(
             if apenasAtivos:
                 continue
             try:
-                devolucao_date = datetime.fromisoformat(data_devolucao).date()
+                devolucao_date = datetime_utc(data_devolucao).date()
             except Exception:
                 continue
             if devolucao_date > prevista_date:
@@ -446,10 +460,10 @@ def relatorio_atrasos(
             devolvido_em_atraso = it.get("_devolvidoEmAtraso")
             try:
                 if devolvido_em_atraso:
-                    fim = datetime.fromisoformat(it.get("dataDevolucao")).date()
+                    fim = datetime_utc(it.get("dataDevolucao")).date()
                 else:
                     fim = hoje
-                dias_atraso = (fim - datetime.fromisoformat(data_prevista).date()).days
+                dias_atraso = (fim - datetime_utc(data_prevista).date()).days
             except Exception:
                 dias_atraso = 0
 
@@ -678,16 +692,14 @@ def relatorio_acervo_exemplares(
     usada para exemplares extraviados/danificados/baixados) e candidatos a
     descarte por ano de publicação."""
     try:
-        livros = (
+        consulta_livros = (
             supabase.table("Livro")
             .select("idLivro, livTitulo, livISBN, livAnoPublicacao, livAtivo")
             .eq("livAtivo", True)
-            .execute()
-            .data
-            or []
         )
         if anoMax is not None:
-            livros = [l for l in livros if l.get("livAnoPublicacao") and l["livAnoPublicacao"] <= anoMax]
+            consulta_livros = consulta_livros.lte("livAnoPublicacao", anoMax)
+        livros = consulta_livros.execute().data or []
 
         livro_ids = [l["idLivro"] for l in livros]
         if not livro_ids:

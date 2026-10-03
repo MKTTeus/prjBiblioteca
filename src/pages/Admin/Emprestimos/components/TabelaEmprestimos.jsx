@@ -1,4 +1,6 @@
 import EmprestimoRow from "./EmprestimoRow";
+import Pagination from "../../../../components/Pagination/Pagination";
+import usePagination from "../../../../hooks/usePagination";
 
 export default function TabelaEmprestimos({
   emprestimos,
@@ -7,6 +9,8 @@ export default function TabelaEmprestimos({
   onDevolver,
   onRenovar,
 }) {
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(emprestimos);
+
   return (
     <div className="emp-table-box">
       <div className="emp-table-header">
@@ -34,7 +38,7 @@ export default function TabelaEmprestimos({
               </td>
             </tr>
           ) : (
-            emprestimos.map((emprestimo) => (
+            paginaItens.map((emprestimo) => (
               <EmprestimoRow
                 key={emprestimo.idEmprestimo}
                 emprestimo={emprestimo}
@@ -47,6 +51,13 @@ export default function TabelaEmprestimos({
           )}
         </tbody>
       </table>
+
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onChange={irParaPagina}
+        totalItens={emprestimos.length}
+      />
     </div>
   );
 }

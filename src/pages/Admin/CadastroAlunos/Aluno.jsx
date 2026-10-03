@@ -5,6 +5,8 @@ import { Users, UserCheck, UserX, GraduationCap, Pencil, Trash2, Upload } from "
 import { getAlunos, createAluno, updateAluno, deleteAluno, excluirAlunosLote, atualizarStatusLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
+import Pagination from "../../../components/Pagination/Pagination";
+import usePagination from "../../../hooks/usePagination";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -445,6 +447,8 @@ const handleSalvar = async () => {
     );
   });
 
+  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(alunosFiltrados);
+
   function alternarVisualizacao() {
     setVerFormados((atual) => !atual);
     setSelecionados([]);
@@ -566,7 +570,7 @@ const handleSalvar = async () => {
           </thead>
 
           <tbody>
-            {alunosFiltrados.map((aluno) => (
+            {paginaItens.map((aluno) => (
               <tr key={aluno.idUsuario} className={selecionados.includes(aluno.idUsuario) ? "row-selecionada" : ""}>
                 <td className="col-check">
                   <input
@@ -609,6 +613,13 @@ const handleSalvar = async () => {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        paginaAtual={paginaAtual}
+        totalPaginas={totalPaginas}
+        onChange={irParaPagina}
+        totalItens={alunosFiltrados.length}
+      />
 
       <AlunoModal
         aberto={modalAberto}

@@ -22,6 +22,27 @@ router = APIRouter()
 # o arquivo fica salvo no bucket, mas a capa nunca aparece no sistema.
 CAPA_BUCKET = "capas"
 
+
+def excluir_capa_do_storage(url: str) -> None:
+    """Remove uma capa do bucket `capas` quando a URL pertence ao Storage.
+    URLs externas são ignoradas. Falhas de remoção são silenciadas para não
+    impedir a operação principal sobre o livro."""
+    if not url or not isinstance(url, str):
+        return
+
+    prefixo = f"{SUPABASE_URL}/storage/v1/object/public/{CAPA_BUCKET}/"
+    if not SUPABASE_URL or not url.startswith(prefixo):
+        return
+
+    nome_arquivo = url[len(prefixo):].split("?", 1)[0].lstrip("/")
+    if not nome_arquivo:
+        return
+
+    try:
+        supabase.storage.from_(CAPA_BUCKET).remove([nome_arquivo])
+    except Exception as e:
+        print(f"Erro ao excluir capa do Storage ({nome_arquivo}): {e}")
+
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").rstrip("/")
 
 EXTENSOES_PERMITIDAS = {"jpg", "jpeg", "png", "webp", "gif"}
