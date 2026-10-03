@@ -14,7 +14,7 @@ const Modal = ({ show, onClose, children, className = "" }) => {
       document.body.style.overflow = "hidden";
     } else if (mounted && !show) {
       setExiting(true);
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         setMounted(false);
         setExiting(false);
         document.body.style.overflow = "";
