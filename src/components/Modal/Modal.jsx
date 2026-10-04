@@ -2,38 +2,55 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import "./Modal.css";
 
+const EXIT_DURATION_MS = 200;
+
 const Modal = ({ show, onClose, children, className = "" }) => {
   const [mounted, setMounted] = useState(false);
   const [exiting, setExiting] = useState(false);
 
-  // useEffect de montagem/desmontagem do portal.
+  // Controla montagem/desmontagem do portal com animação de saída.
   useEffect(() => {
     if (show) {
       setExiting(false);
       setMounted(true);
       document.body.style.overflow = "hidden";
-    } else if (mounted && !show) {
-      setExiting(true);
-      setTimeout(() => {
-        setMounted(false);
-        setExiting(false);
-        document.body.style.overflow = "";
-      }, 200);
+      return undefined;
     }
+
+    if (!mounted) return undefined;
+
+    setExiting(true);
+    const timer = setTimeout(() => {
+      setMounted(false);
+      setExiting(false);
+      document.body.style.overflow = "";
+    }, EXIT_DURATION_MS);
+
+    return () => clearTimeout(timer);
   }, [show, mounted]);
 
-  // Effect para fechamento com tecla Escape
+  // Garante que o scroll do body seja liberado se o componente for desmontado aberto.
   useEffect(() => {
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") onClose();
-    });
-    return () => document.removeEventListener("keydown", (e) => {
-      if (e.key === "Escape") onClose();
-    });
-  }, [onClose]);
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
 
-  // Sem early return que pule hooks - sempre renderizamos o portal.
-  // A visibilidade é controlada por CSS/state, não por pular o retorno.
+  // Fecha com Escape apenas enquanto o modal está aberto.
+  useEffect(() => {
+    if (!show) return undefined;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [show, onClose]);
+
+  // Fechado e já desmontado: não renderiza nada.
+  if (!show && !mounted) return null;
+
   const modalContent = (
     <div
       className={`modal-overlay${exiting ? " exiting" : ""}`}
