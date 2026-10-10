@@ -50,9 +50,9 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
   const cards = [
     {
       key: "total",
-      title: "Total de livros",
+      title: "Títulos no acervo",
       value: stats.totalLivros,
-      description: "Quantidade de títulos disponíveis no acervo escolar.",
+      description: "Com pelo menos um exemplar não desativado.",
       icon: <FaBook size={18} />,
       color: "blue",
     },
