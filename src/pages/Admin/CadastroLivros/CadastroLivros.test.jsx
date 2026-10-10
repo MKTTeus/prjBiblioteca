@@ -29,7 +29,7 @@ test('aviso filtra pendências e oferece acesso direto à correção', async () 
   fireEvent.change(screen.getByLabelText('Exemplares'), { target: { value: 'sem' } });
   expect(screen.queryByRole('heading', { name: 'Tudo desativado' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Corrigir exemplares' }));
-  expect(screen.getByText('Corrigir Sem cópias: copies')).toBeInTheDocument();
+  expect(await screen.findByText('Corrigir Sem cópias: copies')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
   expect(screen.getByRole('heading', { name: 'Em circulação' })).toBeInTheDocument();
 });

@@ -373,13 +373,14 @@ export default function NovoEmprestimo({ onNavigate }) {
             <div className="user-empty-state">Carregando livros...</div>
           ) : books.length > 0 ? (
             <div className="shared-book-grid">
-              {books.map((book) => {
+              {books.map((book, index) => {
                 const idLivro = book.idLivro ?? book.id;
                 return (
                   <BookCard
                     key={idLivro}
                     book={book}
                     genreName={book.livGenero}
+                    coverLoading={index < 4 ? "eager" : "lazy"}
                     cartMode
                     pendingQuantity={pendingQty[idLivro] || 0}
                     onPendingQuantityChange={(v) => handlePendingQtyChange(idLivro, v)}

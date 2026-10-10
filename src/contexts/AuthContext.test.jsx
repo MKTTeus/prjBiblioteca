@@ -9,6 +9,15 @@ test('metadados persistidos cedem ao perfil confirmado pelo servidor',async()=>{
  await screen.findByText('perfil:true');
  expect(fetch.mock.calls[0][0]).toContain('/admin/me');
 });
+test('perfil validado libera a rota mesmo se a configuração ainda estiver pendente',async()=>{
+ localStorage.setItem('token','token');localStorage.setItem('user',JSON.stringify({tipo:'admin'}));
+ fetch.mockResolvedValueOnce({ok:true,status:200,json:async()=>({nome:'Gestor',professor:false})})
+   .mockImplementationOnce(()=>new Promise(()=>{}));
+ render(<AuthProvider><Probe/></AuthProvider>);
+ await screen.findByText('perfil:false');
+ expect(fetch.mock.calls[1][0]).toContain('/configuracoes');
+ expect(localStorage.getItem('token')).toBe('token');
+});
 test('um erro ao validar o servidor não restaura uma sessão do armazenamento',async()=>{
  localStorage.setItem('token','token');localStorage.setItem('user',JSON.stringify({tipo:'Aluno'}));
  fetch.mockResolvedValue({ok:false,status:503});

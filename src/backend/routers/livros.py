@@ -360,7 +360,7 @@ def _listar_livros(
         exemplares = []
         if livro_ids:
             exemplares = consultar_em_lotes(
-                lambda ids_lote: supabase.table("Exemplar").select("*").in_("idLivro", ids_lote),
+                lambda ids_lote: supabase.table("Exemplar").select("idLivro, exeLivStatus").in_("idLivro", ids_lote),
                 livro_ids, "idExemplar",
             )
 

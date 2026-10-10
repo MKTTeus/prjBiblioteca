@@ -1,35 +1,35 @@
-import React, { useEffect } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
 import AppShell from "./components/AppShell/AppShell";
-import Dashboard from "./pages/Admin/Dashboard/Dashboard";
-import Livros from "./pages/Admin/CadastroLivros/CadastroLivros";
-import CadastrosAuxiliares from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/CadastrosAuxiliares";
-import GenerosTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/GenerosTab";
-import AutoresTab from "./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/AutoresTab";
-import Aluno from "./pages/Admin/CadastroAlunos/Aluno";
-import Comunidade from "./pages/Admin/CadastroComunidade/Comunidade";
-import Emprestimos from "./pages/Admin/Emprestimos/Emprestimos";
-import SolicitacoesEmprestimo from "./pages/Admin/Emprestimos/SolicitacoesEmprestimo";
-import Admin from "./pages/Admin/CadastroAdmins/Admin";
-import Login from "./pages/Login";
-import Biblioteca from "./pages/Admin/Biblioteca/Biblioteca";
-import EsqueciSenha from "./pages/EsqueciSenha";
-import RedefinirSenha from "./pages/RedefinirSenha";
-import PrimeiroAcesso from "./pages/PrimeiroAcesso";
+const Dashboard = lazy(() => import("./pages/Admin/Dashboard/Dashboard"));
+const Livros = lazy(() => import("./pages/Admin/CadastroLivros/CadastroLivros"));
+const CadastrosAuxiliares = lazy(() => import("./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/CadastrosAuxiliares"));
+const GenerosTab = lazy(() => import("./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/GenerosTab"));
+const AutoresTab = lazy(() => import("./pages/Admin/CadastroLivros/components/CadastrosAuxiliares/tabs/AutoresTab"));
+const Aluno = lazy(() => import("./pages/Admin/CadastroAlunos/Aluno"));
+const Comunidade = lazy(() => import("./pages/Admin/CadastroComunidade/Comunidade"));
+const Emprestimos = lazy(() => import("./pages/Admin/Emprestimos/Emprestimos"));
+const SolicitacoesEmprestimo = lazy(() => import("./pages/Admin/Emprestimos/SolicitacoesEmprestimo"));
+const Admin = lazy(() => import("./pages/Admin/CadastroAdmins/Admin"));
+const Login = lazy(() => import("./pages/Login"));
+const Biblioteca = lazy(() => import("./pages/Admin/Biblioteca/Biblioteca"));
+const EsqueciSenha = lazy(() => import("./pages/EsqueciSenha"));
+const RedefinirSenha = lazy(() => import("./pages/RedefinirSenha"));
+const PrimeiroAcesso = lazy(() => import("./pages/PrimeiroAcesso"));
 import ProtectedRoute from "./components/ProtectedRoute";
-import Configuracoes from "./pages/Admin/Configuracoes/Configuracoes";
-import Geral from "./pages/Admin/Configuracoes/components/Geral/Geral";
-import Notificacoes from "./pages/Admin/Configuracoes/components/Notificacoes/Notificacoes";
-import Seguranca from "./pages/Admin/Configuracoes/components/Seguranca/Seguranca";
-import Email from "./pages/Admin/Configuracoes/components/Email/Email";
-import Avancado from "./pages/Admin/Configuracoes/components/Avancado/Avancado";
-import AdminNotificacoes from "./pages/Admin/Notificacoes/Notificacoes";
-import Backups from "./pages/Admin/Configuracoes/components/Backup/Backups";
-import AnoLetivo from "./pages/Admin/Configuracoes/components/AnoLetivo/AnoLetivo";
-import UserDashboard from "./pages/user/UserDashboard";
-import Relatorios from "./pages/Admin/Relatorios/Relatorios";
-import PainelProfessor from "./pages/Professor/PainelProfessor";
+const Configuracoes = lazy(() => import("./pages/Admin/Configuracoes/Configuracoes"));
+const Geral = lazy(() => import("./pages/Admin/Configuracoes/components/Geral/Geral"));
+const Notificacoes = lazy(() => import("./pages/Admin/Configuracoes/components/Notificacoes/Notificacoes"));
+const Seguranca = lazy(() => import("./pages/Admin/Configuracoes/components/Seguranca/Seguranca"));
+const Email = lazy(() => import("./pages/Admin/Configuracoes/components/Email/Email"));
+const Avancado = lazy(() => import("./pages/Admin/Configuracoes/components/Avancado/Avancado"));
+const AdminNotificacoes = lazy(() => import("./pages/Admin/Notificacoes/Notificacoes"));
+const Backups = lazy(() => import("./pages/Admin/Configuracoes/components/Backup/Backups"));
+const AnoLetivo = lazy(() => import("./pages/Admin/Configuracoes/components/AnoLetivo/AnoLetivo"));
+const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
+const Relatorios = lazy(() => import("./pages/Admin/Relatorios/Relatorios"));
+const PainelProfessor = lazy(() => import("./pages/Professor/PainelProfessor"));
 
 function RoleHomeRedirect() {
   const { user, loadingUser } = useAuth();
@@ -85,6 +85,7 @@ function App() {
     });
   }, []);
   return (
+    <Suspense fallback={<div className="page-shell">Carregando página...</div>}>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />
@@ -161,6 +162,7 @@ function App() {
       <Route path="/Biblioteca" element={<LegacyBibliotecaRedirect />} />
       <Route path="*" element={<RoleHomeRedirect />} />
     </Routes>
+    </Suspense>
   );
 }
 
