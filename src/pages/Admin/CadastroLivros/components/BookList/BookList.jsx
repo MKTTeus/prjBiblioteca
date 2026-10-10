@@ -39,7 +39,7 @@ const BookList = ({ books = [], onEditBook, onDeleteBook, onToggleStatus, onView
       ) : (
         <>
           <div className="shared-book-grid">
-            {safeBooks.length === 0 && <p>Nenhum livro cadastrado.</p>}
+            {safeBooks.length === 0 && <p>Nenhum título encontrado com estes filtros.</p>}
 
             {paginaItens.map((book, index) => {
               if (!book) return null;

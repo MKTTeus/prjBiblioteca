@@ -557,3 +557,11 @@
     font-size: 1rem;
   }
 }
+.shared-book-card__catalog-warning {
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--status-warning-surface);
+  color: var(--status-warning-text);
+  font-size: 12px;
+  line-height: 1.5;
+}

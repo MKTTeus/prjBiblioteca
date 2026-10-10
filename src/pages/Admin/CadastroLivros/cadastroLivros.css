@@ -2,6 +2,31 @@
   font-family: "Inter", "Segoe UI", sans-serif;
 }
 
+.acervo-pendencia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--status-warning-bg);
+  border-radius: 12px;
+  background: var(--status-warning-surface);
+  color: var(--status-warning-text);
+}
+
+.acervo-pendencia p { margin: 0; flex: 1 1 250px; }
+.acervo-pendencia button {
+  padding: 10px 14px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
 /* HEADER */
 
 .cadastro-header {

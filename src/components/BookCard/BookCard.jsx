@@ -29,7 +29,7 @@ function getBookStatus(book) {
 
   // Sem exemplares cadastrados
   if (total === 0 && disponiveis === 0 && emprestados === 0 && reservados === 0) {
-    return { label: "Sem exemplares", className: "indisponivel" };
+    return { label: Number(book?.exemplares_cadastrados ?? 0) > 0 ? "Exemplares desativados" : "Sem exemplares", className: "indisponivel" };
   }
 
   // Priorizar campos numéricos
@@ -157,6 +157,11 @@ export default function BookCard({
           )}
 
           <div className="shared-book-card__details">
+            {isAdmin && totalExemplares === 0 && (
+              <p className="shared-book-card__catalog-warning">
+                Fora do acervo: {Number(book?.exemplares_cadastrados ?? 0) > 0 ? "reative ou cadastre um exemplar." : "cadastre um exemplar."}
+              </p>
+            )}
             <p className={`shared-book-card__detail status-line ${status.className}`}>
               <HiOutlineCheckCircle />
               <span>{status.label}</span>
@@ -254,7 +259,7 @@ export default function BookCard({
                   onClick={() => onEdit && onEdit(book)}
                 >
                   <HiOutlinePencil />
-                  <span>Editar</span>
+                  <span>{totalExemplares === 0 ? "Corrigir exemplares" : "Editar"}</span>
                 </button>
                 {onViewFicha && (
                   <button

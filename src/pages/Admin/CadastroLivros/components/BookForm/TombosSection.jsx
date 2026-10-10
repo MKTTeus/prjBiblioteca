@@ -7,6 +7,7 @@ const STATUS_OPTIONS = [
   "Indisponível",
   "Tombo Fixo",
   "Reservado",
+  "Desativado",
 ];
 
 export default function TombosSection({
@@ -26,7 +27,7 @@ export default function TombosSection({
           <div className="tombos-panel-header">
             <div>
               <h3>Geração inicial de tombos</h3>
-              <p>Defina o prefixo e a quantidade para criar os exemplares junto com o novo livro.</p>
+              <p>Cadastre pelo menos um exemplar para o livro aparecer no acervo.</p>
             </div>
           </div>
 
@@ -120,7 +121,7 @@ export default function TombosSection({
           {exemplares.length === 0 ? (
             <div className="empty-tombos-state">
               <HiOutlineBookOpen />
-              <span>Nenhum exemplar carregado para este livro.</span>
+              <span>Nenhum exemplar cadastrado. Informe a quantidade acima e salve para adicioná-los.</span>
             </div>
           ) : (
             exemplares.map((ex) => (

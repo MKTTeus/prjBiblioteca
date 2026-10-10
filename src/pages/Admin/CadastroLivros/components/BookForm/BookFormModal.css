@@ -1001,3 +1001,25 @@
   cursor: pointer;
   white-space: nowrap;
 }
+.editor-copies-warning {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 18px;
+  border: 1px solid var(--status-warning-bg);
+  border-radius: 10px;
+  background: var(--status-warning-surface);
+  color: var(--status-warning-text);
+}
+.editor-copies-warning p { margin: 0; flex: 1 1 250px; }
+.editor-copies-warning button {
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}

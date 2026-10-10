@@ -8,7 +8,7 @@ import {
   HiOutlineCalendar,
 } from "react-icons/hi";
 
-import { getBooks, getBook, deleteBook, setBookStatus } from "../../../services/api";
+import { getBooksForManagement, getBook, deleteBook, setBookStatus } from "../../../services/api";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import BookList from "./components/BookList/BookList";
 import BookFormModal from "./components/BookForm/BookFormModal";
@@ -38,9 +38,16 @@ export default function CadastroLivros() {
     q: "",
     genero: "todos",
     status: "todas",
+    exemplares: "todos",
   });
 
   const filteredBooks = books.filter((b) => {
+    const cadastrados = Number(b.exemplares_cadastrados ?? b.total_exemplares ?? 0);
+    const utilizaveis = Number(b.total_exemplares ?? 0);
+    if (filters.exemplares === "sem" && cadastrados > 0) return false;
+    if (filters.exemplares === "desativados" && (cadastrados === 0 || utilizaveis > 0)) return false;
+    if (filters.exemplares === "pendentes" && utilizaveis > 0) return false;
+    if (filters.exemplares === "com" && utilizaveis === 0) return false;
     const q = (filters.q || "").toLowerCase().trim();
 
     if (q) {
@@ -68,10 +75,12 @@ export default function CadastroLivros() {
     return true;
   });
 
-  const loadBooks = useCallback(async (params = {}) => {
+  const pendentes = books.filter((b) => b.livAtivo !== false && Number(b.total_exemplares ?? 0) === 0);
+
+  const loadBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getBooks({ incluir_inativos: true, ...params });
+      const data = await getBooksForManagement();
       setBooks(data || []);
     } catch (err) {
       console.error(err);
@@ -168,7 +177,7 @@ export default function CadastroLivros() {
       <div className="cadastro-header">
         <div>
           <h1>Bem-vindo ao Cadastro de Livros</h1>
-          <p>O acervo mostra livros com pelo menos um exemplar não desativado.</p>
+          <p>Gerencie todos os títulos, inclusive os que ainda não aparecem no acervo.</p>
         </div>
 
         {isAdmin && (
@@ -180,9 +189,9 @@ export default function CadastroLivros() {
 
       <div className="stats-cards-grid">
         <StatsCard
-          title="Títulos no acervo"
+          title="Títulos cadastrados"
           value={books.length}
-          subtitle="Com exemplares não desativados"
+          subtitle="Ativos e inativos, com ou sem exemplares"
           icon={<HiOutlineBookOpen />}
           color="blue"
         />
@@ -223,7 +232,14 @@ export default function CadastroLivros() {
         />
       </div>
 
-      <FiltroBusca onFilter={(f) => setFilters(f)} />
+      {!loading && pendentes.length > 0 && (
+        <div className="acervo-pendencia" role="status">
+          <p><strong>{pendentes.length} {pendentes.length === 1 ? "título ativo fora do acervo" : "títulos ativos fora do acervo"}.</strong> Cadastre ou reative um exemplar para exibir {pendentes.length === 1 ? "o livro" : "os livros"}.</p>
+          <button type="button" onClick={() => setFilters({ q: "", genero: "todos", status: "ativo", exemplares: "pendentes" })}>Ver títulos</button>
+        </div>
+      )}
+
+      <FiltroBusca filters={filters} onFilter={setFilters} />
 
       <div className="catalog-header">
         <h2>
@@ -251,6 +267,7 @@ export default function CadastroLivros() {
       {modalOpen && (
         <BookFormModal
           bookToEdit={currentBook}
+          initialSection={currentBook && Number(currentBook.total_exemplares ?? 0) === 0 ? "copies" : "basic"}
           onClose={() => setModalOpen(false)}
           onBookSaved={handleSaved}
         />

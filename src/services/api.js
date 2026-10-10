@@ -82,6 +82,8 @@ export const getBooks = (params = {}) => {
 export const getBook = (idLivro) =>
   apiFetch(`/livros/${idLivro}`);
 
+export const getBooksForManagement = () => apiFetch("/livros/gestao");
+
 export const createBook = (payload) =>
   apiFetch("/livros", {
     method: "POST",
