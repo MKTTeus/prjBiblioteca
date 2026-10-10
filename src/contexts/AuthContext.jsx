@@ -3,6 +3,9 @@ import { API_URL } from "../services/apiConfig";
 
 const AuthContext = createContext();
 const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
+// O painel aceita no mínimo um minuto. Até receber a configuração, nunca
+// manter uma sessão restaurada por mais tempo do que o menor prazo permitido.
+const PENDING_TIMEOUT_MS = 60 * 1000;
 
 function extrairMensagemErro(data, fallback) {
   const detail = data?.detail;
@@ -86,9 +89,16 @@ export function AuthProvider({ children }) {
         if (cancelled) return;
         const current = { ...storedUser, token: storedToken, nome: perfil.nome, email: perfil.email,
           professor: !!perfil.professor, senhaProvisoria: !!perfil.senhaProvisoria };
+        timeoutMsRef.current = PENDING_TIMEOUT_MS;
         setUser(current);
         localStorage.setItem("user", JSON.stringify(current));
-        timeoutMsRef.current = await fetchTimeoutMs();
+        // O perfil validado libera a rota. A configuração da sessão chega em
+        // seguida, sem bloquear a primeira consulta da página.
+        fetchTimeoutMs().then((timeoutMs) => {
+          if (cancelled || localStorage.getItem("token") !== storedToken) return;
+          timeoutMsRef.current = timeoutMs;
+          resetTimer();
+        });
       } catch {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
@@ -97,7 +107,7 @@ export function AuthProvider({ children }) {
     }
     restoreSession();
     return () => { cancelled = true; };
-  }, [doLogout]);
+  }, [doLogout, resetTimer]);
 
   useEffect(() => {
     const onToken = (event) => setUser((previous) => {

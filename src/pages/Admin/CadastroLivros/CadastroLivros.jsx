@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { useToast } from "../../../contexts/ToastContext";
 import {
@@ -11,8 +11,8 @@ import {
 import { getBooksForManagement, getBook, deleteBook, setBookStatus } from "../../../services/api";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import BookList from "./components/BookList/BookList";
-import BookFormModal from "./components/BookForm/BookFormModal";
-import BookInfoModal from "./components/BookInfo/BookInfoModal";
+const BookFormModal = lazy(() => import("./components/BookForm/BookFormModal"));
+const BookInfoModal = lazy(() => import("./components/BookInfo/BookInfoModal"));
 import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
 import { useAuth } from "../../../contexts/AuthContext";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -264,21 +264,21 @@ export default function CadastroLivros() {
         />
       )}
 
-      {modalOpen && (
+      {modalOpen && <Suspense fallback={<p>Carregando formulário...</p>}>
         <BookFormModal
           bookToEdit={currentBook}
           initialSection={currentBook && Number(currentBook.total_exemplares ?? 0) === 0 ? "copies" : "basic"}
           onClose={() => setModalOpen(false)}
           onBookSaved={handleSaved}
         />
-      )}
+      </Suspense>}
 
-      {fichaBook && (
+      {fichaBook && <Suspense fallback={<p>Carregando ficha...</p>}>
         <BookInfoModal
           book={fichaBook}
           onClose={() => setFichaBook(null)}
         />
-      )}
+      </Suspense>}
 
       <ConfirmModal
         show={Boolean(pendingDeleteBook)}

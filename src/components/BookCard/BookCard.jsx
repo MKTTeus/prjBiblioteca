@@ -70,6 +70,7 @@ function getBookCode(book) {
 export default function BookCard({
   book,
   genreName,
+  coverLoading = "lazy",
   isAdmin = false,
   onEdit,
   onDelete,
@@ -124,6 +125,8 @@ export default function BookCard({
         <img
           src={capa}
           alt={titulo}
+          loading={coverLoading}
+          decoding="async"
           onError={(e) => { e.target.src = "/placeholder.png"; }}
         />
       </div>

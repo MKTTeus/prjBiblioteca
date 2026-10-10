@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { lazy, Suspense, useState } from "react";
 import AppShell from "../../components/AppShell/AppShell";
-import Biblioteca from "./Biblioteca/Biblioteca";
-import DashboardHome from "./Dashboard/DashboardHome";
-import Emprestimos from "./Emprestimos/Emprestimos";
-import Notificacoes from "./Notificacoes/Notificacoes";
-import ConfiguracoesUser from "./Configuracoes/Configuracoes";
+const Biblioteca = lazy(() => import("./Biblioteca/Biblioteca"));
+const DashboardHome = lazy(() => import("./Dashboard/DashboardHome"));
+const Emprestimos = lazy(() => import("./Emprestimos/Emprestimos"));
+const Notificacoes = lazy(() => import("./Notificacoes/Notificacoes"));
+const ConfiguracoesUser = lazy(() => import("./Configuracoes/Configuracoes"));
 
 const pages = {
   dashboard: DashboardHome,
@@ -24,10 +24,12 @@ export default function UserDashboard() {
       activePage={activePage}
       setActivePage={setActivePage}
     >
-      <CurrentPage
-        onViewAllNotifications={() => setActivePage("notificacoes")}
-        onNavigate={setActivePage}
-      />
+      <Suspense fallback={<div className="page-shell">Carregando página...</div>}>
+        <CurrentPage
+          onViewAllNotifications={() => setActivePage("notificacoes")}
+          onNavigate={setActivePage}
+        />
+      </Suspense>
     </AppShell>
   );
 }
