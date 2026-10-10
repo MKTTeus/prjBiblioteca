@@ -10,7 +10,7 @@ import "./Seguranca.css";
 export default function Seguranca() {
   const { addToast } = useToast();
   const [senhaForte, setSenhaForte] = useState(true);
-  const [doisFatores, setDoisFatores] = useState(false);
+
   const [timeout, setTimeoutValue] = useState(30);
   const [tamanhoSenha, setTamanhoSenha] = useState(8);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,7 +22,6 @@ export default function Seguranca() {
         setTimeoutValue(configToNumber(configs, "timeout_sessao", 30));
         setTamanhoSenha(configToNumber(configs, "tamanho_minimo_senha", 8));
         setSenhaForte(configToBool(configs, "exigir_senha_forte", true));
-        setDoisFatores(configToBool(configs, "autenticacao_dois_fatores", false));
       } catch (error) {
         addToast("Erro ao carregar configurações de segurança", "error");
       }
@@ -38,7 +37,7 @@ export default function Seguranca() {
         updateConfiguracao({ chave: "timeout_sessao", valor: String(timeout) }),
         updateConfiguracao({ chave: "tamanho_minimo_senha", valor: String(tamanhoSenha) }),
         updateConfiguracao({ chave: "exigir_senha_forte", valor: String(senhaForte) }),
-        updateConfiguracao({ chave: "autenticacao_dois_fatores", valor: String(doisFatores) }),
+
       ]);
       addToast("Configurações de segurança salvas com sucesso", "success");
     } catch (error) {
@@ -78,7 +77,8 @@ export default function Seguranca() {
           <input
             type="number"
             value={timeout}
-            min={0}
+            min={1}
+            max={1440}
             onChange={(e) => setTimeoutValue(Number(e.target.value) || 0)}
           />
         </div>
@@ -88,7 +88,8 @@ export default function Seguranca() {
           <input
             type="number"
             value={tamanhoSenha}
-            min={1}
+            min={8}
+            max={32}
             onChange={(e) => setTamanhoSenha(Number(e.target.value) || 1)}
           />
         </div>
@@ -105,9 +106,9 @@ export default function Seguranca() {
       <div className="switch-row">
         <div>
           <span className="switch-title">Autenticação de Dois Fatores</span>
-          <p>Adicionar camada extra de segurança</p>
+          <p>Indisponível nesta versão</p>
         </div>
-        <Switch checked={doisFatores} onChange={() => setDoisFatores(!doisFatores)} {...switchStyle} />
+        <Switch checked={false} disabled {...switchStyle} />
       </div>
 
       <div className="card-actions">

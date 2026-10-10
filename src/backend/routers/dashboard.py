@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_optional_user, utc_now
+from core import get_optional_user, utc_now, business_today
 
 router = APIRouter()
 
@@ -17,21 +17,11 @@ def _contar(query) -> int:
 
 
 def _contar_itens_ativos(data: str, *, atrasados: bool) -> int:
+    query=supabase.table('MovimentacaoExemplar').select('idExemplar',count='exact',head=True).eq('itemStatus','Ativo').is_('dataDevolucao','null')
     query = (
-        supabase.table("Movimentacao")
-        .select(
-            "idMovimentacao, MovimentacaoExemplar!inner(idExemplar)",
-            count="exact",
-            head=True,
-        )
-        .eq("movStatus", "Ativo")
-        .eq("MovimentacaoExemplar.itemStatus", "Ativo")
-        .is_("MovimentacaoExemplar.dataDevolucao", "null")
-    )
-    query = (
-        query.lt("MovimentacaoExemplar.dataPrevistaDevolucao", data)
+        query.lt("dataPrevistaDevolucao", data)
         if atrasados
-        else query.eq("MovimentacaoExemplar.dataPrevistaDevolucao", data)
+        else query.eq("dataPrevistaDevolucao", data)
     )
     resposta = query.execute()
     count = getattr(resposta, "count", None)
@@ -44,7 +34,7 @@ def _contar_itens_ativos(data: str, *, atrasados: bool) -> int:
 def dashboard_stats(user=Depends(get_optional_user)):
     """Retorna os indicadores do painel com contagens executadas no banco."""
     try:
-        hoje = utc_now().date().isoformat()
+        hoje = business_today().isoformat()
         return {
             "totalLivros": _contar(
                 supabase.table("Livro").select("*", count="exact", head=True).eq("livAtivo", True)
@@ -65,13 +55,4 @@ def dashboard_stats(user=Depends(get_optional_user)):
             "devolucoesHoje": _contar_itens_ativos(hoje, atrasados=False),
         }
     except Exception as e:
-        print("Erro dashboard:", e)
-        return {
-            "totalLivros": 0,
-            "totalUsuarios": 0,
-            "emprestimosAtivos": 0,
-            "devolucoesPendentes": 0,
-            "reservados": 0,
-            "atrasados": 0,
-            "devolucoesHoje": 0,
-        }
+        raise HTTPException(503,'Serviço temporariamente indisponível') from e

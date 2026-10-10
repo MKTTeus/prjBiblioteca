@@ -1,3 +1,5 @@
+from rpc import executar_rpc
+from core import consultar_completo, consultar_lote
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
@@ -9,10 +11,10 @@ router = APIRouter()
 @router.get("/categorias")
 def listar_categorias():
     try:
-        res = supabase.table("Categoria").select("*").order("catNome").execute()
+        res = consultar_completo(lambda: supabase.table('Categoria').select('*').order('catNome'), 'Categoria')
         categorias = res.data or []
         if categorias:
-            links = supabase.table("LivroCategoria").select("idCategoria").execute().data or []
+            links = consultar_completo(lambda: supabase.table('LivroCategoria').select('idCategoria'), 'LivroCategoria').data or []
             contagem = {}
             for l in links:
                 contagem[l["idCategoria"]] = contagem.get(l["idCategoria"], 0) + 1
@@ -20,7 +22,7 @@ def listar_categorias():
                 c["total_livros"] = contagem.get(c["idCategoria"], 0)
         return categorias
     except Exception as e:
-        print("Erro ao listar categorias:", e)
+        print("Erro ao listar categorias:", 'falha de operação')
         raise HTTPException(status_code=500, detail="Erro ao listar categorias")
 
 @router.post("/categorias")
@@ -39,8 +41,8 @@ def criar_categoria(cat: Categoria, admin=Depends(get_admin)):
         error_msg = str(e)
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Categoria já existe")
-        print("Erro ao criar categoria:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao criar categoria: {str(e)}")
+        print("Erro ao criar categoria:", 'falha de operação')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 @router.get("/categorias/{idCategoria}/uso")
@@ -55,7 +57,7 @@ def contar_uso_categoria(idCategoria: int, admin=Depends(get_admin)):
         )
         return {"total_livros": res.count or 0}
     except Exception as e:
-        print("Erro ao contar uso da categoria:", e)
+        print("Erro ao contar uso da categoria:", 'falha de operação')
         raise HTTPException(status_code=500, detail="Erro ao verificar uso da categoria")
 
 
@@ -81,8 +83,8 @@ def atualizar_categoria(idCategoria: int, cat: CategoriaUpdate, admin=Depends(ge
         error_msg = str(e)
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Já existe uma categoria com esse nome")
-        print("Erro ao atualizar categoria:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar categoria: {str(e)}")
+        print("Erro ao atualizar categoria:", 'falha de operação')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 @router.delete("/categorias/{idCategoria}")
@@ -111,54 +113,10 @@ def excluir_categoria(idCategoria: int, admin=Depends(get_admin)):
     except HTTPException:
         raise
     except Exception as e:
-        print("Erro ao excluir categoria:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao excluir categoria: {str(e)}")
+        print("Erro ao excluir categoria:", 'falha de operação')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 @router.post("/categorias/{idCategoria}/mesclar")
-def mesclar_categoria(idCategoria: int, payload: MesclarPayload, admin=Depends(get_admin)):
-    """Transfere todos os livros vinculados a `idCategoria` para `idDestino`
-    e em seguida exclui a categoria de origem. Útil para corrigir cadastros
-    duplicados (ex.: "Romance" -> "Romances")."""
-    try:
-        id_destino = payload.idDestino
-        if id_destino == idCategoria:
-            raise HTTPException(status_code=400, detail="Selecione uma categoria diferente da original")
-
-        destino = (
-            supabase.table("Categoria")
-            .select("idCategoria")
-            .eq("idCategoria", id_destino)
-            .limit(1)
-            .execute()
-        )
-        if not destino.data:
-            raise HTTPException(status_code=404, detail="Categoria de destino não encontrada")
-
-        origem_links = (
-            supabase.table("LivroCategoria").select("idLivro").eq("idCategoria", idCategoria).execute().data or []
-        )
-        destino_links = (
-            supabase.table("LivroCategoria").select("idLivro").eq("idCategoria", id_destino).execute().data or []
-        )
-        destino_ids = {l["idLivro"] for l in destino_links}
-        para_mover = [l["idLivro"] for l in origem_links if l["idLivro"] not in destino_ids]
-
-        if para_mover:
-            novas_linhas = [{"idLivro": idLivro, "idCategoria": id_destino} for idLivro in para_mover]
-            supabase.table("LivroCategoria").insert(novas_linhas).execute()
-
-        # Remove todos os vínculos remanescentes com a categoria de origem
-        # (os que foram movidos e os que já existiam em ambas as categorias)
-        supabase.table("LivroCategoria").delete().eq("idCategoria", idCategoria).execute()
-        supabase.table("Categoria").delete().eq("idCategoria", idCategoria).execute()
-
-        return {
-            "detail": "Categorias mescladas com sucesso",
-            "livros_migrados": len(para_mover),
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("Erro ao mesclar categorias:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao mesclar categorias: {str(e)}")
+def mesclar_categoria(idCategoria:int,payload:MesclarPayload,admin=Depends(get_admin)):
+    return executar_rpc('mesclar_catalogo',{'p_tipo':'Categoria','p_origem':idCategoria,'p_destino':payload.idDestino})

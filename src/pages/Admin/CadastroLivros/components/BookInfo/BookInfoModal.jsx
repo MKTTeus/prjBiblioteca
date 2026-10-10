@@ -1,3 +1,4 @@
+import { escapeHtml } from "../../../../../utils/escapeHtml";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   HiOutlineSparkles,
@@ -112,7 +113,7 @@ export default function BookInfoModal({ book, onClose }) {
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <title>Ficha Catalográfica — ${titulo}</title>
+  <title>Ficha Catalográfica — ${escapeHtml(titulo)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Courier New', Courier, monospace; color: #111; background: #fff; padding: 40px; }
@@ -135,12 +136,12 @@ export default function BookInfoModal({ book, onClose }) {
   <header>
     <div>
       <h1>Ficha Catalográfica</h1>
-      <div class="sub">${titulo}</div>
+      <div class="sub">${escapeHtml(titulo)}</div>
     </div>
     <div class="sub">Gerado em: ${new Date().toLocaleString("pt-BR")}</div>
   </header>
   <div class="ficha-box">
-    ${ficha.fichaHtml || ficha.fichaTexto.split("\n\n").map((p, i) => `<div class="ficha-${["autor","titulo","pub","desc","isbn","assuntos","cdd"][i] || "item"}">${p.replace(/\n/g,"<br/>")}</div>`).join("")}
+    ${ficha.fichaTexto.split("\n\n").map((p, i) => `<div class="ficha-${["autor","titulo","pub","desc","isbn","assuntos","cdd"][i] || "item"}">${escapeHtml(p).replace(/\n/g,"<br/>")}</div>`).join("")}
   </div>
   <footer>Documento gerado automaticamente pelo sistema de gerenciamento da biblioteca.</footer>
   <script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }</script>
@@ -260,10 +261,7 @@ export default function BookInfoModal({ book, onClose }) {
                 <HiOutlineSparkles /> CDD sugerida pela IA — confira antes de publicar
               </div>
             )}
-            <div
-              className="ficha-card"
-              dangerouslySetInnerHTML={{ __html: ficha.fichaHtml || ficha.fichaTexto }}
-            />
+            <div className="ficha-card" style={{whiteSpace:'pre-wrap',fontFamily:'monospace'}}>{ficha.fichaTexto}</div>
           </>
         )}
         {fichaStatus === "done" && ficha && editMode && (

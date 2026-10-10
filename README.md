@@ -1,108 +1,45 @@
-﻿# prjBiblioteca
+# prjBiblioteca
 
-Projeto de biblioteca escolar com frontend em React e backend em Python/FastAPI.
+Biblioteca escolar com React/Vite, FastAPI e Supabase. O frontend usa rotas por hash; no Vercel, `/api/*` é encaminhado à função Python.
 
-## Visão geral
+## Execução local
 
-- Frontend: React + Create React App
-- Backend: Python + FastAPI
-- Banco/serviços: Supabase
-- Deploy target: Vercel / API em serverless, mas localmente executa `uvicorn`
+Requisitos: Node 22.12+ e Python 3.12. Na raiz:
 
-## Pré-requisitos
-
-- Node.js + npm
-- Python 3.10+ (ou versão compatível)
-- pip
-- Git
-
-## Configuração de ambiente
-
-1. Copie o arquivo de exemplo:
-
-```powershell
-copy .env.example .env
+```bash
+npm ci
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements-dev.txt
+cp .env.example .env
 ```
 
-2. Preencha os valores reais em `.env`.
+Preencha `.env` com as credenciais do seu ambiente local/homologação. Nunca publique esse arquivo. Use uma chave service_role somente no backend. Em banco vazio, aplique os SQL timestampados em `supabase/migrations`, em ordem, e execute `python scripts/criar_gestor.py` para cadastrar o primeiro gestor com senha individual. Os arquivos em `legacy_migrations` ficam preservados para consulta histórica.
 
-3. Para desenvolvimento local, ajuste `REACT_APP_API_URL` para o endpoint do backend local:
+Em dois terminais:
 
-```dotenv
-REACT_APP_API_URL=http://localhost:5000
-```
-
-4. O backend Python carrega as variáveis usando `python-dotenv`. Coloque `.env` em `src/backend/` ou execute o servidor a partir desse diretório.
-
-> O arquivo `.env` não deve ser commitado. Use apenas `.env.example` para compartilhar os nomes das variáveis.
-
-## Backend (Python / FastAPI)
-
-```powershell
-cd src\backend
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-# Se der erro de permissão no PowerShell, rode isso:
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
-
-Crie o arquivo `.env` em `src/backend/` com as variáveis necessárias e execute:
-
-```powershell
-uvicorn main:app --reload --port 5000
-```
-
-O backend ficará disponível em:
-
-- `http://localhost:5000`
-
-## Frontend (React)
-
-No diretório raiz do projeto:
-
-```powershell
-npm install
+```bash
+uvicorn main:app --app-dir src/backend --reload --port 5000
 npm start
 ```
 
-O frontend será aberto em:
+Frontend: `http://localhost:3000`; API: `http://localhost:5000/api`. A variável pública `REACT_APP_API_URL` pode ficar vazia para esse padrão ou indicar a origem da API. No deploy, vazia usa a própria origem. Secrets não devem receber o prefixo `REACT_APP_`.
 
-- `http://localhost:3000`
+## Validação
 
-## Variáveis de ambiente usadas
+```bash
+python -m pytest -q src/backend/tests
+npm test -- --runInBand
+npm run test:db
+npm run build
+npm audit
+```
 
-No frontend:
+`test:db` aplica todas as migrations em PostgreSQL embarcado e descartável. A CI também executa `scripts/test-concurrency.py` num PostgreSQL 16 vazio chamado `biblioteca_test`; esse script não deve ser apontado a um banco de aplicação.
 
-- `REACT_APP_API_URL` - URL base da API do backend
+## Implantação e operação
 
-No backend:
+- [Registro dos 26 itens corrigidos e limites conhecidos](docs/CORRECOES_AUDITORIA.md)
+- [Ensaio, migrations, variáveis, jobs e implantação coordenada](docs/APLICACAO_MIGRATIONS.md)
 
-- `SECRET_KEY` - chave secreta para JWT
-- `CORS_ORIGINS` - origens permitidas para CORS
-- `CORS_ALLOW_ORIGIN_REGEX` - regex de origens permitidas
-- `SUPABASE_URL` - URL do projeto Supabase
-- `SUPABASE_KEY` - chave Supabase
-
-## Estrutura de pastas relevante
-
-- `src/` - código frontend React
-- `src/backend/` - código backend FastAPI
-- `public/` - arquivos públicos do React
-- `.env.example` - template de variáveis de ambiente
-- `.gitignore` - exclusões de arquivos sensíveis e de build
-
-## Observações
-
-- Não comite o arquivo `.env` real.
-- Não versionar `node_modules/`, `venv/`, `.vscode/`, `.idea/` ou arquivos temporários.
-- `package-lock.json` deve permanecer versionado para builds reproduzíveis.
-
-## Links úteis
-
-- React: https://reactjs.org/
-- FastAPI: https://fastapi.tiangolo.com/
-- Supabase: https://supabase.com/
-- Uvicorn: https://www.uvicorn.org/
+O build é `dist`; `vercel.json` configura Vite, API, cabeçalhos e jobs diários. O workflow de circulação exige secrets próprios e só agenda na branch padrão. Senhas provisórias precisam ser trocadas; usuários importados usam recuperação de senha individual. O backup da aplicação está na versão 3, com snapshot consistente e recuperação atômica; arquivos antigos exigem conversão ensaiada.

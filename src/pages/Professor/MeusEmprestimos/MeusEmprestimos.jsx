@@ -33,7 +33,7 @@ export default function MeusEmprestimos() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selecionado, setSelecionado] = useState(null);
-  const [quantidadesDevolucao, setQuantidadesDevolucao] = useState({});
+  const [idsDevolucao, setIdsDevolucao] = useState([]);
   const [devolvendo, setDevolvendo] = useState(false);
 
   async function carregar({ mostrarLoading } = { mostrarLoading: true }) {
@@ -67,37 +67,24 @@ export default function MeusEmprestimos() {
 
   const abrirDetalhes = (emprestimo) => {
     setSelecionado(emprestimo);
-    const iniciais = {};
-    emprestimo.livros.forEach((livro) => {
-      iniciais[livro.idLivro] = 0;
-    });
-    setQuantidadesDevolucao(iniciais);
+    setIdsDevolucao([]);
   };
 
   const fecharDetalhes = () => {
+    if (devolvendo) return;
     setSelecionado(null);
-    setQuantidadesDevolucao({});
-  };
-
-  const alterarQuantidadeDevolucao = (idLivro, valor, max) => {
-    const limitado = Math.max(0, Math.min(max, valor));
-    setQuantidadesDevolucao((prev) => ({ ...prev, [idLivro]: limitado }));
+    setIdsDevolucao([]);
   };
 
   const confirmarDevolucao = async () => {
     if (!selecionado) return;
-    const itens = Object.entries(quantidadesDevolucao)
-      .filter(([, qtd]) => qtd > 0)
-      .map(([idLivro, qtd]) => ({ idLivro: Number(idLivro), quantidade: qtd }));
-
-    if (itens.length === 0) {
-      addToast("Selecione ao menos um exemplar para devolver.", "error");
+    if (idsDevolucao.length === 0) {
+      addToast("Selecione os tombos que foram devolvidos.", "error");
       return;
     }
-
     setDevolvendo(true);
     try {
-      await devolverEmprestimoProfessor(selecionado.idMovimentacao, itens);
+      await devolverEmprestimoProfessor(selecionado.idMovimentacao, idsDevolucao);
       addToast("Devolução registrada com sucesso.", "success");
       fecharDetalhes();
       carregar({ mostrarLoading: false });
@@ -222,42 +209,13 @@ export default function MeusEmprestimos() {
                       {livro.ativos} ativo(s){livro.devolvidos > 0 ? ` · ${livro.devolvidos} devolvido(s)` : ""}
                     </span>
                   </div>
-                  {livro.ativos > 0 && (
-                    <div className="professor-detalhe__devolucao">
-                      <span>Devolver:</span>
-                      <div className="shared-book-card__qty-row">
-                        <button
-                          type="button"
-                          className="shared-book-card__qty-btn"
-                          onClick={() =>
-                            alterarQuantidadeDevolucao(
-                              livro.idLivro,
-                              (quantidadesDevolucao[livro.idLivro] || 0) - 1,
-                              livro.ativos
-                            )
-                          }
-                        >
-                          -
-                        </button>
-                        <span className="shared-book-card__qty-value">
-                          {quantidadesDevolucao[livro.idLivro] || 0}
-                        </span>
-                        <button
-                          type="button"
-                          className="shared-book-card__qty-btn"
-                          onClick={() =>
-                            alterarQuantidadeDevolucao(
-                              livro.idLivro,
-                              (quantidadesDevolucao[livro.idLivro] || 0) + 1,
-                              livro.ativos
-                            )
-                          }
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  {(selecionado.exemplares || []).filter((ex) => ex.idLivro === livro.idLivro && ex.itemStatus === "Ativo").map((ex) => (
+                    <label key={ex.idExemplar}>
+                      <input type="checkbox" disabled={devolvendo} checked={idsDevolucao.includes(ex.idExemplar)}
+                        onChange={(event) => setIdsDevolucao((ids) => event.target.checked ? [...ids, ex.idExemplar] : ids.filter((id) => id !== ex.idExemplar))} />
+                      Devolver tombo {ex.tombo}
+                    </label>
+                  ))}
                 </div>
               ))}
             </div>

@@ -40,7 +40,7 @@ export default function TabelaEmprestimos({
           ) : (
             paginaItens.map((emprestimo) => (
               <EmprestimoRow
-                key={emprestimo.idEmprestimo}
+                key={`${emprestimo.idEmprestimo}-${emprestimo.idExemplar}`}
                 emprestimo={emprestimo}
                 usuario={mapUsuarios[emprestimo.idUsuario]}
                 exemplar={mapExemplares[emprestimo.idExemplar]}

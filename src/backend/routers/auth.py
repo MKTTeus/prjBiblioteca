@@ -17,7 +17,7 @@ from core import (
     create_token,
     invalidate_token_version_cache,
 )
-from rate_limit import limitar_login, limitar_esqueci_senha, limitar_redefinir_senha
+from rate_limit import checar_rate_limit, limitar_login, limitar_esqueci_senha, limitar_redefinir_senha
 from routers.emails import enviar_email, _email_redefinir_senha
 from schemas import Login, EsqueciSenha, RedefinirSenha
 
@@ -37,21 +37,21 @@ def _hash_token(token: str) -> str:
 def _frontend_base_url(request: Request) -> str:
     configurado = os.getenv("FRONTEND_URL")
     if configurado:
+        from urllib.parse import urlparse
+        parsed = urlparse(configurado)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.query or parsed.fragment or parsed.username or parsed.password or parsed.path not in ("","/") or (os.getenv("VERCEL") and parsed.scheme!="https"):
+            raise HTTPException(503, "FRONTEND_URL inválida")
         return configurado.rstrip("/")
 
-    origin = request.headers.get("origin") or request.headers.get("referer")
-    if origin:
-        # remove path/hash eventualmente presentes no referer
-        origin = origin.split("/#")[0]
-        return origin.rstrip("/")
-
+    if os.getenv("VERCEL"):
+        raise HTTPException(503, "FRONTEND_URL não configurada")
     return "http://localhost:3000"
 
 
 def _buscar_usuario_por_login(login: str, tipo: str):
     """Busca um usuário pelo e-mail ou pelo identificador específico do tipo."""
     email = normalize_email(login)
-    campos = "idUsuario, usuEmail, usuSenha, usuNome, usuTipo, usuStatus, usuSenhaProvisoria"
+    campos = "idUsuario, usuEmail, usuSenha, usuNome, usuTipo, usuStatus, usuSenhaProvisoria, usuTokenVersion, usuExcluido"
 
     por_email = (
         supabase.table("Usuario")
@@ -133,9 +133,11 @@ def login(data: Login, request: Request):
         if not usuario:
             raise HTTPException(status_code=400, detail=credenciais_invalidas)
 
-        if not parse_status(usuario.get("usuStatus")):
+        if usuario.get("usuExcluido") or not parse_status(usuario.get("usuStatus")):
             raise HTTPException(status_code=400, detail="Conta de usuario desativada")
 
+        if identificador.lower()!=usuario['usuEmail'].lower():
+            checar_rate_limit('login-conta:'+usuario['usuEmail'].lower(),5,300)
         if not verify_password(data.senha, usuario["usuSenha"]):
             raise HTTPException(status_code=400, detail=credenciais_invalidas)
 
@@ -151,6 +153,7 @@ def login(data: Login, request: Request):
             "access_token": token,
             "tipo": usuario["usuTipo"],
             "nome": usuario["usuNome"],
+            "email": usuario["usuEmail"],
             "senhaProvisoria": bool(usuario.get("usuSenhaProvisoria")),
         }
 
@@ -166,7 +169,7 @@ def esqueci_senha(data: EsqueciSenha, request: Request):
     # quais contas estão cadastradas no sistema.
     usuario_resp = (
         supabase.table("Usuario")
-        .select("idUsuario, usuNome, usuEmail, usuStatus")
+        .select("idUsuario, usuNome, usuEmail, usuStatus, usuExcluido")
         .eq("usuEmail", email)
         .limit(1)
         .execute()
@@ -189,19 +192,22 @@ def esqueci_senha(data: EsqueciSenha, request: Request):
         nome_conta = "admNome"
         status_conta = "admStatus"
 
-    if not conta or not parse_status(conta.get(status_conta)):
+    if not conta or conta.get("usuExcluido") or not parse_status(conta.get(status_conta)):
         return MENSAGEM_RESET_GENERICA
 
+    frontend_url = _frontend_base_url(request)
     token = secrets.token_urlsafe(32)
     expira_em = utc_now() + timedelta(minutes=RESET_TOKEN_TTL_MINUTOS)
 
     supabase.table("RedefinicaoSenha").insert({
         "usuEmail": conta[email_conta],
+        "contaTipo": "admin" if email_conta == "admEmail" else "usuario",
+        "contaId": conta.get("idAdmin") if email_conta == "admEmail" else conta.get("idUsuario"),
         "tokenHash": _hash_token(token),
         "expiraEm": expira_em.isoformat(),
     }).execute()
 
-    link = f"{_frontend_base_url(request)}/#/redefinir-senha?token={token}"
+    link = f"{frontend_url}/#/redefinir-senha?token={token}"
     html = _email_redefinir_senha(conta.get(nome_conta, "usuário(a)"), link, RESET_TOKEN_TTL_MINUTOS)
     enviar_email(conta[email_conta], "Redefinição de senha — Sistema de Biblioteca", html)
 
@@ -213,7 +219,7 @@ def _validar_token_redefinicao(token: str) -> dict:
     token_hash = _hash_token(token)
     resp = (
         supabase.table("RedefinicaoSenha")
-        .select("idRedefinicao, usuEmail, expiraEm, usadoEm")
+        .select("idRedefinicao, usuEmail, expiraEm, usadoEm, contaTipo, contaId")
         .eq("tokenHash", token_hash)
         .limit(1)
         .execute()
@@ -223,7 +229,7 @@ def _validar_token_redefinicao(token: str) -> dict:
         raise HTTPException(status_code=400, detail=TOKEN_INVALIDO_OU_EXPIRADO)
 
     registro = resp.data[0]
-    if registro.get("usadoEm"):
+    if registro.get("usadoEm") or not registro.get("contaId") or registro.get("contaTipo") not in ("admin","usuario"):
         raise HTTPException(status_code=400, detail=TOKEN_INVALIDO_OU_EXPIRADO)
 
     try:
@@ -247,46 +253,11 @@ def validar_token_redefinicao(token: str, request: Request):
 @router.post("/redefinir-senha")
 def redefinir_senha(data: RedefinirSenha, request: Request):
     limitar_redefinir_senha(request)
-    registro = _validar_token_redefinicao(data.token)
     nova_senha = hash_password(data.novaSenha)
-
-    # Incrementa token_version para invalidar tokens existentes (Usuario)
-    resp_usuario = supabase.table("Usuario").select("idUsuario, usuTokenVersion").eq("usuEmail", registro["usuEmail"]).execute()
-    if resp_usuario.data:
-        user = resp_usuario.data[0]
-        new_version = user.get("usuTokenVersion", 1) + 1
-        supabase.table("Usuario").update({
-            "usuSenha": nova_senha,
-            "usuSenhaProvisoria": False,
-            "usuTokenVersion": new_version
-        }).eq("usuEmail", registro["usuEmail"]).execute()
-        invalidate_token_version_cache("Usuario", registro["usuEmail"])
-    else:
-        supabase.table("Usuario").update({
-            "usuSenha": nova_senha,
-            "usuSenhaProvisoria": False
-        }).eq("usuEmail", registro["usuEmail"]).execute()
-
-    # Incrementa token_version para invalidar tokens existentes (Administrador)
-    resp_admin = supabase.table("Administrador").select("idAdmin, admTokenVersion").eq("admEmail", registro["usuEmail"]).execute()
-    if resp_admin.data:
-        admin_user = resp_admin.data[0]
-        new_version = admin_user.get("admTokenVersion", 1) + 1
-        supabase.table("Administrador").update({
-            "admSenha": nova_senha,
-            "admTokenVersion": new_version
-        }).eq("admEmail", registro["usuEmail"]).execute()
-        invalidate_token_version_cache("Administrador", registro["usuEmail"])
-    else:
-        supabase.table("Administrador").update({
-            "admSenha": nova_senha
-        }).eq("admEmail", registro["usuEmail"]).execute()
-
-    if not (resp_usuario.data or resp_admin.data):
-        raise HTTPException(status_code=400, detail=TOKEN_INVALIDO_OU_EXPIRADO)
-
-    supabase.table("RedefinicaoSenha").update({
-        "usadoEm": utc_now().isoformat(),
-    }).eq("idRedefinicao", registro["idRedefinicao"]).execute()
-
-    return {"message": "Senha redefinida com sucesso. Você já pode fazer login com a nova senha."}
+    try:
+        supabase.rpc("consumir_reset", {"p_hash": _hash_token(data.token), "p_senha": nova_senha}).execute()
+    except Exception as exc:
+        if "Link inválido" in str(exc):
+            raise HTTPException(400, TOKEN_INVALIDO_OU_EXPIRADO) from exc
+        raise HTTPException(503, "Não foi possível redefinir a senha") from exc
+    return {"message": "Senha redefinida com sucesso. Faça login com a nova senha."}

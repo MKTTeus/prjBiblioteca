@@ -1,0 +1,3 @@
+-r requirements.txt
+pytest==9.1.1
+psycopg[binary]==3.3.6

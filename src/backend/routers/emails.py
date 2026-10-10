@@ -1,3 +1,8 @@
+import hmac
+from html import escape
+from rpc import executar_rpc
+from loan_data import montar_itens
+from core import consultar_completo, consultar_lote
 import os
 from datetime import timedelta
 
@@ -6,7 +11,10 @@ import httpx
 
 from database import supabase
 from core import datetime_utc, utc_now
-from routers.emprestimos import get_config_bool, get_config_int
+from zoneinfo import ZoneInfo
+import logging
+logger=logging.getLogger(__name__)
+from routers.emprestimos import get_config_bool, get_config_int, get_config_map
 
 router = APIRouter()
 
@@ -15,31 +23,25 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "Biblioteca <onboarding@resend.dev>")
 
 
-def verificar_cron(
-    authorization: str | None = Header(default=None),
-    x_vercel_cron_signature: str | None = Header(default=None),
-):
-    """Aceita o header padrão do Vercel ou Authorization Bearer."""
-    autorizado_bearer = authorization == f"Bearer {CRON_SECRET}"
-    autorizado_vercel = x_vercel_cron_signature == CRON_SECRET
-    if not CRON_SECRET or not (autorizado_bearer or autorizado_vercel):
-        raise HTTPException(status_code=401, detail="Acesso não autorizado")
+def verificar_cron(authorization: str | None = Header(default=None)):
+    if not CRON_SECRET or not hmac.compare_digest(authorization or '', f'Bearer {CRON_SECRET}'):
+        raise HTTPException(401,'Acesso não autorizado')
 
 
-def enviar_email(destinatario: str, assunto: str, html: str) -> bool:
+def enviar_email(destinatario: str, assunto: str, html: str, chave: str | None = None) -> bool:
     if not RESEND_API_KEY:
         print("RESEND_API_KEY não configurada")
         return False
     try:
         resp = httpx.post(
             "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+            headers={"Authorization": f"Bearer {RESEND_API_KEY}", **({"Idempotency-Key": chave} if chave else {})},
             json={"from": RESEND_FROM_EMAIL, "to": [destinatario], "subject": assunto, "html": html},
             timeout=10,
         )
         return resp.status_code in (200, 201)
     except Exception as e:
-        print("Erro ao enviar email via Resend:", e)
+        print("Erro ao enviar email via Resend:", 'falha de operação')
         return False
 
 
@@ -95,6 +97,7 @@ def _base_template(conteudo: str) -> str:
 
 
 def _email_atraso(nome: str, titulo: str, dias_atraso: int) -> str:
+    nome=escape(str(nome),quote=True); titulo=escape(str(titulo),quote=True)
     label_dias = "1 dia" if dias_atraso == 1 else f"{dias_atraso} dias"
     conteudo = f"""
       <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
@@ -133,6 +136,7 @@ def _email_atraso(nome: str, titulo: str, dias_atraso: int) -> str:
 
 
 def _email_devolucao(nome: str, titulo: str, dias_restantes: int, prazo_fmt: str) -> str:
+    nome=escape(str(nome),quote=True); titulo=escape(str(titulo),quote=True)
     urgencia = "amanhã" if dias_restantes == 1 else f"em {dias_restantes} dias"
     badge_cor = "#f59e0b" if dias_restantes == 1 else "#3b82f6"
     badge_bg = "#fffbeb" if dias_restantes == 1 else "#eff6ff"
@@ -182,196 +186,15 @@ def _email_devolucao(nome: str, titulo: str, dias_restantes: int, prazo_fmt: str
 
 @router.get("/cron/lembretes-atraso")
 def lembretes_atraso_email(_=Depends(verificar_cron)):
-    if not get_config_bool("notificacao_email", True) or not get_config_bool("lembrete_atraso", True):
-        return {"enviados": 0, "motivo": "notificações desativadas nas configurações"}
-
-    try:
-        hoje = utc_now().date()
-        limite_renotificacao = utc_now() - timedelta(hours=24)
-
-        movimentacoes = supabase.table("Movimentacao").select("idMovimentacao, idUsuario").eq("movStatus", "Ativo").execute().data or []
-        movimentacao_map = {m["idMovimentacao"]: m for m in movimentacoes}
-        mov_ids = list(movimentacao_map.keys())
-        if not mov_ids:
-            return {"enviados": 0}
-
-        itens_mov = supabase.table("MovimentacaoExemplar").select("*").in_("idMovimentacao", mov_ids).eq("itemStatus", "Ativo").execute().data or []
-
-        usuario_ids, exemplar_ids, pendentes = set(), set(), []
-
-        for me in itens_mov:
-            if not me.get("dataPrevistaDevolucao"):
-                continue
-            try:
-                data_prevista = datetime_utc(me["dataPrevistaDevolucao"]).date()
-            except Exception:
-                continue
-            if data_prevista >= hoje:
-                continue
-
-            notificado_em = me.get("emailAtrasoNotificadoEm")
-            if notificado_em:
-                try:
-                    if datetime_utc(notificado_em) >= limite_renotificacao:
-                        continue
-                except Exception:
-                    pass
-
-            mov = movimentacao_map.get(me["idMovimentacao"], {})
-            usuario_ids.add(mov.get("idUsuario"))
-            exemplar_ids.add(me.get("idExemplar"))
-            pendentes.append({**me, "idUsuario": mov.get("idUsuario"), "diasAtraso": (hoje - data_prevista).days})
-
-        if not pendentes:
-            return {"enviados": 0}
-
-        usuarios = supabase.table("Usuario").select("idUsuario, usuNome, usuEmail").in_("idUsuario", list(usuario_ids)).execute().data or []
-        exemplares = supabase.table("Exemplar").select("idExemplar, idLivro").in_("idExemplar", list(exemplar_ids)).execute().data or []
-        livro_ids = list({e["idLivro"] for e in exemplares if e.get("idLivro")})
-        livros = supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or [] if livro_ids else []
-
-        usuario_map = {u["idUsuario"]: u for u in usuarios}
-        exemplar_map = {e["idExemplar"]: e for e in exemplares}
-        livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
-
-        enviados = 0
-        agora = utc_now().isoformat()
-
-        for p in pendentes:
-            usuario = usuario_map.get(p["idUsuario"], {})
-            exemplar = exemplar_map.get(p["idExemplar"], {})
-            email = usuario.get("usuEmail")
-            if not email:
-                continue
-
-            titulo = livro_map.get(exemplar.get("idLivro"), "Livro")
-            html = _email_atraso(usuario.get("usuNome", "aluno(a)"), titulo, p["diasAtraso"])
-
-            if enviar_email(email, f"⚠️ Livro em atraso: {titulo} — Biblioteca", html):
-                enviados += 1
-                supabase.table("MovimentacaoExemplar").update({
-                    "emailAtrasoNotificadoEm": agora
-                }).eq("idMovimentacao", p["idMovimentacao"]).eq("idExemplar", p["idExemplar"]).execute()
-
-        return {"enviados": enviados, "total_pendentes": len(pendentes)}
-    except Exception as e:
-        print("Erro lembretes atraso email:", e)
-        raise HTTPException(status_code=500, detail="Erro ao enviar lembretes")
+    return processar_fila_emails()
 
 
 @router.get("/cron/lembretes-devolucao")
 def lembretes_devolucao_email(_=Depends(verificar_cron)):
-    if not get_config_bool("notificacao_email", True) or not get_config_bool("lembrete_devolucao", True):
-        return {"enviados": 0, "motivo": "notificações desativadas nas configurações"}
-
-    try:
-        dias_antecedencia = get_config_int("dias_antecedencia_lembrete", 2)
-        hoje = utc_now().date()
-        data_alvo = hoje + timedelta(days=dias_antecedencia)
-
-        movimentacoes = (
-            supabase.table("Movimentacao")
-            .select("idMovimentacao, idUsuario")
-            .eq("movStatus", "Ativo")
-            .execute()
-            .data or []
-        )
-        movimentacao_map = {m["idMovimentacao"]: m for m in movimentacoes}
-        mov_ids = list(movimentacao_map.keys())
-        if not mov_ids:
-            return {"enviados": 0}
-
-        itens_mov = (
-            supabase.table("MovimentacaoExemplar")
-            .select("*")
-            .in_("idMovimentacao", mov_ids)
-            .eq("itemStatus", "Ativo")
-            .execute()
-            .data or []
-        )
-
-        usuario_ids, exemplar_ids, pendentes = set(), set(), []
-
-        for me in itens_mov:
-            if not me.get("dataPrevistaDevolucao"):
-                continue
-            try:
-                data_prevista = datetime_utc(me["dataPrevistaDevolucao"]).date()
-            except Exception:
-                continue
-
-            if data_prevista != data_alvo:
-                continue
-
-            notificado_em = me.get("emailDevolucaoNotificadoEm")
-            if notificado_em:
-                try:
-                    limite = utc_now() - timedelta(hours=24)
-                    if datetime_utc(notificado_em) >= limite:
-                        continue
-                except Exception:
-                    pass
-
-            mov = movimentacao_map.get(me["idMovimentacao"], {})
-            usuario_ids.add(mov.get("idUsuario"))
-            exemplar_ids.add(me.get("idExemplar"))
-            pendentes.append({**me, "idUsuario": mov.get("idUsuario"), "diasRestantes": dias_antecedencia})
-
-        if not pendentes:
-            return {"enviados": 0}
-
-        usuarios = (
-            supabase.table("Usuario")
-            .select("idUsuario, usuNome, usuEmail")
-            .in_("idUsuario", list(usuario_ids))
-            .execute()
-            .data or []
-        )
-        exemplares = (
-            supabase.table("Exemplar")
-            .select("idExemplar, idLivro")
-            .in_("idExemplar", list(exemplar_ids))
-            .execute()
-            .data or []
-        )
-        livro_ids = list({e["idLivro"] for e in exemplares if e.get("idLivro")})
-        livros = (
-            supabase.table("Livro").select("idLivro, livTitulo").in_("idLivro", livro_ids).execute().data or []
-        ) if livro_ids else []
-
-        usuario_map = {u["idUsuario"]: u for u in usuarios}
-        exemplar_map = {e["idExemplar"]: e for e in exemplares}
-        livro_map = {l["idLivro"]: l["livTitulo"] for l in livros}
-
-        enviados = 0
-        agora = utc_now().isoformat()
-
-        for p in pendentes:
-            usuario = usuario_map.get(p["idUsuario"], {})
-            exemplar = exemplar_map.get(p["idExemplar"], {})
-            email = usuario.get("usuEmail")
-            if not email:
-                continue
-
-            titulo = livro_map.get(exemplar.get("idLivro"), "Livro")
-            dias = p["diasRestantes"]
-            prazo_fmt = data_alvo.strftime("%d/%m/%Y")
-            urgencia = "amanhã" if dias == 1 else f"em {dias} dia(s)"
-
-            html = _email_devolucao(usuario.get("usuNome", "aluno(a)"), titulo, dias, prazo_fmt)
-
-            if enviar_email(email, f"🔔 Lembrete: devolução de '{titulo}' {urgencia} — Biblioteca", html):
-                enviados += 1
-                supabase.table("MovimentacaoExemplar").update({
-                    "emailDevolucaoNotificadoEm": agora
-                }).eq("idMovimentacao", p["idMovimentacao"]).eq("idExemplar", p["idExemplar"]).execute()
-
-        return {"enviados": enviados, "total_pendentes": len(pendentes)}
-    except Exception as e:
-        print("Erro lembretes devolucao email:", e)
-        raise HTTPException(status_code=500, detail="Erro ao enviar lembretes de devolução")
+    return processar_fila_emails()
 
 def _email_redefinir_senha(nome: str, link: str, ttl_minutos: int) -> str:
+    nome=escape(str(nome),quote=True); link=escape(str(link),quote=True)
     conteudo = f"""
       <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
 
@@ -405,6 +228,7 @@ def _email_redefinir_senha(nome: str, link: str, ttl_minutos: int) -> str:
 # ── Email templates for confirmation workflow ─────────────────────────
 
 def _email_confirmacao(nome: str, titulo: str, prazo_fmt: str, prazo_horas: int) -> str:
+    nome=escape(str(nome),quote=True); titulo=escape(str(titulo),quote=True)
     conteudo = f"""
       <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
 
@@ -445,6 +269,7 @@ def _email_confirmacao(nome: str, titulo: str, prazo_fmt: str, prazo_horas: int)
 
 
 def _email_lembrete_confirmacao(nome: str, titulo: str, horas_passadas: int, prazo_fmt: str) -> str:
+    nome=escape(str(nome),quote=True); titulo=escape(str(titulo),quote=True)
     conteudo = f"""
       <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
 
@@ -471,6 +296,7 @@ def _email_lembrete_confirmacao(nome: str, titulo: str, horas_passadas: int, pra
 
 
 def _email_aviso_expiracao(nome: str, titulo: str, horas_restantes: int, prazo_fmt: str) -> str:
+    nome=escape(str(nome),quote=True); titulo=escape(str(titulo),quote=True)
     conteudo = f"""
       <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
 
@@ -507,6 +333,7 @@ def _email_aviso_expiracao(nome: str, titulo: str, horas_restantes: int, prazo_f
 
 
 def _email_expirado(nome: str, titulo: str) -> str:
+    nome=escape(str(nome),quote=True); titulo=escape(str(titulo),quote=True)
     conteudo = f"""
       <p style="margin:0 0 8px;font-size:15px;color:#374151;">Olá, <strong>{nome}</strong>!</p>
 
@@ -560,198 +387,57 @@ def _get_mov_user_book(mov):
 
 @router.get("/cron/verificar-expiracoes")
 def cron_verificar_expiracoes(_=Depends(verificar_cron)):
-    """Hourly cron: expire overdue confirmed solicitations + send emails."""
-    from routers.emprestimos import verificar_expiracoes
-
-    if not get_config_bool("notificacao_email", True):
-        expirados = verificar_expiracoes()
-        return {"expirados": len(expirados), "emails_enviados": 0}
-
-    # First, find confirmed ones about to expire (to send pre-expiration alerts)
-    agora = utc_now()
-    alerta_horas = get_config_int("alerta_expiracao_horas", 2)
-
-    pre_alert_enviados = 0
-    try:
-        movs_confirmadas = (
-            supabase.table("Movimentacao")
-            .select("idMovimentacao, idUsuario, data_confirmacao, prazo_horas, status_confirmacao")
-            .eq("status_confirmacao", "CONFIRMADA")
-            .execute()
-            .data or []
-        )
-
-        for mov in movs_confirmadas:
-            data_conf_str = mov.get("data_confirmacao")
-            prazo = mov.get("prazo_horas") or 48
-            if not data_conf_str:
-                continue
-            try:
-                dt_conf = datetime_utc(data_conf_str)
-                data_limite = dt_conf + timedelta(hours=prazo)
-                horas_restantes = (data_limite - agora).total_seconds() / 3600
-
-                # Send pre-expiration alert if within the alert window
-                if 0 < horas_restantes <= alerta_horas:
-                    # Check if we already sent this alert
-                    me_resp = supabase.table("MovimentacaoExemplar").select("emailConfirmacaoNotificadoEm, emailLembreteConfHoras").eq("idMovimentacao", mov["idMovimentacao"]).limit(1).execute()
-                    horas_enviadas = set()
-                    if me_resp.data:
-                        raw = me_resp.data[0].get("emailLembreteConfHoras") or ""
-                        horas_enviadas = set(raw.split(",")) if raw else set()
-
-                    if "pre_exp" not in horas_enviadas:
-                        usuario, titulo = _get_mov_user_book(mov)
-                        email = usuario.get("usuEmail")
-                        if email:
-                            prazo_fmt = data_limite.strftime("%d/%m/%Y %H:%M")
-                            html = _email_aviso_expiracao(
-                                usuario.get("usuNome", "aluno(a)"), titulo,
-                                max(1, int(horas_restantes)), prazo_fmt
-                            )
-                            if enviar_email(email, f"⚠️ Prazo de retirada expirando: {titulo}", html):
-                                pre_alert_enviados += 1
-                                horas_enviadas.add("pre_exp")
-                                supabase.table("MovimentacaoExemplar").update({
-                                    "emailLembreteConfHoras": ",".join(horas_enviadas)
-                                }).eq("idMovimentacao", mov["idMovimentacao"]).execute()
-            except Exception:
-                continue
-    except Exception as e:
-        print("Erro pre-expiration alerts:", e)
-
-    # Now run actual expiration check
-    expirados = verificar_expiracoes()
-
-    # Send expiration emails
-    emails_exp_enviados = 0
-    for id_mov in expirados:
-        try:
-            mov_resp = supabase.table("Movimentacao").select("*").eq("idMovimentacao", id_mov).limit(1).execute()
-            if mov_resp.data:
-                usuario, titulo = _get_mov_user_book(mov_resp.data[0])
-                email = usuario.get("usuEmail")
-                if email:
-                    html = _email_expirado(usuario.get("usuNome", "aluno(a)"), titulo)
-                    if enviar_email(email, f"❌ Reserva expirada: {titulo}", html):
-                        emails_exp_enviados += 1
-        except Exception:
-            continue
-
-    return {
-        "expirados": len(expirados),
-        "emails_expiracao_enviados": emails_exp_enviados,
-        "emails_pre_alerta_enviados": pre_alert_enviados,
-    }
+    return processar_fila_emails()
 
 # ── Cron: send reminder emails 2h before expiration ───────────────
 
 @router.get("/cron/lembretes-confirmacao")
 def lembretes_confirmacao_email(_=Depends(verificar_cron)):
-    """
-    Envia apenas um lembrete quando faltam 2 horas para a retirada expirar.
-    O e-mail de expiração é enviado pelo endpoint /cron/verificar-expiracoes.
-    """
-    if not get_config_bool("notificacao_email", True):
-        return {"enviados": 0, "motivo": "notificações desativadas"}
+    return processar_fila_emails()
 
-    try:
-        agora = utc_now()
-        alerta_horas = 2
 
-        # Busca apenas movimentações confirmadas
-        movs = (
-            supabase.table("Movimentacao")
-            .select(
-                "idMovimentacao, idUsuario, data_confirmacao, "
-                "prazo_horas, status_confirmacao"
-            )
-            .eq("status_confirmacao", "CONFIRMADA")
-            .execute()
-            .data or []
-        )
+def processar_fila_emails():
+    executar_rpc('processar_prazos',{})
+    executar_rpc('enfileirar_lembretes',{})
+    enviados=0; adiados=0
+    for evento in executar_rpc('reservar_emails',{'p_limite':20}) or []:
+        sucesso=False
+        try:
+            rows=supabase.table('Movimentacao').select('*').eq('idMovimentacao',evento['idMovimentacao']).limit(1).execute().data
+            if not rows: sucesso=True
+            else:
+                m=rows[0]; tipo='lembrete_confirmacao' if evento['tipo']=='lembrete' else evento['tipo']; cfg=get_config_map()
+                valido=get_config_bool('notificacao_email',True,cfg)
+                if tipo in ('aprovacao','lembrete_confirmacao'): valido=valido and m['movStatus']=='Aprovado' and m['status_confirmacao']=='CONFIRMADA'
+                if tipo=='expiracao': valido=valido and m['movStatus']=='Expirado'
+                itens=montar_itens(rows)
+                if tipo in ('atraso','devolucao'):
+                    partes=evento['chave'].split(':'); idex=int(partes[2]); prazo=partes[3]
+                    itens=[i for i in itens if i['idExemplar']==idex and i['itemStatus']=='Ativo' and i.get('dataPrevistaDevolucao')==prazo]
+                    valido=valido and bool(itens) and get_config_bool('lembrete_'+tipo,True,cfg)
+                    if tipo=='atraso': valido=valido and itens[0]['status']=='atrasado'
+                if not valido: sucesso=True
+                else:
+                    is_prof=bool(m.get('idAdminProfessor')); tabela='Administrador' if is_prof else 'Usuario'; idcol='idAdmin' if is_prof else 'idUsuario'; prefix='adm' if is_prof else 'usu'
+                    idconta=m.get('idAdminProfessor') if is_prof else m.get('idUsuario')
+                    conta=supabase.table(tabela).select(f'{prefix}Nome,{prefix}Email,{prefix}Status').eq(idcol,idconta).limit(1).execute().data
+                    if not conta or not conta[0][prefix+'Status']: sucesso=True
+                    else:
+                        titulos=', '.join(f"{i['titulo']} (tombo {i['codigo']})" for i in itens)
+                        assunto={'aprovacao':'Solicitação aprovada','lembrete_confirmacao':'Prazo de retirada','expiracao':'Solicitação expirada','atraso':'Devolução em atraso','devolucao':'Lembrete de devolução'}[tipo]
+                        mensagem=f"<p>Olá, {escape(conta[0][prefix+'Nome'])}.</p><p>{escape(assunto)}: {escape(titulos)}.</p>"
+                        if m.get('data_confirmacao') and tipo in ('aprovacao','lembrete_confirmacao'):
+                            limite=datetime_utc(m['data_confirmacao'])+timedelta(hours=m['prazo_horas'])
+                            mensagem+=f"<p>Retire até {limite.astimezone(ZoneInfo('America/Sao_Paulo')).strftime('%d/%m/%Y %H:%M')}.</p>"
+                        sucesso=enviar_email(conta[0][prefix+'Email'],assunto,_base_template(mensagem),chave=evento['chave'])
+            enviados+=int(sucesso);adiados+=int(not sucesso)
+        except Exception:
+            logger.error('Falha ao processar evento de email %s',evento['id']);adiados+=1
+        finally:
+            executar_rpc('concluir_email',{'p_id':evento['id'],'p_lease':evento['lease_token'],'p_sucesso':sucesso})
+    return {'ok':True,'processados':enviados,'adiados':adiados}
 
-        enviados = 0
 
-        for mov in movs:
-            data_conf_str = mov.get("data_confirmacao")
-            prazo = mov.get("prazo_horas") or 48
-
-            if not data_conf_str:
-                continue
-
-            try:
-                dt_conf = datetime_utc(data_conf_str)
-            except Exception:
-                continue
-
-            # Calcula o momento exato da expiração
-            data_limite = dt_conf + timedelta(hours=prazo)
-
-            # Quantas horas faltam para expirar
-            horas_restantes = (
-                data_limite - agora
-            ).total_seconds() / 3600
-
-            # Envia somente quando estiver dentro das 2 horas anteriores
-            if not (0 < horas_restantes <= alerta_horas):
-                continue
-
-            # Verifica se o aviso de 2h já foi enviado
-            me_resp = (
-                supabase.table("MovimentacaoExemplar")
-                .select("emailLembreteConfHoras")
-                .eq("idMovimentacao", mov["idMovimentacao"])
-                .limit(1)
-                .execute()
-            )
-
-            avisos_enviados = set()
-
-            if me_resp.data:
-                raw = me_resp.data[0].get("emailLembreteConfHoras") or ""
-                avisos_enviados = set(raw.split(",")) if raw else set()
-
-            # Evita enviar o mesmo aviso novamente
-            if "2h_expiracao" in avisos_enviados:
-                continue
-
-            usuario, titulo = _get_mov_user_book(mov)
-            email = usuario.get("usuEmail")
-
-            if not email:
-                continue
-
-            prazo_fmt = data_limite.strftime("%d/%m/%Y %H:%M")
-
-            html = _email_aviso_expiracao(
-                usuario.get("usuNome", "aluno(a)"),
-                titulo,
-                max(1, int(horas_restantes)),
-                prazo_fmt
-            )
-
-            if enviar_email(
-                email,
-                f"⚠️ Faltam 2 horas para retirar: {titulo}",
-                html
-            ):
-                enviados += 1
-
-                avisos_enviados.add("2h_expiracao")
-
-                supabase.table("MovimentacaoExemplar").update({
-                    "emailLembreteConfHoras": ",".join(avisos_enviados)
-                }).eq(
-                    "idMovimentacao",
-                    mov["idMovimentacao"]
-                ).execute()
-
-        return {"enviados": enviados}
-
-    except Exception as e:
-        print("Erro lembrete 2h confirmação:", e)
-        raise HTTPException(
-            status_code=500,
-            detail="Erro ao enviar lembrete de 2 horas"
-        )
+@router.get('/cron/circulacao')
+def cron_circulacao(_=Depends(verificar_cron)):
+    return processar_fila_emails()

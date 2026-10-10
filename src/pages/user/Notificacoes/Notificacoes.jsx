@@ -40,18 +40,22 @@ export default function Notificacoes() {
         const mappedNotifications = loanItems.map((loan) => {
           const status = String(loan.status || "").toLowerCase();
           const tipo = status === "atrasado" ? "warning" : status === "ativo" ? "success" : "info";
-          const descricao =
-            status === "pendente"
-              ? `Sua reserva de ${loan.titulo || "um livro"} está aguardando retirada.`
-              : status === "atrasado"
-              ? `O prazo para devolver ${loan.titulo || "um livro"} já passou.`
-              : `Seu empréstimo de ${loan.titulo || "um livro"} vence em ${loan.dataDevolucao ? formatarData(loan.dataDevolucao) : "breve"}.`;
+          const titulo = loan.titulo || 'um livro';
+          const descricao = {
+            pendente:`Sua solicitação de ${titulo} está aguardando análise.`,
+            aprovado:`Sua solicitação de ${titulo} foi aprovada. Procure a biblioteca para retirar.`,
+            atrasado:`O prazo para devolver ${titulo} já passou.`,
+            devolvido:`A devolução de ${titulo} foi registrada.`,
+            negado:`Sua solicitação de ${titulo} foi negada.`,
+            expirado:`O prazo de retirada de ${titulo} expirou.`
+          }[status] || `Seu empréstimo de ${titulo} vence em ${loan.dataPrevistaDevolucao ? formatarData(loan.dataPrevistaDevolucao) : 'breve'}.`;
+
 
           return {
-            id: loan.idEmprestimo ?? loan.id,
+            id: `${loan.idEmprestimo ?? loan.id}-${loan.idExemplar}`,
             titulo: loan.titulo || "Livro desconhecido",
             descricao,
-            data: loan.dataDevolucao || loan.dataEmprestimo ? formatarData(loan.dataDevolucao || loan.dataEmprestimo) : "Sem data",
+            data: loan.dataPrevistaDevolucao || loan.dataEmprestimo ? formatarData(loan.dataPrevistaDevolucao || loan.dataEmprestimo) : "Sem data",
             tipo,
           };
         });

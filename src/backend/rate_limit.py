@@ -1,53 +1,35 @@
-import threading
-import time
-from typing import Dict, Tuple
-
+import hashlib
+import os
 from fastapi import HTTPException, Request
-
-_lock = threading.Lock()
-# chave -> lista de timestamps (segundos) das tentativas dentro da janela
-_tentativas: Dict[str, list] = {}
+from database import supabase
 
 
 def _client_ip(request: Request) -> str:
-    # Atrás de proxy (Vercel/Railway), o IP real vem em X-Forwarded-For
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    if os.getenv("VERCEL"):
+        # Vercel sobrescreve este header; não confiar em X-Forwarded-For arbitrário.
+        return request.headers.get("x-vercel-forwarded-for", "desconhecido").split(",")[0].strip()
     return request.client.host if request.client else "desconhecido"
 
 
 def checar_rate_limit(chave: str, max_tentativas: int, janela_segundos: int) -> None:
-    """Levanta HTTPException 429 se `chave` já tiver `max_tentativas` dentro
-    dos últimos `janela_segundos`. Caso contrário, registra mais uma tentativa."""
-    agora = time.time()
-    with _lock:
-        tentativas = _tentativas.setdefault(chave, [])
-        # descarta tentativas fora da janela
-        tentativas[:] = [t for t in tentativas if agora - t < janela_segundos]
-
-        if len(tentativas) >= max_tentativas:
-            raise HTTPException(
-                status_code=429,
-                detail="Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.",
-            )
-
-        tentativas.append(agora)
+    chave = hashlib.sha256(chave.encode()).hexdigest()
+    try:
+        permitido = supabase.rpc("registrar_tentativa", {"p_chave": chave, "p_max": max_tentativas, "p_janela": janela_segundos}).execute().data
+    except Exception as exc:
+        raise HTTPException(503, "Proteção de acesso indisponível") from exc
+    if permitido is not True:
+        raise HTTPException(429, "Muitas tentativas. Aguarde alguns minutos e tente novamente.")
 
 
 def limitar_login(request: Request, email: str) -> None:
-    """No máximo 5 tentativas de login por (IP + e-mail) a cada 5 minutos."""
-    chave = f"login:{_client_ip(request)}:{(email or '').strip().lower()}"
-    checar_rate_limit(chave, max_tentativas=5, janela_segundos=5 * 60)
+    checar_rate_limit(f"login-ip:{_client_ip(request)}", 30, 300)
+    checar_rate_limit(f"login-conta:{email.strip().lower()}", 5, 300)
 
 
 def limitar_esqueci_senha(request: Request, email: str) -> None:
-    """No máximo 3 solicitações de redefinição por (IP + e-mail) a cada 15 minutos."""
-    chave = f"esqueci-senha:{_client_ip(request)}:{(email or '').strip().lower()}"
-    checar_rate_limit(chave, max_tentativas=3, janela_segundos=15 * 60)
+    checar_rate_limit(f"reset-ip:{_client_ip(request)}", 15, 900)
+    checar_rate_limit(f"reset-conta:{email.strip().lower()}", 3, 900)
 
 
 def limitar_redefinir_senha(request: Request) -> None:
-    """No máximo 10 tentativas de uso de token por IP a cada 15 minutos."""
-    chave = f"redefinir-senha:{_client_ip(request)}"
-    checar_rate_limit(chave, max_tentativas=10, janela_segundos=15 * 60)
+    checar_rate_limit(f"reset-token:{_client_ip(request)}", 10, 900)

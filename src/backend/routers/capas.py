@@ -1,3 +1,6 @@
+import asyncio
+import warnings
+from urllib.parse import urljoin
 import ipaddress
 import os
 import socket
@@ -62,52 +65,17 @@ def _extensao_valida(nome_arquivo: str) -> str | None:
 
 
 def _comprimir_capa(conteudo: bytes, ext: str, content_type: str) -> tuple[bytes, str, str]:
-    """Recomprime a imagem da capa sem perda visual perceptível, convertendo
-    para WebP. Se a imagem não puder ser processada (arquivo corrompido,
-    GIF animado, ou o resultado não ficar menor que o original), devolve o
-    conteúdo original sem alterações."""
     try:
-        imagem = Image.open(BytesIO(conteudo))
-        imagem.load()
-    except Exception:
-        # Não conseguimos abrir como imagem (arquivo corrompido/formato
-        # exótico) — melhor manter o original do que falhar o upload.
-        return conteudo, ext, content_type
-
-    # GIFs animados: preserva como está, para não perder a animação.
-    if getattr(imagem, "is_animated", False):
-        return conteudo, ext, content_type
-
-    # Reduz apenas se a imagem for maior do que o necessário — mantém a
-    # proporção e não amplia imagens menores.
-    if max(imagem.size) > DIMENSAO_MAXIMA_PX:
-        imagem.thumbnail((DIMENSAO_MAXIMA_PX, DIMENSAO_MAXIMA_PX), Image.LANCZOS)
-
-    tem_transparencia = imagem.mode in ("RGBA", "LA") or (
-        imagem.mode == "P" and "transparency" in imagem.info
-    )
-
-    buffer = BytesIO()
-    try:
-        if tem_transparencia:
-            imagem.convert("RGBA").save(
-                buffer, format="WEBP", quality=QUALIDADE_WEBP, method=6
-            )
-        else:
-            imagem.convert("RGB").save(
-                buffer, format="WEBP", quality=QUALIDADE_WEBP, method=6
-            )
-    except Exception:
-        return conteudo, ext, content_type
-
-    novo_conteudo = buffer.getvalue()
-
-    # Só troca pelo resultado comprimido se ele realmente for menor —
-    # evita "compressão" que aumenta o arquivo em casos raros.
-    if novo_conteudo and len(novo_conteudo) < len(conteudo):
-        return novo_conteudo, "webp", "image/webp"
-
-    return conteudo, ext, content_type
+        with warnings.catch_warnings():
+            warnings.simplefilter('error',Image.DecompressionBombWarning)
+            imagem=Image.open(BytesIO(conteudo))
+            if imagem.format not in ('JPEG','PNG','WEBP','GIF') or imagem.width*imagem.height>16000000: raise ValueError('Imagem inválida')
+            imagem.load()
+        imagem.thumbnail((DIMENSAO_MAXIMA_PX,DIMENSAO_MAXIMA_PX),Image.Resampling.LANCZOS)
+        buffer=BytesIO(); imagem.convert('RGBA' if 'A' in imagem.getbands() else 'RGB').save(buffer,format='WEBP',quality=QUALIDADE_WEBP)
+        return buffer.getvalue(),'webp','image/webp'
+    except Exception as exc:
+        raise HTTPException(422,'Imagem inválida, corrompida ou maior que 16 megapixels') from exc
 
 
 def _montar_public_url(path: str) -> str:
@@ -130,7 +98,7 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
             detail="Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF.",
         )
 
-    conteudo = await file.read()
+    conteudo = await file.read(TAMANHO_MAXIMO_MB*1024*1024+1)
     if not conteudo:
         raise HTTPException(status_code=400, detail="Arquivo vazio.")
     if len(conteudo) > TAMANHO_MAXIMO_MB * 1024 * 1024:
@@ -161,7 +129,7 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
             file_options={"content-type": content_type},
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Falha ao enviar a capa: {e}")
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
     return {"url": _montar_public_url(nome_arquivo)}
 
@@ -177,58 +145,45 @@ TAMANHO_MAXIMO_URL_MB = 8
 TIMEOUT_BUSCA_URL_SEGUNDOS = 10.0
 
 
+def _resolver_host_seguro(hostname: str, porta: int):
+    try: infos=socket.getaddrinfo(hostname,porta,type=socket.SOCK_STREAM)
+    except socket.gaierror as exc: raise HTTPException(400,'Endereço não encontrado') from exc
+    ips=list(dict.fromkeys(i[4][0] for i in infos))
+    if not ips or any(not ipaddress.ip_address(ip).is_global for ip in ips): raise HTTPException(400,'Endereço não permitido')
+    return ips[0]
+
+
 def _host_e_seguro(hostname: str) -> bool:
-    """Bloqueia hosts que resolvem para endereços privados/locais, para
-    reduzir o risco de SSRF através desse proxy de imagens. Não é uma
-    proteção completa (não revalida o host a cada redirecionamento), mas
-    cobre o caso comum de alguém apontar para localhost/rede interna."""
-    try:
-        infos = socket.getaddrinfo(hostname, None)
-    except socket.gaierror:
-        return False
-    for info in infos:
-        try:
-            ip = ipaddress.ip_address(info[4][0])
-        except ValueError:
-            continue
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
-            return False
-    return True
+    try: _resolver_host_seguro(hostname,443); return True
+    except HTTPException: return False
 
 
 @router.get("/buscar-capa-por-url")
 async def buscar_capa_por_url(url: str, admin=Depends(get_admin)):
-    """Baixa a imagem apontada por `url` e devolve os bytes (com o
-    content-type original) para o frontend montar um File e abrir no
-    CoverImageEditor, como se o usuário tivesse escolhido um arquivo."""
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        raise HTTPException(status_code=400, detail="URL inválida.")
-    if not _host_e_seguro(parsed.hostname):
-        raise HTTPException(status_code=400, detail="Esse endereço não pode ser acessado.")
-
     try:
-        async with httpx.AsyncClient(
-            follow_redirects=True, timeout=TIMEOUT_BUSCA_URL_SEGUNDOS, max_redirects=3
-        ) as client:
-            resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0 (BibliotecaEscolar)"})
-    except httpx.HTTPError:
-        raise HTTPException(status_code=400, detail="Não foi possível baixar a imagem desse link.")
-
-    if resp.status_code != 200:
-        raise HTTPException(status_code=400, detail="Não foi possível baixar a imagem desse link.")
-
-    content_type = resp.headers.get("content-type", "").split(";")[0].strip().lower()
-    if not content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Esse link não aponta para uma imagem.")
-
-    conteudo = resp.content
-    if not conteudo:
-        raise HTTPException(status_code=400, detail="Não foi possível baixar a imagem desse link.")
-    if len(conteudo) > TAMANHO_MAXIMO_URL_MB * 1024 * 1024:
-        raise HTTPException(
-            status_code=400,
-            detail=f"A imagem desse link deve ter no máximo {TAMANHO_MAXIMO_URL_MB}MB.",
-        )
-
-    return Response(content=conteudo, media_type=content_type)
+        async with httpx.AsyncClient(follow_redirects=False,trust_env=False,timeout=TIMEOUT_BUSCA_URL_SEGUNDOS) as client:
+            for passo in range(4):
+                parsed=urlparse(url)
+                try: porta=parsed.port or (443 if parsed.scheme=='https' else 80)
+                except ValueError: raise HTTPException(400,'URL inválida')
+                if parsed.scheme not in ('http','https') or not parsed.hostname or parsed.username or parsed.password or porta not in (80,443): raise HTTPException(400,'URL inválida')
+                ip=await asyncio.to_thread(_resolver_host_seguro,parsed.hostname,porta)
+                # Conecta no IP que foi validado, mantendo Host e SNI do servidor original.
+                destino=httpx.URL(url).copy_with(host=ip)
+                async with client.stream('GET',destino,headers={'Host':parsed.netloc},extensions={'sni_hostname':parsed.hostname}) as resp:
+                    if resp.status_code in (301,302,303,307,308):
+                        if passo==3 or not resp.headers.get('location'): raise HTTPException(400,'Redirecionamentos inválidos')
+                        url=urljoin(url,resp.headers['location']); continue
+                    if resp.status_code!=200 or not resp.headers.get('content-type','').lower().startswith('image/'): raise HTTPException(400,'O link não aponta para uma imagem acessível')
+                    limite=TAMANHO_MAXIMO_URL_MB*1024*1024
+                    try: declarado=int(resp.headers.get('content-length','0'))
+                    except ValueError: declarado=0
+                    if declarado>limite: raise HTTPException(413,'Imagem maior que 8 MB')
+                    dados=bytearray()
+                    async for parte in resp.aiter_bytes():
+                        dados.extend(parte)
+                        if len(dados)>limite: raise HTTPException(413,'Imagem maior que 8 MB')
+                    conteudo,_,tipo=await asyncio.to_thread(_comprimir_capa,bytes(dados),'','')
+                    return Response(content=conteudo,media_type=tipo,headers={'X-Content-Type-Options':'nosniff'})
+    except httpx.HTTPError as exc:
+        raise HTTPException(400,'Não foi possível baixar a imagem') from exc

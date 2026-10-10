@@ -204,8 +204,8 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
             ),
         )
     except APIError as e:
-        print("Erro na API do Gemini:", e)
-        raise HTTPException(status_code=502, detail=f"Erro ao consultar a IA: {str(e)}")
+        print("Erro na API do Gemini:", 'falha de operação')
+        raise HTTPException(status_code=502, detail='Não foi possível concluir a operação')
 
     if not resposta.text:
         raise HTTPException(status_code=502, detail="A IA não retornou dados estruturados.")

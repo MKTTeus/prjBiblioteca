@@ -1,3 +1,5 @@
+from html import escape
+from core import consultar_completo, consultar_lote
 import json
 import os
 from typing import Optional, List
@@ -80,7 +82,7 @@ def buscar_cdd_externo(isbn: str) -> Optional[str]:
                 if "classificacao" in data and data["classificacao"]:
                     return str(data["classificacao"])
     except Exception as e:
-        print("Erro ao buscar no BrasilAPI:", e)
+        print("Erro ao buscar no BrasilAPI:", 'falha de operação')
     return None
 
 def sugerir_cdd_ia(livro_data: dict) -> str:
@@ -105,7 +107,7 @@ def sugerir_cdd_ia(livro_data: dict) -> str:
         if resp.text:
             return resp.text.strip()
     except Exception as e:
-        print("Erro Gemini sugerir_cdd_ia:", e)
+        print("Erro Gemini sugerir_cdd_ia:", 'falha de operação')
     return "000"
 
 def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
@@ -136,7 +138,7 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
             if isinstance(items, list):
                 return [str(i).strip().capitalize() for i in items[:5]]
     except Exception as e:
-        print("Erro Gemini sugerir_assuntos_ia:", e)
+        print("Erro Gemini sugerir_assuntos_ia:", 'falha de operação')
     fallback = []
     if livro_data.get("livCategoria"):
         fallback.append(livro_data["livCategoria"])
@@ -158,6 +160,8 @@ def formatar_ficha_html(
     cdd: str,
     nota_idioma: str = ""
 ) -> str:
+    autor_abnt, titulo, publicacao, descricao_fisica, isbn, cdd, nota_idioma = [escape(str(v or ''),quote=True) for v in (autor_abnt,titulo,publicacao,descricao_fisica,isbn,cdd,nota_idioma)]
+    assuntos=[escape(str(v),quote=True) for v in assuntos]; entradas=[escape(str(v),quote=True) for v in entradas]
     assuntos_html = ""
     for i, ass in enumerate(assuntos, 1):
         assuntos_html += f"{i}. {ass}. "
@@ -221,7 +225,7 @@ def formatar_ficha_html(
 @router.get("/livros/{idLivro}/ficha-catalografica")
 def obter_ficha_catalografica(idLivro: int):
     # Buscar ficha catalográfica no banco
-    ficha_resp = supabase.table("FichaCatalografica").select("*").eq("idLivro", idLivro).execute()
+    ficha_resp = consultar_completo(lambda: supabase.table('FichaCatalografica').select('*').eq('idLivro', idLivro), 'FichaCatalografica')
     if not ficha_resp.data:
         raise HTTPException(
             status_code=404,
@@ -229,12 +233,12 @@ def obter_ficha_catalografica(idLivro: int):
         )
     ficha = ficha_resp.data[0]
     # Buscar livro e enriquecer
-    livro_resp = supabase.table("Livro").select("*").eq("idLivro", idLivro).execute()
+    livro_resp = consultar_completo(lambda: supabase.table('Livro').select('*').eq('idLivro', idLivro), 'Livro')
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado.")
     livro = enriquecer_livros(livro_resp.data)[0]
     # Resolver autores
-    autores_resp = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento)").eq("idLivro", idLivro).execute()
+    autores_resp = consultar_completo(lambda: supabase.table('LivroAutor').select('idLivro, Autor(idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento)').eq('idLivro', idLivro), 'LivroAutor')
     autores_list = []
     if autores_resp.data:
         for r in autores_resp.data:
@@ -285,11 +289,11 @@ def obter_ficha_catalografica(idLivro: int):
     
 @router.post("/livros/{idLivro}/ficha-catalografica/gerar")
 def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
-    livro_resp = supabase.table("Livro").select("*").eq("idLivro", idLivro).execute()
+    livro_resp = consultar_completo(lambda: supabase.table('Livro').select('*').eq('idLivro', idLivro), 'Livro')
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado.")
     livro = enriquecer_livros(livro_resp.data)[0]
-    autores_resp = supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento)").eq("idLivro", idLivro).execute()
+    autores_resp = consultar_completo(lambda: supabase.table('LivroAutor').select('idLivro, Autor(idAutor, autNome, autABNT, autAnoNascimento, autAnoFalecimento)').eq('idLivro', idLivro), 'LivroAutor')
     autores_list = []
     if autores_resp.data:
         for r in autores_resp.data:
@@ -404,7 +408,7 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     texto_linhas.append(f"CDD {cdd}")
     ficTexto = "\n\n".join(texto_linhas)
     ficHtml = formatar_ficha_html(autor_abnt, titulo_cat, publicacao, desc_fisica, isbn, assuntos, entradas_formatadas, cdd, nota_idioma)
-    ex_ficha = supabase.table("FichaCatalografica").select("idFicha, ficVersao").eq("idLivro", idLivro).execute()
+    ex_ficha = consultar_completo(lambda: supabase.table('FichaCatalografica').select('idFicha, ficVersao').eq('idLivro', idLivro), 'FichaCatalografica')
     payload_ficha = {
         "idLivro": idLivro,
         "ficTexto": ficTexto,
@@ -443,7 +447,7 @@ def gerar_ficha_catalografica(idLivro: int, admin=Depends(get_admin)):
     
 @router.put("/livros/{idLivro}/ficha-catalografica")
 def atualizar_ficha_catalografica(idLivro: int, data: FichaCatalograficaUpdate, admin=Depends(get_admin)):
-    ficha_resp = supabase.table("FichaCatalografica").select("*").eq("idLivro", idLivro).execute()
+    ficha_resp = consultar_completo(lambda: supabase.table('FichaCatalografica').select('*').eq('idLivro', idLivro), 'FichaCatalografica')
     if not ficha_resp.data:
         raise HTTPException(status_code=404, detail="Ficha catalográfica não encontrada para este livro.")
     ficha = ficha_resp.data[0]
@@ -495,6 +499,7 @@ def atualizar_ficha_catalografica(idLivro: int, data: FichaCatalograficaUpdate, 
     # da 1ª letra do sobrenome (sem indentação); só título/publicação/
     # descrição física ficam recuados. Autor só aparece quando não é uma
     # entrada por título.
+    autor_abnt,titulo_cat,pub,desc,isbn_text,assuntos_entradas_clean,cdd_text = [escape(str(v or ''),quote=True) for v in (autor_abnt,titulo_cat,pub,desc,isbn_text,assuntos_entradas_clean,cdd_text)]
     autor_html = (
         f'<div style="font-weight: bold; margin-bottom: 12px;">{autor_abnt}</div>'
         if autor_abnt else ""

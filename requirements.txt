@@ -1,17 +1,15 @@
-# Runtime dependencies for the Vercel Python Function.
-# Keep local backend installs pointed here through src/backend/requirements.txt.
-fastapi
-uvicorn
-python-dotenv
-python-jose
-python-multipart
-passlib==1.7.4
+# Versões usadas na validação desta correção.
+fastapi==0.142.2
+uvicorn==0.54.0
+python-dotenv==1.2.4
+python-jose==3.5.0
+python-multipart==0.0.32
 bcrypt==4.0.1
-cryptography
-pydantic
-email-validator
-supabase
-httpx
-google-genai
-openpyxl
-Pillow
+cryptography==50.0.2
+pydantic==2.13.5
+email-validator==2.3.0
+supabase==2.32.0
+httpx==0.28.1
+google-genai==2.28.0
+openpyxl==3.1.5
+Pillow==12.3.0

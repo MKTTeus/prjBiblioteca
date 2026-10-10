@@ -20,8 +20,8 @@ export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolve
       <td className="emp-id-cell">{emprestimo.idEmprestimo}</td>
 
       <td className="emp-main-cell">
-        <strong>{usuario?.nome || "-"}</strong>
-        <small>{isAluno ? "RA" : "CPF"}: {documento}</small>
+        <strong>{usuario?.nome || emprestimo.usuario || "-"}</strong>
+        <small>{emprestimo.usuarioTipo === "Professor" ? "Professor" : `${isAluno ? "RA" : "CPF"}: ${documento}`}</small>
       </td>
 
       <td className="emp-main-cell">
@@ -52,7 +52,7 @@ export default function EmprestimoRow({ emprestimo, usuario, exemplar, onDevolve
       </button>
     )}
 
-    {status !== "devolvido" && (
+    {podeRenovar && (
       <button
         type="button"
         className="emp-btn-light"

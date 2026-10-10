@@ -16,6 +16,7 @@ export default function AnoLetivo() {
   const [senha, setSenha] = useState("");
   const [showSenha, setShowSenha] = useState(false);
   const [confirmacao, setConfirmacao] = useState("");
+  const [retidos, setRetidos] = useState([]);
   const [processando, setProcessando] = useState(false);
 
   const carregar = useCallback(async () => {
@@ -40,6 +41,7 @@ export default function AnoLetivo() {
 
   const abrirModal = () => {
     setSenha("");
+    setRetidos([]);
     setConfirmacao("");
     setShowModal(true);
   };
@@ -53,7 +55,7 @@ export default function AnoLetivo() {
     if (!senha || !fraseOk) return;
     setProcessando(true);
     try {
-      const r = await encerrarAnoLetivo({ senha, confirmacao });
+      const r = await encerrarAnoLetivo({ senha, confirmacao, retidos });
       addToast(
         `Ano letivo encerrado: ${r.promovidos} promovido(s), ${r.formados} formado(s). Novo ano: ${r.novoAnoLetivo}.`,
         "success"
@@ -135,6 +137,13 @@ export default function AnoLetivo() {
               <AlertTriangle size={14} /> Esta ação não pode ser desfeita.
             </p>
 
+            <fieldset disabled={processando} style={{maxHeight:200,overflow:'auto'}}>
+              <legend>Alunos retidos (permanecem na série atual)</legend>
+              {(info?.alunos || []).map(a => <label key={a.idUsuario} style={{display:'block'}}>
+                <input type="checkbox" checked={retidos.includes(a.idUsuario)} onChange={e => setRetidos(ids => e.target.checked ? [...ids,a.idUsuario] : ids.filter(id => id!==a.idUsuario))} />
+                {a.usuNome} — {a.usuSerie} {a.usuTurma}
+              </label>)}
+            </fieldset>
             <div className="al-field">
               <label>Senha do administrador</label>
               <div className="al-input-wrap">
