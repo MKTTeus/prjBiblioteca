@@ -168,7 +168,7 @@ export default function CadastroLivros() {
       <div className="cadastro-header">
         <div>
           <h1>Bem-vindo ao Cadastro de Livros</h1>
-          <p>Gerencie o acervo completo da biblioteca escolar.</p>
+          <p>O acervo mostra livros com pelo menos um exemplar não desativado.</p>
         </div>
 
         {isAdmin && (
@@ -180,9 +180,9 @@ export default function CadastroLivros() {
 
       <div className="stats-cards-grid">
         <StatsCard
-          title="Total de Livros"
+          title="Títulos no acervo"
           value={books.length}
-          subtitle="Acervo cadastrado"
+          subtitle="Com exemplares não desativados"
           icon={<HiOutlineBookOpen />}
           color="blue"
         />

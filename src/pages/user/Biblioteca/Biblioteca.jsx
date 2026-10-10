@@ -105,7 +105,7 @@ export default function Biblioteca() {
       <section className="user-page__hero">
         <div className="user-page__hero-content">
           <h2>Biblioteca</h2>
-          <p>Pesquise livros por título, autor ou gênero usando dados reais do banco.</p>
+          <p>Explore livros com pelo menos um exemplar não desativado.</p>
         </div>
       </section>
 

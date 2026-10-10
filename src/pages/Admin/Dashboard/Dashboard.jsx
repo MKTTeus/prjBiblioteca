@@ -257,13 +257,13 @@ export default function Dashboard() {
       <div className="cards">
         <NavLink to="/admin/livros" className="card card-link">
           <div className="card-header">
-            <span>Total de Livros</span>
+            <span>Títulos ativos</span>
             <div className="icon blue">
               <FaBook />
             </div>
           </div>
           <h2>{stats.totalLivros}</h2>
-          <small className="positive">Clique para ver os livros</small>
+          <small>Inclui títulos sem exemplares.</small>
         </NavLink>
 
         <NavLink to="/admin/alunos" className="card card-link">
