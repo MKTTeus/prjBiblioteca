@@ -2,7 +2,7 @@
 
 Base: `aea9eb17f2fe68469136d6d92e2c1bae1cf8b498`. Branch de trabalho: `fix/auditoria-biblioteca`.
 
-As correções abaixo estão implementadas no repositório. A aplicação no Supabase e a implantação do backend/frontend precisam seguir [APLICACAO_MIGRATIONS.md](APLICACAO_MIGRATIONS.md). Nenhuma alteração no banco de produção foi feita durante este trabalho.
+As correções abaixo estão implementadas no repositório. As oito migrations foram aplicadas ao Supabase de produção em 10/10/2026, com pré-verificação, ensaio local da estrutura real e conferência posterior. O backend/frontend aguardam a implantação pelo PR; veja [APLICACAO_MIGRATIONS.md](APLICACAO_MIGRATIONS.md).
 
 | Item | Pendência | Correção implementada |
 |---|---|---|

@@ -4,8 +4,9 @@ import assert from 'node:assert/strict';
 
 process.on('uncaughtException', e => { console.error(e.message,e.where || '',e.internalQuery || ''); process.exit(1); });
 const db = new PGlite();
-await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
- CREATE TABLE "RedefinicaoSenha"("idRedefinicao" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,"usuEmail" text NOT NULL,"tokenHash" text NOT NULL UNIQUE,"expiraEm" timestamp NOT NULL,"usadoEm" timestamp,"criadoEm" timestamp DEFAULT now());
+await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;`);
+if (process.env.LEGACY_SCHEMA_SQL) await db.exec(readFileSync(process.env.LEGACY_SCHEMA_SQL, 'utf8'));
+await db.exec(`CREATE TABLE IF NOT EXISTS "RedefinicaoSenha"("idRedefinicao" integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,"usuEmail" text NOT NULL,"tokenHash" text NOT NULL UNIQUE,"expiraEm" timestamp NOT NULL,"usadoEm" timestamp,"criadoEm" timestamp DEFAULT now());
  CREATE SCHEMA storage; CREATE TABLE storage.buckets(id text PRIMARY KEY,name text,public boolean,file_size_limit bigint);
  CREATE TABLE storage.objects(id integer GENERATED ALWAYS AS IDENTITY,bucket_id text);
  ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
@@ -19,11 +20,18 @@ for (const name of readdirSync('supabase/migrations').filter(n => n.endsWith('.s
 const query = async (sql, args = []) => (await db.query(sql, args)).rows;
 const scalar = async (sql, args = []) => Object.values((await query(sql, args))[0])[0];
 const rejected = async (sql, args=[]) => { await assert.rejects(() => db.query(sql,args)); };
-await db.exec(`INSERT INTO "Administrador" ("admNome","admEmail","admSenha") VALUES ('Gestor','gestor@example.com','hash');
-INSERT INTO "Administrador" ("admNome","admEmail","admSenha","admProfessor") VALUES ('Professor','prof@example.com','hash',true);
-INSERT INTO "Usuario" ("usuNome","usuEmail","usuSenha","usuTipo","usuSerie","usuTurma") VALUES ('Aluno','aluno@example.com','hash','Aluno','6º Ano','A');
+// Instalações antigas usam enums; bancos novos usam text no baseline.
+// Executar os mesmos fluxos nos dois perfis detecta coerções incompatíveis.
+if (process.env.TEST_LEGACY_ENUMS && !process.env.LEGACY_SCHEMA_SQL) await db.exec(`
+ CREATE TYPE public.tipo_usuario AS ENUM ('Aluno','Comunidade');
+ CREATE TYPE public.tipomovimentacao AS ENUM ('EMPRESTIMO','RESERVA','SOLICITACAO');
+ ALTER TABLE "Usuario" ALTER COLUMN "usuTipo" TYPE tipo_usuario USING "usuTipo"::tipo_usuario;
+ ALTER TABLE "Movimentacao" ALTER COLUMN "movTipo" TYPE tipomovimentacao USING "movTipo"::tipomovimentacao;`);
+await db.exec(`INSERT INTO "Administrador" ("admNome","admEmail","admSenha","admStatus") VALUES ('Gestor','gestor@example.com','hash',true);
+INSERT INTO "Administrador" ("admNome","admEmail","admSenha","admProfessor","admStatus") VALUES ('Professor','prof@example.com','hash',true,true);
+INSERT INTO "Usuario" ("usuNome","usuEmail","usuSenha","usuTipo","usuSerie","usuTurma","usuTelefone","usuEndereco","usuStatus") VALUES ('Aluno','aluno@example.com','hash','Aluno','6º Ano','A','','',true);
 INSERT INTO "Livro" ("livTitulo","livPaginas") VALUES ('Livro A',100),('Livro B',100);
-INSERT INTO "Exemplar" ("idLivro","exeLivTombo") VALUES (1,'T0001'),(1,'T0002'),(2,'T0003');`);
+INSERT INTO "Exemplar" ("idLivro","exeLivTombo","exeLivStatus") VALUES (1,'T0001','Disponível'),(1,'T0002','Disponível'),(2,'T0003','Disponível');`);
 const create = (usuario, professor, admin, itens, extra='') => scalar(`SELECT criar_movimentacao($1,$2,$3,$4::jsonb${professor ? ",p_finalidade=>'PESSOAL'" : ''}${extra})`,[usuario,professor,admin,JSON.stringify(itens)]);
 const move = (id,acao, extra='') => scalar(`SELECT transicionar_movimentacao($1,$2,1${extra})`,[id,acao]);
 const req = await create(null,2,null,[{idLivro:1,quantidade:2},{idLivro:2,quantidade:1}]);
@@ -69,7 +77,7 @@ const before=await scalar('SELECT count(*) FROM "Livro"');
 await rejected(`SELECT salvar_livro(NULL,'{"livTitulo":"Falha","livPaginas":100,"livAutor":"Novo autor","livEditora":"Nova editora","idCategoria":999}',1,'T')`);
 assert.equal(await scalar('SELECT count(*) FROM "Livro"'),before);
 assert.equal(await scalar(`SELECT count(*) FROM "Autor" WHERE "autNome"='Novo autor'`),0);
-await db.exec(`INSERT INTO "Exemplar"("idLivro","exeLivTombo") VALUES(2,'T9999'),(2,'T10000')`);
+await db.exec(`INSERT INTO "Exemplar"("idLivro","exeLivTombo","exeLivStatus") VALUES(2,'T9999','Disponível'),(2,'T10000','Disponível')`);
 const created=await scalar(`SELECT salvar_livro(NULL,'{"livTitulo":"Teste","livPaginas":50,"livAutor":"Autor teste"}',2,'T')`);
 assert.deepEqual(created.exemplares.map(x=>x.exeLivTombo),['T10001','T10002']);
 await scalar(`SELECT salvar_livro($1,'{"livAutor":"","livISBN":"123"}')`,[created.livro.idLivro]);
@@ -112,7 +120,7 @@ const bad=structuredClone(snapshot);delete bad.Usuario[0].usuNome;
 await rejected('SELECT restaurar_backup_completo($1::jsonb)',[JSON.stringify(bad)]);
 assert.equal(await scalar('SELECT "usuNome" FROM "Usuario" WHERE "idUsuario"=1'),'Aluno');
 // Fechamento guarda a série histórica e só retém os alunos selecionados.
-await db.exec(`INSERT INTO "Usuario"("usuNome","usuEmail","usuSenha","usuTipo","usuSerie") VALUES('Finalista','final@example.com','hash','Aluno','3º Ano EM')`);
+await db.exec(`INSERT INTO "Usuario"("usuNome","usuEmail","usuSenha","usuTipo","usuSerie","usuTelefone","usuEndereco","usuStatus") VALUES('Finalista','final@example.com','hash','Aluno','3º Ano EM','','',true)`);
 const closure=await scalar('SELECT encerrar_ano_letivo(2026,ARRAY[1])');
 assert.equal(closure.retidos,1);assert.equal(closure.formados,1);
 assert.equal(await scalar('SELECT "usuSerie" FROM "Usuario" WHERE "idUsuario"=1'),'6º Ano');

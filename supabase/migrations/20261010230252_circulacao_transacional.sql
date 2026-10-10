@@ -77,7 +77,7 @@ BEGIN
     INSERT INTO "Movimentacao" ("idUsuario","idAdmin","idAdminProfessor","movTipo","movStatus","movDataSolicitacao","status_confirmacao","movFinalidade","movTurma","movSerie")
       VALUES (p_usuario,gestor,p_professor,'SOLICITACAO',estado,hoje,'PENDENTE',p_finalidade,p_turma,p_serie) RETURNING "idMovimentacao" INTO idmov;
   END IF;
-  UPDATE "Movimentacao" SET "movUsuarioNome"=COALESCE(u."usuNome",a."admNome"), "movUsuarioTipo"=CASE WHEN p_professor IS NOT NULL THEN 'Professor' ELSE u."usuTipo" END,
+  UPDATE "Movimentacao" SET "movUsuarioNome"=COALESCE(u."usuNome",a."admNome"), "movUsuarioTipo"=CASE WHEN p_professor IS NOT NULL THEN 'Professor' ELSE u."usuTipo"::text END,
     "movSerie"=COALESCE(p_serie,u."usuSerie"), "movTurma"=COALESCE(p_turma,u."usuTurma"), "movAnoLetivo"=config_int('ano_letivo_atual',extract(year from hoje)::integer) WHERE "idMovimentacao"=idmov;
   INSERT INTO "MovimentacaoExemplar" ("idMovimentacao","idExemplar","itemStatus","dataPrevistaDevolucao")
     SELECT idmov, unnest(ids), estado, CASE WHEN p_direto THEN hoje + dias ELSE NULL END;

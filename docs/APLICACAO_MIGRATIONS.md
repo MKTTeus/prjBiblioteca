@@ -1,6 +1,18 @@
 # Aplicação das correções no ambiente real
 
-A aplicação foi alterada para depender das novas RPCs e colunas. Banco e versão da aplicação precisam ser implantados de forma coordenada. Este procedimento não foi executado no banco de produção.
+A aplicação foi alterada para depender das novas RPCs e colunas. Banco e versão da aplicação precisam ser implantados de forma coordenada.
+
+## Estado da implantação em 10/10/2026
+
+As oito migrations foram aplicadas pelo plugin Supabase ao projeto `xjwodxotibpbxsmalkck` (`prjBiblioteca`), após confirmação dos backups e pré-verificação sem os conflitos conhecidos. Os arquivos receberam os timestamps registrados pelo Supabase, de `20261010230214` a `20261010230420`. Não reaplique essas migrations nesse projeto nem use `migration repair` para versões antigas.
+
+O ensaio local reproduziu a estrutura real do banco com dados fictícios, incluindo enums, constraints e campos legados. Ele encontrou e corrigiu a conversão de `usuTipo` para texto no snapshot da circulação. As configurações legadas de SMTP foram preservadas. Não foi feita uma restauração dos dados reais em homologação nem uma alteração das variáveis da Vercel.
+
+Após a aplicação, as contagens permaneceram: 334 livros, 1.960 exemplares, 2 usuários, 11 administradores e 1 movimentação. Todas as 22 tabelas de negócio têm RLS; nenhuma permite leitura/escrita por `anon`. As 16 RPCs de negócio verificadas permitem `service_role`; nenhuma função privilegiada em `public` permite `anon`/`authenticated`. Os buckets e quatro policies restritivas de Storage foram conferidos. O cache de schema da API foi recarregado.
+
+O advisor não apontou erros de segurança. As informações de RLS sem policies são esperadas neste modelo de acesso exclusivo pelo backend. Permanece um aviso anterior sobre `pg_trgm` em `public`: [orientação do Supabase](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public). A extensão não foi movida nesta implantação.
+
+Próximo passo: aguardar a CI do PR atualizado, conferir as variáveis do servidor listadas abaixo e mesclar o PR para implantar a aplicação. Depois, testar login, catálogo e circulação no ambiente real.
 
 ## Preparação e ensaio
 

@@ -36,6 +36,7 @@ jobs:
       - run: python -m pytest -q src/backend/tests
       - run: npm test -- --runInBand
       - run: npm run test:db
+      - run: TEST_LEGACY_ENUMS=1 npm run test:db
       - run: python scripts/test-concurrency.py
         env:
           TEST_DATABASE_URL: postgresql://postgres:teste_local_ci@localhost:5432/biblioteca_test

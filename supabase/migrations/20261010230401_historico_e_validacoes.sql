@@ -18,4 +18,5 @@ ALTER TABLE public."Exemplar" ADD CONSTRAINT exemplar_tombo_nao_vazio CHECK(leng
 ALTER TABLE public."ResultadoAnoLetivo" ADD CONSTRAINT resultado_ano_valido CHECK(resultado IN('Promovido','Retido','Formado')) NOT VALID;
 INSERT INTO "Configuracoes"(chave,valor) VALUES('tamanho_minimo_senha','8'),('exigir_senha_forte','false'),('frequencia_backup','diario'),('log_api','true') ON CONFLICT DO NOTHING;
 UPDATE "Configuracoes" SET valor='false' WHERE chave IN('autenticacao_dois_fatores','notificacao_sms','modo_debug','modo_manutencao');
-DELETE FROM "Configuracoes" WHERE chave='smtp_senha';
+-- Configurações legadas de SMTP são preservadas; a API usa uma allowlist
+-- e não expõe credenciais nem oferece configuração de SMTP no frontend.
