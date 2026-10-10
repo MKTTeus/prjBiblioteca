@@ -1,32 +1,23 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { FiFilter, FiSearch, FiTag, FiX } from "react-icons/fi";
 import "./FiltroBusca.css";
 import SelectGenero from "../SelectGenero/SelectGenero";
 import SelectStatus from "../SelectStatus/SelectStatus";
 
-function FiltroBusca({ onFilter }) {
-  const [filters, setFilters] = useState({
-    q: "",
-    genero: "todos",
-    status: "todas",
-  });
-
-  useEffect(() => {
-    onFilter && onFilter(filters);
-  }, [filters, onFilter]);
-
+function FiltroBusca({ filters, onFilter }) {
   function updateField(field, value) {
-    setFilters((prev) => ({
-      ...prev,
+    onFilter({
+      ...filters,
       [field]: value,
-    }));
+    });
   }
 
   function clearAll() {
-    setFilters({
+    onFilter({
       q: "",
       genero: "todos",
       status: "todas",
+      exemplares: "todos",
     });
   }
 
@@ -78,6 +69,16 @@ function FiltroBusca({ onFilter }) {
             <FiTag className="campo-icone" />
             <SelectStatus value={filters.status} onChange={(v) => updateField("status", v)} />
           </div>
+        </div>
+        <div className="campo">
+          <label htmlFor="filtro-exemplares">Exemplares</label>
+          <select id="filtro-exemplares" className="filtro-exemplares" value={filters.exemplares} onChange={(e) => updateField("exemplares", e.target.value)}>
+            <option value="todos">Todos os títulos</option>
+            <option value="pendentes">Pendências no acervo</option>
+            <option value="sem">Sem exemplares</option>
+            <option value="desativados">Todos desativados</option>
+            <option value="com">Com exemplares não desativados</option>
+          </select>
         </div>
       </div>
     </div>

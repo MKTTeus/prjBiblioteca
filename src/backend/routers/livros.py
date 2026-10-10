@@ -251,6 +251,30 @@ def listar_livros(
     per_page: int = Query(10000, ge=1, le=10000),
     incluir_inativos: bool = False
 ):
+    return _listar_livros(q, categoria, status, page, per_page, incluir_inativos)
+
+
+@router.get("/livros/gestao")
+def listar_livros_gestao(
+    q: str | None = None,
+    categoria: str | None = "todas",
+    status: str | None = "todos",
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10000, ge=1, le=10000),
+    admin=Depends(get_admin)
+):
+    return _listar_livros(q, categoria, status, page, per_page, True, True)
+
+
+def _listar_livros(
+    q: str | None = None,
+    categoria: str | None = "todas",
+    status: str | None = "todos",
+    page: int = 1,
+    per_page: int = 10000,
+    incluir_inativos: bool = False,
+    incluir_sem_exemplares: bool = False
+):
     try:
         allowed_ids = None
 
@@ -341,11 +365,15 @@ def listar_livros(
             )
 
         mapa_ex = {}
+        cadastrados = {}
+        desativados = {}
         for ex in exemplares:
+            lid = ex["idLivro"]
+            cadastrados[lid] = cadastrados.get(lid, 0) + 1
             s = (ex.get("exeLivStatus") or "").lower()
             if "desativado" in s:
+                desativados[lid] = desativados.get(lid, 0) + 1
                 continue
-            lid = ex["idLivro"]
             if lid not in mapa_ex:
                 mapa_ex[lid] = {"total_exemplares": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0}
             mapa_ex[lid]["total_exemplares"] += 1
@@ -354,9 +382,11 @@ def listar_livros(
             elif "reserv" in s:  mapa_ex[lid]["reservados"] += 1
 
         livros_ativos = [
-            {**l, **mapa_ex.get(l["idLivro"], {"total_exemplares": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0})}
+            {**l, **mapa_ex.get(l["idLivro"], {"total_exemplares": 0, "disponiveis": 0, "emprestados": 0, "reservados": 0}),
+             "exemplares_cadastrados": cadastrados.get(l["idLivro"], 0),
+             "exemplares_desativados": desativados.get(l["idLivro"], 0)}
             for l in livros
-            if mapa_ex.get(l["idLivro"], {}).get("total_exemplares", 0) > 0
+            if incluir_sem_exemplares or mapa_ex.get(l["idLivro"], {}).get("total_exemplares", 0) > 0
         ]
 
         # Enriquecer com autor, editora, categoria, gênero

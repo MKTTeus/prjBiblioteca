@@ -241,13 +241,14 @@ const DEFAULT_EDIT_ADD_CONFIG = {
   quantidade: 0,
 };
 
-export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
+export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initialSection = "basic" }) {
   const { addToast } = useToast();
   const [generos, setGeneros] = useState([]);
   const [autores, setAutores] = useState([]);
   const [editoras, setEditoras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [loadedBookId, setLoadedBookId] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
   const [initialForm, setInitialForm] = useState(DEFAULT_FORM);
   const [exemplares, setExemplares] = useState([]);
@@ -285,6 +286,18 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
     copies: copiesSectionRef,
   };
 
+  const semExemplares = !loadingDetails && Number(addConfig.quantidade || 0) === 0 &&
+    (bookToEdit ? loadedBookId === bookToEdit.idLivro && exemplares.every((ex) => String(ex.exeLivStatus || "").toLowerCase().includes("desativado")) : true);
+
+  function irParaExemplares() {
+    copiesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    copiesSectionRef.current?.querySelector('input[type="number"]')?.focus({ preventScroll: true });
+  }
+
+  useEffect(() => {
+    if (initialSection === "copies" && bookToEdit && loadedBookId === bookToEdit.idLivro && !loadingDetails) irParaExemplares();
+  }, [initialSection, bookToEdit, loadedBookId, loadingDetails]);
+
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
@@ -313,6 +326,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
   }
 
   const carregarLivroEmEdicao = useCallback(async () => {
+    setLoadedBookId(null);
     setHighlightedFields(new Set());
     setIsbnFilledFields(new Set());
 
@@ -334,7 +348,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         ? detalhes.exemplares.map((ex) => ({
             ...ex,
             exeLivTombo: ex.exeLivTombo || "",
-            exeLivStatus: ex.exeLivStatus || "Disponível",
+            exeLivStatus: String(ex.exeLivStatus || "").toLowerCase().includes("desativado") ? "Desativado" : ex.exeLivStatus || "Disponível",
             exeLivDescricao: ex.exeLivDescricao || "",
           }))
         : [];
@@ -372,6 +386,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
       setInitialExemplares(exemplaresCarregados);
       setAddConfig(DEFAULT_EDIT_ADD_CONFIG);
       setInitialAddConfig(DEFAULT_EDIT_ADD_CONFIG);
+      setLoadedBookId(bookToEdit.idLivro);
     } catch (err) {
       console.error(err);
       addToast("Falha ao carregar detalhes do livro", "error");
@@ -731,7 +746,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
         }
       } else {
         if (Number(addConfig.quantidade) < 1) {
-          addToast("Falha ao cadastrar o livro", "error");
+          addToast("Informe ao menos um exemplar para cadastrar o livro no acervo.", "error");
           setLoading(false);
           return;
         }
@@ -875,6 +890,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit }) {
           <div className="editor-divider" />
 
           <div className="editor-content">
+            {semExemplares && (
+              <div className="editor-copies-warning" role="status">
+                <p><strong>{exemplares.length === 0 ? "Nenhum exemplar cadastrado." : "Todos os exemplares estão desativados."}</strong> Adicione ou reative um exemplar para exibir o livro no acervo.{bookToEdit?.livAtivo === false ? " O título também precisa ser reativado." : ""}</p>
+                <button type="button" onClick={irParaExemplares}>Ir para exemplares</button>
+              </div>
+            )}
             {loadingDetails ? (
               <div className="editor-loading-state">Carregando dados do livro...</div>
             ) : (
