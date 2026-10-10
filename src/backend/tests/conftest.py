@@ -13,6 +13,6 @@ Cada teste que toca uma função que usa `supabase` faz o mock do client
 """
 import os
 
-os.environ.setdefault("SUPABASE_URL", "https://exemplo-teste.supabase.co")
-os.environ.setdefault("SUPABASE_KEY", "chave-fake-de-teste")
+os.environ.pop("SUPABASE_URL",None)
+os.environ.pop("SUPABASE_KEY",None)
 os.environ.setdefault("SECRET_KEY", "chave-secreta-fake-para-testes")

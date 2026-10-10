@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from core import consultar_completo, consultar_lote
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from database import supabase
-from core import get_admin, gerar_tombos, executar_em_paralelo
+from core import get_admin, executar_em_paralelo, buscar_todos
+from rpc import executar_rpc
 from schemas import Livro, LivroCreate, ExemplarUpdate, LivroStatusUpdate
 
 router = APIRouter()
@@ -9,7 +11,7 @@ router = APIRouter()
 TAMANHO_LOTE_SUPABASE = 100
 
 
-def consultar_em_lotes(criar_consulta, ids: list[int]) -> list[dict]:
+def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro") -> list[dict]:
     """Consulta o Supabase em lotes de IDs, paginando também o RESULTADO de
     cada lote via .range().
 
@@ -26,7 +28,9 @@ def consultar_em_lotes(criar_consulta, ids: list[int]) -> list[dict]:
         lote = ids[inicio:inicio + TAMANHO_LOTE_SUPABASE]
         offset = 0
         while True:
-            resposta = criar_consulta(lote).range(offset, offset + TAMANHO_LOTE_SUPABASE - 1).execute()
+            query=criar_consulta(lote)
+            for coluna in ordem.split(','): query=query.order(coluna)
+            resposta = query.range(offset, offset + TAMANHO_LOTE_SUPABASE - 1).execute()
             pagina = resposta.data or []
             registros.extend(pagina)
             if len(pagina) < TAMANHO_LOTE_SUPABASE:
@@ -57,27 +61,27 @@ def enriquecer_livros(livros: list) -> list:
     consultas = [
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autAnoNascimento, autAnoFalecimento)").in_("idLivro", ids_lote),
-            lote,
+            lote, "idLivro,idAutor",
         ),
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids_lote),
-            lote,
+            lote, "idLivro,idCategoria",
         ),
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids_lote),
-            lote,
+            lote, "idLivro,idGenero",
         ),
     ]
     if ed_ids:
         consultas.append(
             lambda lote: consultar_em_lotes(
                 lambda ids_lote: supabase.table("Editora").select("idEditora, ediNome, ediCidade, ediEstado, ediPais").in_("idEditora", ids_lote),
-                lote,
+                lote, "idEditora",
             )
         )
 
     respostas = executar_em_paralelo(
-        *(lambda consulta=consulta: consulta(ids) for consulta in consultas)
+        *(lambda consulta=consulta: consulta(ed_ids if i==3 else ids) for i,consulta in enumerate(consultas))
     )
     la, lc, lg, *resto = respostas
 
@@ -224,34 +228,16 @@ def resolver_editora(nome_editora: str, cidade: str = None, estado: str = None, 
 
 @router.get("/editoras")
 def listar_editoras():
-    res = supabase.table("Editora").select("idEditora, ediNome").order("ediNome").execute()
+    res = consultar_completo(lambda: supabase.table('Editora').select('idEditora, ediNome').order('ediNome'), 'Editora')
     return res.data or []
 
 
 # ── Exemplares extras ─────────────────────────────────────────────
 
 @router.post("/livros/{idLivro}/adicionar-exemplares")
-def adicionar_exemplares(
-    idLivro: int,
-    quantidade: int,
-    prefixo: str = "T",
-    admin=Depends(get_admin)
-):
-    livro_resp = supabase.table("Livro").select("livISBN").eq("idLivro", idLivro).execute()
-    if not livro_resp.data:
-        raise HTTPException(status_code=404, detail="Livro não encontrado")
-
-    tombos = gerar_tombos(quantidade, prefixo)
-    exemplares = []
-    for t in tombos:
-        ex = supabase.table("Exemplar").insert({
-            "idLivro": idLivro,
-            "exeLivTombo": t,
-            "exeLivStatus": "Disponível"
-        }).execute()
-        exemplares.append(ex.data[0])
-
-    return {"message": f"{quantidade} exemplares adicionados", "exemplares": exemplares}
+def adicionar_exemplares(idLivro: int, quantidade: int = Query(ge=1,le=500), prefixo: str = Query('T',pattern=r'^[A-Za-z][A-Za-z0-9_-]{0,19}$'),admin=Depends(get_admin)):
+    exemplares=executar_rpc('adicionar_exemplares',{'p_livro':idLivro,'p_quantidade':quantidade,'p_prefixo':prefixo})
+    return {'message':f'{len(exemplares)} exemplares adicionados','exemplares':exemplares}
 
 
 # ── GET /livros ───────────────────────────────────────────────────
@@ -261,8 +247,8 @@ def listar_livros(
     q: str | None = None,
     categoria: str | None = "todas",
     status: str | None = "todos",
-    page: int = 1,
-    per_page: int = 10000,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(10000, ge=1, le=10000),
     incluir_inativos: bool = False
 ):
     try:
@@ -272,19 +258,19 @@ def listar_livros(
             q_str = f"%{q}%"
 
             def buscar_por_titulo():
-                return supabase.table("Livro").select("idLivro").ilike("livTitulo", q_str).execute()
+                return consultar_completo(lambda: supabase.table('Livro').select('idLivro').ilike('livTitulo', q_str), 'Livro')
 
             def buscar_por_tombo():
-                return supabase.table("Exemplar").select("idLivro").ilike("exeLivTombo", q_str).execute()
+                return consultar_completo(lambda: supabase.table('Exemplar').select('idLivro').ilike('exeLivTombo', q_str), 'Exemplar')
 
             def buscar_por_autor():
                 # Passo interno em 2 etapas (autor → LivroAutor), mas essa
                 # cadeia inteira roda em paralelo com as outras duas buscas.
-                autores = supabase.table("Autor").select("idAutor").ilike("autNome", q_str).execute().data or []
+                autores = consultar_completo(lambda: supabase.table('Autor').select('idAutor').ilike('autNome', q_str), 'Autor').data or []
                 if not autores:
                     return []
                 autor_ids = [a["idAutor"] for a in autores]
-                la = supabase.table("LivroAutor").select("idLivro").in_("idAutor", autor_ids).execute().data or []
+                la = consultar_lote(lambda ids_lote: supabase.table('LivroAutor').select('idLivro').in_('idAutor', ids_lote), 'LivroAutor', autor_ids).data or []
                 return [r["idLivro"] for r in la]
 
             resp_titulo, resp_tombo, ids_por_autor = executar_em_paralelo(
@@ -302,7 +288,7 @@ def listar_livros(
             try:
                 cat_id = int(categoria)
                 # Filtrar por categoria via LivroCategoria
-                lc = supabase.table("LivroCategoria").select("idLivro").eq("idCategoria", cat_id).execute().data or []
+                lc = consultar_completo(lambda: supabase.table('LivroCategoria').select('idLivro').eq('idCategoria', cat_id), 'LivroCategoria').data or []
                 cat_ids = {r["idLivro"] for r in lc}
                 allowed_ids = cat_ids if allowed_ids is None else allowed_ids & cat_ids
             except Exception:
@@ -317,7 +303,7 @@ def listar_livros(
             }
             cond = mapa.get(status.lower())
             if cond:
-                r = supabase.table("Exemplar").select("idLivro").ilike("exeLivStatus", f"%{cond}%").execute()
+                r = consultar_completo(lambda: supabase.table('Exemplar').select('idLivro').ilike('exeLivStatus', f'%{cond}%'), 'Exemplar')
                 status_ids = {e["idLivro"] for e in (r.data or [])}
                 allowed_ids = status_ids if allowed_ids is None else allowed_ids & status_ids
 
@@ -330,24 +316,28 @@ def listar_livros(
                 q = q.eq("livAtivo", True)
             if isinstance(allowed_ids, set):
                 q = q.in_("idLivro", list(allowed_ids))
-            return q
+            return q.order("idLivro")
 
         start = (page - 1) * per_page
-        livros = []
-        while len(livros) < per_page:
-            inicio_lote = start + len(livros)
-            tamanho_lote = min(TAMANHO_LOTE_SUPABASE, per_page - len(livros))
-            lote = criar_consulta_livros().range(inicio_lote, inicio_lote + tamanho_lote - 1).execute().data or []
-            livros.extend(lote)
-            if len(lote) < tamanho_lote:
-                break
+        if isinstance(allowed_ids,set):
+            def consulta_lote(ids_lote):
+                qb=supabase.table('Livro').select('*').in_('idLivro',ids_lote)
+                return qb if incluir_inativos else qb.eq('livAtivo',True)
+            livros=sorted(consultar_lote(consulta_lote,'Livro',sorted(allowed_ids)).data,key=lambda l:l['idLivro'])[start:start+per_page]
+        else:
+            livros=[]
+            while len(livros)<per_page:
+                inicio_lote=start+len(livros); tamanho_lote=min(TAMANHO_LOTE_SUPABASE,per_page-len(livros))
+                lote=criar_consulta_livros().range(inicio_lote,inicio_lote+tamanho_lote-1).execute().data or []
+                livros.extend(lote)
+                if len(lote)<tamanho_lote: break
 
         livro_ids = [l["idLivro"] for l in livros]
         exemplares = []
         if livro_ids:
             exemplares = consultar_em_lotes(
                 lambda ids_lote: supabase.table("Exemplar").select("*").in_("idLivro", ids_lote),
-                livro_ids,
+                livro_ids, "idExemplar",
             )
 
         mapa_ex = {}
@@ -373,17 +363,17 @@ def listar_livros(
         return enriquecer_livros(livros_ativos)
 
     except Exception as e:
-        print("ERRO listar_livros:", e)
+        print("ERRO listar_livros:", 'falha de operação')
         raise HTTPException(status_code=500, detail="Erro ao listar livros")
 
 
 @router.get("/livros/{idLivro}")
 def detalhes_livro(idLivro: int):
-    livro_resp = supabase.table("Livro").select("*").eq("idLivro", idLivro).execute()
+    livro_resp = consultar_completo(lambda: supabase.table('Livro').select('*').eq('idLivro', idLivro), 'Livro')
     if not livro_resp.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado")
 
-    exemplares_resp = supabase.table("Exemplar").select("*").eq("idLivro", idLivro).execute()
+    exemplares_resp = consultar_completo(lambda: supabase.table('Exemplar').select('*').eq('idLivro', idLivro), 'Exemplar')
     livro_enriquecido = enriquecer_livros(livro_resp.data)[0]
 
     return {"livro": livro_enriquecido, "exemplares": exemplares_resp.data}
@@ -393,154 +383,15 @@ def detalhes_livro(idLivro: int):
 
 @router.post("/livros")
 def criar_livro(data: LivroCreate, admin=Depends(get_admin)):
-    try:
-        payload = data.livro.model_dump()
-
-        # exemplarISBN é o nome usado no formulário (o ISBN é digitado/lido
-        # junto do exemplar físico), mas na modelagem do banco o ISBN é um
-        # atributo do Livro (coluna livISBN, única) — cada exemplar (tombo)
-        # é só uma cópia física da mesma edição/ISBN.
-        isbn = (payload.pop("exemplarISBN", None) or "").strip() or None
-        if isbn:
-            payload["livISBN"] = isbn
-        else:
-            payload.pop("livISBN", None)
-        id_categoria = payload.pop("idCategoria", None)
-        id_genero    = payload.pop("idGenero", None)
-        nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
-        autor_ano_nasc  = payload.pop("autorAnoNascimento", None)
-        autor_ano_falec = payload.pop("autorAnoFalecimento", None)
-        nome_editora = (payload.pop("livEditora", None) or "").strip() or None
-        edi_cidade = (payload.pop("ediCidade", None) or "").strip() or None
-        edi_estado = (payload.pop("ediEstado", None) or "").strip() or None
-        edi_pais   = (payload.pop("ediPais", None) or "").strip() or "Brasil"
-
-
-        # Resolver FK de editora
-        id_editora = resolver_editora(nome_editora, edi_cidade, edi_estado, edi_pais)
-        if id_editora:
-            payload["idEditora"] = id_editora
-
-        livro_resp = supabase.table("Livro").insert(payload).execute()
-        if not livro_resp.data:
-            raise HTTPException(status_code=500, detail="Não foi possível criar o livro")
-        id_livro = livro_resp.data[0]["idLivro"]
-
-        # Autor(es) → LivroAutor (um livro pode ter vários autores; o campo
-        # aceita nomes separados por vírgula)
-        ids_autores = resolver_autores_multiplos(nome_autor, autor_ano_nasc, autor_ano_falec)
-        if ids_autores:
-            supabase.table("LivroAutor").insert(
-                [{"idLivro": id_livro, "idAutor": id_autor} for id_autor in ids_autores]
-            ).execute()
-
-        # Categoria → LivroCategoria
-        if id_categoria:
-            supabase.table("LivroCategoria").insert({"idLivro": id_livro, "idCategoria": id_categoria}).execute()
-
-        # Gênero → LivroGenero
-        if id_genero:
-            supabase.table("LivroGenero").insert({"idLivro": id_livro, "idGenero": id_genero}).execute()
-
-        # Exemplares
-        tombos = gerar_tombos(data.quantidade_exemplares, data.prefixo_tombo)
-        exemplares = []
-        for t in tombos:
-            ex = supabase.table("Exemplar").insert({
-                "idLivro": id_livro, "exeLivTombo": t, "exeLivStatus": "Disponível"
-            }).execute()
-            exemplares.append(ex.data[0])
-
-        return {"livro": livro_resp.data[0], "exemplares": exemplares}
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("Erro ao criar livro:", e)
-        error_msg = str(e)
-        if "null value in column" in error_msg or "23502" in error_msg:
-            raise HTTPException(
-                status_code=400,
-                detail="Preencha todos os campos obrigatórios do livro (título e número de páginas).",
-            )
-        if "livISBN" in error_msg and ("duplicate key" in error_msg or "23505" in error_msg):
-            raise HTTPException(
-                status_code=409,
-                detail="Já existe um livro cadastrado com esse ISBN.",
-            )
-        raise HTTPException(status_code=500, detail=f"Erro ao criar livro: {str(e)}")
+    return executar_rpc('salvar_livro',{'p_id':None,'p_dados':data.livro.model_dump(exclude_unset=True),'p_quantidade':data.quantidade_exemplares,'p_prefixo':data.prefixo_tombo})
 
 
 # ── PUT /livros/{idLivro} ─────────────────────────────────────────
 
 @router.put("/livros/{idLivro}")
 def atualizar_livro(idLivro: int, livro: Livro, admin=Depends(get_admin)):
-    try:
-        payload = livro.model_dump()
-        # Mesmo mapeamento de criar_livro: o ISBN do formulário (exemplarISBN)
-        # é gravado na coluna livISBN do Livro. Aqui, diferente da criação,
-        # setamos explicitamente (mesmo quando vazio) para permitir limpar
-        # um ISBN cadastrado incorretamente.
-        isbn = (payload.pop("exemplarISBN", None) or "").strip() or None
-        payload["livISBN"] = isbn
-        id_categoria = payload.pop("idCategoria", None)
-        id_genero    = payload.pop("idGenero", None)
-        nome_autor   = (payload.pop("livAutor",   None) or "").strip() or None
-        autor_ano_nasc  = payload.pop("autorAnoNascimento", None)
-        autor_ano_falec = payload.pop("autorAnoFalecimento", None)
-        nome_editora = (payload.pop("livEditora", None) or "").strip() or None
-        edi_cidade = (payload.pop("ediCidade", None) or "").strip() or None
-        edi_estado = (payload.pop("ediEstado", None) or "").strip() or None
-        edi_pais   = (payload.pop("ediPais", None) or "").strip() or "Brasil"
-
-
-        # Resolver FK de editora
-        id_editora = resolver_editora(nome_editora, edi_cidade, edi_estado, edi_pais)
-        if id_editora:
-            payload["idEditora"] = id_editora
-        else:
-            payload.pop("idEditora", None)  # não apagar editora existente se não veio
-
-        resp = supabase.table("Livro").update(payload).eq("idLivro", idLivro).execute()
-        if not resp.data:
-            raise HTTPException(status_code=404, detail="Livro não encontrado")
-
-        # Autor(es) — mesmo tratamento da criação: aceita vários nomes
-        # separados por vírgula e substitui todos os vínculos do livro.
-        if nome_autor is not None:
-            ids_autores = resolver_autores_multiplos(nome_autor, autor_ano_nasc, autor_ano_falec)
-            if ids_autores:
-                supabase.table("LivroAutor").delete().eq("idLivro", idLivro).execute()
-                supabase.table("LivroAutor").insert(
-                    [{"idLivro": idLivro, "idAutor": id_autor} for id_autor in ids_autores]
-                ).execute()
-
-        # Categoria
-        if id_categoria is not None:
-            supabase.table("LivroCategoria").delete().eq("idLivro", idLivro).execute()
-            supabase.table("LivroCategoria").insert({"idLivro": idLivro, "idCategoria": id_categoria}).execute()
-
-        # Gênero
-        if id_genero is not None:
-            supabase.table("LivroGenero").delete().eq("idLivro", idLivro).execute()
-            supabase.table("LivroGenero").insert({"idLivro": idLivro, "idGenero": id_genero}).execute()
-
-        return enriquecer_livros(resp.data)[0]
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("Erro ao atualizar livro:", e)
-        error_msg = str(e)
-        if "null value in column" in error_msg or "23502" in error_msg:
-            raise HTTPException(
-                status_code=400,
-                detail="Preencha todos os campos obrigatórios do livro (título e número de páginas).",
-            )
-        if "livISBN" in error_msg and ("duplicate key" in error_msg or "23505" in error_msg):
-            raise HTTPException(
-                status_code=409,
-                detail="Já existe um livro cadastrado com esse ISBN.",
-            )
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar livro: {str(e)}")
+    result=executar_rpc('salvar_livro',{'p_id':idLivro,'p_dados':livro.model_dump(exclude_unset=True)})
+    return enriquecer_livros([result['livro']])[0]
 
 
 @router.patch("/livros/{idLivro}/status")
@@ -553,7 +404,7 @@ def alterar_status_livro(idLivro: int, data: LivroStatusUpdate, admin=Depends(ge
     seus dados intactos — Exemplares, histórico de empréstimos, vínculos de
     autor/categoria/gênero — e pode ser reativado a qualquer momento.
     """
-    livro = supabase.table("Livro").select("idLivro").eq("idLivro", idLivro).execute()
+    livro = consultar_completo(lambda: supabase.table('Livro').select('idLivro').eq('idLivro', idLivro), 'Livro')
     if not livro.data:
         raise HTTPException(status_code=404, detail="Livro não encontrado")
 
@@ -564,57 +415,12 @@ def alterar_status_livro(idLivro: int, data: LivroStatusUpdate, admin=Depends(ge
 
 
 @router.delete("/livros/{idLivro}")
-def deletar_livro(idLivro: int, admin=Depends(get_admin)):
-    """
-    Exclui um livro PERMANENTEMENTE, junto de seus Exemplares e vínculos com
-    autor/categoria/gênero.
-
-    Isso é bloqueado (409) se qualquer Exemplar desse livro já apareceu em
-    alguma Movimentacao (empréstimo/reserva, passado ou presente) — ou seja,
-    serve para corrigir um cadastro feito por engano, não para "apagar" um
-    livro com histórico. Nesses casos, use a desativação
-    (PATCH /livros/{idLivro}/status) para tirá-lo do catálogo sem perder
-    o histórico nem violar as chaves estrangeiras (Movimentacao/MovimentacaoExemplar
-    continuam existindo e apontando para o Exemplar/Livro).
-    """
-    livro = supabase.table("Livro").select("idLivro").eq("idLivro", idLivro).execute()
-    if not livro.data:
-        raise HTTPException(status_code=404, detail="Livro não encontrado")
-
-    exemplares = supabase.table("Exemplar").select("idExemplar").eq("idLivro", idLivro).execute().data or []
-    exemplar_ids = [e["idExemplar"] for e in exemplares]
-
-    if exemplar_ids:
-        movs = supabase.table("MovimentacaoExemplar") \
-            .select("idExemplar") \
-            .in_("idExemplar", exemplar_ids) \
-            .limit(1) \
-            .execute()
-        if movs.data:
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "Este livro possui histórico de empréstimos/reservas e não pode ser "
-                    "excluído permanentemente. Use a opção \"Desativar\" para retirá-lo do "
-                    "catálogo sem apagar seus dados."
-                ),
-            )
-        supabase.table("Exemplar").delete().in_("idExemplar", exemplar_ids).execute()
-
-    supabase.table("LivroAutor").delete().eq("idLivro", idLivro).execute()
-    supabase.table("LivroCategoria").delete().eq("idLivro", idLivro).execute()
-    supabase.table("LivroGenero").delete().eq("idLivro", idLivro).execute()
-    supabase.table("Livro").delete().eq("idLivro", idLivro).execute()
-
-    return {"message": "Livro excluído permanentemente com sucesso"}
+def deletar_livro(idLivro:int,admin=Depends(get_admin)):
+    executar_rpc('excluir_livro',{'p_id':idLivro})
+    return {'message':'Livro excluído permanentemente com sucesso'}
 
 
 @router.put("/exemplares/{idExemplar}")
-def atualizar_exemplar(idExemplar: int, data: ExemplarUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("Exemplar").select("*").eq("idExemplar", idExemplar).execute()
-    if not resp.data:
-        raise HTTPException(status_code=404, detail="Exemplar não encontrado")
-    update_data = {k: v for k, v in data.dict().items() if v is not None}
-    updated = supabase.table("Exemplar").update(update_data).eq("idExemplar", idExemplar).execute()
-    return updated.data[0]
+def atualizar_exemplar(idExemplar:int,data:ExemplarUpdate,admin=Depends(get_admin)):
+    return executar_rpc('salvar_exemplar',{'p_id':idExemplar,'p_dados':data.model_dump(exclude_unset=True)})
 

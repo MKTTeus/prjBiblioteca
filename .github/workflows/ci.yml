@@ -1,0 +1,43 @@
+name: Testes e build
+on:
+  push:
+    branches: [main, 'fix/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: biblioteca_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: teste_local_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: npm ci
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m pytest -q src/backend/tests
+      - run: npm test -- --runInBand
+      - run: npm run test:db
+      - run: python scripts/test-concurrency.py
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:teste_local_ci@localhost:5432/biblioteca_test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high

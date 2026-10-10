@@ -10,7 +10,6 @@ import "./Notificacoes.css";
 export default function Notificacoes() {
   const { addToast } = useToast();
   const [email, setEmail] = useState(true);
-  const [sms, setSms] = useState(false);
   const [atraso, setAtraso] = useState(true);
   const [devolucao, setDevolucao] = useState(true);
   const [dias, setDias] = useState(2);
@@ -21,7 +20,6 @@ export default function Notificacoes() {
       try {
         const configs = await getConfiguracoes();
         setEmail(configToBool(configs, "notificacao_email", true));
-        setSms(configToBool(configs, "notificacao_sms", false));
         setAtraso(configToBool(configs, "lembrete_atraso", true));
         setDevolucao(configToBool(configs, "lembrete_devolucao", true));
         setDias(configToNumber(configs, "dias_antecedencia_lembrete", 2));
@@ -38,7 +36,6 @@ export default function Notificacoes() {
     try {
       await Promise.all([
         updateConfiguracao({ chave: "notificacao_email", valor: String(email) }),
-        updateConfiguracao({ chave: "notificacao_sms", valor: String(sms) }),
         updateConfiguracao({ chave: "lembrete_atraso", valor: String(atraso) }),
         updateConfiguracao({ chave: "lembrete_devolucao", valor: String(devolucao) }),
         updateConfiguracao({ chave: "dias_antecedencia_lembrete", valor: String(dias) }),
@@ -89,9 +86,9 @@ export default function Notificacoes() {
         <div className="noti-item">
           <div>
             <span className="noti-title">Notificações por SMS</span>
-            <p>Enviar notificações por mensagem de texto</p>
+            <p>Indisponível nesta versão</p>
           </div>
-          <Switch checked={sms} onChange={() => setSms(!sms)} {...switchStyle} />
+          <Switch checked={false} disabled {...switchStyle} />
         </div>
 
         <div className="noti-item">

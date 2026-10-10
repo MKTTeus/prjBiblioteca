@@ -1,3 +1,5 @@
+from core import conta_publica
+from core import consultar_completo, consultar_lote
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional as Opt
@@ -27,15 +29,12 @@ def _proteger_desativacao(ids: list[int], admin_atual: dict) -> None:
         return
 
     atuais = (
-        supabase.table("Administrador")
-        .select("idAdmin, admEmail, admStatus")
-        .in_("idAdmin", ids)
-        .execute()
+        consultar_lote(lambda ids_lote: supabase.table('Administrador').select('idAdmin, admEmail, admStatus, admProfessor').in_('idAdmin', ids_lote), 'Administrador', ids)
         .data
         or []
     )
     ids_ativos_afetados = {
-        a["idAdmin"] for a in atuais if parse_status(a.get("admStatus"))
+        a["idAdmin"] for a in atuais if parse_status(a.get("admStatus")) and not a.get("admProfessor")
     }
     if admin_atual.get("sub") in {a.get("admEmail") for a in atuais}:
         raise HTTPException(status_code=400, detail="Não é possível desativar a própria conta")
@@ -43,7 +42,7 @@ def _proteger_desativacao(ids: list[int], admin_atual: dict) -> None:
     ativos = (
         supabase.table("Administrador")
         .select("idAdmin", count="exact", head=True)
-        .eq("admStatus", True)
+        .eq("admStatus", True).eq("admProfessor", False)
         .execute()
     )
     total_ativos = getattr(ativos, "count", None)
@@ -59,19 +58,19 @@ def _proteger_desativacao_individual(id_admin: int, admin_atual: dict) -> None:
 
 @router.get("/admins")
 def listar_admins(admin=Depends(get_admin)):
-    resp = supabase.table("Administrador").select("*").order("admNome").execute()
-    return resp.data or []
+    resp = consultar_completo(lambda: supabase.table('Administrador').select('*').order('admNome'), 'Administrador')
+    return [conta_publica(c) for c in (resp.data or [])]
 
 
 @router.post("/admins")
 def criar_admin(data: AdminCreate, admin=Depends(get_admin)):
     email = normalize_email(data.email)
 
-    email_existe_usuario = supabase.table("Usuario").select("*").eq("usuEmail", email).execute()
+    email_existe_usuario = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('usuEmail', email), 'Usuario')
     if email_existe_usuario.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como usuário")
 
-    exist = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
+    exist = consultar_completo(lambda: supabase.table('Administrador').select('*').eq('admEmail', email), 'Administrador')
     if exist.data:
         raise HTTPException(status_code=400, detail="Admin já existe")
 
@@ -83,22 +82,14 @@ def criar_admin(data: AdminCreate, admin=Depends(get_admin)):
         "admStatus": parse_status(data.status),
         "admProfessor": bool(data.professor)
     }).execute()
-    return criado.data[0]
+    return conta_publica(criado.data[0])
 
 
-def _increment_admin_token_version(id_admin: int) -> int:
-    """Incrementa token_version do admin e retorna o novo valor."""
-    resp = supabase.table("Administrador").select("admTokenVersion, admEmail").eq("idAdmin", id_admin).execute()
-    if not resp.data:
-        return 1
-    current = resp.data[0].get("admTokenVersion", 1)
-    new_version = current + 1
-    supabase.table("Administrador").update({"admTokenVersion": new_version}).eq("idAdmin", id_admin).execute()
-    # Invalida cache
-    email = resp.data[0].get("admEmail")
-    if email:
-        invalidate_token_version_cache("Administrador", email)
-    return new_version
+def _increment_admin_token_version(id_conta: int) -> int:
+    rows = supabase.table("Administrador").select("admTokenVersion").eq("idAdmin", id_conta).limit(1).execute().data
+    if not rows:
+        raise HTTPException(404, "Conta não encontrada")
+    return int(rows[0]["admTokenVersion"]) + 1
 
 
 @router.post("/admins/batch/excluir")
@@ -106,8 +97,6 @@ def excluir_admins_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
     _proteger_desativacao(data.ids, admin)
-    for id in data.ids:
-        _increment_admin_token_version(id)
     supabase.table("Administrador").update({"admStatus": False}).in_("idAdmin", data.ids).execute()
     return {"message": f"{len(data.ids)} admin(s) desativado(s) com sucesso"}
 
@@ -118,15 +107,13 @@ def atualizar_status_admins_lote(data: BatchStatus, admin=Depends(get_admin)):
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
     if not data.status:
         _proteger_desativacao(data.ids, admin)
-    for id in data.ids:
-        _increment_admin_token_version(id)
     supabase.table("Administrador").update({"admStatus": data.status}).in_("idAdmin", data.ids).execute()
     return {"message": f"{len(data.ids)} admin(s) atualizados com sucesso"}
 
 
 @router.put("/admins/{idAdmin}")
 def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("Administrador").select("*").eq("idAdmin", idAdmin).execute()
+    resp = consultar_completo(lambda: supabase.table('Administrador').select('*').eq('idAdmin', idAdmin), 'Administrador')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
 
@@ -135,6 +122,7 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
     if data.nome is not None:
         payload["admNome"] = data.nome
     if data.email is not None:
+        increment_token = True
         payload["admEmail"] = normalize_email(data.email)
     if data.senha is not None:
         payload["admSenha"] = hash_password(data.senha)
@@ -146,6 +134,9 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
         payload["admStatus"] = novo_status
         increment_token = True
     if data.professor is not None:
+        increment_token = True
+        if data.professor:
+            _proteger_desativacao_individual(idAdmin, admin)
         payload["admProfessor"] = bool(data.professor)
 
     if not payload:
@@ -158,7 +149,7 @@ def atualizar_admin(idAdmin: int, data: AdminUpdate, admin=Depends(get_admin)):
     resp = supabase.table("Administrador").update(payload).eq("idAdmin", idAdmin).execute()
     if not resp.data:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
-    return resp.data[0]
+    return conta_publica(resp.data[0])
 
 @router.delete("/admins/{idAdmin}")
 def deletar_admin(idAdmin: int, admin=Depends(get_admin)):
@@ -177,7 +168,7 @@ class AdminPerfilUpdate(BaseModel):
 
 @router.get("/admin/me")
 def get_perfil_admin(admin=Depends(get_admin_ou_professor)):
-    resp = supabase.table("Administrador").select("*").eq("admEmail", admin["sub"]).execute()
+    resp = consultar_completo(lambda: supabase.table('Administrador').select('*').eq('admEmail', admin['sub']), 'Administrador')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
     a = resp.data[0]
@@ -192,7 +183,7 @@ def get_perfil_admin(admin=Depends(get_admin_ou_professor)):
 
 @router.patch("/admin/me")
 def atualizar_perfil_admin(data: AdminPerfilUpdate, admin=Depends(get_admin_ou_professor)):
-    resp = supabase.table("Administrador").select("*").eq("admEmail", admin["sub"]).execute()
+    resp = consultar_completo(lambda: supabase.table('Administrador').select('*').eq('admEmail', admin['sub']), 'Administrador')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
     a = resp.data[0]

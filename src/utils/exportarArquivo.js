@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
+
 
 /**
  * Gera um PDF real (arquivo binário) que é baixado diretamente pelo navegador
@@ -121,7 +121,7 @@ export function exportarFichaCatalografica({ tituloLivro, paragrafos, nomeArquiv
 }
 
 /**
- * Gera um arquivo .xlsx real para download, usando SheetJS.
+ * Gera um arquivo .xlsx real para download, usando ExcelJS.
  *
  * @param {Object} opcoes
  * @param {string} opcoes.nomeAba - Nome da planilha/aba.
@@ -129,9 +129,13 @@ export function exportarFichaCatalografica({ tituloLivro, paragrafos, nomeArquiv
  * @param {Array<Array<string|number>>} opcoes.linhas - Linhas da tabela.
  * @param {string} opcoes.nomeArquivo - Nome do arquivo (sem extensão).
  */
-export function exportarExcel({ nomeAba, colunas, linhas, nomeArquivo }) {
-  const planilha = XLSX.utils.aoa_to_sheet([colunas, ...linhas]);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, planilha, nomeAba || "Dados");
-  XLSX.writeFile(workbook, `${nomeArquivo}.xlsx`);
+export async function exportarExcel({ nomeAba, colunas, linhas, nomeArquivo }) {
+  const { default: ExcelJS } = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet((nomeAba || 'Dados').replace(/[\\/*?:\[\]]/g,' ').slice(0,31));
+  sheet.addRows([colunas,...linhas]);
+  const bytes = await workbook.xlsx.writeBuffer();
+  const url = URL.createObjectURL(new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  const a = document.createElement('a');a.href=url;a.download=`${nomeArquivo}.xlsx`;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
 }

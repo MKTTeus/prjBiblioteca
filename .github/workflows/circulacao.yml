@@ -1,0 +1,25 @@
+name: Processar circulação e notificações
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: cron-circulacao
+  cancel-in-progress: false
+jobs:
+  processar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Processar fila autenticada
+        env:
+          CRON_URL: ${{ secrets.CRON_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo 'Configure CRON_API_URL e CRON_SECRET nos secrets do repositório.'
+            exit 1
+          fi
+          curl --fail --silent --show-error --max-time 240 \
+            --header "Authorization: Bearer $CRON_SECRET" "$CRON_URL/api/cron/circulacao"

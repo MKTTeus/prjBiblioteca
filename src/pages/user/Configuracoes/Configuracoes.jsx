@@ -68,7 +68,7 @@ export default function ConfiguracoesUser() {
     if (!senhaAtual) { addToast("Informe a senha atual", "error"); return; }
     if (!novaSenha)  { addToast("Informe a nova senha", "error"); return; }
     if (novaSenha !== confirmSenha) { addToast("As senhas não coincidem", "error"); return; }
-    if (novaSenha.length < 6) { addToast("A nova senha deve ter ao menos 6 caracteres", "error"); return; }
+    if (novaSenha.length < 8) { addToast("A nova senha deve ter ao menos 8 caracteres", "error"); return; }
 
     setSavingSenha(true);
     try {

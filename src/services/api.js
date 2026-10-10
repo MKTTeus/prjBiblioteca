@@ -12,21 +12,33 @@ export const getToken = () => localStorage.getItem("token");
 // FETCH BASE
 // ========================
 
+const pendingMutations = new Map();
+
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
   const isFormData = options.body instanceof FormData;
+  const mutation = options.method && options.method !== "GET";
+
+  const identity = mutation && !isFormData ? JSON.stringify([token, options.method, endpoint, options.body || '']) : null;
+  let requestKey = options.headers?.['Idempotency-Key'];
+  if (mutation && !requestKey) {
+    requestKey = (identity && pendingMutations.get(identity)) || crypto.randomUUID();
+    if (identity) pendingMutations.set(identity, requestKey);
+  }
 
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     cache: "no-store",
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
+      ...(mutation && { "Idempotency-Key": requestKey }),
       ...(token && { Authorization: `Bearer ${token}` }),
       ...(options.headers || {})
     }
   });
 
   if (!res.ok) {
+    if (identity && res.status < 500) pendingMutations.delete(identity);
 
     if (res.status === 401) {
       localStorage.removeItem("user");
@@ -42,7 +54,13 @@ async function apiFetch(endpoint, options = {}) {
     throw err;
   }
 
-  return res.json();
+  const data = await res.json();
+  if (identity) pendingMutations.delete(identity);
+  if (data?.access_token) {
+    localStorage.setItem("token", data.access_token);
+    window.dispatchEvent(new CustomEvent("session-token", { detail: data.access_token }));
+  }
+  return data;
 }
 
 // ========================
@@ -534,15 +552,16 @@ export const expirarSolicitacao = (id) =>
     method: "POST"
   });
 
-export const devolverEmprestimo = (id) =>
+export const devolverEmprestimo = (id, idExemplares) =>
   apiFetch(`/emprestimos/${id}/devolver`, {
-    method: "PUT"
+    method: "PUT",
+    body: JSON.stringify({ idExemplares })
   });
 
-export const renovarEmprestimo = (id, novaData) =>
+export const renovarEmprestimo = (id, novaData, idExemplares) =>
   apiFetch(`/emprestimos/${id}/renovar`, {
     method: "PUT",
-    body: JSON.stringify({ novaData })
+    body: JSON.stringify({ novaData, idExemplares })
   });
 
 export const getExemplaresDisponiveis = () =>
@@ -638,8 +657,10 @@ export const criarEmprestimoProfessor = (payload) =>
     body: JSON.stringify(payload),
   });
 
-export const devolverEmprestimoProfessor = (idMovimentacao, itens) =>
+export const devolverEmprestimoProfessor = (idMovimentacao, idExemplares) =>
   apiFetch(`/professor/emprestimos/${idMovimentacao}/devolucao`, {
     method: "POST",
-    body: JSON.stringify({ itens }),
+    body: JSON.stringify({ idExemplares }),
   });
+
+export const getEmailStatus = () => apiFetch("/configuracoes/email-status");

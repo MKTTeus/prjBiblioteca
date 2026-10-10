@@ -1,5 +1,5 @@
 from typing import Optional, Union
-from datetime import datetime
+from datetime import datetime, date
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -21,10 +21,10 @@ class RedefinirSenha(BaseModel):
 
 
 class Livro(BaseModel):
-    livTitulo: str
+    livTitulo: str = Field(min_length=1,max_length=1000)
     livDescricao: Optional[str] = None
     livAnoPublicacao: Optional[int] = None
-    livPaginas: Optional[int] = None
+    livPaginas: int = Field(gt=0,le=100000)
     livCapaURL: Optional[str] = None
     livISBN: Optional[str] = None
     # Campos sugeridos pela IA de catalogação (colunas simples de Livro)
@@ -83,8 +83,8 @@ class AutorUpdate(BaseModel):
 
 class LivroCreate(BaseModel):
     livro: Livro
-    quantidade_exemplares: int
-    prefixo_tombo: str = "T"
+    quantidade_exemplares: int = Field(ge=1,le=500)
+    prefixo_tombo: str = Field("T",pattern=r"^[A-Za-z][A-Za-z0-9_-]{0,19}$")
 
 
 class LivroStatusUpdate(BaseModel):
@@ -117,24 +117,25 @@ class Emprestimo(BaseModel):
 
 
 class RenovarEmprestimo(BaseModel):
-    novaData: str
+    idExemplares: list[int] = Field(min_length=1,max_length=500)
+    novaData: date
 
 
 class ItemEmprestimoProfessor(BaseModel):
     idLivro: int
-    quantidade: int = Field(gt=0)
+    quantidade: int = Field(gt=0,le=500)
 
 
 class EmprestimoProfessorCreate(BaseModel):
     finalidade: str  # "PESSOAL" | "TURMA"
     turma: Optional[str] = None
     serie: Optional[str] = None
-    itens: list[ItemEmprestimoProfessor]
+    itens: list[ItemEmprestimoProfessor] = Field(min_length=1,max_length=500)
 
 
 class ItemDevolucaoProfessor(BaseModel):
     idLivro: int
-    quantidade: int = Field(gt=0)
+    quantidade: int = Field(gt=0,le=500)
 
 
 class DevolucaoProfessor(BaseModel):
@@ -205,6 +206,7 @@ class UsuarioUpdate(BaseModel):
 
 
 class EncerrarAnoLetivo(BaseModel):
+    retidos: list[int] = Field(default_factory=list, max_length=10000)
     senha: str
     confirmacao: str
 
@@ -230,3 +232,7 @@ class AdminUpdate(BaseModel):
     senha: Optional[str] = Field(default=None, min_length=8)
     status: Optional[Union[bool, str]] = None
     professor: Optional[bool] = None
+
+
+class DevolucaoExemplares(BaseModel):
+    idExemplares: list[int] = Field(min_length=1, max_length=500)

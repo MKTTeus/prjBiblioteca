@@ -72,44 +72,43 @@ export function AuthProvider({ children }) {
   }, [user, resetTimer]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const storedToken = localStorage.getItem("token");
-
-    if (storedUser && storedToken) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      fetchTimeoutMs().then((ms) => {
-        timeoutMsRef.current = ms;
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(doLogout, ms);
-      });
-
-      // Sessões abertas antes da senha ser marcada como provisória (ex.:
-      // admin trocou a senha do aluno enquanto ele já estava logado, ou a
-      // sessão é de antes desse recurso existir) não têm esse dado no
-      // localStorage. Reconfere direto no backend pra não depender de um
-      // novo login.
-      if (parsedUser.tipo && parsedUser.tipo !== "admin") {
-        fetch(`${API_URL}/usuario/me`, {
-          headers: { Authorization: `Bearer ${storedToken}` },
-        })
-          .then((res) => (res.ok ? res.json() : null))
-          .then((perfil) => {
-            if (perfil && typeof perfil.senhaProvisoria === "boolean") {
-              setUser((prev) => {
-                if (!prev || prev.senhaProvisoria === perfil.senhaProvisoria) return prev;
-                const atualizado = { ...prev, senhaProvisoria: perfil.senhaProvisoria };
-                localStorage.setItem("user", JSON.stringify(atualizado));
-                return atualizado;
-              });
-            }
-          })
-          .catch(() => {});
-      }
+    let cancelled = false;
+    async function restoreSession() {
+      try {
+        const storedToken = localStorage.getItem("token");
+        const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+        if (!storedToken || !storedUser) return;
+        const endpoint = storedUser.tipo === "admin" ? "/admin/me" : "/usuario/me";
+        const res = await fetch(`${API_URL}${endpoint}`, { headers: { Authorization: `Bearer ${storedToken}` } });
+        if (res.status === 401 || res.status === 403) { doLogout(); return; }
+        if (!res.ok) throw new Error("Sessão indisponível");
+        const perfil = await res.json();
+        if (cancelled) return;
+        const current = { ...storedUser, token: storedToken, nome: perfil.nome, email: perfil.email,
+          professor: !!perfil.professor, senhaProvisoria: !!perfil.senhaProvisoria };
+        setUser(current);
+        localStorage.setItem("user", JSON.stringify(current));
+        timeoutMsRef.current = await fetchTimeoutMs();
+      } catch {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        localStorage.removeItem("tipo");
+      } finally { if (!cancelled) setLoadingUser(false); }
     }
-
-    setLoadingUser(false);
+    restoreSession();
+    return () => { cancelled = true; };
   }, [doLogout]);
+
+  useEffect(() => {
+    const onToken = (event) => setUser((previous) => {
+      if (!previous) return previous;
+      const current = { ...previous, token: event.detail, senhaProvisoria: false };
+      localStorage.setItem("user", JSON.stringify(current));
+      return current;
+    });
+    window.addEventListener("session-token", onToken);
+    return () => window.removeEventListener("session-token", onToken);
+  }, []);
 
   const login = async ({ email, senha, UserType }) => {
     try {
@@ -133,7 +132,7 @@ export function AuthProvider({ children }) {
 
       const newUser = {
         nome: data.nome,
-        email: normalizedEmail,
+        email: data.email || normalizedEmail,
         tipo: data.tipo,
         token: data.access_token,
         senhaProvisoria: !!data.senhaProvisoria,
@@ -185,7 +184,7 @@ export function AuthProvider({ children }) {
 
   const logout = doLogout;
 
-  const getToken = () => user?.token || localStorage.getItem("token");
+  const getToken = () => localStorage.getItem("token");
 
   const esqueciSenha = async (email) => {
     try {

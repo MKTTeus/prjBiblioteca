@@ -120,8 +120,8 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
                   ? `Sua reserva de "${loan.titulo}" está aguardando aprovação.`
                   : status === "atrasado"
                   ? `O prazo para devolver "${loan.titulo}" já passou.`
-                  : `Seu empréstimo de "${loan.titulo}" vence em ${loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "data não informada"}.`,
-              data: loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || loan.dataEmprestimo || "Sem data",
+                  : `Seu empréstimo de "${loan.titulo}" vence em ${loan.empLiv_DataPrevistaDevolucao || loan.dataPrevistaDevolucao || "data não informada"}.`,
+              data: loan.empLiv_DataPrevistaDevolucao || loan.dataPrevistaDevolucao || loan.dataEmprestimo || "Sem data",
               tipo: tone,
               label,
             };

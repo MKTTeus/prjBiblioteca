@@ -1,3 +1,7 @@
+import base64
+import io
+import re
+from urllib.parse import unquote
 import gzip
 import hashlib
 import json
@@ -11,6 +15,8 @@ from pydantic import BaseModel
 
 from core import buscar_todos, get_admin, utc_now, verify_password
 from database import supabase
+from rpc import executar_rpc
+import hmac
 
 router = APIRouter()
 
@@ -38,33 +44,10 @@ BACKUP_SEGURANCA_RETENCAO_HORAS = _ler_horas_retencao_seguranca()
 # tabelas ou a estrutura do payload mudar de forma incompatível com
 # restaurações antigas — /backup/restaurar usa isso para recusar backups de
 # um formato mais novo do que o que este código sabe restaurar.
-BACKUP_VERSAO = 2
-
-# Tabelas de dados que TÊM que estar presentes e íntegras em todo backup.
-# Revisada em conjunto com supabase/migrations/ — se uma nova tabela de
-# dados for criada, ela precisa entrar aqui (e na função SQL
-# restaurar_backup_completo) para não ficar de fora do backup silenciosamente.
-TABELAS = [
-    "Usuario", "Administrador", "Livro", "Exemplar",
-    "Autor", "Editora", "Categoria", "Genero",
-    "LivroAutor", "LivroCategoria", "LivroGenero",
-    "Movimentacao", "MovimentacaoExemplar", "Configuracoes",
-    "FichaCatalografica",
-]
-
-# RedefinicaoSenha: decisão — INCLUIR no backup.
-# Motivo: a tabela guarda apenas hash de token (nunca o token em claro) e
-# timestamps; já hoje o backup inclui Usuario.usuSenha e Administrador.admSenha
-# (hashes de senha), então excluir só o hash de token de redefinição não
-# traria proteção adicional relevante, e incluir mantém o comportamento de
-# "restauração exata" também para o fluxo de esqueci-minha-senha. O valor do
-# token nunca é exposto na interface (/backup/listar só soma contagens).
-# Tokens expirados/usados são restaurados como estavam no momento do backup —
-# eles não concedem acesso por si só (a validação de expiração acontece em
-# tempo de uso, no endpoint /redefinir-senha/validar).
-INCLUIR_REDEFINICAO_SENHA = True
-if INCLUIR_REDEFINICAO_SENHA:
-    TABELAS = TABELAS + ["RedefinicaoSenha"]
+BACKUP_VERSAO = 3
+TABELAS = ['Administrador','Usuario','Autor','Editora','Categoria','Genero','Livro','Exemplar',
+    'LivroAutor','LivroCategoria','LivroGenero','Movimentacao','MovimentacaoExemplar','Configuracoes',
+    'FichaCatalografica','ResultadoAnoLetivo','TomboContador','EmailOutbox','RedefinicaoSenha']
 
 
 class BackupIncompletoError(Exception):
@@ -73,52 +56,82 @@ class BackupIncompletoError(Exception):
     Storage."""
 
 
-def verificar_cron(
-    authorization: str = Header(None),
-    x_vercel_cron_signature: str = Header(None),
-):
-    vercel_ok = CRON_SECRET and x_vercel_cron_signature == CRON_SECRET
-    manual_ok = CRON_SECRET and authorization == f"Bearer {CRON_SECRET}"
-
-    if not vercel_ok and not manual_ok:
-        raise HTTPException(status_code=401, detail="Acesso não autorizado")
+def verificar_cron(authorization: str = Header(None)):
+    if not CRON_SECRET or not hmac.compare_digest(authorization or '', f'Bearer {CRON_SECRET}'):
+        raise HTTPException(401,'Acesso não autorizado')
 
 
 def _gerar_dados_backup() -> dict:
-    """Lê todas as TABELAS por completo (com paginação, via buscar_todos —
-    um select sem paginação é truncado silenciosamente pelo limite de Max
-    Rows do Supabase). Se qualquer tabela obrigatória falhar, interrompe
-    imediatamente: nunca produz um backup parcial."""
-    dados = {}
-    for tabela in TABELAS:
+    dados = executar_rpc('gerar_snapshot_backup', {})
+    if not isinstance(dados, dict) or set(dados) != set(TABELAS):
+        raise BackupIncompletoError('Snapshot incompleto')
+    arquivos=_capturar_capas(dados)
+    return {'arquivos':arquivos, 'versao_backup':BACKUP_VERSAO, 'identificador':str(uuid.uuid4()),
+        'gerado_em':utc_now().isoformat(), 'tabelas':TABELAS,
+        'contagem_registros':{t:len(dados[t]) for t in TABELAS},
+        'hash_dados':hashlib.sha256(json.dumps(dados,ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest(),
+        'dados':dados}
+
+
+def _capturar_capas(dados):
+    prefixo=os.getenv('SUPABASE_URL','').rstrip('/')+'/storage/v1/object/public/capas/'
+    arquivos={}
+    for livro in dados.get('Livro',[]):
+        url=livro.get('livCapaURL') or ''
+        if not url.startswith(prefixo): continue
+        caminho=unquote(url[len(prefixo):].split('?',1)[0])
+        if caminho in arquivos: continue
+        conteudo=supabase.storage.from_('capas').download(caminho)
+        if len(conteudo)>8*1024*1024: raise BackupIncompletoError('Capa maior que o limite de backup')
+        arquivos[caminho]={'base64':base64.b64encode(conteudo).decode(),'sha256':hashlib.sha256(conteudo).hexdigest(),'url':url}
+    return arquivos
+
+
+def _restaurar_capas(payload):
+    # Arquivos imutáveis novos: uma falha de banco não altera capas em uso.
+    dados=payload['dados']
+    prefixo=os.getenv('SUPABASE_URL','').rstrip('/')+'/storage/v1/object/public/capas/'
+    for arquivo in payload['arquivos'].values():
+        conteudo=base64.b64decode(arquivo['base64'],validate=True)
+        caminho='restaurados/'+arquivo['sha256']
         try:
-            dados[tabela] = buscar_todos(lambda t=tabela: supabase.table(t).select("*"))
-        except Exception as e:
-            print(f"Erro ao ler tabela '{tabela}' para backup:", e)
-            raise BackupIncompletoError(
-                f"Falha ao ler a tabela '{tabela}': {e}"
-            ) from e
+            existente=supabase.storage.from_('capas').download(caminho)
+            if hashlib.sha256(existente).hexdigest()!=arquivo['sha256']: raise ValueError('Capa restaurada divergente')
+        except Exception:
+            from routers.capas import _comprimir_capa
+            limpo,_,tipo=_comprimir_capa(conteudo,'','')
+            # Mantém os bytes do backup; validação rejeita arquivos que não são imagens.
+            supabase.storage.from_('capas').upload(caminho,conteudo,file_options={'content-type':Image_mime(conteudo),'upsert':'false'})
+        for livro in dados.get('Livro',[]):
+            if livro.get('livCapaURL')==arquivo['url']:
+                livro['livCapaURL']=prefixo+caminho
+                livro['livCapaCaminho']=caminho
+    return dados
 
-    contagem_registros = {t: len(v) for t, v in dados.items()}
-    hash_dados = hashlib.sha256(
-        json.dumps(dados, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")
-    ).hexdigest()
 
-    return {
-        "versao_backup": BACKUP_VERSAO,
-        "identificador": str(uuid.uuid4()),
-        "gerado_em": utc_now().isoformat(),
-        "tabelas": TABELAS,
-        "contagem_registros": contagem_registros,
-        "hash_dados": hash_dados,
-        "dados": dados,
-    }
+def Image_mime(conteudo):
+    from PIL import Image
+    with Image.open(io.BytesIO(conteudo)) as im: return Image.MIME[im.format]
+
+
+def _validar_nome(nome):
+    if not re.fullmatch(r'(backup|seguranca_pre_restauracao)_[0-9_]+(?:[a-f0-9]{32})?\.json(?:\.gz)?',nome):
+        raise HTTPException(422,'Nome de backup inválido')
+
+
+def _listar_storage():
+    arquivos=[]; offset=0
+    while True:
+        lote=supabase.storage.from_(BACKUP_BUCKET).list(options={'limit':100,'offset':offset,'sortBy':{'column':'name','order':'asc'}})
+        arquivos.extend(lote or [])
+        if len(lote or [])<100: return arquivos
+        offset+=100
 
 
 def _salvar_no_storage(payload: dict, prefixo: str = "backup") -> str:
     """Serializa o payload como JSON, comprime com gzip e faz upload no
     Supabase Storage. Retorna o nome do arquivo salvo."""
-    nome_arquivo = f"{prefixo}_{utc_now().strftime('%Y%m%d_%H%M%S')}.json.gz"
+    nome_arquivo = f"{prefixo}_{utc_now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex}.json.gz"
     conteudo_json = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
     conteudo = gzip.compress(conteudo_json)
 
@@ -135,47 +148,29 @@ def _conteudo_backup_descompactado(conteudo: bytes, nome_arquivo: str) -> bytes:
     """Descompacta backups novos (.json.gz) e mantém compatibilidade com
     backups antigos (.json)."""
     if nome_arquivo.lower().endswith(".gz"):
-        return gzip.decompress(conteudo)
+        with gzip.GzipFile(fileobj=io.BytesIO(conteudo)) as arquivo:
+            descompactado=arquivo.read(100*1024*1024+1)
+        if len(descompactado)>100*1024*1024: raise ValueError('Backup maior que 100 MB')
+        return descompactado
     return conteudo
 
 
 def _validar_backup(payload: dict) -> None:
-    """Valida a integridade estrutural de um backup antes de permitir que
-    ele seja usado em uma restauração destrutiva. Levanta ValueError com
-    uma mensagem clara em caso de qualquer problema."""
-    if not isinstance(payload, dict):
-        raise ValueError("Arquivo de backup inválido: formato inesperado")
-
-    dados = payload.get("dados")
-    if not isinstance(dados, dict):
-        raise ValueError("Arquivo de backup inválido: seção 'dados' ausente ou corrompida")
-
-    versao = payload.get("versao_backup", 1)  # backups antigos não tinham este campo
-    if not isinstance(versao, int) or versao > BACKUP_VERSAO:
-        raise ValueError(
-            f"Backup em uma versão não suportada (versao_backup={versao!r}); "
-            f"este servidor sabe restaurar até a versão {BACKUP_VERSAO}"
-        )
-
-    for tabela in TABELAS:
-        registros = dados.get(tabela)
-        if registros is None:
-            # Compatibilidade com backups antigos: uma tabela adicionada
-            # depois (ex.: FichaCatalografica, RedefinicaoSenha) pode não
-            # existir em um backup feito antes de ela existir — a RPC de
-            # restauração trata isso preservando os dados atuais dessa
-            # tabela. Só é erro se a tabela é obrigatória E o backup diz
-            # ser da versão atual (então deveria tê-la).
-            if versao >= BACKUP_VERSAO and tabela not in ("RedefinicaoSenha",):
-                raise ValueError(f"Backup incompleto: tabela obrigatória '{tabela}' ausente")
-            continue
-        if not isinstance(registros, list):
-            # Cobre também o formato antigo com falha (dados[tabela] = {"erro": ...}),
-            # que nunca deve ser aceito como backup válido.
-            raise ValueError(f"Backup corrompido ou incompleto: tabela '{tabela}' não é uma lista de registros")
-        for registro in registros[:1]:
-            if not isinstance(registro, dict):
-                raise ValueError(f"Backup corrompido: registros de '{tabela}' com estrutura inválida")
+    if not isinstance(payload,dict) or payload.get('versao_backup') != BACKUP_VERSAO:
+        raise ValueError('Formato incompatível: é obrigatório um backup completo na versão 3')
+    arquivos=payload.get('arquivos')
+    if not isinstance(arquivos,dict): raise ValueError('Seção de arquivos ausente')
+    for arquivo in arquivos.values():
+        try: conteudo=base64.b64decode(arquivo['base64'],validate=True)
+        except Exception as exc: raise ValueError('Arquivo inválido no backup') from exc
+        if len(conteudo)>8*1024*1024 or hashlib.sha256(conteudo).hexdigest()!=arquivo.get('sha256'): raise ValueError('Arquivo corrompido no backup')
+    dados=payload.get('dados')
+    if not isinstance(dados,dict) or set(dados) != set(TABELAS): raise ValueError('Tabelas ausentes ou desconhecidas')
+    for t in TABELAS:
+        if not isinstance(dados[t],list) or any(not isinstance(r,dict) for r in dados[t]): raise ValueError(f'Registros inválidos: {t}')
+        if payload.get('contagem_registros',{}).get(t) != len(dados[t]): raise ValueError(f'Contagem divergente: {t}')
+    digest=hashlib.sha256(json.dumps(dados,ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest()
+    if not hmac.compare_digest(digest,str(payload.get('hash_dados',''))): raise ValueError('Hash de integridade divergente')
 
 
 def _rotacionar_backups() -> None:
@@ -184,7 +179,7 @@ def _rotacionar_backups() -> None:
     Backups de segurança criados antes de restaurações seguem uma política
     separada, por tempo, para garantir uma janela de recuperação previsível.
     """
-    arquivos = supabase.storage.from_(BACKUP_BUCKET).list()
+    arquivos = _listar_storage()
     backups = []
 
     for arq in (arquivos or []):
@@ -223,7 +218,7 @@ def _data_backup_seguranca(arquivo: dict) -> datetime | None:
 
     nome = arquivo.get("name", "")
     try:
-        trecho = nome.removeprefix(f"{PREFIXO_BACKUP_SEGURANCA}_").split(".", 1)[0]
+        trecho = "_".join(nome.removeprefix(f"{PREFIXO_BACKUP_SEGURANCA}_").split("_",2)[:2])
         return datetime.strptime(trecho, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
     except (TypeError, ValueError):
         return None
@@ -237,9 +232,9 @@ def _expirar_backups_seguranca() -> None:
     """
     limite = datetime.now(timezone.utc) - timedelta(hours=BACKUP_SEGURANCA_RETENCAO_HORAS)
     try:
-        arquivos = supabase.storage.from_(BACKUP_BUCKET).list()
+        arquivos = _listar_storage()
     except Exception as e:
-        print("Erro ao listar backups de segurança para expiração:", e)
+        print("Erro ao listar backups de segurança para expiração:", 'falha de operacao')
         return
 
     for arquivo in arquivos or []:
@@ -287,11 +282,11 @@ def cron_backup_diario(_=Depends(verificar_cron)):
         _aplicar_retencao_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
     except BackupIncompletoError as e:
-        print("Backup diário abortado (dados incompletos):", e)
-        raise HTTPException(status_code=500, detail=f"Backup não gerado: {e}")
+        print("Backup diário abortado (dados incompletos):", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
     except Exception as e:
-        print("Erro no backup diário:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao salvar backup: {e}")
+        print("Erro no backup diário:", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 # ── Admin: salvar backup manualmente ─────────────────────────────────────────
@@ -305,11 +300,11 @@ def backup_salvar(admin=Depends(get_admin)):
         _aplicar_retencao_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
     except BackupIncompletoError as e:
-        print("Backup manual abortado (dados incompletos):", e)
-        raise HTTPException(status_code=500, detail=f"Backup não gerado: {e}")
+        print("Backup manual abortado (dados incompletos):", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
     except Exception as e:
-        print("Erro ao salvar backup:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao salvar backup: {e}")
+        print("Erro ao salvar backup:", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 # ── Admin: listar backups disponíveis ────────────────────────────────────────
@@ -318,9 +313,7 @@ def backup_salvar(admin=Depends(get_admin)):
 def backup_listar(admin=Depends(get_admin)):
     """Lista todos os arquivos de backup salvos no Supabase Storage."""
     try:
-        arquivos = supabase.storage.from_(BACKUP_BUCKET).list(
-            options={"sortBy": {"column": "created_at", "order": "desc"}}
-        )
+        arquivos = _listar_storage()
         resultado = []
         for arq in (arquivos or []):
             # Filtra entradas de sistema (.emptyFolderPlaceholder etc.)
@@ -374,8 +367,8 @@ def backup_listar(admin=Depends(get_admin)):
             "retencao_seguranca_horas": BACKUP_SEGURANCA_RETENCAO_HORAS,
         }
     except Exception as e:
-        print("Erro ao listar backups:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao listar backups: {e}")
+        print("Erro ao listar backups:", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 # ── Admin: gerar URL assinada para download ───────────────────────────────────
@@ -384,6 +377,7 @@ def backup_listar(admin=Depends(get_admin)):
 def backup_download_url(nome_arquivo: str, admin=Depends(get_admin)):
     """Gera uma URL assinada (válida por 60 s) para download direto do arquivo."""
     try:
+        _validar_nome(nome_arquivo)
         resp = supabase.storage.from_(BACKUP_BUCKET).create_signed_url(
             path=nome_arquivo, expires_in=60
         )
@@ -394,8 +388,8 @@ def backup_download_url(nome_arquivo: str, admin=Depends(get_admin)):
     except HTTPException:
         raise
     except Exception as e:
-        print("Erro ao gerar URL de download:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao gerar URL: {e}")
+        print("Erro ao gerar URL de download:", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 # ── Admin: excluir backup ─────────────────────────────────────────────────────
@@ -404,11 +398,12 @@ def backup_download_url(nome_arquivo: str, admin=Depends(get_admin)):
 def backup_excluir(nome_arquivo: str, admin=Depends(get_admin)):
     """Remove um arquivo de backup do Supabase Storage."""
     try:
+        _validar_nome(nome_arquivo)
         supabase.storage.from_(BACKUP_BUCKET).remove([nome_arquivo])
         return {"ok": True, "removido": nome_arquivo}
     except Exception as e:
-        print("Erro ao excluir backup:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao excluir: {e}")
+        print("Erro ao excluir backup:", 'falha de operacao')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 # ── Legado: download direto (mantido para compatibilidade) ────────────────────
@@ -418,7 +413,7 @@ def backup_completo(admin=Depends(get_admin)):
     try:
         dados = _gerar_dados_backup()
     except BackupIncompletoError as e:
-        raise HTTPException(status_code=500, detail=f"Backup não gerado: {e}")
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
     return JSONResponse(
         content=dados,
         headers={
@@ -449,6 +444,7 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
          se qualquer parte falhar, o banco inteiro volta ao estado anterior
          automaticamente (ROLLBACK implícito da função)."""
 
+    _validar_nome(body.nome_arquivo)
     # 1. Verificar senha do admin
     email = admin.get("sub")
     adm_db = (
@@ -461,7 +457,7 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
     if not adm_db.data:
         raise HTTPException(status_code=403, detail="Administrador não encontrado")
     if not verify_password(body.senha, adm_db.data[0]["admSenha"]):
-        raise HTTPException(status_code=401, detail="Senha incorreta")
+        raise HTTPException(status_code=403, detail="Senha incorreta")
 
     # 2. Baixar e validar o arquivo do Storage
     try:
@@ -469,12 +465,12 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
         conteudo = _conteudo_backup_descompactado(conteudo, body.nome_arquivo)
         payload = json.loads(conteudo)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {e}")
+        raise HTTPException(status_code=404, detail='Não foi possível concluir a operação')
 
     try:
         _validar_backup(payload)
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=f"Backup inválido, restauração não iniciada: {e}")
+        raise HTTPException(status_code=422, detail='Não foi possível concluir a operação')
 
     # 3. Backup de segurança do estado atual — obrigatório antes de qualquer
     #    operação destrutiva. Se falhar, a restauração é abortada.
@@ -483,27 +479,30 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
         nome_seguranca = _salvar_no_storage(payload_seguranca, prefixo=PREFIXO_BACKUP_SEGURANCA)
         _aplicar_retencao_backups()
     except Exception as e:
-        print("Restauração abortada: falha ao criar backup de segurança:", e)
+        print("Restauração abortada: falha ao criar backup de segurança:", 'falha de operacao')
         raise HTTPException(
             status_code=500,
             detail=(
-                "Restauração abortada: não foi possível criar um backup de segurança "
-                f"do estado atual antes de prosseguir ({e}). Nenhum dado foi alterado."
+                'Não foi possível concluir a operação'
             ),
         )
+
+    # Capas são adicionadas como novos objetos antes da transação, sem sobrescrever objetos atuais.
+    try: dados_restauracao=_restaurar_capas(payload)
+    except Exception as exc: raise HTTPException(503,"Não foi possível recuperar as capas; banco não restaurado") from exc
 
     # 4. Restauração exata, atômica, via RPC única
     try:
         resp = supabase.rpc(
-            "restaurar_backup_completo", {"dados": payload.get("dados", {})}
+            "restaurar_backup_completo", {"dados": dados_restauracao}
         ).execute()
         restauradas = resp.data or {}
     except Exception as e:
-        print("Erro na restauração (revertida automaticamente pelo Postgres):", e)
+        print("Erro na restauração (revertida automaticamente pelo Postgres):", 'falha de operacao')
         return JSONResponse(status_code=500, content={
             "ok": False,
             "arquivo": body.nome_arquivo,
-            "erro": str(e),
+            "erro": "Restauração recusada; os dados foram revertidos",
             "rollback": True,
             "backup_seguranca": nome_seguranca,
         })

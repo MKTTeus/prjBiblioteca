@@ -129,7 +129,7 @@ export default function Emprestimos() {
     if (!emprestimoDevolver) return;
     setDevolvendo(true);
     try {
-      await devolverEmprestimo(emprestimoDevolver.idEmprestimo);
+      await devolverEmprestimo(emprestimoDevolver.idEmprestimo, [emprestimoDevolver.idExemplar]);
       addToast("Empréstimo devolvido com sucesso", "success");
       setEmprestimoDevolver(null);
       carregarDados();
@@ -154,7 +154,7 @@ export default function Emprestimos() {
     if (!emprestimoRenovar) return;
     setRenovando(true);
     try {
-      await renovarEmprestimo(emprestimoRenovar.idEmprestimo, novaData);
+      await renovarEmprestimo(emprestimoRenovar.idEmprestimo, novaData, [emprestimoRenovar.idExemplar]);
       addToast("Empréstimo renovado com sucesso", "success");
       setEmprestimoRenovar(null);
       carregarDados();

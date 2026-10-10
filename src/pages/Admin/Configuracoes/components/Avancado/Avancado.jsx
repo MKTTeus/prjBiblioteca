@@ -9,8 +9,6 @@ import "./Avancado.css";
 
 export default function Avancado() {
   const { addToast } = useToast();
-  const [debug, setDebug] = useState(false);
-  const [maintenance, setMaintenance] = useState(false);
   const [logApi, setLogApi] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [fazendoBackup, setFazendoBackup] = useState(false);
@@ -19,8 +17,6 @@ export default function Avancado() {
     async function load() {
       try {
         const configs = await getConfiguracoes();
-        setDebug(configToBool(configs, "modo_debug", false));
-        setMaintenance(configToBool(configs, "modo_manutencao", false));
         setLogApi(configToBool(configs, "log_api", true));
       } catch (error) {
         addToast("Erro ao carregar configurações avançadas", "error");
@@ -34,8 +30,6 @@ export default function Avancado() {
     setIsSaving(true);
     try {
       await Promise.all([
-        updateConfiguracao({ chave: "modo_debug", valor: String(debug) }),
-        updateConfiguracao({ chave: "modo_manutencao", valor: String(maintenance) }),
         updateConfiguracao({ chave: "log_api", valor: String(logApi) }),
       ]);
       addToast("Configurações avançadas salvas com sucesso", "success");
@@ -85,17 +79,17 @@ export default function Avancado() {
       <div className="switch-row">
         <div>
           <span className="switch-title">Modo de Debug</span>
-          <p>Ativar logs detalhados para depuração</p>
+          <p>Indisponível nesta versão</p>
         </div>
-        <Switch checked={debug} onChange={() => setDebug(!debug)} {...switchStyle} />
+        <Switch checked={false} disabled {...switchStyle} />
       </div>
 
       <div className="switch-row">
         <div>
           <span className="switch-title">Modo de Manutenção</span>
-          <p>Bloquear acesso temporariamente</p>
+          <p>Indisponível nesta versão</p>
         </div>
-        <Switch checked={maintenance} onChange={() => setMaintenance(!maintenance)} {...switchStyle} />
+        <Switch checked={false} disabled {...switchStyle} />
       </div>
 
       <div className="switch-row">
@@ -112,8 +106,8 @@ export default function Avancado() {
         <h4>Ações do Sistema</h4>
 
         <div className="acoes-botoes">
-          <button className="btn-secondary" type="button">Limpar Cache</button>
-          <button className="btn-secondary" type="button">Reindexar Banco</button>
+
+
           <button
             className="btn-secondary text-danger"
             type="button"

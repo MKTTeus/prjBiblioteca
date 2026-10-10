@@ -1,28 +1,23 @@
+import secrets
+from core import conta_publica
+from core import consultar_completo, consultar_lote
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 
 from database import supabase
-from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, get_user, verify_password, validar_cpf, normalize_cpf, invalidate_token_version_cache
+from core import get_admin, hash_password, normalize_email, parse_status, get_optional_user, get_user, get_user_profile, create_token, verify_password, validar_cpf, normalize_cpf, invalidate_token_version_cache
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 from routers.ano_letivo import get_ano_letivo_atual
 import io
 import openpyxl
 import csv
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional as Opt
 
-def _increment_usuario_token_version(id_usuario: int) -> int:
-    """Incrementa token_version do usuário e retorna o novo valor."""
-    resp = supabase.table("Usuario").select("usuTokenVersion, usuEmail").eq("idUsuario", id_usuario).execute()
-    if not resp.data:
-        return 1
-    current = resp.data[0].get("usuTokenVersion", 1)
-    new_version = current + 1
-    supabase.table("Usuario").update({"usuTokenVersion": new_version}).eq("idUsuario", id_usuario).execute()
-    # Invalida cache
-    email = resp.data[0].get("usuEmail")
-    if email:
-        invalidate_token_version_cache("Usuario", email)
-    return new_version
+def _increment_usuario_token_version(id_conta: int) -> int:
+    rows = supabase.table("Usuario").select("usuTokenVersion").eq("idUsuario", id_conta).limit(1).execute().data
+    if not rows:
+        raise HTTPException(404, "Conta não encontrada")
+    return int(rows[0]["usuTokenVersion"]) + 1
 
 
 def _validar_campos_obrigatorios(valores: dict, campos: list[tuple[str, str]]):
@@ -36,27 +31,13 @@ router = APIRouter()
 
 
 def _buscar_conflito_usuario(email: str, ra: str = None, cpf: str = None, excluir_id: int = None):
-    filtros = [f"usuEmail.eq.{email}"]
-    if ra:
-        filtros.append(f"usuRA.eq.{ra}")
-    if cpf:
-        filtros.append(f"usuCPF.eq.{cpf}")
-
-    query = supabase.table("Usuario").select("*").or_(",".join(filtros))
-    if excluir_id:
-        query = query.neq("idUsuario", excluir_id)
-
-    encontrados = query.execute().data or []
-    if not encontrados:
-        return None
-
-    ids_distintos = {u["idUsuario"] for u in encontrados}
-    if len(ids_distintos) > 1:
-        raise HTTPException(
-            status_code=400,
-            detail="O e-mail e o RA/CPF informados pertencem a cadastros diferentes. Verifique os dados.",
-        )
-    return encontrados[0]
+    for coluna,valor in [('usuEmail',email),('usuRA',ra),('usuCPF',cpf)]:
+        if not valor: continue
+        q=supabase.table('Usuario').select('*').eq(coluna,valor)
+        if excluir_id: q=q.neq('idUsuario',excluir_id)
+        encontrados=q.limit(1).execute().data
+        if encontrados: return encontrados[0]
+    return None
 
 
 def _resposta_conflito(usuario: dict, email: str, ra: str = None, cpf: str = None):
@@ -123,8 +104,8 @@ def _parse_upload(contents: bytes, filename: str) -> list[dict]:
 
 @router.get("/alunos")
 def listar_alunos(admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("usuTipo", "Aluno").eq("usuExcluido", False).order("usuNome").execute()
-    return resp.data or []
+    resp = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('usuTipo', 'Aluno').eq('usuExcluido', False).order('usuNome'), 'Usuario')
+    return [conta_publica(c) for c in (resp.data or [])]
 
 
 @router.post("/alunos")
@@ -149,7 +130,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         ],
     )
 
-    email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
+    email_existe_admin = consultar_completo(lambda: supabase.table('Administrador').select('*').eq('admEmail', email), 'Administrador')
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
@@ -183,7 +164,7 @@ def criar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail="Falha ao criar aluno")
     if not criado.data:
         raise HTTPException(status_code=500, detail="Falha ao criar aluno")
-    return criado.data[0]
+    return conta_publica(criado.data[0])
 
 
 @router.post("/alunos/reativar")
@@ -223,14 +204,15 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     if not reativado.data:
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
-    return reativado.data[0]
+    return conta_publica(reativado.data[0])
 
 
 @router.post("/alunos/importar")
 async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)):
-    contents = await file.read()
+    contents = await file.read(5*1024*1024+1)
+    if len(contents)>5*1024*1024: raise HTTPException(413,'Arquivo maior que 5 MB')
     linhas = _parse_upload(contents, file.filename)
-    resultados = {"importados": 0, "ignorados": 0, "erros": []}
+    resultados = {"importados": 0, "ignorados": 0, "erros": [], "orientacao": "Usuários importados devem usar Esqueci minha senha para definir uma senha individual."}
     ano_letivo = get_ano_letivo_atual()
 
     for i, dados in enumerate(linhas, start=2):
@@ -264,7 +246,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
         novo = {
             "usuNome": nome,
             "usuEmail": email,
-            "usuSenha": hash_password("mudar@123"),
+            "usuSenha": hash_password(secrets.token_urlsafe(32)+'@1'),
             "usuTelefone": dados.get("telefone", ""),
             "usuTelefoneResponsavel": dados.get("telefone_responsavel", ""),
             "usuEndereco": dados.get("endereco", ""),
@@ -282,7 +264,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             supabase.table("Usuario").insert(novo).execute()
             resultados["importados"] += 1
         except Exception as e:
-            resultados["erros"].append(f"Linha {i}: erro ao inserir — {str(e)}")
+            resultados["erros"].append(f"Linha {i}: cadastro não inserido; verifique dados e duplicidades")
             resultados["ignorados"] += 1
 
     return resultados
@@ -292,8 +274,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
 def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        _increment_usuario_token_version(id)
+    
     resp = (
         supabase.table("Usuario")
         .update({"usuExcluido": True})
@@ -313,8 +294,7 @@ def excluir_alunos_lote(data: BatchIds, admin=Depends(get_admin)):
 def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        _increment_usuario_token_version(id)
+    
     resp = (
         supabase.table("Usuario")
         .update({"usuStatus": data.status})
@@ -331,7 +311,7 @@ def atualizar_status_lote(data: BatchStatus, admin=Depends(get_admin)):
 
 @router.put("/alunos/{idUsuario}")
 def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).eq("usuExcluido", False).execute()
+    resp = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('idUsuario', idUsuario).eq('usuExcluido', False), 'Usuario')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
 
@@ -340,6 +320,7 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
     if data.nome is not None:
         payload["usuNome"] = data.nome
     if data.email is not None:
+        increment_token = True
         payload["usuEmail"] = normalize_email(data.email)
     if data.senha is not None:
         payload["usuSenha"] = hash_password(data.senha)
@@ -397,7 +378,7 @@ def atualizar_aluno(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin
         raise HTTPException(status_code=500, detail="Falha ao atualizar aluno")
     if not atual.data:
         raise HTTPException(status_code=500, detail="Falha ao atualizar aluno")
-    return atual.data[0]
+    return conta_publica(atual.data[0])
 
 
 @router.delete("/alunos/{idUsuario}")
@@ -418,8 +399,8 @@ def deletar_aluno(idUsuario: int, admin=Depends(get_admin)):
 
 @router.get("/comunidade")
 def listar_comunidade(admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("usuTipo", "Comunidade").eq("usuExcluido", False).order("usuNome").execute()
-    return resp.data or []
+    resp = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('usuTipo', 'Comunidade').eq('usuExcluido', False).order('usuNome'), 'Usuario')
+    return [conta_publica(c) for c in (resp.data or [])]
 
 
 @router.post("/comunidade")
@@ -435,7 +416,7 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         [("nome", "Nome Completo"), ("telefone", "Telefone"), ("endereco", "Endereço")],
     )
 
-    email_existe_admin = supabase.table("Administrador").select("*").eq("admEmail", email).execute()
+    email_existe_admin = consultar_completo(lambda: supabase.table('Administrador').select('*').eq('admEmail', email), 'Administrador')
     if email_existe_admin.data:
         raise HTTPException(status_code=400, detail="Email já cadastrado como administrador")
 
@@ -465,7 +446,7 @@ def criar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail="Falha ao criar membro")
     if not criado.data:
         raise HTTPException(status_code=500, detail="Falha ao criar membro")
-    return criado.data[0]
+    return conta_publica(criado.data[0])
 
 
 @router.post("/comunidade/reativar")
@@ -509,14 +490,15 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
     if not reativado.data:
         raise HTTPException(status_code=500, detail="Falha ao reativar usuário no banco de dados")
-    return reativado.data[0]
+    return conta_publica(reativado.data[0])
 
 
 @router.post("/comunidade/importar")
 async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_admin)):
-    contents = await file.read()
+    contents = await file.read(5*1024*1024+1)
+    if len(contents)>5*1024*1024: raise HTTPException(413,'Arquivo maior que 5 MB')
     linhas = _parse_upload(contents, file.filename)
-    resultados = {"importados": 0, "ignorados": 0, "erros": []}
+    resultados = {"importados": 0, "ignorados": 0, "erros": [], "orientacao": "Usuários importados devem usar Esqueci minha senha para definir uma senha individual."}
     cpfs_vistos = set()
 
     for i, dados in enumerate(linhas, start=2):
@@ -553,7 +535,7 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
         novo = {
             "usuNome": nome,
             "usuEmail": email,
-            "usuSenha": hash_password("mudar@123"),
+            "usuSenha": hash_password(secrets.token_urlsafe(32)+'@1'),
             "usuTelefone": dados.get("telefone", ""),
             "usuTelefoneResponsavel": dados.get("telefone_responsavel", ""),
             "usuEndereco": dados.get("endereco", ""),
@@ -569,7 +551,7 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             if cpf:
                 cpfs_vistos.add(cpf)
         except Exception as e:
-            resultados["erros"].append(f"Linha {i}: erro ao inserir — {str(e)}")
+            resultados["erros"].append(f"Linha {i}: cadastro não inserido; verifique dados e duplicidades")
             resultados["ignorados"] += 1
 
     return resultados
@@ -579,8 +561,7 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
 def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        _increment_usuario_token_version(id)
+    
     resp = (
         supabase.table("Usuario")
         .update({"usuExcluido": True})
@@ -600,8 +581,7 @@ def excluir_comunidade_lote(data: BatchIds, admin=Depends(get_admin)):
 def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)):
     if not data.ids:
         raise HTTPException(status_code=400, detail="Nenhum ID informado")
-    for id in data.ids:
-        _increment_usuario_token_version(id)
+    
     resp = (
         supabase.table("Usuario")
         .update({"usuStatus": data.status})
@@ -618,7 +598,7 @@ def atualizar_status_comunidade_lote(data: BatchStatus, admin=Depends(get_admin)
 
 @router.put("/comunidade/{idUsuario}")
 def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_admin)):
-    resp = supabase.table("Usuario").select("*").eq("idUsuario", idUsuario).eq("usuExcluido", False).execute()
+    resp = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('idUsuario', idUsuario).eq('usuExcluido', False), 'Usuario')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Membro não encontrado")
 
@@ -627,6 +607,7 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
     if data.nome is not None:
         payload["usuNome"] = data.nome
     if data.email is not None:
+        increment_token = True
         payload["usuEmail"] = normalize_email(data.email)
     if data.senha is not None:
         payload["usuSenha"] = hash_password(data.senha)
@@ -683,7 +664,7 @@ def atualizar_comunidade(idUsuario: int, data: UsuarioUpdate, admin=Depends(get_
         raise HTTPException(status_code=500, detail="Falha ao atualizar membro")
     if not atual.data:
         raise HTTPException(status_code=500, detail="Falha ao atualizar membro")
-    return atual.data[0]
+    return conta_publica(atual.data[0])
 
 
 @router.delete("/comunidade/{idUsuario}")
@@ -709,7 +690,7 @@ class PerfilUpdate(BaseModel):
     telefoneResponsavel:  Opt[str] = None
     endereco:             Opt[str] = None
     senhaAtual:           Opt[str] = None
-    novaSenha:            Opt[str] = None
+    novaSenha:            Opt[str] = Field(default=None, min_length=8, max_length=72)
     tema:                 Opt[str] = None
 
 
@@ -724,8 +705,8 @@ def _tema_para_db(valor_app: str) -> str:
     return valor_app.upper()
 
 @router.get("/usuario/me")
-def get_perfil(user=Depends(get_user)):
-    resp = supabase.table("Usuario").select("*").eq("usuEmail", user["sub"]).execute()
+def get_perfil(user=Depends(get_user_profile)):
+    resp = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('usuEmail', user['sub']), 'Usuario')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     u = resp.data[0]
@@ -745,9 +726,9 @@ def get_perfil(user=Depends(get_user)):
     }
 
 @router.patch("/usuario/me")
-def atualizar_perfil(data: PerfilUpdate, user=Depends(get_user)):
+def atualizar_perfil(data: PerfilUpdate, user=Depends(get_user_profile)):
 
-    resp = supabase.table("Usuario").select("*").eq("usuEmail", user["sub"]).execute()
+    resp = consultar_completo(lambda: supabase.table('Usuario').select('*').eq('usuEmail', user['sub']), 'Usuario')
     if not resp.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     u = resp.data[0]
@@ -793,6 +774,7 @@ def atualizar_perfil(data: PerfilUpdate, user=Depends(get_user)):
 
     updated = atual.data[0]
     return {
+        **({"access_token": create_token({"sub": updated["usuEmail"], "tipo": updated["usuTipo"]}, updated["usuTokenVersion"])} if increment_token else {}),
         "idUsuario":            updated.get("idUsuario"),
         "nome":                 updated.get("usuNome"),
         "email":                updated.get("usuEmail"),

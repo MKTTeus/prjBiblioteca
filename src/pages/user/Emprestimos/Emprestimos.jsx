@@ -78,7 +78,7 @@ export default function Emprestimos() {
     return (
       <div className="user-loans-list">
         {items.map((loan) => (
-          <article className="user-loan-item" key={loan.idEmprestimo ?? loan.id}>
+          <article className="user-loan-item" key={`${loan.idEmprestimo ?? loan.id}-${loan.idExemplar}`}>
             <div className="user-loan-item__top">
               <div>
                 <h4>{loan.titulo || "Livro desconhecido"}</h4>
@@ -89,7 +89,7 @@ export default function Emprestimos() {
               </span>
             </div>
             <p>Data do registro: {loan.dataEmprestimo || "Não disponível"}</p>
-            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataDevolucao || "Não disponível"}</p>
+            <p>Prazo: {loan.empLiv_DataPrevistaDevolucao || loan.dataPrevistaDevolucao || "Não disponível"}</p>
             <p>Renovações: {loan.renovacoes ?? 0}</p>
           </article>
         ))}

@@ -18,8 +18,6 @@ import { getToken } from "../../../../../services/api";
 
 const backupOptions = [
   { value: "diario", label: "Diário" },
-  { value: "semanal", label: "Semanal" },
-  { value: "mensal", label: "Mensal" },
 ];
 
 function formatBytes(bytes) {

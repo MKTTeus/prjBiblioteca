@@ -1,20 +1,29 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "create-react-app",
+  "framework": "vite",
   "buildCommand": "npm run build",
-  "outputDirectory": "build",
+  "outputDirectory": "dist",
   "functions": {
     "api/**/*.py": {
-      "excludeFiles": "{build/**,node_modules/**,src/backend/test_*.py,src/backend/init_sample_data.py,src/backend/data/**,**/__pycache__/**,**/*.pyc}"
+      "excludeFiles": "{dist/**,node_modules/**,src/backend/tests/**,src/backend/init_sample_data.py,src/backend/data/**,**/__pycache__/**,**/*.pyc}"
     }
   },
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
         {
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://www.googleapis.com https://openlibrary.org; frame-ancestors 'self'"
@@ -23,13 +32,31 @@
     }
   ],
   "rewrites": [
-    { "source": "/api",        "destination": "/api/index.py" },
-    { "source": "/api/:path*", "destination": "/api/index.py" },
-    { "source": "/(.*)",       "destination": "/index.html"   }
+    {
+      "source": "/api",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "crons": [
-    { "path": "/api/cron/lembretes-atraso",    "schedule": "0 11 * * *" },
-    { "path": "/api/cron/lembretes-devolucao", "schedule": "0 11 * * *" },
-    { "path": "/api/cron/backup-diario",       "schedule": "0 16 * * *" }
+    {
+      "path": "/api/cron/lembretes-atraso",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/lembretes-devolucao",
+      "schedule": "0 11 * * *"
+    },
+    {
+      "path": "/api/cron/backup-diario",
+      "schedule": "0 16 * * *"
+    }
   ]
 }

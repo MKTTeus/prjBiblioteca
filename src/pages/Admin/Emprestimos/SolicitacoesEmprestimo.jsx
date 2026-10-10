@@ -524,7 +524,7 @@ export default function SolicitacoesEmprestimo() {
                             <LoadingButton
                               className="emp-btn-retirar"
                               onClick={() => handleRegistrarRetirada(item)}
-                              disabled={isProcessando}
+                              disabled={isProcessando || horasRestantes === null || horasRestantes <= 0}
                               title="Registrar que o aluno retirou o livro"
                             >
                               Retirar
@@ -532,7 +532,7 @@ export default function SolicitacoesEmprestimo() {
                             <LoadingButton
                               className="emp-btn-expirar"
                               onClick={() => handleExpirarSolicitacao(item)}
-                              disabled={isProcessando}
+                              disabled={isProcessando || horasRestantes === null || horasRestantes > 0}
                               title="Expirar manualmente esta solicitação"
                             >
                               Expirar

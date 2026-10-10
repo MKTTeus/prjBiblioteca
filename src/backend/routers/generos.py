@@ -1,3 +1,5 @@
+from rpc import executar_rpc
+from core import consultar_completo, consultar_lote
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
@@ -9,10 +11,10 @@ router = APIRouter()
 @router.get("/generos")
 def listar_generos():
     try:
-        res = supabase.table("Genero").select("*").order("genNome").execute()
+        res = consultar_completo(lambda: supabase.table('Genero').select('*').order('genNome'), 'Genero')
         generos = res.data or []
         if generos:
-            links = supabase.table("LivroGenero").select("idGenero").execute().data or []
+            links = consultar_completo(lambda: supabase.table('LivroGenero').select('idGenero'), 'LivroGenero').data or []
             contagem = {}
             for l in links:
                 contagem[l["idGenero"]] = contagem.get(l["idGenero"], 0) + 1
@@ -20,7 +22,7 @@ def listar_generos():
                 g["total_livros"] = contagem.get(g["idGenero"], 0)
         return generos
     except Exception as e:
-        print("Erro ao listar gêneros:", e)
+        print("Erro ao listar gêneros:", 'falha de operação')
         raise HTTPException(status_code=500, detail="Erro ao listar gêneros")
 
 @router.post("/generos")
@@ -39,8 +41,8 @@ def criar_genero(gen: Genero, admin=Depends(get_admin)):
         error_msg = str(e)
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Gênero já existe")
-        print("Erro ao criar gênero:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao criar gênero: {str(e)}")
+        print("Erro ao criar gênero:", 'falha de operação')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 @router.get("/generos/{idGenero}/uso")
@@ -55,7 +57,7 @@ def contar_uso_genero(idGenero: int, admin=Depends(get_admin)):
         )
         return {"total_livros": res.count or 0}
     except Exception as e:
-        print("Erro ao contar uso do gênero:", e)
+        print("Erro ao contar uso do gênero:", 'falha de operação')
         raise HTTPException(status_code=500, detail="Erro ao verificar uso do gênero")
 
 
@@ -81,8 +83,8 @@ def atualizar_genero(idGenero: int, gen: GeneroUpdate, admin=Depends(get_admin))
         error_msg = str(e)
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Já existe um gênero com esse nome")
-        print("Erro ao atualizar gênero:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao atualizar gênero: {str(e)}")
+        print("Erro ao atualizar gênero:", 'falha de operação')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 @router.delete("/generos/{idGenero}")
@@ -111,51 +113,10 @@ def excluir_genero(idGenero: int, admin=Depends(get_admin)):
     except HTTPException:
         raise
     except Exception as e:
-        print("Erro ao excluir gênero:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao excluir gênero: {str(e)}")
+        print("Erro ao excluir gênero:", 'falha de operação')
+        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
 
 
 @router.post("/generos/{idGenero}/mesclar")
-def mesclar_genero(idGenero: int, payload: MesclarPayload, admin=Depends(get_admin)):
-    """Transfere todos os livros vinculados a `idGenero` para `idDestino`
-    e em seguida exclui o gênero de origem."""
-    try:
-        id_destino = payload.idDestino
-        if id_destino == idGenero:
-            raise HTTPException(status_code=400, detail="Selecione um gênero diferente do original")
-
-        destino = (
-            supabase.table("Genero")
-            .select("idGenero")
-            .eq("idGenero", id_destino)
-            .limit(1)
-            .execute()
-        )
-        if not destino.data:
-            raise HTTPException(status_code=404, detail="Gênero de destino não encontrado")
-
-        origem_links = (
-            supabase.table("LivroGenero").select("idLivro").eq("idGenero", idGenero).execute().data or []
-        )
-        destino_links = (
-            supabase.table("LivroGenero").select("idLivro").eq("idGenero", id_destino).execute().data or []
-        )
-        destino_ids = {l["idLivro"] for l in destino_links}
-        para_mover = [l["idLivro"] for l in origem_links if l["idLivro"] not in destino_ids]
-
-        if para_mover:
-            novas_linhas = [{"idLivro": idLivro, "idGenero": id_destino} for idLivro in para_mover]
-            supabase.table("LivroGenero").insert(novas_linhas).execute()
-
-        supabase.table("LivroGenero").delete().eq("idGenero", idGenero).execute()
-        supabase.table("Genero").delete().eq("idGenero", idGenero).execute()
-
-        return {
-            "detail": "Gêneros mesclados com sucesso",
-            "livros_migrados": len(para_mover),
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        print("Erro ao mesclar gêneros:", e)
-        raise HTTPException(status_code=500, detail=f"Erro ao mesclar gêneros: {str(e)}")
+def mesclar_genero(idGenero:int,payload:MesclarPayload,admin=Depends(get_admin)):
+    return executar_rpc('mesclar_catalogo',{'p_tipo':'Genero','p_origem':idGenero,'p_destino':payload.idDestino})

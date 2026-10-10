@@ -1,3 +1,4 @@
+import { resolverStatus, dataBiblioteca } from "../../../utils/loanStatus";
 import {
   FiAlertCircle,
   FiAlertTriangle,
@@ -38,14 +39,7 @@ export function criarMapaPorId(itens = [], campoId = "id") {
 }
 
 export function getStatusEmprestimo(emprestimo) {
-  if (emprestimo.empLiv_Status === "Devolvido") return "devolvido";
-
-  const hoje = new Date();
-  const dataPrevista = new Date(emprestimo.empLiv_DataPrevistaDevolucao);
-
-  if (dataPrevista < hoje) return "atrasado";
-
-  return "ativo";
+  return resolverStatus(emprestimo);
 }
 
 export function getStatusVisual(emprestimo) {
@@ -65,14 +59,7 @@ export function getStatusVisual(emprestimo) {
 export function isMesmoDia(data, referencia = new Date()) {
   if (!data) return false;
 
-  const valor = new Date(data);
-  if (Number.isNaN(valor.getTime())) return false;
-
-  return (
-    valor.getFullYear() === referencia.getFullYear() &&
-    valor.getMonth() === referencia.getMonth() &&
-    valor.getDate() === referencia.getDate()
-  );
+  return String(data).slice(0,10) === dataBiblioteca(referencia);
 }
 
 export function calcularMetricas(emprestimos = []) {
@@ -131,6 +118,9 @@ export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios
 
     const textoBusca = [
       emprestimo.idEmprestimo,
+      emprestimo.usuario,
+      emprestimo.titulo,
+      emprestimo.codigo,
       usuario?.nome,
       usuario?.documento,
       usuario?.tipo,
@@ -169,7 +159,8 @@ export function filtrarExemplares(exemplares, buscaExemplar) {
 
 export function formatarData(data) {
   if (!data) return "-";
-  return new Date(data).toLocaleDateString("pt-BR");
+  const [ano,mes,dia] = String(data).slice(0,10).split("-");
+  return ano && mes && dia ? `${dia}/${mes}/${ano}` : "-";
 }
 
 export function paraInputDate(data) {

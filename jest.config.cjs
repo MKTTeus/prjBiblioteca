@@ -1,0 +1,1 @@
+module.exports={testEnvironment:'jsdom',roots:['<rootDir>/src'],setupFilesAfterEnv:['<rootDir>/src/setupTests.js'],transform:{'^.+\\.[jt]sx?$':'babel-jest'},moduleNameMapper:{'\\.(css|scss)$':'<rootDir>/scripts/style-mock.cjs','\\.(svg|png|jpg|webp)$':'<rootDir>/scripts/file-mock.cjs'}};

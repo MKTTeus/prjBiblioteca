@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_admin, utc_now, verify_password
+from core import get_admin, utc_now, verify_password, buscar_todos
+from rpc import executar_rpc
 from schemas import EncerrarAnoLetivo
 
 router = APIRouter()
@@ -63,73 +64,16 @@ def _filtros_alunos_ativos(qb):
 
 @router.get("/ano-letivo")
 def info_ano_letivo(admin=Depends(get_admin)):
-    ano_atual = get_ano_letivo_atual()
-
-    ativos_resp = _filtros_alunos_ativos(
-        supabase.table("Usuario").select("idUsuario")
-    ).execute()
-    ativos = len(ativos_resp.data or [])
-
-    concluintes_resp = _filtros_alunos_ativos(
-        supabase.table("Usuario").select("idUsuario")
-    ).eq("usuSerie", SERIE_CONCLUINTE).execute()
-    concluintes = len(concluintes_resp.data or [])
-
-    return {
-        "anoLetivoAtual": ano_atual,
-        "alunosAtivos": ativos,
-        "concluintes": concluintes,
-        "fraseConfirmacao": f"ENCERRAR ANO LETIVO {ano_atual}",
-    }
+    ano=get_ano_letivo_atual()
+    alunos=buscar_todos(lambda:_filtros_alunos_ativos(supabase.table('Usuario').select('idUsuario,usuNome,usuSerie,usuTurma')).order('idUsuario'))
+    return {'anoLetivoAtual':ano,'alunosAtivos':len(alunos),'concluintes':sum(a['usuSerie']==SERIE_CONCLUINTE for a in alunos),
+        'fraseConfirmacao':f'ENCERRAR ANO LETIVO {ano}','alunos':alunos}
 
 
 @router.post("/ano-letivo/encerrar")
 def encerrar_ano_letivo(body: EncerrarAnoLetivo, admin=Depends(get_admin)):
-    ano_atual = get_ano_letivo_atual()
-    novo_ano = ano_atual + 1
-
-    # 1. Verificar senha do administrador autenticado
-    email = admin.get("sub")
-    adm_db = (
-        supabase.table("Administrador")
-        .select("admSenha")
-        .eq("admEmail", email)
-        .limit(1)
-        .execute()
-    )
-    if not adm_db.data:
-        raise HTTPException(status_code=403, detail="Administrador não encontrado")
-    if not verify_password(body.senha, adm_db.data[0]["admSenha"]):
-        # 403 (e não 401) para não disparar o logout automático do cliente
-        raise HTTPException(status_code=403, detail="Senha incorreta")
-
-    # 2. Validar frase de confirmação (carrega o ano → garante idempotência)
-    frase_esperada = f"ENCERRAR ANO LETIVO {ano_atual}"
-    if (body.confirmacao or "").strip().upper() != frase_esperada.upper():
-        raise HTTPException(
-            status_code=400,
-            detail=f'Frase de confirmação incorreta. Digite exatamente: "{frase_esperada}"',
-        )
-
-    # 3. Formar concluintes (3º Ano EM) antes de promover os demais
-    formados_resp = _filtros_alunos_ativos(
-        supabase.table("Usuario").update({"usuFormado": True})
-    ).eq("usuSerie", SERIE_CONCLUINTE).execute()
-    formados = len(formados_resp.data or [])
-
-    # 4. Promover em ordem decrescente para não promover o mesmo aluno duas vezes
-    promovidos = 0
-    for atual, proxima in reversed(list(PROXIMA_SERIE.items())):
-        resp = _filtros_alunos_ativos(
-            supabase.table("Usuario").update({"usuSerie": proxima, "usuAnoLetivo": novo_ano})
-        ).eq("usuSerie", atual).execute()
-        promovidos += len(resp.data or [])
-
-    # 5. Avançar o ano letivo do sistema
-    set_ano_letivo_atual(novo_ano)
-
-    return {
-        "promovidos": promovidos,
-        "formados": formados,
-        "novoAnoLetivo": novo_ano,
-    }
+    ano=get_ano_letivo_atual()
+    rows=supabase.table('Administrador').select('admSenha').eq('idAdmin',admin['id']).limit(1).execute().data
+    if not rows or not verify_password(body.senha,rows[0]['admSenha']): raise HTTPException(403,'Senha incorreta')
+    if body.confirmacao.strip().upper()!=f'ENCERRAR ANO LETIVO {ano}': raise HTTPException(400,'Frase de confirmação incorreta')
+    return executar_rpc('encerrar_ano_letivo',{'p_ano':ano,'p_retidos':body.retidos})

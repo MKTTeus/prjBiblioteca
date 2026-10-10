@@ -2,12 +2,13 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import Optional
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from passlib.context import CryptContext
+import bcrypt
 from dotenv import load_dotenv
 
 from database import supabase
@@ -21,67 +22,35 @@ if not SECRET_KEY:
         "(uma string aleatória e secreta, ex.: gerada com `openssl rand -hex 32`) "
         "no seu .env antes de iniciar o backend."
     )
+if os.getenv('VERCEL') and (len(SECRET_KEY)<32 or SECRET_KEY.startswith('replace-')):
+    raise RuntimeError('SECRET_KEY deve ser um segredo forte e exclusivo no ambiente de produção')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 6
 
-# Cache de 60 segundos para token_version (evita consultar o banco a cada request)
-_TOKEN_VERSION_CACHE: dict[str, tuple[int, float]] = {}  # key -> (token_version, timestamp)
-_TOKEN_VERSION_CACHE_TTL = 60  # segundos
-
-
-def _get_cache_key(table: str, email: str) -> str:
-    return f"{table}:{email}"
-
-
-def _get_cached_token_version(table: str, email: str) -> Optional[int]:
-    """Retorna token_version do cache se ainda válido, senão None."""
-    key = _get_cache_key(table, email)
-    if key in _TOKEN_VERSION_CACHE:
-        version, timestamp = _TOKEN_VERSION_CACHE[key]
-        if time.time() - timestamp < _TOKEN_VERSION_CACHE_TTL:
-            return version
-        else:
-            del _TOKEN_VERSION_CACHE[key]
-    return None
-
-
-def _set_cached_token_version(table: str, email: str, version: int) -> None:
-    """Armazena token_version no cache com timestamp atual."""
-    key = _get_cache_key(table, email)
-    _TOKEN_VERSION_CACHE[key] = (version, time.time())
-
-
-def _fetch_token_version_from_db(table: str, email: str) -> Optional[int]:
-    """Busca token_version direto do banco."""
+def get_session_epoch() -> str:
     try:
-        if table == "Administrador":
-            resp = supabase.table("Administrador").select("admTokenVersion").eq("admEmail", email).limit(1).execute()
-            if resp.data:
-                return resp.data[0].get("admTokenVersion", 1)
-        elif table == "Usuario":
-            resp = supabase.table("Usuario").select("usuTokenVersion").eq("usuEmail", email).limit(1).execute()
-            if resp.data:
-                return resp.data[0].get("usuTokenVersion", 1)
-    except Exception:
-        pass
-    return None
+        rows = supabase.table("SegurancaSessao").select("epoch").eq("id", 1).execute().data
+    except Exception as exc:
+        raise HTTPException(503, "Não foi possível validar a sessão") from exc
+    if not rows:
+        raise HTTPException(503, "Configuração de segurança indisponível")
+    return str(rows[0]["epoch"])
 
 
 def get_token_version(table: str, email: str) -> int:
-    """Obtém token_version com cache de 60s."""
-    cached = _get_cached_token_version(table, email)
-    if cached is not None:
-        return cached
-    version = _fetch_token_version_from_db(table, email) or 1
-    _set_cached_token_version(table, email, version)
-    return version
+    prefix = "adm" if table == "Administrador" else "usu"
+    try:
+        rows = supabase.table(table).select(f"{prefix}TokenVersion").eq(f"{prefix}Email", email).limit(1).execute().data
+    except Exception as exc:
+        raise HTTPException(503, "Não foi possível validar a sessão") from exc
+    if not rows:
+        raise HTTPException(401, "Conta não encontrada")
+    return int(rows[0][f"{prefix}TokenVersion"])
 
 
 def invalidate_token_version_cache(table: str, email: str) -> None:
-    """Invalida o cache de token_version para forçar nova leitura do banco."""
-    key = _get_cache_key(table, email)
-    if key in _TOKEN_VERSION_CACHE:
-        del _TOKEN_VERSION_CACHE[key]
+    # Mantido por compatibilidade; não há cache local de autorização.
+    return None
 
 
 TAMANHO_LOTE_SUPABASE = 100
@@ -90,6 +59,10 @@ TAMANHO_LOTE_SUPABASE = 100
 def utc_now() -> datetime:
     """Retorna o instante atual como datetime aware em UTC."""
     return datetime.now(timezone.utc)
+
+
+def business_today():
+    return utc_now().astimezone(ZoneInfo("America/Sao_Paulo")).date()
 
 
 def datetime_utc(value: str | datetime) -> datetime:
@@ -144,18 +117,33 @@ def get_session_timeout_minutes() -> int:
             return int(resp.data[0]["valor"])
     except Exception:
         pass
-    return ACCESS_TOKEN_EXPIRE_HOURS * 60  # fallback: 360 min
+    return 30  # padrão também usado pelo frontend
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login", auto_error=False)
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    if len(password)<8 or len(password.encode('utf-8'))>72:
+        raise HTTPException(422,'Senha deve ter pelo menos 8 caracteres e no máximo 72 bytes')
+    try:
+        rows=supabase.table('Configuracoes').select('chave,valor').in_('chave',['tamanho_minimo_senha','exigir_senha_forte']).execute().data or []
+        config={r['chave']:r['valor'] for r in rows}
+    except Exception as exc:
+        raise HTTPException(503,'Política de senhas indisponível') from exc
+    minimo=max(8,min(32,int(config.get('tamanho_minimo_senha','8'))))
+    if len(password)<minimo or len(password.encode('utf-8'))>72:
+        raise HTTPException(422,f'A senha deve ter pelo menos {minimo} caracteres e no máximo 72 bytes')
+    if config.get('exigir_senha_forte','false')=='true' and not (any(c.isalpha() for c in password) and any(c.isdigit() for c in password) and any(not c.isalnum() for c in password)):
+        raise HTTPException(422,'A senha deve conter letras, números e símbolos')
+    return bcrypt.hashpw(password.encode('utf-8'),bcrypt.gensalt()).decode('ascii')
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    try:
+        return len(plain.encode('utf-8'))<=72 and bcrypt.checkpw(plain.encode('utf-8'),hashed.encode('ascii'))
+    except (ValueError, TypeError):
+        return False
 
 
 def parse_status(value):
@@ -203,117 +191,92 @@ def validar_cpf(cpf: Optional[str]) -> bool:
 
 
 def create_token(data: dict, token_version: int = 1) -> str:
-    minutes = get_session_timeout_minutes()
+    minutes = max(1, min(1440, get_session_timeout_minutes()))
     expire = utc_now() + timedelta(minutes=minutes)
-    data.update({"exp": expire, "tv": token_version})
+    data = {**data, "exp": expire, "tv": token_version, "epoch": get_session_epoch()}
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def _verify_token_version(payload: dict, table: str, email: str) -> None:
-    """Verifica se o token_version do JWT corresponde ao do banco."""
-    token_tv = payload.get("tv")
-    if token_tv is None:
-        # Token antigo sem token_version - invalida por segurança
-        raise HTTPException(status_code=401, detail="Token inválido: versão ausente. Faça login novamente.")
-    
-    db_tv = get_token_version(table, email)
-    if token_tv != db_tv:
-        # Token version mismatch - invalida cache e rejeita
-        invalidate_token_version_cache(table, email)
-        raise HTTPException(status_code=401, detail="Token inválido: sessão expirada. Faça login novamente.")
+def _authenticate(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError as exc:
+        raise HTTPException(401, "Token inválido ou expirado") from exc
+    tipo = payload.get("tipo")
+    if tipo not in ("admin", "Aluno", "Comunidade") or not payload.get("sub"):
+        raise HTTPException(401, "Token inválido")
+    table, prefix = ("Administrador", "adm") if tipo == "admin" else ("Usuario", "usu")
+    try:
+        rows = supabase.table(table).select("*").eq(f"{prefix}Email", payload["sub"]).limit(1).execute().data
+    except Exception as exc:
+        raise HTTPException(503, "Não foi possível validar a sessão") from exc
+    if not rows or not parse_status(rows[0].get(f"{prefix}Status")):
+        raise HTTPException(401, "Conta inexistente ou inativa")
+    account = rows[0]
+    if account.get("usuExcluido"):
+        raise HTTPException(401, "Conta excluída")
+    if payload.get("tv") != account.get(f"{prefix}TokenVersion") or payload.get("epoch") != get_session_epoch():
+        raise HTTPException(401, "Sessão expirada. Faça login novamente")
+    if tipo != "admin" and tipo != account.get("usuTipo"):
+        raise HTTPException(401, "Perfil alterado. Faça login novamente")
+    payload["id"] = account["idAdmin" if tipo == "admin" else "idUsuario"]
+    payload["admProfessor"] = bool(account.get("admProfessor"))
+    payload["senhaProvisoria"] = bool(account.get("usuSenhaProvisoria"))
+    return payload
 
 
 def get_admin(token: str = Depends(oauth2_scheme)):
-    """Exige um administrador da equipe gestora (admProfessor = false).
-
-    Usada em todas as rotas administrativas existentes. Um professor
-    (admProfessor = true) autentica com tipo "admin" mas é bloqueado aqui,
-    o que restringe automaticamente todo o painel administrativo a ele
-    sem precisar alterar rota por rota.
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("tipo") != "admin":
-            raise HTTPException(status_code=403, detail="Acesso restrito a admins")
-        if payload.get("admProfessor"):
-            raise HTTPException(status_code=403, detail="Acesso restrito à equipe gestora")
-        
-        # Verifica token_version
-        email = payload.get("sub")
-        if email:
-            _verify_token_version(payload, "Administrador", email)
-        
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+    payload = _authenticate(token)
+    if payload["tipo"] != "admin" or payload["admProfessor"]:
+        raise HTTPException(403, "Acesso restrito à equipe gestora")
+    return payload
 
 
 def get_professor(token: str = Depends(oauth2_scheme)):
-    """Exige um administrador marcado como professor (admProfessor = true)."""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("tipo") != "admin" or not payload.get("admProfessor"):
-            raise HTTPException(status_code=403, detail="Acesso restrito a professores")
-        
-        # Verifica token_version
-        email = payload.get("sub")
-        if email:
-            _verify_token_version(payload, "Administrador", email)
-        
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+    payload = _authenticate(token)
+    if payload["tipo"] != "admin" or not payload["admProfessor"]:
+        raise HTTPException(403, "Acesso restrito a professores")
+    return payload
 
 
 def get_admin_ou_professor(token: str = Depends(oauth2_scheme)):
-    """Aceita qualquer administrador (equipe gestora OU professor).
+    payload = _authenticate(token)
+    if payload["tipo"] != "admin":
+        raise HTTPException(403, "Acesso restrito a administradores e professores")
+    return payload
 
-    Uso restrito a endpoints que ambos os perfis podem acessar, como o
-    próprio perfil (/admin/me). Não usar em rotas administrativas gerais.
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("tipo") != "admin":
-            raise HTTPException(status_code=403, detail="Acesso restrito a admins")
-        
-        # Verifica token_version
-        email = payload.get("sub")
-        if email:
-            _verify_token_version(payload, "Administrador", email)
-        
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+
+def get_user_profile(token: str = Depends(oauth2_scheme)):
+    payload = _authenticate(token)
+    if payload["tipo"] not in ("Aluno", "Comunidade"):
+        raise HTTPException(403, "Acesso restrito a usuários")
+    return payload
 
 
 def get_user(token: str = Depends(oauth2_scheme)):
-    """Exige um usuário autenticado (Aluno ou Comunidade) com token_version válido."""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if payload.get("tipo") not in ("Aluno", "Comunidade"):
-            raise HTTPException(status_code=403, detail="Acesso restrito a usuários")
-        
-        # Verifica token_version
-        email = payload.get("sub")
-        if email:
-            _verify_token_version(payload, "Usuario", email)
-        
-        return payload
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+    payload = get_user_profile(token)
+    if payload["senhaProvisoria"]:
+        raise HTTPException(403, "Defina sua senha antes de continuar")
+    return payload
 
 
-def get_optional_user(token: Optional[str] = Depends(oauth2_scheme)):
-    if not token:
-        return None
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
-    except JWTError:
-        return None
+def get_loan_reader(token: str = Depends(oauth2_scheme)):
+    payload = _authenticate(token)
+    if payload["tipo"] == "admin":
+        if payload["admProfessor"]:
+            raise HTTPException(403, "Use a área do professor")
+    elif payload["senhaProvisoria"]:
+        raise HTTPException(403, "Defina sua senha antes de continuar")
+    return payload
+
+
+def get_optional_user(token: Optional[str] = Depends(optional_oauth2_scheme)):
+    return _authenticate(token) if token else None
 
 
 def get_admin_id(admin):
+    if admin.get("id"):
+        return admin["id"]
     admin_db = supabase.table("Administrador") \
         .select("idAdmin") \
         .eq("admEmail", admin["sub"]) \
@@ -322,28 +285,39 @@ def get_admin_id(admin):
     return admin_db.data[0]["idAdmin"] if admin_db.data else None
 
 
-def gerar_tombos(quantidade: int, prefixo: str = "T"):
-    resp = (
-        supabase
-        .table("Exemplar")
-        .select("exeLivTombo")
-        .like("exeLivTombo", f"{prefixo}%")
-        .order("exeLivTombo", desc=True)
-        .limit(1)
-        .execute()
-    )
 
-    numero = 1
 
-    if resp.data:
-        ultimo = resp.data[0]["exeLivTombo"]
-        try:
-            numero = int(ultimo.replace(prefixo, "")) + 1
-        except:
-            numero = 1
+_CHAVES_TABELAS = {
+    'Administrador':'idAdmin','Usuario':'idUsuario','Livro':'idLivro','Exemplar':'idExemplar',
+    'Autor':'idAutor','Editora':'idEditora','Categoria':'idCategoria','Genero':'idGenero',
+    'LivroAutor':'idLivro,idAutor','LivroCategoria':'idLivro,idCategoria','LivroGenero':'idLivro,idGenero',
+    'Movimentacao':'idMovimentacao','MovimentacaoExemplar':'idMovimentacao,idExemplar',
+    'Configuracoes':'chave','FichaCatalografica':'idFicha','RedefinicaoSenha':'idRedefinicao'}
 
-    tombos = []
-    for i in range(quantidade):
-        tombos.append(f"{prefixo}{str(numero + i).zfill(4)}")
 
-    return tombos
+def consultar_completo(criar_consulta, tabela):
+    from types import SimpleNamespace
+    def consulta():
+        from copy import copy
+        q=copy(criar_consulta())
+        for coluna in _CHAVES_TABELAS[tabela].split(','): q=q.order(coluna)
+        return q
+    dados=buscar_todos(consulta)
+    return SimpleNamespace(data=dados,count=len(dados))
+
+
+def consultar_lote(criar_consulta, tabela, ids):
+    from types import SimpleNamespace
+    dados=[]; ids=list(dict.fromkeys(ids))
+    for inicio in range(0,len(ids),100):
+        lote=ids[inicio:inicio+100]
+        dados.extend(consultar_completo(lambda:criar_consulta(lote),tabela).data)
+    return SimpleNamespace(data=dados,count=len(dados))
+
+
+def conta_publica(conta):
+    permitidos={'idAdmin','admNome','admEmail','admStatus','admProfessor','admTema',
+        'idUsuario','usuNome','usuEmail','usuTelefone','usuTelefoneResponsavel','usuEndereco',
+        'usuRA','usuCPF','usuTipo','usuStatus','usuSerie','usuTurma','usuAnoLetivo','usuFormado',
+        'usuTema','usuSenhaProvisoria','usuDataNascimento','usuExcluido'}
+    return {k:v for k,v in conta.items() if k in permitidos}
