@@ -12,7 +12,7 @@ class Query:
     def __init__(self, rows):
         self.rows = list(rows)
 
-    def select(self, *args): return self
+    def select(self, *args, **kwargs): return self
     def order(self, *args): return self
     def eq(self, key, value):
         self.rows = [row for row in self.rows if row.get(key) == value]
