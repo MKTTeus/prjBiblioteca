@@ -73,7 +73,6 @@ export const getBooks = (params = {}) => {
   if (params.status) query.append("status", params.status);
   if (params.page) query.append("page", params.page);
   if (params.per_page) query.append("per_page", params.per_page);
-  if (params.incluir_inativos) query.append("incluir_inativos", "true");
   const qs = query.toString();
   const endpoint = qs ? `/livros?${qs}` : "/livros";
   return apiFetch(endpoint);
@@ -90,7 +89,7 @@ export const getBooksPage = (params = {}) => {
 export const getResumoAcervo = () => apiFetch('/livros/resumo');
 
 export const getBook = (idLivro) =>
-  apiFetch(`/livros/${idLivro}`);
+  apiFetch(`/livros/gestao/${idLivro}`);
 
 export const getBooksForManagement = () => apiFetch("/livros/gestao");
 

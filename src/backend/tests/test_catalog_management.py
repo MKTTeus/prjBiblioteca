@@ -122,3 +122,22 @@ def test_catalog_error_has_safe_diagnostics_and_preserves_response(monkeypatch, 
     assert [cause['tipo'] for cause in diagnostic['causas']] == ['RuntimeError', 'ConnectionError']
     assert diagnostic['causas'][0]['frames'][-1]['funcao'] == 'fail'
     assert diagnostic['causas'][0]['frames'][-1]['linha'] > 0
+
+
+def test_public_cannot_request_inactive_books_or_open_their_details(monkeypatch):
+    app, _ = catalog(monkeypatch)
+    client = TestClient(app)
+    assert [book['idLivro'] for book in client.get('/livros?incluir_inativos=true').json()] == [3]
+    assert client.get('/livros/4').status_code == 404
+    assert client.get('/livros/1').status_code == 404
+    assert client.get('/livros/2').status_code == 404
+    assert client.get('/livros/gestao/4').status_code in (401, 403)
+
+    app.dependency_overrides[get_admin] = lambda: {'tipo': 'admin'}
+    details = client.get('/livros/gestao/4')
+    assert details.status_code == 200
+    assert details.json()['livro']['idLivro'] == 4
+    assert len(details.json()['exemplares']) == 1
+    public = client.get('/livros/3')
+    assert public.status_code == 200
+    assert len(public.json()['exemplares']) == 2

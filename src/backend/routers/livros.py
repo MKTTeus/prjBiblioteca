@@ -265,9 +265,8 @@ def listar_livros(
     status: str | None = "todos",
     page: int = Query(1, ge=1),
     per_page: int = Query(10000, ge=1, le=10000),
-    incluir_inativos: bool = False
 ):
-    return _listar_livros(q, categoria, status, page, per_page, incluir_inativos,
+    return _listar_livros(q, categoria, status, page, per_page, False,
                           request_id=getattr(request.state, "request_id", None))
 
 
@@ -461,16 +460,29 @@ def _listar_livros(
         raise HTTPException(status_code=500, detail="Erro ao listar livros")
 
 
-@router.get("/livros/{idLivro}")
-def detalhes_livro(idLivro: int):
+def _detalhes_livro(idLivro: int, *, gestao: bool = False):
     livro_resp = consultar_completo(lambda: supabase.table('Livro').select('*').eq('idLivro', idLivro), 'Livro')
-    if not livro_resp.data:
+    if not livro_resp.data or (not gestao and not livro_resp.data[0].get('livAtivo', True)):
         raise HTTPException(status_code=404, detail="Livro não encontrado")
 
     exemplares_resp = consultar_completo(lambda: supabase.table('Exemplar').select('*').eq('idLivro', idLivro), 'Exemplar')
+    exemplares = exemplares_resp.data or []
+    if not gestao:
+        exemplares = [e for e in exemplares if 'desativado' not in (e.get('exeLivStatus') or '').lower()]
+        if not exemplares:
+            raise HTTPException(status_code=404, detail="Livro não encontrado")
     livro_enriquecido = enriquecer_livros(livro_resp.data)[0]
+    return {"livro": livro_enriquecido, "exemplares": exemplares}
 
-    return {"livro": livro_enriquecido, "exemplares": exemplares_resp.data}
+
+@router.get("/livros/gestao/{idLivro}")
+def detalhes_livro_gestao(idLivro: int, admin=Depends(get_admin)):
+    return _detalhes_livro(idLivro, gestao=True)
+
+
+@router.get("/livros/{idLivro}")
+def detalhes_livro(idLivro: int):
+    return _detalhes_livro(idLivro)
 
 
 # ── POST /livros ──────────────────────────────────────────────────
