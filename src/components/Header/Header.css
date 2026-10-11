@@ -32,9 +32,20 @@
 }
 
 .header-icon {
-  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
   margin-right: 8px;
-  color: var(--primary);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.header-brand-logo {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
 }
 
 .header-title {

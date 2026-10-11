@@ -24,7 +24,7 @@ export default function UserDashboard() {
       activePage={activePage}
       setActivePage={setActivePage}
     >
-      <Suspense fallback={<div className="page-shell">Carregando página...</div>}>
+      <Suspense fallback={<div className="route-loading" role="status" aria-label="Carregando conteúdo" />}>
         <CurrentPage
           onViewAllNotifications={() => setActivePage("notificacoes")}
           onNavigate={setActivePage}

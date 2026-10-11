@@ -73,7 +73,9 @@ function LegacyBibliotecaRedirect() {
 function AdminLayout() {
   return (
     <AppShell sidebarType="admin">
-      <Outlet />
+      <Suspense fallback={<div className="route-loading" role="status" aria-label="Carregando conteúdo" />}>
+        <Outlet />
+      </Suspense>
     </AppShell>
   );
 }
@@ -85,7 +87,7 @@ function App() {
     });
   }, []);
   return (
-    <Suspense fallback={<div className="page-shell">Carregando página...</div>}>
+    <Suspense fallback={<div className="route-loading" role="status" aria-label="Carregando conteúdo" />}>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />
