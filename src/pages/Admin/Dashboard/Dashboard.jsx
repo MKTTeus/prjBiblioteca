@@ -36,6 +36,8 @@ const notificationTypeMap = {
 
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
+  const [statsError, setStatsError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [latestNotifications, setLatestNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -49,6 +51,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
+        setStatsError(false);
         const data = await getDashboardStats();
         setStats(data);
 
@@ -99,11 +102,12 @@ export default function Dashboard() {
         setNotificationCount(unreadNotifications.length);
       } catch (err) {
         console.error("Erro ao carregar estatísticas do dashboard:", err);
+        setStatsError(true);
       }
     }
 
     fetchStats();
-  }, [readNotifications]);
+  }, [readNotifications, retryKey]);
 
   useEffect(() => {
     function handlePointerDown(event) {
@@ -149,7 +153,12 @@ export default function Dashboard() {
   };
 
   if (!stats) {
-    return <p>Carregando...</p>;
+    return statsError ? (
+      <div className="dashboard page-shell" role="alert">
+        <p>Não foi possível carregar o painel.</p>
+        <button type="button" onClick={() => setRetryKey((key) => key + 1)}>Tentar novamente</button>
+      </div>
+    ) : <p role="status">Carregando painel...</p>;
   }
 
   return (

@@ -17,7 +17,7 @@ const books = [
   { idLivro: 3, livTitulo: 'Em circulação', livAtivo: true, exemplares_cadastrados: 1, total_exemplares: 1, emprestados: 1 },
 ];
 
-beforeEach(() => { getBooksForManagement.mockResolvedValue(books); });
+beforeEach(() => { getBooksForManagement.mockReset(); getBooksForManagement.mockResolvedValue(books); });
 
 test('aviso filtra pendências e oferece acesso direto à correção', async () => {
   render(<CadastroLivros />);
@@ -39,4 +39,21 @@ test('um título emprestado não dispara o aviso de falta de exemplares', async 
   render(<CadastroLivros />);
   await screen.findByRole('heading', { name: 'Em circulação' });
   expect(screen.queryByRole('button', { name: 'Ver títulos' })).not.toBeInTheDocument();
+});
+
+test('falha temporária na API tenta novamente e carrega o acervo completo', async () => {
+  getBooksForManagement.mockRejectedValueOnce(Object.assign(new Error('Indisponível'), { status: 503 }));
+  render(<CadastroLivros />);
+  expect(await screen.findByRole('heading', { name: 'Em circulação' }, { timeout: 2000 })).toBeInTheDocument();
+  expect(getBooksForManagement).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+test('falha persistente não apresenta catálogo vazio como se estivesse carregado', async () => {
+  getBooksForManagement.mockRejectedValueOnce(Object.assign(new Error('Falha'), { status: 400 }));
+  render(<CadastroLivros />);
+  expect(await screen.findByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
+  expect(screen.queryByText(/0 livros encontrados/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+  expect(await screen.findByRole('heading', { name: 'Em circulação' })).toBeInTheDocument();
 });

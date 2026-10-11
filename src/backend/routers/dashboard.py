@@ -1,7 +1,9 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_optional_user, business_today, executar_em_paralelo
+from core import get_optional_user, business_today
 
 router = APIRouter()
 
@@ -39,7 +41,7 @@ def dashboard_stats(user=Depends(get_optional_user)):
             "totalLivros", "totalUsuarios", "emprestimosAtivos",
             "devolucoesPendentes", "reservados", "atrasados", "devolucoesHoje",
         )
-        valores = executar_em_paralelo(
+        consultas = (
             lambda: _contar(supabase.table("Livro").select("*", count="exact", head=True).eq("livAtivo", True)),
             lambda: _contar(supabase.table("Usuario").select("*", count="exact", head=True).eq("usuExcluido", False)),
             lambda: _contar(supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Ativo")),
@@ -48,6 +50,9 @@ def dashboard_stats(user=Depends(get_optional_user)):
             lambda: _contar_itens_ativos(hoje, atrasados=True),
             lambda: _contar_itens_ativos(hoje, atrasados=False),
         )
+        # Limita as leituras simultâneas para não sobrecarregar o PostgREST.
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            valores = list(executor.map(lambda consultar: consultar(), consultas))
         return dict(zip(chaves, valores))
     except Exception as e:
         raise HTTPException(503,'Serviço temporariamente indisponível') from e
