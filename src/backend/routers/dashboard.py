@@ -3,7 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_optional_user, business_today
+from core import get_admin, business_today
+from rpc import executar_rpc
 
 router = APIRouter()
 
@@ -33,7 +34,7 @@ def _contar_itens_ativos(data: str, *, atrasados: bool) -> int:
 
 
 @router.get("/dashboard-stats")
-def dashboard_stats(user=Depends(get_optional_user)):
+def dashboard_stats(user=Depends(get_admin)):
     """Retorna os indicadores do painel com contagens executadas no banco."""
     try:
         hoje = business_today().isoformat()
@@ -42,7 +43,7 @@ def dashboard_stats(user=Depends(get_optional_user)):
             "devolucoesPendentes", "reservados", "atrasados", "devolucoesHoje",
         )
         consultas = (
-            lambda: _contar(supabase.table("Livro").select("*", count="exact", head=True).eq("livAtivo", True)),
+            lambda: int(executar_rpc("resumo_acervo", {})["totalLivros"]),
             lambda: _contar(supabase.table("Usuario").select("*", count="exact", head=True).eq("usuExcluido", False)),
             lambda: _contar(supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Ativo")),
             lambda: _contar(supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Pendente")),

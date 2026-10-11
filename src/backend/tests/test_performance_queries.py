@@ -142,10 +142,19 @@ def test_dashboard_keeps_all_seven_counts_and_filters(monkeypatch):
             return SimpleNamespace(count=1)
 
     monkeypatch.setattr(dashboard, "supabase", SimpleNamespace(table=lambda name: Query(name)))
+    monkeypatch.setattr(dashboard, "executar_rpc", lambda name, args: {"totalLivros": 1})
     result = dashboard.dashboard_stats(user=None)
     assert set(result) == {"totalLivros", "totalUsuarios", "emprestimosAtivos",
                            "devolucoesPendentes", "reservados", "atrasados", "devolucoesHoje"}
     assert all(value == 1 for value in result.values())
-    assert len(calls) == 7
+    assert len(calls) == 6
     assert 2 <= peak <= 3
-    assert ("Livro", (("livAtivo", True),)) in calls
+    assert all(table != "Livro" for table, _ in calls)
+
+
+def test_dashboard_stats_requires_manager():
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    app = FastAPI()
+    app.include_router(dashboard.router)
+    assert TestClient(app).get("/dashboard-stats").status_code in (401, 403)
