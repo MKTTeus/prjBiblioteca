@@ -1,4 +1,5 @@
-from threading import Barrier
+from threading import Barrier, Lock
+from time import sleep
 from types import SimpleNamespace
 
 import sys
@@ -59,6 +60,34 @@ def test_exemplars_keep_every_page_with_multiple_book_batches():
     assert [copy["idExemplar"] for copy in result] == [copy["idExemplar"] for copy in copies]
 
 
+def test_enrichment_uses_book_ids_for_relations_and_publisher_ids_for_publishers(monkeypatch):
+    tables = {
+        "LivroAutor": [{"idLivro": 101, "Autor": {"idAutor": 1, "autNome": "Autor"}}],
+        "LivroCategoria": [{"idLivro": 101, "Categoria": {"idCategoria": 2, "catNome": "Literatura"}}],
+        "LivroGenero": [{"idLivro": 101, "Genero": {"idGenero": 3, "genNome": "Romance"}}],
+        "Editora": [{"idEditora": 7, "ediNome": "Editora"}],
+    }
+
+    class Query:
+        def __init__(self, table): self.rows = tables[table]
+        def select(self, *args): return self
+        def in_(self, field, values):
+            self.rows = [row for row in self.rows if row[field] in values]
+            return self
+        def order(self, *args): return self
+        def range(self, start, end):
+            self.rows = self.rows[start:end + 1]
+            return self
+        def execute(self): return SimpleNamespace(data=self.rows)
+
+    monkeypatch.setattr(livros, "supabase", SimpleNamespace(table=lambda name: Query(name)))
+    result = livros.enriquecer_livros([{"idLivro": 101, "idEditora": 7}])
+    assert result[0]["livAutor"] == "Autor"
+    assert result[0]["livCategoria"] == "Literatura"
+    assert result[0]["livGenero"] == "Romance"
+    assert result[0]["livEditora"] == "Editora"
+
+
 def test_login_token_waits_for_both_security_and_timeout_reads(monkeypatch):
     barrier = Barrier(2, timeout=5)
 
@@ -81,7 +110,9 @@ def test_login_token_waits_for_both_security_and_timeout_reads(monkeypatch):
 
 
 def test_dashboard_keeps_all_seven_counts_and_filters(monkeypatch):
-    barrier = Barrier(7, timeout=5)
+    lock = Lock()
+    active = 0
+    peak = 0
     calls = []
 
     class Query:
@@ -100,8 +131,14 @@ def test_dashboard_keeps_all_seven_counts_and_filters(monkeypatch):
             self.filters.append((key, "<", value))
             return self
         def execute(self):
-            barrier.wait()
-            calls.append((self.table, tuple(self.filters)))
+            nonlocal active, peak
+            with lock:
+                active += 1
+                peak = max(peak, active)
+            sleep(0.02)
+            with lock:
+                active -= 1
+                calls.append((self.table, tuple(self.filters)))
             return SimpleNamespace(count=1)
 
     monkeypatch.setattr(dashboard, "supabase", SimpleNamespace(table=lambda name: Query(name)))
@@ -110,4 +147,5 @@ def test_dashboard_keeps_all_seven_counts_and_filters(monkeypatch):
                            "devolucoesPendentes", "reservados", "atrasados", "devolucoesHoje"}
     assert all(value == 1 for value in result.values())
     assert len(calls) == 7
+    assert 2 <= peak <= 3
     assert ("Livro", (("livAtivo", True),)) in calls

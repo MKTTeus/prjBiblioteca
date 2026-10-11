@@ -7,7 +7,7 @@ import "../styles/Login.css";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login, loadingUser } = useAuth();
+  const { login } = useAuth();
   const submitRef = useRef(false);
 
   const [email, setEmail] = useState("");
@@ -22,10 +22,6 @@ export default function Login() {
     aluno: "Aluno",
     comunidade: "Comunidade"
   };
-
-  if (loadingUser) {
-    return <div>Carregando...</div>;
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

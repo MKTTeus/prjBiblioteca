@@ -13,7 +13,7 @@ router = APIRouter()
 TAMANHO_LOTE_SUPABASE = 100
 
 
-def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro") -> list[dict]:
+def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro", *, paralelo: bool = True) -> list[dict]:
     """Consulta o Supabase em lotes de IDs, paginando também o RESULTADO de
     cada lote via .range().
 
@@ -41,8 +41,8 @@ def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro") -
 
     lotes = [ids[inicio:inicio + TAMANHO_LOTE_SUPABASE]
              for inicio in range(0, len(ids), TAMANHO_LOTE_SUPABASE)]
-    if len(lotes) <= 1:
-        return buscar_lote(lotes[0]) if lotes else []
+    if not paralelo or len(lotes) <= 1:
+        return [registro for lote in lotes for registro in buscar_lote(lote)]
     # Cada lote tem filtros e paginação próprios; map preserva a ordem.
     with ThreadPoolExecutor(max_workers=min(4, len(lotes))) as executor:
         return [registro for lote in executor.map(buscar_lote, lotes) for registro in lote]
@@ -70,27 +70,28 @@ def enriquecer_livros(livros: list) -> list:
     consultas = [
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autAnoNascimento, autAnoFalecimento)").in_("idLivro", ids_lote),
-            lote, "idLivro,idAutor",
+            lote, "idLivro,idAutor", paralelo=False,
         ),
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids_lote),
-            lote, "idLivro,idCategoria",
+            lote, "idLivro,idCategoria", paralelo=False,
         ),
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids_lote),
-            lote, "idLivro,idGenero",
+            lote, "idLivro,idGenero", paralelo=False,
         ),
     ]
     if ed_ids:
         consultas.append(
             lambda lote: consultar_em_lotes(
                 lambda ids_lote: supabase.table("Editora").select("idEditora, ediNome, ediCidade, ediEstado, ediPais").in_("idEditora", ids_lote),
-                lote, "idEditora",
+                lote, "idEditora", paralelo=False,
             )
         )
 
     respostas = executar_em_paralelo(
-        *(lambda consulta=consulta: consulta(ed_ids if i==3 else ids) for i,consulta in enumerate(consultas))
+        *(lambda consulta=consulta, lote=(ed_ids if i == 3 else ids): consulta(lote)
+          for i, consulta in enumerate(consultas))
     )
     la, lc, lg, *resto = respostas
 

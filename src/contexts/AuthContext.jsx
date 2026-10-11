@@ -77,16 +77,21 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     async function restoreSession() {
+      const storedToken = localStorage.getItem("token");
       try {
-        const storedToken = localStorage.getItem("token");
         const storedUser = JSON.parse(localStorage.getItem("user") || "null");
         if (!storedToken || !storedUser) return;
         const endpoint = storedUser.tipo === "admin" ? "/admin/me" : "/usuario/me";
         const res = await fetch(`${API_URL}${endpoint}`, { headers: { Authorization: `Bearer ${storedToken}` } });
-        if (res.status === 401 || res.status === 403) { doLogout(); return; }
+        if (res.status === 401 || res.status === 403) {
+          if (localStorage.getItem("token") === storedToken) doLogout();
+          return;
+        }
         if (!res.ok) throw new Error("Sessão indisponível");
         const perfil = await res.json();
-        if (cancelled) return;
+        // Um login iniciado enquanto a sessão antiga era validada vence a
+        // restauração; a resposta atrasada não pode substituir o novo perfil.
+        if (cancelled || localStorage.getItem("token") !== storedToken) return;
         const current = { ...storedUser, token: storedToken, nome: perfil.nome, email: perfil.email,
           professor: !!perfil.professor, senhaProvisoria: !!perfil.senhaProvisoria };
         timeoutMsRef.current = PENDING_TIMEOUT_MS;
@@ -100,9 +105,11 @@ export function AuthProvider({ children }) {
           resetTimer();
         });
       } catch {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        localStorage.removeItem("tipo");
+        if (localStorage.getItem("token") === storedToken) {
+          localStorage.removeItem("user");
+          localStorage.removeItem("token");
+          localStorage.removeItem("tipo");
+        }
       } finally { if (!cancelled) setLoadingUser(false); }
     }
     restoreSession();

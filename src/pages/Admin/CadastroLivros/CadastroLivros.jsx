@@ -27,6 +27,8 @@ export default function CadastroLivros() {
 
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [booksLoaded, setBooksLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [pendingDeleteBook, setPendingDeleteBook] = useState(null);
   const [pendingToggleBook, setPendingToggleBook] = useState(null);
@@ -80,10 +82,20 @@ export default function CadastroLivros() {
   const loadBooks = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getBooksForManagement();
+      setLoadError(false);
+      let data;
+      try {
+        data = await getBooksForManagement();
+      } catch (err) {
+        if (err.status && ![500, 502, 503, 504].includes(err.status)) throw err;
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        data = await getBooksForManagement();
+      }
       setBooks(data || []);
+      setBooksLoaded(true);
     } catch (err) {
       console.error(err);
+      setLoadError(true);
       addToast("Falha ao carregar livros", "error");
     } finally {
       setLoading(false);
@@ -187,7 +199,7 @@ export default function CadastroLivros() {
         )}
       </div>
 
-      <div className="stats-cards-grid">
+      {booksLoaded && <div className="stats-cards-grid">
         <StatsCard
           title="Títulos cadastrados"
           value={books.length}
@@ -230,7 +242,7 @@ export default function CadastroLivros() {
           icon={<HiOutlineCalendar />}
           color="red"
         />
-      </div>
+      </div>}
 
       {!loading && pendentes.length > 0 && (
         <div className="acervo-pendencia" role="status">
@@ -239,9 +251,9 @@ export default function CadastroLivros() {
         </div>
       )}
 
-      <FiltroBusca filters={filters} onFilter={setFilters} />
+      {booksLoaded && <FiltroBusca filters={filters} onFilter={setFilters} />}
 
-      <div className="catalog-header">
+      {booksLoaded && <div className="catalog-header">
         <h2>
           Catálogo de Livros{" "}
           <span className="catalog-count">
@@ -249,19 +261,30 @@ export default function CadastroLivros() {
             {filteredBooks.length === 1 ? "livro encontrado" : "livros encontrados"})
           </span>
         </h2>
-      </div>
+      </div>}
 
       {loading ? (
-        <p>Carregando...</p>
+        <p role="status">Carregando livros...</p>
+      ) : loadError && !booksLoaded ? (
+        <div role="alert" className="acervo-pendencia">
+          <p>Não foi possível carregar os livros. Tente novamente.</p>
+          <button type="button" onClick={loadBooks}>Tentar novamente</button>
+        </div>
       ) : (
-        <BookList
-          books={filteredBooks}
-          onEditBook={handleEdit}
-          onDeleteBook={handleDelete}
-          onToggleStatus={handleToggleStatus}
-          onViewFicha={handleViewFicha}
-          isAdmin={isAdmin}
-        />
+        <>
+          {loadError && <div role="alert" className="acervo-pendencia">
+            <p>Não foi possível atualizar os livros. Exibindo a última lista carregada.</p>
+            <button type="button" onClick={loadBooks}>Tentar novamente</button>
+          </div>}
+          <BookList
+            books={filteredBooks}
+            onEditBook={handleEdit}
+            onDeleteBook={handleDelete}
+            onToggleStatus={handleToggleStatus}
+            onViewFicha={handleViewFicha}
+            isAdmin={isAdmin}
+          />
+        </>
       )}
 
       {modalOpen && <Suspense fallback={<p>Carregando formulário...</p>}>
