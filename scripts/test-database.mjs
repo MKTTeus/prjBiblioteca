@@ -14,19 +14,20 @@ await db.exec(`CREATE TABLE IF NOT EXISTS "RedefinicaoSenha"("idRedefinicao" int
  GRANT USAGE ON SCHEMA storage TO anon,authenticated; GRANT ALL ON storage.objects TO anon,authenticated;
  GRANT USAGE ON ALL SEQUENCES IN SCHEMA storage TO anon,authenticated;`);
 for (const name of readdirSync('supabase/migrations').filter(n => n.endsWith('.sql')).sort()) {
+  // A view de recomendações depende destas colunas. Reproduzir o schema legado
+  // antes de criá-la evita alterar tipos usados por uma view já instalada.
+  if (name.endsWith('_recomendacoes_alunos.sql') &&
+      process.env.TEST_LEGACY_ENUMS && !process.env.LEGACY_SCHEMA_SQL) await db.exec(`
+    CREATE TYPE public.tipo_usuario AS ENUM ('Aluno','Comunidade');
+    CREATE TYPE public.tipomovimentacao AS ENUM ('EMPRESTIMO','RESERVA','SOLICITACAO');
+    ALTER TABLE "Usuario" ALTER COLUMN "usuTipo" TYPE tipo_usuario USING "usuTipo"::tipo_usuario;
+    ALTER TABLE "Movimentacao" ALTER COLUMN "movTipo" TYPE tipomovimentacao USING "movTipo"::tipomovimentacao;`);
   try { await db.exec(readFileSync(`supabase/migrations/${name}`, 'utf8')); }
   catch (error) { console.error(`Migration ${name}: ${error.message}`); console.error({position:error.position, internalPosition:error.internalPosition, internalQuery:error.internalQuery, where:error.where}); process.exit(1); }
 }
 const query = async (sql, args = []) => (await db.query(sql, args)).rows;
 const scalar = async (sql, args = []) => Object.values((await query(sql, args))[0])[0];
 const rejected = async (sql, args=[]) => { await assert.rejects(() => db.query(sql,args)); };
-// Instalações antigas usam enums; bancos novos usam text no baseline.
-// Executar os mesmos fluxos nos dois perfis detecta coerções incompatíveis.
-if (process.env.TEST_LEGACY_ENUMS && !process.env.LEGACY_SCHEMA_SQL) await db.exec(`
- CREATE TYPE public.tipo_usuario AS ENUM ('Aluno','Comunidade');
- CREATE TYPE public.tipomovimentacao AS ENUM ('EMPRESTIMO','RESERVA','SOLICITACAO');
- ALTER TABLE "Usuario" ALTER COLUMN "usuTipo" TYPE tipo_usuario USING "usuTipo"::tipo_usuario;
- ALTER TABLE "Movimentacao" ALTER COLUMN "movTipo" TYPE tipomovimentacao USING "movTipo"::tipomovimentacao;`);
 await db.exec(`INSERT INTO "Administrador" ("admNome","admEmail","admSenha","admStatus") VALUES ('Gestor','gestor@example.com','hash',true);
 INSERT INTO "Administrador" ("admNome","admEmail","admSenha","admProfessor","admStatus") VALUES ('Professor','prof@example.com','hash',true,true);
 INSERT INTO "Usuario" ("usuNome","usuEmail","usuSenha","usuTipo","usuSerie","usuTurma","usuTelefone","usuEndereco","usuStatus") VALUES ('Aluno','aluno@example.com','hash','Aluno','6º Ano','A','','',true);
