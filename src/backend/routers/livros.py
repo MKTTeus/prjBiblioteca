@@ -1,14 +1,19 @@
 from concurrent.futures import ThreadPoolExecutor
+import json
+import logging
+from time import monotonic
 
 from core import consultar_completo, consultar_lote
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from database import supabase
+from diagnostics import resumir_excecao
 from core import get_admin, executar_em_paralelo, buscar_todos
 from rpc import executar_rpc
 from schemas import Livro, LivroCreate, ExemplarUpdate, LivroStatusUpdate
 
 router = APIRouter()
+logger = logging.getLogger("biblioteca.catalogo")
 
 TAMANHO_LOTE_SUPABASE = 100
 
@@ -254,6 +259,7 @@ def adicionar_exemplares(idLivro: int, quantidade: int = Query(ge=1,le=500), pre
 
 @router.get("/livros")
 def listar_livros(
+    request: Request,
     q: str | None = None,
     categoria: str | None = "todas",
     status: str | None = "todos",
@@ -261,11 +267,13 @@ def listar_livros(
     per_page: int = Query(10000, ge=1, le=10000),
     incluir_inativos: bool = False
 ):
-    return _listar_livros(q, categoria, status, page, per_page, incluir_inativos)
+    return _listar_livros(q, categoria, status, page, per_page, incluir_inativos,
+                          request_id=getattr(request.state, "request_id", None))
 
 
 @router.get("/livros/gestao")
 def listar_livros_gestao(
+    request: Request,
     q: str | None = None,
     categoria: str | None = "todas",
     status: str | None = "todos",
@@ -273,7 +281,8 @@ def listar_livros_gestao(
     per_page: int = Query(10000, ge=1, le=10000),
     admin=Depends(get_admin)
 ):
-    return _listar_livros(q, categoria, status, page, per_page, True, True)
+    return _listar_livros(q, categoria, status, page, per_page, True, True,
+                          request_id=getattr(request.state, "request_id", None))
 
 
 def _listar_livros(
@@ -283,8 +292,12 @@ def _listar_livros(
     page: int = 1,
     per_page: int = 10000,
     incluir_inativos: bool = False,
-    incluir_sem_exemplares: bool = False
+    incluir_sem_exemplares: bool = False,
+    *,
+    request_id: str | None = None,
 ):
+    inicio = monotonic()
+    etapa = "filtros"
     try:
         allowed_ids = None
 
@@ -344,6 +357,7 @@ def _listar_livros(
         if isinstance(allowed_ids, set) and len(allowed_ids) == 0:
             return []
 
+        etapa = "livros"
         def criar_consulta_livros(*, contar=False):
             q = supabase.table("Livro").select("*", count="exact") if contar else supabase.table("Livro").select("*")
             if not incluir_inativos:
@@ -381,6 +395,7 @@ def _listar_livros(
                     livros.extend(lote)
                     if len(lote)<tamanho_lote: break
 
+        etapa = "exemplares"
         livro_ids = [l["idLivro"] for l in livros]
         exemplares = []
         if livro_ids:
@@ -389,6 +404,7 @@ def _listar_livros(
                 livro_ids, "idExemplar",
             )
 
+        etapa = "contagem_exemplares"
         mapa_ex = {}
         cadastrados = {}
         desativados = {}
@@ -415,10 +431,16 @@ def _listar_livros(
         ]
 
         # Enriquecer com autor, editora, categoria, gênero
+        etapa = "relacionamentos"
         return enriquecer_livros(livros_ativos)
 
     except Exception as e:
-        print("ERRO listar_livros:", 'falha de operação')
+        logger.error("catalog_error %s", json.dumps({
+            "request_id": request_id,
+            "etapa": etapa,
+            "duracao_ms": int((monotonic() - inicio) * 1000),
+            "causas": resumir_excecao(e),
+        }))
         raise HTTPException(status_code=500, detail="Erro ao listar livros")
 
 
