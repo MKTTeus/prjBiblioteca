@@ -191,9 +191,11 @@ def validar_cpf(cpf: Optional[str]) -> bool:
 
 
 def create_token(data: dict, token_version: int = 1) -> str:
-    minutes = max(1, min(1440, get_session_timeout_minutes()))
+    # São leituras independentes: ambas terminam antes de emitir o JWT.
+    minutes, epoch = executar_em_paralelo(get_session_timeout_minutes, get_session_epoch)
+    minutes = max(1, min(1440, minutes))
     expire = utc_now() + timedelta(minutes=minutes)
-    data = {**data, "exp": expire, "tv": token_version, "epoch": get_session_epoch()}
+    data = {**data, "exp": expire, "tv": token_version, "epoch": epoch}
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 

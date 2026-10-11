@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from database import supabase
-from core import get_optional_user, utc_now, business_today
+from core import get_optional_user, business_today, executar_em_paralelo
 
 router = APIRouter()
 
@@ -35,24 +35,19 @@ def dashboard_stats(user=Depends(get_optional_user)):
     """Retorna os indicadores do painel com contagens executadas no banco."""
     try:
         hoje = business_today().isoformat()
-        return {
-            "totalLivros": _contar(
-                supabase.table("Livro").select("*", count="exact", head=True).eq("livAtivo", True)
-            ),
-            "totalUsuarios": _contar(
-                supabase.table("Usuario").select("*", count="exact", head=True).eq("usuExcluido", False)
-            ),
-            "emprestimosAtivos": _contar(
-                supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Ativo")
-            ),
-            "devolucoesPendentes": _contar(
-                supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Pendente")
-            ),
-            "reservados": _contar(
-                supabase.table("Exemplar").select("*", count="exact", head=True).eq("exeLivStatus", "Reservado")
-            ),
-            "atrasados": _contar_itens_ativos(hoje, atrasados=True),
-            "devolucoesHoje": _contar_itens_ativos(hoje, atrasados=False),
-        }
+        chaves = (
+            "totalLivros", "totalUsuarios", "emprestimosAtivos",
+            "devolucoesPendentes", "reservados", "atrasados", "devolucoesHoje",
+        )
+        valores = executar_em_paralelo(
+            lambda: _contar(supabase.table("Livro").select("*", count="exact", head=True).eq("livAtivo", True)),
+            lambda: _contar(supabase.table("Usuario").select("*", count="exact", head=True).eq("usuExcluido", False)),
+            lambda: _contar(supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Ativo")),
+            lambda: _contar(supabase.table("Movimentacao").select("*", count="exact", head=True).eq("movStatus", "Pendente")),
+            lambda: _contar(supabase.table("Exemplar").select("*", count="exact", head=True).eq("exeLivStatus", "Reservado")),
+            lambda: _contar_itens_ativos(hoje, atrasados=True),
+            lambda: _contar_itens_ativos(hoje, atrasados=False),
+        )
+        return dict(zip(chaves, valores))
     except Exception as e:
         raise HTTPException(503,'Serviço temporariamente indisponível') from e

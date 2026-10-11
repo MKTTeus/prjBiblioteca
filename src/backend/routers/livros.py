@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from core import consultar_completo, consultar_lote
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -23,9 +25,8 @@ def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro") -
     que isso — por isso cada lote de IDs também precisa ser paginado com
     .range() até esgotar as linhas, e não apenas executado uma vez.
     """
-    registros = []
-    for inicio in range(0, len(ids), TAMANHO_LOTE_SUPABASE):
-        lote = ids[inicio:inicio + TAMANHO_LOTE_SUPABASE]
+    def buscar_lote(lote):
+        registros = []
         offset = 0
         while True:
             query=criar_consulta(lote)
@@ -36,7 +37,15 @@ def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro") -
             if len(pagina) < TAMANHO_LOTE_SUPABASE:
                 break
             offset += TAMANHO_LOTE_SUPABASE
-    return registros
+        return registros
+
+    lotes = [ids[inicio:inicio + TAMANHO_LOTE_SUPABASE]
+             for inicio in range(0, len(ids), TAMANHO_LOTE_SUPABASE)]
+    if len(lotes) <= 1:
+        return buscar_lote(lotes[0]) if lotes else []
+    # Cada lote tem filtros e paginação próprios; map preserva a ordem.
+    with ThreadPoolExecutor(max_workers=min(4, len(lotes))) as executor:
+        return [registro for lote in executor.map(buscar_lote, lotes) for registro in lote]
 
 
 # ── Helpers de JOIN ───────────────────────────────────────────────
@@ -334,8 +343,8 @@ def _listar_livros(
         if isinstance(allowed_ids, set) and len(allowed_ids) == 0:
             return []
 
-        def criar_consulta_livros():
-            q = supabase.table("Livro").select("*")
+        def criar_consulta_livros(*, contar=False):
+            q = supabase.table("Livro").select("*", count="exact") if contar else supabase.table("Livro").select("*")
             if not incluir_inativos:
                 q = q.eq("livAtivo", True)
             if isinstance(allowed_ids, set):
@@ -350,11 +359,26 @@ def _listar_livros(
             livros=sorted(consultar_lote(consulta_lote,'Livro',sorted(allowed_ids)).data,key=lambda l:l['idLivro'])[start:start+per_page]
         else:
             livros=[]
-            while len(livros)<per_page:
-                inicio_lote=start+len(livros); tamanho_lote=min(TAMANHO_LOTE_SUPABASE,per_page-len(livros))
-                lote=criar_consulta_livros().range(inicio_lote,inicio_lote+tamanho_lote-1).execute().data or []
-                livros.extend(lote)
-                if len(lote)<tamanho_lote: break
+            tamanho_lote=min(TAMANHO_LOTE_SUPABASE,per_page)
+            primeira=criar_consulta_livros(contar=True).range(start,start+tamanho_lote-1).execute()
+            livros.extend(primeira.data or [])
+            total=getattr(primeira,"count",None)
+            if total is not None:
+                fim=min(start+per_page,int(total))
+                intervalos=[(i,min(i+TAMANHO_LOTE_SUPABASE,fim)-1)
+                            for i in range(start+len(livros),fim,TAMANHO_LOTE_SUPABASE)]
+                if intervalos:
+                    with ThreadPoolExecutor(max_workers=min(4,len(intervalos))) as executor:
+                        paginas=executor.map(lambda limites: criar_consulta_livros().range(*limites).execute().data or [],intervalos)
+                        for pagina in paginas: livros.extend(pagina)
+            elif len(livros)==tamanho_lote:
+                # Compatibilidade com clientes de teste que não informam count.
+                while len(livros)<per_page:
+                    inicio_lote=start+len(livros)
+                    tamanho_lote=min(TAMANHO_LOTE_SUPABASE,per_page-len(livros))
+                    lote=criar_consulta_livros().range(inicio_lote,inicio_lote+tamanho_lote-1).execute().data or []
+                    livros.extend(lote)
+                    if len(lote)<tamanho_lote: break
 
         livro_ids = [l["idLivro"] for l in livros]
         exemplares = []
