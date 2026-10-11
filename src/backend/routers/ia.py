@@ -2,9 +2,6 @@ import json
 import os
 
 from fastapi import APIRouter, Depends, HTTPException
-from google import genai
-from google.genai import types
-from google.genai.errors import APIError
 
 from core import get_admin
 from schemas import CompletarIARequest
@@ -114,7 +111,8 @@ COMPLETAR_LIVRO_SCHEMA = {
 }
 
 
-def _get_client() -> genai.Client:
+def _get_client():
+    from google import genai
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise HTTPException(
@@ -185,6 +183,8 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
 
 @router.post("/livros/completar-com-ia")
 def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
+    from google.genai import types
+    from google.genai.errors import APIError
     if not any([dados.isbn, dados.livTitulo, dados.livAutor]):
         raise HTTPException(
             status_code=400,

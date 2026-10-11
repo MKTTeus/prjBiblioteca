@@ -11,8 +11,6 @@ from urllib.parse import urlparse
 import httpx
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import Response
-from PIL import Image
-
 from core import get_admin
 from database import supabase
 
@@ -65,6 +63,7 @@ def _extensao_valida(nome_arquivo: str) -> str | None:
 
 
 def _comprimir_capa(conteudo: bytes, ext: str, content_type: str) -> tuple[bytes, str, str]:
+    from PIL import Image
     try:
         with warnings.catch_warnings():
             warnings.simplefilter('error',Image.DecompressionBombWarning)

@@ -5,8 +5,6 @@ import os
 from typing import Optional, List
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from google import genai
-from google.genai import types
 from database import supabase
 from core import executar_em_paralelo, get_admin, utc_now
 from routers.livros import enriquecer_livros
@@ -15,7 +13,8 @@ from schemas import FichaCatalograficaUpdate
 router = APIRouter()
 
 MODEL = "gemini-2.5-flash"
-def _get_client() -> genai.Client:
+def _get_client():
+    from google import genai
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise HTTPException(
@@ -111,6 +110,7 @@ def sugerir_cdd_ia(livro_data: dict) -> str:
     return "000"
 
 def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
+    from google.genai import types
     client = _get_client()
     prompt = (
         "Você é um catalogador bibliográfico profissional de uma biblioteca escolar.\n"

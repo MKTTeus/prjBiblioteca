@@ -8,7 +8,6 @@ from core import get_admin, hash_password, normalize_email, parse_status, get_op
 from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 from routers.ano_letivo import get_ano_letivo_atual
 import io
-import openpyxl
 import csv
 from pydantic import BaseModel, Field
 from typing import Optional as Opt
@@ -91,6 +90,7 @@ def _parse_upload(contents: bytes, filename: str) -> list[dict]:
             for row in reader
         ]
     else:
+        import openpyxl
         wb = openpyxl.load_workbook(io.BytesIO(contents))
         ws = wb.active
         headers = [str(c.value).strip().lower() if c.value else "" for c in ws[1]]

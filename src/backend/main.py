@@ -81,11 +81,13 @@ def register_routes(prefix: str = "") -> None:
         app.include_router(router, prefix=prefix)
 
 
-# Local development keeps the original paths (/login, /livros, ...).
-# Vercel rewrites /api/* to api/index.py, so the same routes are also
-# exposed under /api/* for production deployments.
-register_routes()
-register_routes(prefix="/api")
+# Em produção, o rewrite preserva /api no caminho recebido pela função.
+# Registrar somente a árvore usada evita montar todas as rotas duas vezes
+# durante cada cold start. O desenvolvimento local mantém os caminhos atuais.
+if os.getenv("VERCEL"):
+    register_routes(prefix="/api")
+else:
+    register_routes()
 
 @app.get("/")
 def root():
@@ -97,7 +99,9 @@ def api_root():
     return {"status": "ok"}
 
 logger=logging.getLogger('biblioteca.api')
-_log_cache={'ate':0.0,'ativo':True}
+# Um cold start não precisa consultar Configuracoes antes de responder à
+# primeira requisição. Instâncias aquecidas sincronizam a opção após 60 s.
+_log_cache={'ate':time.monotonic()+60,'ativo':True}
 
 
 def _log_api_ativo():
