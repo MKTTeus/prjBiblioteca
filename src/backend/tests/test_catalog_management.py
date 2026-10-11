@@ -1,4 +1,7 @@
 from types import SimpleNamespace
+import json
+import logging
+import pytest
 import sys
 from pathlib import Path
 from fastapi import FastAPI
@@ -72,3 +75,50 @@ def test_adding_a_copy_makes_missing_title_visible_again(monkeypatch):
     assert 1 not in [book['idLivro'] for book in client.get('/livros').json()]
     tables['Exemplar'].append({'idExemplar': 5, 'idLivro': 1, 'exeLivStatus': 'Disponível'})
     assert 1 in [book['idLivro'] for book in client.get('/livros').json()]
+
+
+@pytest.mark.parametrize('failure,stage', [
+    ('Livro', 'livros'), ('Exemplar', 'exemplares'), ('relations', 'relacionamentos'),
+])
+def test_catalog_error_has_safe_diagnostics_and_preserves_response(monkeypatch, caplog, failure, stage):
+    app, tables = catalog(monkeypatch)
+    app.dependency_overrides[get_admin] = lambda: {'tipo': 'admin'}
+
+    @app.middleware('http')
+    async def request_id(request, call_next):
+        request.state.request_id = 'generated-request-id'
+        return await call_next(request)
+
+    secret = 'private-token-and-email@example.com'
+
+    def fail():
+        try:
+            raise ConnectionError('https://example.com/?token=' + secret)
+        except ConnectionError as cause:
+            raise RuntimeError(secret) from cause
+
+    def table(name):
+        if name == failure:
+            fail()
+        return Query(tables[name])
+
+    monkeypatch.setattr(livros, 'supabase', SimpleNamespace(table=table))
+    if failure == 'relations':
+        monkeypatch.setattr(livros, 'enriquecer_livros', lambda rows: fail())
+
+    with caplog.at_level(logging.ERROR, logger='biblioteca.catalogo'):
+        response = TestClient(app).get('/livros/gestao')
+
+    assert response.status_code == 500
+    assert response.json() == {'detail': 'Erro ao listar livros'}
+    record, = [r for r in caplog.records if r.name == 'biblioteca.catalogo']
+    assert record.exc_info is None  # A mensagem bruta da exceção não pode vazar.
+    assert secret not in record.getMessage()
+    assert 'https://' not in record.getMessage()
+    diagnostic = json.loads(record.getMessage().removeprefix('catalog_error '))
+    assert diagnostic['request_id'] == 'generated-request-id'
+    assert diagnostic['etapa'] == stage
+    assert diagnostic['duracao_ms'] >= 0
+    assert [cause['tipo'] for cause in diagnostic['causas']] == ['RuntimeError', 'ConnectionError']
+    assert diagnostic['causas'][0]['frames'][-1]['funcao'] == 'fail'
+    assert diagnostic['causas'][0]['frames'][-1]['linha'] > 0
