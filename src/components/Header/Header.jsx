@@ -48,7 +48,9 @@ function Header() {
             <img
               src="/logo-novedejulho-fundo.png"
               alt="Logo Nove de Julho"
-              className="login-logo"
+              className="header-brand-logo"
+              width="48"
+              height="48"
             />
           </div>
           <h1 className="header-title">{nomeBiblioteca}</h1>

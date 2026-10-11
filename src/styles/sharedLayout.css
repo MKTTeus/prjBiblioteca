@@ -26,6 +26,20 @@ svg {
   max-width: 100%;
 }
 
+.route-loading {
+  min-height: 96px;
+  padding: 24px;
+}
+
+.route-loading::after {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-border);
+}
+
 .page-shell {
   width: 100%;
   max-width: var(--page-max-width);
