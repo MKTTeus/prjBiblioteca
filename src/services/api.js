@@ -666,3 +666,10 @@ export const devolverEmprestimoProfessor = (idMovimentacao, idExemplares) =>
   });
 
 export const getEmailStatus = () => apiFetch("/configuracoes/email-status");
+
+// Painel do aluno: o backend obtém a identidade exclusivamente da sessão.
+export const getRecomendacoes = () => apiFetch('/aluno/recomendacoes');
+export const getAvaliacoes = () => apiFetch('/aluno/avaliacoes');
+export const avaliarLivro = (idLivro, nota) => apiFetch(`/aluno/avaliacoes/${idLivro}`, {
+  method: 'PUT', body: JSON.stringify({ nota }),
+});

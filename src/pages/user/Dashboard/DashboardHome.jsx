@@ -13,6 +13,7 @@ import { resolverStatus } from "../../../utils/loanStatus";
 import { getBooks, getEmprestimos } from "../../../services/api";
 import "../UserArea.css";
 import "./DashboardHome.css";
+import Recomendacoes from "./Recomendacoes";
 
 const notificationTypeMap = {
   info: {
@@ -300,6 +301,7 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
           />
         ))}
       </section>
+      <Recomendacoes />
     </div>
   );
 }

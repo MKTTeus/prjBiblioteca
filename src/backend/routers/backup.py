@@ -44,10 +44,10 @@ BACKUP_SEGURANCA_RETENCAO_HORAS = _ler_horas_retencao_seguranca()
 # tabelas ou a estrutura do payload mudar de forma incompatível com
 # restaurações antigas — /backup/restaurar usa isso para recusar backups de
 # um formato mais novo do que o que este código sabe restaurar.
-BACKUP_VERSAO = 3
+BACKUP_VERSAO = 4
 TABELAS = ['Administrador','Usuario','Autor','Editora','Categoria','Genero','Livro','Exemplar',
     'LivroAutor','LivroCategoria','LivroGenero','Movimentacao','MovimentacaoExemplar','Configuracoes',
-    'FichaCatalografica','ResultadoAnoLetivo','TomboContador','EmailOutbox','RedefinicaoSenha']
+    'FichaCatalografica','ResultadoAnoLetivo','TomboContador','EmailOutbox','RedefinicaoSenha','AvaliacaoLivro']
 
 
 class BackupIncompletoError(Exception):
@@ -157,7 +157,7 @@ def _conteudo_backup_descompactado(conteudo: bytes, nome_arquivo: str) -> bytes:
 
 def _validar_backup(payload: dict) -> None:
     if not isinstance(payload,dict) or payload.get('versao_backup') != BACKUP_VERSAO:
-        raise ValueError('Formato incompatível: é obrigatório um backup completo na versão 3')
+        raise ValueError(f'Formato incompatível: é obrigatório um backup completo na versão {BACKUP_VERSAO}')
     arquivos=payload.get('arquivos')
     if not isinstance(arquivos,dict): raise ValueError('Seção de arquivos ausente')
     for arquivo in arquivos.values():

@@ -41,13 +41,13 @@ def test_password_policy_fails_closed(monkeypatch):
 def backup_payload():
     import hashlib,json
     dados={t:[] for t in backup.TABELAS}
-    return {'versao_backup':3,'dados':dados,'arquivos':{},'contagem_registros':{t:0 for t in dados},'hash_dados':hashlib.sha256(json.dumps(dados,ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest()}
+    return {'versao_backup':backup.BACKUP_VERSAO,'dados':dados,'arquivos':{},'contagem_registros':{t:0 for t in dados},'hash_dados':hashlib.sha256(json.dumps(dados,ensure_ascii=False,sort_keys=True,default=str).encode()).hexdigest()}
 
 def test_backup_rejects_partial_old_or_tampered_payload():
     p=backup_payload();backup._validar_backup(p)
     p['dados']['Usuario'].append({'idUsuario':1})
     with pytest.raises(ValueError):backup._validar_backup(p)
-    p=backup_payload();p['versao_backup']=2
+    p=backup_payload();p['versao_backup']=3
     with pytest.raises(ValueError):backup._validar_backup(p)
     p=backup_payload();p['hash_dados']='0'*64
     with pytest.raises(ValueError):backup._validar_backup(p)
