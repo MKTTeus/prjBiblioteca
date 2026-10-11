@@ -76,7 +76,7 @@ def client(monkeypatch):
     return TestClient(app)
 
 
-@pytest.mark.parametrize('path', ['/aluno/recomendacoes', '/aluno/avaliacoes'])
+@pytest.mark.parametrize('path', ['/aluno/recomendacoes', '/aluno/avaliacoes', '/aluno/recomendacoes/painel'])
 def test_routes_require_student_and_auth(client, path):
     assert client.get(path).status_code == 401
     for tipo in ('Comunidade', 'admin'):
@@ -107,6 +107,20 @@ def test_recommendations_no_peer_data_and_limit(client, monkeypatch):
     assert client.get('/aluno/recomendacoes?limite=100', headers=headers).status_code == 422
 
 
+def test_panel_reuses_catalog_and_history_for_recommendations_and_ratings(client, monkeypatch):
+    calls = {'catalogo': 0, 'historico': 0}
+    livros = [book(1), book(2)]
+    historico = [history(7, 1, 5)]
+    def catalogo(): calls['catalogo'] += 1; return livros
+    def history_all(): calls['historico'] += 1; return historico
+    monkeypatch.setattr(api, 'carregar_catalogo', catalogo)
+    monkeypatch.setattr(api, 'carregar_historico', history_all)
+    response = client.get('/aluno/recomendacoes/painel', headers={'Authorization': 'Bearer Aluno'})
+    assert response.status_code == 200
+    assert response.json()['avaliacoes'][0]['idLivro'] == 1
+    assert calls == {'catalogo': 1, 'historico': 1}
+
+
 def test_provisional_password_is_rejected(client, monkeypatch):
     monkeypatch.setattr(core, '_authenticate', lambda _: {'id': 7, 'tipo': 'Aluno', 'senhaProvisoria': True})
     assert client.get('/aluno/recomendacoes', headers={'Authorization': 'Bearer Aluno'}).status_code == 403
@@ -127,17 +141,8 @@ def test_history_paginates_after_100_rows(monkeypatch):
 
 
 def test_catalog_counts_only_exact_available_status(monkeypatch):
-    rows = {'Livro': [book(1)], 'Exemplar': [
-        {'idLivro': 1, 'exeLivStatus': status} for status in
-        ['Disponível', 'Indisponível', 'Reservado', 'Emprestado', 'Desativado']]}
-    class Query:
-        def __init__(self, table): self.table = table
-        def select(self, *_): return self
-        def order(self, *_): return self
-        def range(self, start, end): self.start, self.end = start, end; return self
-        def execute(self): return SimpleNamespace(data=rows[self.table][self.start:self.end+1])
-    monkeypatch.setattr(repository, 'supabase', SimpleNamespace(table=Query))
-    monkeypatch.setattr(repository, 'enriquecer_livros', lambda books: books)
+    expected = book(1, disponiveis=1, exemplares_cadastrados=5, total_exemplares=4)
+    monkeypatch.setattr(repository, 'executar_rpc', lambda name, params: {'itens': [expected], 'total': 1})
     result = repository.carregar_catalogo()[0]
     assert result['disponiveis'] == 1
     assert result['exemplares_cadastrados'] == 5

@@ -285,6 +285,23 @@ def listar_livros_gestao(
                           request_id=getattr(request.state, "request_id", None))
 
 
+@router.get("/livros/catalogo")
+def listar_catalogo_paginado(
+    q: str | None = Query(None, max_length=120),
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=40),
+):
+    return executar_rpc('catalogo_livros', {
+        'p_busca': q, 'p_pagina': page, 'p_por_pagina': per_page,
+        'p_incluir_inativos': False, 'p_incluir_sem_exemplares': False,
+    })
+
+
+@router.get("/livros/resumo")
+def resumo_acervo():
+    return executar_rpc('resumo_acervo', {})
+
+
 def _listar_livros(
     q: str | None = None,
     categoria: str | None = "todas",

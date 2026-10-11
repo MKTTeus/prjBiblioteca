@@ -79,6 +79,16 @@ export const getBooks = (params = {}) => {
   return apiFetch(endpoint);
 };
 
+export const getBooksPage = (params = {}) => {
+  const query = new URLSearchParams();
+  if (params.q) query.append("q", params.q);
+  query.append("page", String(params.page || 1));
+  query.append("per_page", String(params.per_page || 20));
+  return apiFetch(`/livros/catalogo?${query.toString()}`);
+};
+
+export const getResumoAcervo = () => apiFetch('/livros/resumo');
+
 export const getBook = (idLivro) =>
   apiFetch(`/livros/${idLivro}`);
 
@@ -670,6 +680,7 @@ export const getEmailStatus = () => apiFetch("/configuracoes/email-status");
 // Painel do aluno: o backend obtém a identidade exclusivamente da sessão.
 export const getRecomendacoes = () => apiFetch('/aluno/recomendacoes');
 export const getAvaliacoes = () => apiFetch('/aluno/avaliacoes');
+export const getPainelRecomendacoes = () => apiFetch('/aluno/recomendacoes/painel');
 export const avaliarLivro = (idLivro, nota) => apiFetch(`/aluno/avaliacoes/${idLivro}`, {
   method: 'PUT', body: JSON.stringify({ nota }),
 });

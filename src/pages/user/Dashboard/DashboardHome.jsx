@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { resolverStatus } from "../../../utils/loanStatus";
-import { getBooks, getEmprestimos } from "../../../services/api";
+import { getResumoAcervo, getEmprestimos } from "../../../services/api";
 import "../UserArea.css";
 import "./DashboardHome.css";
 import Recomendacoes from "./Recomendacoes";
@@ -89,11 +89,7 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        const [books, loans] = await Promise.all([getBooks(), getEmprestimos()]);
-
-        const availableBooks = Array.isArray(books)
-          ? books.reduce((acc, book) => acc + (Number(book.disponiveis ?? 0) > 0 ? 1 : 0), 0)
-          : 0;
+        const [resumo, loans] = await Promise.all([getResumoAcervo(), getEmprestimos()]);
 
         const loanItems = Array.isArray(loans) ? loans : [];
 
@@ -131,8 +127,8 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
         const unreadNotifications = allNotifications.filter(notification => !readNotifications.includes(notification.id));
 
         setStats({
-          totalLivros: Array.isArray(books) ? books.length : 0,
-          livrosDisponiveis: availableBooks,
+          totalLivros: Number(resumo?.totalLivros ?? 0),
+          livrosDisponiveis: Number(resumo?.livrosDisponiveis ?? 0),
           meusEmprestimos: emprestimosAtivos.length,
         });
         setLatestNotifications(unreadNotifications.slice(0, 5));

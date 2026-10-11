@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import BookCard from "../../../components/BookCard/BookCard";
 import Pagination from "../../../components/Pagination/Pagination";
-import usePagination from "../../../hooks/usePagination";
 import SearchBar from "../../../components/SearchBar/SearchBar";
 import { useToast } from "../../../contexts/ToastContext";
-import { getBooks, solicitarLivro, getEmprestimos } from "../../../services/api";
+import { getBooksPage, solicitarLivro, getEmprestimos } from "../../../services/api";
 import "../UserArea.css";
 import "./Biblioteca.css";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -18,10 +17,13 @@ export default function Biblioteca() {
   const [error, setError] = useState(null);
   const [solicitados, setSolicitados] = useState({});
   const [solicitando, setSolicitando] = useState({});
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalItens, setTotalItens] = useState(0);
   const { user } = useAuth();
   const isAluno = user?.tipo?.toLowerCase() === "aluno";
   const cooldownRef = useRef({});
-  const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(books);
+  const itensPorPagina = 20;
+  const totalPaginas = Math.max(1, Math.ceil(totalItens / itensPorPagina));
 
   // Carrega empréstimos pendentes/aprovados/ativos para pré-popular solicitados
   useEffect(() => {
@@ -87,10 +89,13 @@ export default function Biblioteca() {
     let ativo = true;
     async function fetchBooks() {
       try {
-        const params = {};
+        const params = { page: paginaAtual, per_page: itensPorPagina };
         if (search.trim()) params.q = search.trim();
-        const data = await getBooks(params);
-        if (ativo) setBooks(Array.isArray(data) ? data : []);
+        const data = await getBooksPage(params);
+        if (ativo) {
+          setBooks(Array.isArray(data?.itens) ? data.itens : []);
+          setTotalItens(Number(data?.total ?? 0));
+        }
       } catch (err) {
         if (!ativo) return;
         console.error("Erro ao buscar livros:", err);
@@ -104,7 +109,7 @@ export default function Biblioteca() {
     setError(null);
     const timer = setTimeout(fetchBooks, search.trim() ? 250 : 0);
     return () => { ativo = false; clearTimeout(timer); };
-  }, [search]);
+  }, [search, paginaAtual]);
 
   return (
     <div className="user-page user-library-page page-shell">
@@ -118,7 +123,7 @@ export default function Biblioteca() {
       <section className="user-section-card user-library-toolbar">
         <SearchBar
           value={search}
-          onChange={(value) => { setSearch(value); irParaPagina(1); }}
+          onChange={(value) => { setSearch(value); setPaginaAtual(1); }}
           placeholder="Buscar por livro, autor ou gênero..."
         />
       </section>
@@ -130,7 +135,7 @@ export default function Biblioteca() {
       ) : books.length > 0 ? (
         <section className="user-library-results">
           <div className="shared-book-grid">
-            {paginaItens.map((book, index) => {
+            {books.map((book, index) => {
               const id = book.idLivro ?? book.id;
               return (
                 <BookCard
@@ -146,7 +151,7 @@ export default function Biblioteca() {
               );
             })}
           </div>
-          <Pagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalItens={books.length} onChange={irParaPagina} />
+          <Pagination paginaAtual={paginaAtual} totalPaginas={totalPaginas} totalItens={totalItens} onChange={setPaginaAtual} />
         </section>
       ) : (
         <div className="user-empty-state">Nenhum livro encontrado para a busca informada.</div>

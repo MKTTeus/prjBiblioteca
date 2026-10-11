@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 from core import executar_em_paralelo, get_user
 from recommendations.engine import recomendar
-from recommendations.repository import carregar_catalogo, carregar_historico, livros_avaliaveis
+from recommendations.repository import carregar_catalogo, carregar_historico, livros_avaliaveis, montar_avaliacoes
 from rpc import executar_rpc
 
 router = APIRouter()
@@ -19,6 +19,18 @@ def get_aluno(user=Depends(get_user)):
 class Avaliacao(BaseModel):
     model_config = ConfigDict(extra='forbid')
     nota: Annotated[int, Field(strict=True, ge=1, le=5)]
+
+
+@router.get('/aluno/recomendacoes/painel')
+def painel_recomendacoes(response: Response, limite: int = Query(6, ge=1, le=12), aluno=Depends(get_aluno)):
+    response.headers['Cache-Control'] = 'private, no-store'
+    livros, historico = executar_em_paralelo(carregar_catalogo, carregar_historico)
+    return {
+        'itens': recomendar(livros, historico, aluno['id'], limite),
+        'avaliacoes': montar_avaliacoes(
+            [item for item in historico if item['idUsuario'] == aluno['id']], livros
+        ),
+    }
 
 
 @router.get('/aluno/recomendacoes')

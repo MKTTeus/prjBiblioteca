@@ -103,6 +103,20 @@ const renewal=await create(null,2,null,[{idLivro:2,quantidade:2}]);await move(re
 const renewalIds=(await query('SELECT "idExemplar" FROM "MovimentacaoExemplar" WHERE "idMovimentacao"=$1 ORDER BY "idExemplar"',[renewal.idMovimentacao])).map(i=>i.idExemplar);
 await scalar(`SELECT transicionar_movimentacao($1,'renovar',1,p_ids=>$2::int[],p_nova_data=>current_date+60)`,[renewal.idMovimentacao,renewalIds.slice(0,1)]);
 assert.equal(await scalar('SELECT sum(renovacoes) FROM "MovimentacaoExemplar" WHERE "idMovimentacao"=$1',[renewal.idMovimentacao]),1);
+// O catálogo público pagina e agrega no Postgres sem expor a RPC aos clientes.
+const catalogo=await scalar(`SELECT catalogo_livros(NULL,1,1,false,false)`);
+assert.equal(catalogo.total,2);
+assert.equal(catalogo.itens.length,1);
+assert.equal(typeof catalogo.itens[0].disponiveis,'number');
+assert.ok('livAutor' in catalogo.itens[0]);
+const buscaCatalogo=await scalar(`SELECT catalogo_livros('Livro A',1,20,false,false)`);
+assert.equal(buscaCatalogo.total,1);
+assert.equal(buscaCatalogo.itens[0].livTitulo,'Livro A');
+const resumoAcervo=await scalar('SELECT resumo_acervo()');
+assert.equal(resumoAcervo.totalLivros,2);
+assert.ok(resumoAcervo.livrosDisponiveis <= resumoAcervo.totalLivros);
+assert.equal(await scalar(`SELECT has_function_privilege('anon','public.catalogo_livros(text,integer,integer,boolean,boolean)','EXECUTE')`),false);
+assert.equal(await scalar(`SELECT has_function_privilege('authenticated','public.resumo_acervo()','EXECUTE')`),false);
 // Permissões Storage continuam negando segredos/escrita mesmo com policy antiga permissiva.
 assert.equal(await scalar(`SELECT public FROM storage.buckets WHERE id='backups'`),false);
 await db.exec(`INSERT INTO storage.objects(bucket_id) VALUES('backups'),('capas'); SET ROLE anon;`);

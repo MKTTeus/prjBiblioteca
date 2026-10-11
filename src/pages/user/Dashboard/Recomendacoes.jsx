@@ -4,7 +4,7 @@ import BookCard from '../../../components/BookCard/BookCard';
 import LoadingButton from '../../../components/LoadingButton/LoadingButton';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
-import { getRecomendacoes, getAvaliacoes, avaliarLivro, solicitarLivro } from '../../../services/api';
+import { getPainelRecomendacoes, avaliarLivro, solicitarLivro } from '../../../services/api';
 import { getErrorMessage } from '../../../utils/apiError';
 import './Recomendacoes.css';
 
@@ -94,12 +94,16 @@ function PainelRecomendacoes() {
     setLoading(true);
     setErro('');
     setErroAvaliacoes('');
-    const [recomendacoes, notas] = await Promise.allSettled([getRecomendacoes(), getAvaliacoes()]);
-    if (sequence.current !== request) return;
-    if (recomendacoes.status === 'fulfilled') setItens(recomendacoes.value.itens);
-    else setErro('Não foi possível carregar as sugestões.');
-    if (notas.status === 'fulfilled') setAvaliacoes(notas.value);
-    else setErroAvaliacoes('Não foi possível carregar suas avaliações.');
+    try {
+      const painel = await getPainelRecomendacoes();
+      if (sequence.current !== request) return;
+      setItens(painel.itens || []);
+      setAvaliacoes(painel.avaliacoes || []);
+    } catch {
+      if (sequence.current !== request) return;
+      setErro('Não foi possível carregar as sugestões.');
+      setErroAvaliacoes('Não foi possível carregar suas avaliações.');
+    }
     setLoading(false);
   }, []);
 

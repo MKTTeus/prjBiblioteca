@@ -1,26 +1,15 @@
-"""Leituras paginadas; não consulta nomes, emails ou senhas dos vizinhos."""
-from collections import Counter, defaultdict
-from core import buscar_todos, executar_em_paralelo
+"""Consultas agregadas; não consulta nomes, emails ou senhas dos vizinhos."""
+from core import buscar_todos
 from database import supabase
-from routers.livros import enriquecer_livros
+from rpc import executar_rpc
 
 
 def carregar_catalogo():
-    livros, exemplares = executar_em_paralelo(
-        lambda: buscar_todos(lambda: supabase.table('Livro').select(
-            '*,LivroCategoria(Categoria(catNome)),LivroGenero(Genero(genNome))').order('idLivro')),
-        lambda: buscar_todos(lambda: supabase.table('Exemplar').select(
-            'idLivro,exeLivStatus').order('idExemplar')),
-    )
-    contagens = defaultdict(Counter)
-    for exemplar in exemplares:
-        contagens[exemplar['idLivro']][exemplar['exeLivStatus']] += 1
-    for livro in livros:
-        counts = contagens[livro['idLivro']]
-        livro.update(disponiveis=counts['Disponível'], emprestados=counts['Emprestado'],
-                     reservados=counts['Reservado'], exemplares_cadastrados=sum(counts.values()),
-                     total_exemplares=sum(n for s, n in counts.items() if s != 'Desativado'))
-    return enriquecer_livros(livros)
+    resultado = executar_rpc('catalogo_livros', {
+        'p_busca': None, 'p_pagina': 1, 'p_por_pagina': 10000,
+        'p_incluir_inativos': False, 'p_incluir_sem_exemplares': False,
+    }) or {}
+    return resultado.get('itens', [])
 
 
 def carregar_historico(usuario_id=None):
@@ -32,16 +21,19 @@ def carregar_historico(usuario_id=None):
     return buscar_todos(consulta)
 
 
-def livros_avaliaveis(usuario_id):
-    historico = carregar_historico(usuario_id)
+def montar_avaliacoes(historico, livros):
     devolvidos = [h for h in historico if h['devolvido']]
     if not devolvidos:
         return []
-    from core import consultar_lote
-    livros = consultar_lote(lambda ids: supabase.table('Livro').select(
-        'idLivro,livTitulo').in_('idLivro', ids), 'Livro', [h['idLivro'] for h in devolvidos]).data
     titulos = {b['idLivro']: b['livTitulo'] for b in livros}
     return [{'idLivro': h['idLivro'], 'livTitulo': titulos[h['idLivro']],
              'nota': h.get('nota'), 'devolvidoEm': h['devolvidoEm']} for h in sorted(
                  devolvidos, key=lambda h: (h['devolvidoEm'], h['idLivro']), reverse=True)
             if h['idLivro'] in titulos]
+
+
+def livros_avaliaveis(usuario_id):
+    historico = carregar_historico(usuario_id)
+    if not any(h['devolvido'] for h in historico):
+        return []
+    return montar_avaliacoes(historico, carregar_catalogo())
