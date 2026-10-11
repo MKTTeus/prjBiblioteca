@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Any
 
+import httpx
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -35,7 +36,22 @@ def _criar_cliente():
         logger.warning("SUPABASE_URL/SUPABASE_KEY ausentes; usando fallback local")
         return SupabaseNaoConfigurado()
     try:
-        return create_client(SUPABASE_URL, SUPABASE_KEY)
+        cliente = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # O HTTP/2 apresentou RemoteProtocolError nas leituras concorrentes
+        # da Vercel. Configure apenas a sessão REST, antes de qualquer uso;
+        # Auth, Storage e Functions conservam seus clientes e timeouts.
+        rest = cliente.postgrest
+        sessao_anterior = rest.session
+        rest.session = httpx.Client(
+            base_url=str(cliente.rest_url),
+            headers=rest.headers,
+            timeout=rest.timeout,
+            follow_redirects=True,
+            http2=False,
+            verify=True,
+        )
+        sessao_anterior.close()
+        return cliente
     except Exception:
         logger.exception("Falha ao inicializar o cliente Supabase; usando fallback local")
         return SupabaseNaoConfigurado()
