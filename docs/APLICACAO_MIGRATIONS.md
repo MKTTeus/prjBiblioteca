@@ -12,7 +12,7 @@ Após a aplicação, as contagens permaneceram: 334 livros, 1.960 exemplares, 2 
 
 O advisor não apontou erros de segurança. As informações de RLS sem policies são esperadas neste modelo de acesso exclusivo pelo backend. Permanece um aviso anterior sobre `pg_trgm` em `public`: [orientação do Supabase](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public). A extensão não foi movida nesta implantação.
 
-As migrations de recomendações (`20261011194555`) e otimização do catálogo (`20261011195541`) também constam do histórico remoto. Os nomes dos arquivos foram alinhados a essas versões sem reaplicar SQL. A migration `20261011223000_indices_fks.sql` está proposta nesta branch e ainda exige aplicação coordenada ao banco após validação. Consulte o registro de resolução da auditoria para o estado da CI e dos agendamentos.
+As migrations de recomendações (`20261011194555`) e otimização do catálogo (`20261011195541`) também constam do histórico remoto. Os nomes dos arquivos foram alinhados a essas versões sem reaplicar SQL. A migration `20261011223222_indices_fks.sql` foi aplicada ao Supabase e seus quatro índices foram conferidos no banco. Consulte o registro de resolução da auditoria para o estado da CI e dos agendamentos.
 
 ## Preparação e ensaio
 

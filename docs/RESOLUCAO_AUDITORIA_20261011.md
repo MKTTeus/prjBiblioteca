@@ -12,13 +12,13 @@ Branch: `fix/pendencias-auditoria-20261011`. Referência: auditoria da `main` em
 | Total de livros divergente | Corrigido na branch | O painel usa `resumo_acervo()` para `totalLivros`, igual ao catálogo público, incluindo somente títulos ativos com exemplar ativo. |
 | Seed local ausente | Corrigido na branch | `db.seed` desativado e lista de arquivos vazia. O projeto não inclui dados fictícios automáticos. |
 | Recomendações com leitura global | Acompanhar capacidade | Cada painel ainda consulta o catálogo e o histórico global. Com cerca de 334 títulos e uma movimentação, não há evidência de gargalo atual. Antes de ampliar a base, medir duração e volume das respostas e então limitar candidatos no SQL ou introduzir snapshot/cache com invalidação de avaliações e empréstimos. |
-| FKs sem índices | Preparado na branch | Nova migration com quatro índices: outbox→movimentação, movimentação→admin/professor e usuário→admin. Aplicar ao banco somente após validar a branch e registrar a versão no histórico. Índices antigos com uso baixo não foram removidos sem dados de carga. |
+| FKs sem índices | Aplicado ao banco e na branch | Migration com quatro índices: outbox→movimentação, movimentação→admin/professor e usuário→admin. Aplicada ao projeto Supabase com versão `20261011223222`; os quatro índices foram conferidos. Índices antigos com uso baixo não foram removidos sem dados de carga. |
 
 ## Passos operacionais restantes
 
 1. Confirmar a CI completa no último commit e revisar/mesclar o PR.
 2. Configurar no GitHub os secrets `CRON_API_URL` (origem HTTPS sem `/api`) e `CRON_SECRET` (mesmo valor do backend). Acionar manualmente `circulacao.yml` e verificar resposta 2xx e processamento de prazos/outbox.
-3. Aplicar `20261011223000_indices_fks.sql` pelo processo de migrations após validação e conferir que aparece no histórico remoto. Os nomes das duas migrations anteriores já foram reconciliados; não reaplicá-las.
+3. Conferir que `20261011223222_indices_fks.sql` está na branch e no histórico remoto. Não reaplicar as três migrations já registradas.
 4. Depois do deploy, conferir anon/gestor nos endpoints corrigidos e comparar `totalLivros` com `/livros/resumo`.
 
 A frequência efetiva do GitHub Actions pode variar; o agendador diário da Vercel também depende do deploy e de `CRON_SECRET` configurado no ambiente. Não considere a circulação de 30 minutos restabelecida até o teste manual do workflow passar.
