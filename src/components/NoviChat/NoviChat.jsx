@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { FiBookOpen, FiMessageCircle, FiSend, FiX } from "react-icons/fi";
 import { perguntarNovi } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 import NoviMessage from "./NoviMessage";
 import "./NoviChat.css";
 
@@ -21,16 +22,38 @@ const BOAS_VINDAS = {
 // Mensagens recentes enviadas como contexto (precisa acompanhar MAX_HISTORY do backend).
 const MAX_HISTORICO = 10;
 const MAX_TEXTO_HISTORICO = 1600;
+const STORAGE_KEY = "novi-conversa-v1";
 
 function caminhoSeguro(caminho) {
   return typeof caminho === "string" && /^\/admin(?:\/[a-z-]+)*$/.test(caminho);
 }
 
+function carregarConversa(email) {
+  if (!email) return [BOAS_VINDAS];
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || "null");
+    if (saved?.email !== email || !Array.isArray(saved?.mensagens)) return [BOAS_VINDAS];
+    const validas = saved.mensagens.slice(-MAX_HISTORICO).filter((item) =>
+      ["gestor", "novi"].includes(item?.papel) && typeof item.texto === "string" &&
+      item.texto.length > 0 && item.texto.length <= MAX_TEXTO_HISTORICO && !item.erro && item.contexto !== false
+    ).map((item) => ({
+      papel: item.papel,
+      texto: item.texto,
+      destino: caminhoSeguro(item.destino?.caminho) ? item.destino : null,
+    }));
+    return [BOAS_VINDAS, ...validas];
+  } catch {
+    return [BOAS_VINDAS];
+  }
+}
+
 export default function NoviChat() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const email = user?.email?.toLowerCase();
   const [aberto, setAberto] = useState(false);
   const [texto, setTexto] = useState("");
-  const [mensagens, setMensagens] = useState([BOAS_VINDAS]);
+  const [mensagens, setMensagens] = useState(() => carregarConversa(email));
   const [enviando, setEnviando] = useState(false);
   const launcherRef = useRef(null);
   const inputRef = useRef(null);
@@ -58,11 +81,21 @@ export default function NoviChat() {
 
   useEffect(() => () => pendingRef.current?.abort(), []);
 
+  useEffect(() => {
+    if (!email) return;
+    try {
+      const turnos = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro && item.contexto !== false)
+        .slice(-MAX_HISTORICO);
+      if (enviando && turnos.at(-1)?.papel === "gestor") turnos.pop();
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ email, mensagens: turnos }));
+    } catch { /* Armazenamento indisponível: o chat segue funcionando em memória. */ }
+  }, [email, mensagens, enviando]);
+
   async function enviar(pergunta = texto) {
     const mensagem = pergunta.trim();
     if (!mensagem || enviando) return;
     // Boas-vindas e avisos de erro não fazem parte da conversa: só trocas reais servem de contexto.
-    const historico = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro).slice(-MAX_HISTORICO)
+    const historico = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro && item.contexto !== false).slice(-MAX_HISTORICO)
       .map((item) => ({ papel: item.papel, texto: item.texto.slice(0, MAX_TEXTO_HISTORICO) }));
     setMensagens((atuais) => [...atuais, { papel: "gestor", texto: mensagem }]);
     setTexto("");
@@ -72,13 +105,20 @@ export default function NoviChat() {
     try {
       const resposta = await perguntarNovi(mensagem, historico, controller.signal);
       if (pendingRef.current !== controller) return;
+      if (resposta.contexto === false) {
+        setMensagens((atuais) => atuais.map((item, index) =>
+          index === atuais.length - 1 && item.papel === "gestor" ? { ...item, contexto: false } : item));
+      }
       setMensagens((atuais) => [...atuais, {
         papel: "novi",
         texto: resposta.resposta,
+        contexto: resposta.contexto,
         destino: caminhoSeguro(resposta.destino?.caminho) ? resposta.destino : null,
       }]);
     } catch (error) {
       if (pendingRef.current === controller && error.name !== "AbortError") {
+        setMensagens((atuais) => atuais.map((item, index) =>
+          index === atuais.length - 1 && item.papel === "gestor" ? { ...item, erro: true } : item));
         setMensagens((atuais) => [...atuais, {
           papel: "novi",
           erro: true,

@@ -12,6 +12,8 @@ Este guia descreve as telas do gestor nesta versão. A Novi explica o procedimen
 
 O botão de salvar está no fim da janela **Novo Livro**. O cadastro de autor e gênero pode ser resolvido no mesmo fluxo; evite criar duplicatas. A ficha catalográfica é uma função separada, acessível na gestão do título depois do cadastro. A Novi nunca cadastra por conta própria.
 
+O recurso **Completar com IA** recebe os dados bibliográficos já informados, como ISBN, título e autor, e sugere campos adicionais; é preciso informar ao menos um desses três para usá-lo. As sugestões são geradas por um modelo de IA, que pode deixar campos factuais incertos em branco. Confira título, autor, edição e demais dados na própria obra antes de salvar. O recurso não consulta automaticamente uma base bibliográfica externa nem salva o livro por conta própria.
+
 ## Aprovar solicitação e registrar retirada: passo a passo
 
 1. Abra **Empréstimos → Solicitações** e localize a solicitação na fila.

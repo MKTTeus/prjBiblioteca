@@ -4,11 +4,12 @@ import NoviChat from "./NoviChat";
 import { perguntarNovi } from "../../services/api";
 
 jest.mock("../../services/api", () => ({ perguntarNovi: jest.fn() }));
+jest.mock("../../contexts/AuthContext", () => ({ useAuth: () => ({ user: { email: "gestor@escola.test" } }) }));
 const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
 
 beforeAll(() => { Element.prototype.scrollIntoView = jest.fn(); });
-afterEach(() => jest.clearAllMocks());
+afterEach(() => { jest.clearAllMocks(); sessionStorage.clear(); });
 
 test("abre o chat, envia a pergunta e navega pelo destino permitido", async () => {
   perguntarNovi.mockResolvedValue({
@@ -88,8 +89,46 @@ test("envia as respostas da Novi como contexto da pergunta seguinte e ignora avi
     [
       { papel: "gestor", texto: "Quantos livros de Harry Potter?" },
       { papel: "novi", texto: "Encontrei **7 títulos** com Harry Potter." },
-      { papel: "gestor", texto: "E o segundo?" },
     ],
     expect.any(AbortSignal),
   );
+});
+
+test("retoma a conversa após remontagem e limpa o contexto quando solicitado", async () => {
+  perguntarNovi.mockResolvedValueOnce({ resposta: "Abra Cadastro de Livros." })
+    .mockResolvedValueOnce({ resposta: "Use Novo Livro." });
+  const first = render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Como cadastrar um livro?" }));
+  expect(await screen.findByText("Abra Cadastro de Livros.")).toBeInTheDocument();
+  first.unmount();
+
+  render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  expect(screen.getByText("Abra Cadastro de Livros.")).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Digite sua pergunta para a Novi"), { target: { value: "E depois?" } });
+  fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+  expect(perguntarNovi).toHaveBeenLastCalledWith("E depois?", [
+    { papel: "gestor", texto: "Como cadastrar um livro?" },
+    { papel: "novi", texto: "Abra Cadastro de Livros." },
+  ], expect.any(AbortSignal));
+  expect(await screen.findByText("Use Novo Livro.")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
+  expect(JSON.parse(sessionStorage.getItem("novi-conversa-v1")).mensagens).toEqual([]);
+});
+
+test("não guarda nem reenvia uma pergunta recusada por privacidade", async () => {
+  perguntarNovi.mockResolvedValueOnce({ resposta: "Retire os dados pessoais da pergunta.", contexto: false })
+    .mockResolvedValueOnce({ resposta: "Posso orientar sobre o procedimento." });
+  render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  const campo = screen.getByLabelText("Digite sua pergunta para a Novi");
+  fireEvent.change(campo, { target: { value: "CPF 123.456.789-09" } });
+  fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+  expect(await screen.findByText("Retire os dados pessoais da pergunta.")).toBeInTheDocument();
+  expect(JSON.parse(sessionStorage.getItem("novi-conversa-v1")).mensagens).toEqual([]);
+  fireEvent.change(campo, { target: { value: "Como é o procedimento?" } });
+  fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+  expect(await screen.findByText("Posso orientar sobre o procedimento.")).toBeInTheDocument();
+  expect(perguntarNovi).toHaveBeenLastCalledWith("Como é o procedimento?", [], expect.any(AbortSignal));
 });

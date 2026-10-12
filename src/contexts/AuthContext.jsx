@@ -47,6 +47,7 @@ export function AuthProvider({ children }) {
 
   const doLogout = useCallback(() => {
     setUser(null);
+    sessionStorage.removeItem("novi-conversa-v1");
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     localStorage.removeItem("tipo");
