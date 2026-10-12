@@ -36,11 +36,11 @@
   "rewrites": [
     {
       "source": "/api",
-      "destination": "/api/index.py"
+      "destination": "/api/index.py?__vercel_path="
     },
     {
       "source": "/api/:path*",
-      "destination": "/api/index.py"
+      "destination": "/api/index.py?__vercel_path=:path*"
     },
     {
       "source": "/(.*)",
