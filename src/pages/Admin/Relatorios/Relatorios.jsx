@@ -5,11 +5,13 @@ import "./Relatorios.css";
 import RelatorioEmprestimos from "./RelatorioEmprestimos";
 import RelatorioAtrasos from "./RelatorioAtrasos";
 import RelatorioAcervo from "./RelatorioAcervo";
+import RelatorioGestao from "./RelatorioGestao";
 
 const ABAS = [
   { valor: "emprestimos", label: "Empréstimos", icon: <FiBookOpen />, Componente: RelatorioEmprestimos },
   { valor: "atrasos", label: "Usuários em Atraso", icon: <FiAlertTriangle />, Componente: RelatorioAtrasos },
-  { valor: "acervo", label: "Acervo por Gênero/Autor/Editora", icon: <FiGrid />, Componente: RelatorioAcervo },
+  { valor: "acervo", label: "Acervo por Grupo", icon: <FiGrid />, Componente: RelatorioAcervo },
+  { valor: "gestao", label: "Consultas e Controle", icon: <FiGrid />, Componente: RelatorioGestao },
 ];
 
 export default function Relatorios() {
@@ -22,7 +24,7 @@ export default function Relatorios() {
       <div className="rel-header">
         <div>
           <h1>Relatórios</h1>
-          <p>Acompanhe empréstimos, atrasos e o acervo da biblioteca.</p>
+          <p>Controle leitores, professores, acervo e circulação. Consulte históricos, rankings e inventário e exporte os resultados.</p>
         </div>
       </div>
 

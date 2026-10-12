@@ -87,6 +87,58 @@
   letter-spacing: 0.04em;
 }
 
+.rel-filtro-campo > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rel-consultas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.rel-consulta-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--surface-bg);
+  color: var(--text-default);
+  cursor: pointer;
+}
+.rel-consulta-card span { color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+.rel-consulta-card strong { font-size: 15px; }
+.rel-consulta-card small { color: var(--text-muted); line-height: 1.5; }
+.rel-consulta-card-active { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.rel-consulta-card:hover { border-color: var(--primary); }
+.rel-atalhos, .rel-paginacao { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rel-atalhos button, .rel-paginacao button {
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  color: var(--text-default);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+.rel-atalhos button:disabled, .rel-paginacao button:disabled { opacity: .5; cursor: not-allowed; }
+.rel-paginacao { margin-top: 16px; }
+.rel-paginacao span { flex: 1; color: var(--text-muted); font-size: 13px; }
+.rel-resumo { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+.rel-resumo > div { min-width: 120px; flex: 1; border: 1px solid var(--surface-border); border-radius: 12px; padding: 18px; background: var(--surface-bg); }
+.rel-resumo strong, .rel-resumo span { display: block; }
+.rel-resumo strong { font-size: 26px; color: var(--primary); }
+.rel-resumo span, .rel-nota, .rel-notas { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.rel-notas { border-left: 3px solid var(--primary); padding-left: 14px; }
+.rel-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.rel-busca-aluno-lista button { border: 0; background: none; color: inherit; width: 100%; display: flex; justify-content: space-between; gap: 10px; text-align: left; padding: 0; font: inherit; cursor: pointer; }
+.rel-page button:focus-visible, .rel-page input:focus-visible, .rel-page select:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
 .rel-filtro-campo input,
 .rel-filtro-campo select {
   border: 1px solid var(--surface-border);

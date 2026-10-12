@@ -1,4 +1,4 @@
-from core import buscar_todos, datetime_utc, business_today
+from core import buscar_todos, datetime_utc, business_today, executar_em_paralelo
 from database import supabase
 
 def relacionados(tabela, coluna, ids, campos, ordem):
@@ -11,10 +11,15 @@ def relacionados(tabela, coluna, ids, campos, ordem):
 def montar_itens(movimentacoes):
     movs = {m['idMovimentacao']: m for m in movimentacoes}
     itens = relacionados('MovimentacaoExemplar', 'idMovimentacao', movs, '*', 'idExemplar')
-    exemplares = {e['idExemplar']: e for e in relacionados('Exemplar', 'idExemplar', [i['idExemplar'] for i in itens], 'idExemplar, idLivro, exeLivTombo', 'idExemplar')}
+    rows_exemplares, rows_usuarios, rows_professores = executar_em_paralelo(
+        lambda: relacionados('Exemplar', 'idExemplar', [i['idExemplar'] for i in itens], 'idExemplar, idLivro, exeLivTombo', 'idExemplar'),
+        lambda: relacionados('Usuario', 'idUsuario', [m['idUsuario'] for m in movimentacoes if m.get('idUsuario')], 'idUsuario, usuNome, usuTipo, usuSerie, usuTurma', 'idUsuario'),
+        lambda: relacionados('Administrador', 'idAdmin', [m['idAdminProfessor'] for m in movimentacoes if m.get('idAdminProfessor')], 'idAdmin, admNome', 'idAdmin'),
+    )
+    exemplares = {e['idExemplar']: e for e in rows_exemplares}
     livros = {l['idLivro']: l for l in relacionados('Livro', 'idLivro', [e['idLivro'] for e in exemplares.values()], 'idLivro, livTitulo, livISBN', 'idLivro')}
-    usuarios = {u['idUsuario']: u for u in relacionados('Usuario', 'idUsuario', [m['idUsuario'] for m in movimentacoes if m.get('idUsuario')], 'idUsuario, usuNome, usuTipo, usuSerie, usuTurma', 'idUsuario')}
-    professores = {a['idAdmin']: a for a in relacionados('Administrador', 'idAdmin', [m['idAdminProfessor'] for m in movimentacoes if m.get('idAdminProfessor')], 'idAdmin, admNome', 'idAdmin')}
+    usuarios = {u['idUsuario']: u for u in rows_usuarios}
+    professores = {a['idAdmin']: a for a in rows_professores}
     resultado = []; hoje = business_today()
     for it in itens:
         m = movs[it['idMovimentacao']]; ex = exemplares.get(it['idExemplar'], {}); livro = livros.get(ex.get('idLivro'), {})

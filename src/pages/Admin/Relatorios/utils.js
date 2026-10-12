@@ -8,6 +8,7 @@ export const STATUS_OPTIONS = [
 export const TIPO_USUARIO_OPTIONS = [
   { valor: "todos", label: "Todos" },
   { valor: "Aluno", label: "Alunos" },
+  { valor: "Professor", label: "Professores" },
   { valor: "Comunidade", label: "Comunidade" },
 ];
 
@@ -19,7 +20,7 @@ export const STATUS_LABEL = {
 
 export function formatarData(data) {
   if (!data) return "-";
-  const d = new Date(`${data}T00:00:00`);
+  const d = new Date(`${String(data).slice(0, 10)}T00:00:00`);
   if (Number.isNaN(d.getTime())) return "-";
   return d.toLocaleDateString("pt-BR");
 }
@@ -86,7 +87,7 @@ export const COLUNAS_EXPORT_ATRASOS = [
 // ── Ranking (agrupamentos: por aluno, turma, série ou livro) ──────
 export const AGRUPADOR_EMPRESTIMOS_OPTIONS = [
   { valor: "", label: "Nenhum (lista detalhada)" },
-  { valor: "usuario", label: "Por aluno — quem mais empresta" },
+  { valor: "usuario", label: "Por leitor — quem mais empresta" },
   { valor: "turma", label: "Por turma" },
   { valor: "serie", label: "Por série" },
   { valor: "livro", label: "Por livro — mais emprestados" },
@@ -94,7 +95,7 @@ export const AGRUPADOR_EMPRESTIMOS_OPTIONS = [
 
 export const AGRUPADOR_ATRASOS_OPTIONS = [
   { valor: "", label: "Nenhum (lista detalhada)" },
-  { valor: "usuario", label: "Por aluno — reincidentes" },
+  { valor: "usuario", label: "Por leitor — ocorrências" },
   { valor: "turma", label: "Por turma" },
 ];
 
@@ -138,15 +139,19 @@ export const COLUNAS_EXPORT_RANKING_ATRASOS = [
 
 // ── Relatório: Acervo por gênero/autor/editora ───────────
 export const AGRUPADOR_OPTIONS = [
+  { valor: "categoria", label: "Categoria" },
   { valor: "genero", label: "Gênero" },
   { valor: "autor", label: "Autor" },
   { valor: "editora", label: "Editora" },
+  { valor: "ano_publicacao", label: "Ano de publicação" },
 ];
 
 const LABEL_AGRUPADOR = {
+  categoria: "Categoria",
   genero: "Gênero",
   autor: "Autor",
   editora: "Editora",
+  ano_publicacao: "Ano de publicação",
 };
 
 export function linhasParaExportAcervo(itens) {
@@ -156,6 +161,9 @@ export function linhasParaExportAcervo(itens) {
     item.quantidadeExemplares,
     item.quantidadeDisponiveis,
     item.quantidadeEmprestados,
+    item.quantidadeReservados,
+    item.quantidadeIndisponiveis,
+    item.quantidadeDesativados,
   ]);
 }
 
@@ -166,5 +174,8 @@ export function colunasExportAcervo(agrupador) {
     "Exemplares (cópias)",
     "Disponíveis",
     "Emprestados",
+    "Reservados",
+    "Indisponíveis / tombos fixos",
+    "Desativados",
   ];
 }

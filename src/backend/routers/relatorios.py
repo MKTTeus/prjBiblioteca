@@ -1,7 +1,8 @@
 from core import consultar_completo, consultar_lote
-from typing import Optional
+from typing import Optional, Literal
+from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from database import supabase
 from core import datetime_utc, get_admin, executar_em_paralelo, utc_now, buscar_todos, business_today
@@ -12,19 +13,34 @@ router = APIRouter()
 MESES_LABEL = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
 
 
-def _buscar_itens_emprestimos(dataInicio=None,dataFim=None,tipoUsuario='todos',turma=None,serie=None,anoLetivo=None,idUsuario=None,status='todos'):
+def _validar_periodo(inicio, fim):
+    try:
+        if inicio: date.fromisoformat(str(inicio))
+        if fim: date.fromisoformat(str(fim))
+    except ValueError as e:
+        raise HTTPException(422, 'Informe datas válidas no formato AAAA-MM-DD.') from e
+    if inicio and fim and str(inicio) > str(fim):
+        raise HTTPException(422, 'A data inicial deve ser anterior ou igual à data final.')
+
+
+def _buscar_itens_emprestimos(dataInicio=None,dataFim=None,tipoUsuario='todos',turma=None,serie=None,anoLetivo=None,idUsuario=None,status='todos',idAdminProfessor=None,idLivro=None,q=None,finalidade=None):
     def consulta():
         q=supabase.table('Movimentacao').select('*').eq('movTipo','EMPRESTIMO').order('idMovimentacao')
         if dataInicio: q=q.gte('movDataEmprestimo',dataInicio)
         if dataFim: q=q.lte('movDataEmprestimo',dataFim)
         if idUsuario: q=q.eq('idUsuario',idUsuario)
+        if idAdminProfessor: q=q.eq('idAdminProfessor',idAdminProfessor)
         return q
     itens=montar_itens(buscar_todos(consulta))
     itens=[{**i,'tombo':i['codigo']} for i in itens if
+        i['status'] in ('ativo','atrasado','devolvido') and
         (not tipoUsuario or tipoUsuario=='todos' or i['usuarioTipo']==tipoUsuario) and
         (not turma or i['turma']==turma) and (not serie or i['serie']==serie) and
         (not anoLetivo or (i.get('movAnoLetivo') or str(i.get('dataEmprestimo',''))[:4]) in (anoLetivo,str(anoLetivo))) and
-        (not status or status=='todos' or i['status']==status)]
+        (not status or status=='todos' or i['status']==status) and
+        (not idLivro or i.get('idLivro')==idLivro) and
+        (not finalidade or i.get('movFinalidade')==finalidade) and
+        (not q or q.casefold() in ' '.join(str(i.get(k) or '') for k in ('usuario','titulo','codigo','isbn')).casefold())]
     return sorted(itens,key=lambda i:(i.get('dataEmprestimo') or '',i['idExemplar']),reverse=True)
 
 
@@ -39,13 +55,18 @@ def relatorio_emprestimos(
     anoLetivo: Optional[int] = None,       # filtra pelo ano de movDataEmprestimo
     idUsuario: Optional[int] = None,       # histórico de um aluno específico
     agrupador: Optional[str] = None,       # None | usuario | turma | serie | livro
+    idAdminProfessor: Optional[int] = None,
+    idLivro: Optional[int] = None,
+    q: Optional[str] = None,
+    finalidade: Optional[str] = None,
     admin=Depends(get_admin),
 ):
+    _validar_periodo(dataInicio, dataFim)
     try:
         itens = _buscar_itens_emprestimos(
             dataInicio=dataInicio, dataFim=dataFim, tipoUsuario=tipoUsuario,
             turma=turma, serie=serie, anoLetivo=anoLetivo, idUsuario=idUsuario,
-            status=status,
+            status=status, idAdminProfessor=idAdminProfessor, idLivro=idLivro, q=q, finalidade=finalidade,
         )
 
         resumo = {"ativos": 0, "atrasados": 0, "devolvidos": 0, "total": len(itens)}
@@ -89,6 +110,71 @@ def relatorio_emprestimos(
         return resultado
     except Exception as e:
         raise HTTPException(503,'Serviço temporariamente indisponível') from e
+
+
+@router.get('/relatorios/gestao/{tipo}')
+def relatorio_gestao(
+    tipo: Literal['livros','inventario','autores','cadastro','leitores','turmas','historico','devolucoes','renovacoes','solicitacoes'],
+    dataInicio: Optional[date] = None, dataFim: Optional[date] = None,
+    tipoUsuario: Literal['todos','Aluno','Professor','Comunidade'] = 'todos',
+    atividade: Literal['todos','ativos','inativos','formados'] = 'todos',
+    turma: Optional[str] = None, serie: Optional[str] = None, anoLetivo: Optional[int] = None,
+    idUsuario: Optional[int] = None, idAdminProfessor: Optional[int] = None,
+    finalidade: Optional[str] = None, q: str = '', status: str = '',
+    participacao: Literal['todos','com','sem'] = 'todos',
+    ordenarPor: str = '', ordem: Literal['asc','desc'] = 'desc',
+    pagina: int = Query(1, ge=1), tamanhoPagina: int = Query(50, ge=1, le=200),
+    exportar: bool = False, admin=Depends(get_admin),
+):
+    from report_data import montar_gestao, texto
+    _validar_periodo(dataInicio, dataFim)
+    campos = {
+        'livros': ('titulo','emprestimos','exemplares','ultimoEmprestimo'),
+        'inventario': ('titulo','tombo','status','localizacao','anoPublicacao'),
+        'autores': ('autor','titulos','exemplares','emprestimos'),
+        'cadastro': ('titulo','pendencias','exemplares'),
+        'leitores': ('usuario','emprestimos','ativos','atrasados','ultimoEmprestimo'),
+        'turmas': ('serie','turma','alunos','leitores','emprestimos'),
+        'historico': ('dataEmprestimo','usuario','titulo','tombo'),
+        'devolucoes': ('dataDevolucao','usuario','titulo','tombo'),
+        'renovacoes': ('renovacoes','dataEmprestimo','usuario','titulo'),
+        'solicitacoes': ('dataSolicitacao','usuario','titulo','situacao'),
+    }[tipo]
+    ordenarPor = ordenarPor or ('emprestimos' if 'emprestimos' in campos else campos[0])
+    if ordenarPor not in campos:
+        raise HTTPException(422, 'Ordenação inválida para este relatório.')
+    filtros = dict(dataInicio=str(dataInicio) if dataInicio else None, dataFim=str(dataFim) if dataFim else None,
+        tipoUsuario=tipoUsuario, atividade=atividade, turma=turma, serie=serie, anoLetivo=anoLetivo,
+        idUsuario=idUsuario, idAdminProfessor=idAdminProfessor, finalidade=finalidade)
+    try:
+        itens, notas = montar_gestao(tipo, filtros, _buscar_itens_emprestimos)
+        termos = texto(q).split()
+        if termos:
+            itens = [i for i in itens if all(t in texto(' '.join(str(v) for v in i.values() if v is not None)) for t in termos)]
+        if status:
+            itens = [i for i in itens if texto(i.get('status') or i.get('situacao')) == texto(status)]
+        if participacao != 'todos' and tipo in ('livros','leitores','autores','turmas'):
+            itens = [i for i in itens if bool(i.get('emprestimos')) == (participacao=='com')]
+        resumo = {'registros':len(itens)}
+        for campo in ('emprestimos','exemplares','ativos','atrasados','renovacoes'):
+            if tipo == 'autores' and campo in ('emprestimos','exemplares'):
+                continue  # Coautoria repete vínculos; não mostrar a soma como total físico.
+            if any(campo in i for i in itens): resumo[campo] = sum(i.get(campo) or 0 for i in itens)
+        # Desempate estável; valores ausentes sempre ficam no fim.
+        itens.sort(key=lambda i: texto(i.get('titulo') or i.get('usuario') or i.get('autor') or i.get('turma')))
+        presentes = [i for i in itens if i.get(ordenarPor) is not None]
+        ausentes = [i for i in itens if i.get(ordenarPor) is None]
+        presentes.sort(key=lambda i: i[ordenarPor] if isinstance(i[ordenarPor], (int,float)) else texto(i[ordenarPor]), reverse=ordem=='desc')
+        itens = presentes + ausentes
+        total = len(itens)
+        inicio = (pagina-1)*tamanhoPagina
+        return {'itens':itens if exportar else itens[inicio:inicio+tamanhoPagina],
+            'resumo':resumo, 'total':total, 'pagina':pagina, 'tamanhoPagina':tamanhoPagina,
+            'notas':notas, 'geradoEm':utc_now().isoformat()}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(503, 'Não foi possível consultar os relatórios. Tente novamente.') from e
 
 
 @router.get("/relatorios/emprestimos/mensal")
@@ -197,7 +283,9 @@ def relatorio_usuarios_busca(
             .limit(15)
             .execute()
         )
-        return {"itens": resp.data or []}
+        professores = supabase.table('Administrador').select('idAdmin,admNome').eq('admProfessor',True).ilike('admNome',f'%{termo}%').order('admNome').limit(15).execute()
+        itens = (resp.data or []) + [{'idAdminProfessor':p['idAdmin'],'usuNome':p['admNome'],'usuTipo':'Professor'} for p in professores.data or []]
+        return {"itens": sorted(itens,key=lambda i:i['usuNome'].casefold())[:20]}
     except Exception as e:
         raise HTTPException(503,'Serviço temporariamente indisponível') from e
 
@@ -311,6 +399,7 @@ def relatorio_acervo(
             "reservado": "reservados",
             "indisponível": "indisponiveis",
             "tombo fixo": "tomboFixo",
+            "desativado": "desativados",
         }
         exemplares_por_livro = {}
         status_por_livro = {}  # idLivro -> {"disponiveis": n, "emprestados": n, ...}
@@ -342,12 +431,12 @@ def relatorio_acervo(
                 bucket = agregados.setdefault(id_grupo, {
                     "nome": nome, "livros": set(), "exemplares": 0,
                     "disponiveis": 0, "emprestados": 0, "reservados": 0,
-                    "indisponiveis": 0, "tomboFixo": 0,
+                    "indisponiveis": 0, "tomboFixo": 0, "desativados": 0,
                 })
                 bucket["livros"].add(lid)
                 bucket["exemplares"] += exemplares_por_livro.get(lid, 0)
                 status_livro = status_por_livro.get(lid, {})
-                for chave in ("disponiveis", "emprestados", "reservados", "indisponiveis", "tomboFixo"):
+                for chave in ("disponiveis", "emprestados", "reservados", "indisponiveis", "tomboFixo", "desativados"):
                     bucket[chave] += status_livro.get(chave, 0)
 
         itens = [
@@ -360,6 +449,7 @@ def relatorio_acervo(
                 "quantidadeEmprestados": dados["emprestados"],
                 "quantidadeReservados": dados["reservados"],
                 "quantidadeIndisponiveis": dados["indisponiveis"] + dados["tomboFixo"],
+                "quantidadeDesativados": dados["desativados"],
                 "idLivros": sorted(dados["livros"]),
             }
             for id_grupo, dados in agregados.items()

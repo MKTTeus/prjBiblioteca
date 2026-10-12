@@ -6,7 +6,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/**/*.py": {
-      "includeFiles": "{docs/*.md,src/backend/routers/*.py,src/App.jsx}",
+      "includeFiles": "{docs/*.md,src/backend/routers/*.py,src/backend/report_data.py,src/App.jsx}",
       "excludeFiles": "{dist/**,node_modules/**,src/backend/tests/**,src/backend/init_sample_data.py,src/backend/data/**,**/__pycache__/**,**/*.pyc}"
     }
   },
