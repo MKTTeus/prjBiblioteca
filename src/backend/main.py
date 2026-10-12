@@ -29,6 +29,8 @@ from routers.relatorios import router as relatorios_router
 from routers.professor import router as professor_router
 from routers.recomendacoes import router as recomendacoes_router
 from routers.novi import router as novi_router
+from vercel_path import VercelRewritePathMiddleware
+
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -54,6 +56,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(VercelRewritePathMiddleware)
 
 ROUTERS = [
     auth_router,
