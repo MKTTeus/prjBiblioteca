@@ -46,6 +46,52 @@ def test_sources_are_versioned_and_navigation_is_allowlisted():
     assert all(path.startswith("/admin") for _, path in novi.ROUTES.values())
 
 
+def test_retrieval_keeps_full_procedure_and_finds_related_user_flow():
+    from novi_knowledge import doc_entries
+    sections = [entry for entry in doc_entries() if entry["secao"] == "Cadastrar um livro: passo a passo"]
+    assert len(sections) == 1
+    assert "Novo Livro" in sections[0]["texto"] and "Salvar Atualizações" in sections[0]["texto"]
+    assert any(entry["secao"] == "Empréstimo direto, devolução e renovação: passo a passo"
+               for entry in retrieve_docs("Como registrar um empréstimo manualmente?"))
+    assert any(entry["secao"] == "Alunos e comunidade"
+               for entry in retrieve_docs("Como orientar meu aluno a pedir um livro pelo login dele?"))
+
+
+def test_first_question_uses_own_words_when_planner_search_is_poor(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("orientar", topic="livros", search="termo sem relação"))
+    sources_seen = []
+    def generate(question, history, sources):
+        sources_seen.extend(sources)
+        return {"estado": "respondida", "resposta": "Abra Cadastro de Livros e clique em Novo Livro."}
+    monkeypatch.setattr(novi, "_generate", generate)
+    result = ask(api, "Como cadastrar um novo livro?")
+    assert result.status_code == 200
+    assert "Novo Livro" in result.json()["resposta"]
+    assert any("Novo Livro" in entry["texto"] for entry in sources_seen)
+
+
+def test_insufficient_sources_prompt_one_specific_followup(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("orientar", search="um termo inexistente"))
+    monkeypatch.setattr(novi, "retrieve_docs", lambda *args, **kwargs: [])
+    monkeypatch.setattr(novi, "_generate", lambda *args: {"estado": "sem_fonte", "resposta":
+        "Qual mensagem aparece quando você tenta salvar?"})
+    result = ask(api, "Não consigo concluir o procedimento")
+    assert result.status_code == 200
+    assert "Qual mensagem aparece" in result.json()["resposta"]
+    assert result.json()["fontes"] == []
+
+
+def test_no_sources_cannot_turn_a_model_guess_into_product_instructions(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("orientar", search="texto desconhecido"))
+    monkeypatch.setattr(novi, "retrieve_docs", lambda *args, **kwargs: [])
+    monkeypatch.setattr(novi, "_generate", lambda *args: {"estado": "respondida", "resposta":
+        "Use uma tela que não existe."})
+    assert "Use uma tela" not in ask(api, "Como faço isso?").json()["resposta"]
+
+
 def test_sensitive_and_third_party_requests_stay_out_of_provider(monkeypatch):
     api = client(monkeypatch)
     monkeypatch.setattr(novi, "_plan", lambda *args: (_ for _ in ()).throw(AssertionError("provider called")))
