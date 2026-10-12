@@ -8,6 +8,7 @@ Esta documentação descreve o código da `main` após o PR #16 (referência: `f
 | [Regras e fluxos](REGRAS_E_FLUXOS.md) | Equipe e desenvolvedores: circulação, perfis, catálogo, recomendações e fechamento letivo. |
 | [Guia de uso](GUIA_DE_USO.md) | Alunos, comunidade, professores e gestores: tarefas e dúvidas frequentes. Base inicial de conteúdo público do futuro chatbot. |
 | [Novi](NOVI.md) | Gestores e desenvolvedores: limites, fontes, configuração e validação do assistente. |
+| [Fluxos da Novi](NOVI_FLUXOS_GESTOR.md) | Gestores: passos conferidos nas telas para dúvidas de uso. |
 | [Migrations](APLICACAO_MIGRATIONS.md) | Implantação coordenada e histórico de migração. |
 | [Auditoria anterior](CORRECOES_AUDITORIA.md) e [resolução de 11/10](RESOLUCAO_AUDITORIA_20261011.md) | Registros históricos; não substituem o estado atual nem o guia de operação. |
 

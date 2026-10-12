@@ -14,7 +14,7 @@ const SUGESTOES = [
 
 const BOAS_VINDAS = {
   papel: "novi",
-  texto: "Oi! Eu sou a Novi 👋 Posso te explicar os fluxos da biblioteca e indicar a tela certa. Como posso ajudar?",
+  texto: "Oi! Eu sou a Novi 👋 Posso te explicar os fluxos da Sala de Leitura e indicar a tela certa. Como posso ajudar?",
 };
 
 function caminhoSeguro(caminho) {
@@ -98,7 +98,7 @@ export default function NoviChat() {
         <section className="novi-panel" role="dialog" aria-label="Conversa com Novi">
           <header className="novi-header">
             <span className="novi-avatar" aria-hidden="true"><FiBookOpen /></span>
-            <span className="novi-heading"><strong>Novi</strong><small>Assistente da biblioteca</small></span>
+            <span className="novi-heading"><strong>Novi</strong><small>Assistente da Sala de Leitura</small></span>
             {mensagens.length > 1 && <button type="button" className="novi-clear" onClick={() => {
               pendingRef.current?.abort();
               pendingRef.current = null;
