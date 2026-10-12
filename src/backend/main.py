@@ -83,10 +83,11 @@ def register_routes(prefix: str = "") -> None:
         app.include_router(router, prefix=prefix)
 
 
-# Em produção, o rewrite preserva /api no caminho recebido pela função.
-# Registrar somente a árvore usada evita montar todas as rotas duas vezes
-# durante cada cold start. O desenvolvimento local mantém os caminhos atuais.
+# A Vercel pode encaminhar à função compartilhada tanto o caminho original
+# (/api/...) quanto o caminho sem o prefixo (/...). Exponha ambos no deploy
+# para que os rewrites existentes não transformem POSTs em "Method Not Allowed".
 if os.getenv("VERCEL"):
+    register_routes()
     register_routes(prefix="/api")
 else:
     register_routes()
