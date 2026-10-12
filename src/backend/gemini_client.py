@@ -65,6 +65,9 @@ def _generate_groq(*, contents, config=None):
     if system:
         messages.append({"role": "system", "content": str(system)})
     user_content = contents if isinstance(contents, str) else json.dumps(contents, ensure_ascii=False)
+    schema = getattr(config, "response_json_schema", None) if config is not None else None
+    if schema:
+        user_content += "\\n\\nResponda conforme este schema JSON:\\n" + json.dumps(schema, ensure_ascii=False)
     messages.append({"role": "user", "content": user_content})
 
     request = {
@@ -126,7 +129,15 @@ def generate_content_with_fallback(
             return _generate_groq(contents=contents, config=config)
         except Exception as exc:
             _log_fallback("Groq", exc)
-            return _generate_gemini(client, model=model, contents=contents, config=config)
+            try:
+                return _generate_gemini(client, model=model, contents=contents, config=config)
+            except Exception as gemini_exc:
+                if getattr(gemini_exc, "code", None) != 429:
+                    raise
+                alternative = _fallback_for(model, fallback_model)
+                if alternative:
+                    return _generate_gemini(client, model=alternative, contents=contents, config=config)
+                raise
 
     primary_exc = None
     if primary_provider == "gemini" and client is None and groq_configured:
