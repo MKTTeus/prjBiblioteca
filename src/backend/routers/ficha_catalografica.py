@@ -13,16 +13,14 @@ from gemini_client import create_gemini_client, generate_content_with_fallback
 
 router = APIRouter()
 
-# Fluxo de catalogação frequente usa o modelo leve e reserva o Flash para 429.
+# O Groq atende primeiro a catalogação; Gemini é a reserva entre provedores.
 MODEL = os.getenv("GEMINI_CATALOG_MODEL", "gemini-3.5-flash-lite")
 FALLBACK_MODEL = os.getenv("GEMINI_CATALOG_FALLBACK_MODEL", "gemini-2.5-flash")
+PRIMARY_PROVIDER = os.getenv("CATALOG_AI_PRIMARY_PROVIDER", "groq").lower()
 
 def _get_client():
-    if not os.getenv("GEMINI_API_KEY"):
-        raise HTTPException(
-            status_code=500,
-            detail="GEMINI_API_KEY não configurada no servidor.",
-        )
+    if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
+        raise HTTPException(status_code=500, detail="Configure GEMINI_API_KEY ou GROQ_API_KEY no servidor.")
     return create_gemini_client()
 
 def int_to_roman(n: int) -> str:
@@ -105,6 +103,7 @@ def sugerir_cdd_ia(livro_data: dict) -> str:
             client,
             model=MODEL,
             fallback_model=FALLBACK_MODEL,
+            primary_provider=PRIMARY_PROVIDER,
             contents=prompt,
         )
         if resp.text:
@@ -134,6 +133,7 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
             client,
             model=MODEL,
             fallback_model=FALLBACK_MODEL,
+            primary_provider=PRIMARY_PROVIDER,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
