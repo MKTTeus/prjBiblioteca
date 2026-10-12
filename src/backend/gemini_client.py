@@ -128,11 +128,16 @@ def generate_content_with_fallback(
             _log_fallback("Groq", exc)
             return _generate_gemini(client, model=model, contents=contents, config=config)
 
+    primary_exc = None
+    if primary_provider == "gemini" and client is None and groq_configured:
+        primary_provider = "groq"
+
     try:
         return _generate_gemini(client, model=model, contents=contents, config=config)
-    except Exception as primary_exc:
-        if getattr(primary_exc, "code", None) != 429:
+    except Exception as exc:
+        if getattr(exc, "code", None) != 429:
             raise
+        primary_exc = exc
 
     if groq_configured:
         try:
@@ -143,4 +148,6 @@ def generate_content_with_fallback(
     alternative = _fallback_for(model, fallback_model)
     if alternative:
         return _generate_gemini(client, model=alternative, contents=contents, config=config)
-    raise primary_exc
+    if primary_exc is not None:
+        raise primary_exc
+    raise RuntimeError("Nenhum provedor de IA está configurado.")
