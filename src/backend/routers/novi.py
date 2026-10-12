@@ -169,7 +169,7 @@ def _explain_refusal(question: str, history: list[Turno]) -> str | None:
     if not EXPLANATION_REQUEST.fullmatch(question):
         return None
     previous_novi = next((turn.texto for turn in reversed(history) if turn.papel == "novi"), "")
-    if not re.search(r"\b(?:n[aã]o posso|n[aã]o vou|desculpe)\b", previous_novi, re.IGNORECASE):
+    if not re.search(r"\b(?:n[aã]o posso|n[aã]o vou|n[aã]o repito|desculpe)\b", previous_novi, re.IGNORECASE):
         return None
     previous_request = next((turn.texto for turn in reversed(history) if turn.papel == "gestor"
                              and not EXPLANATION_REQUEST.fullmatch(turn.texto.strip())), "")
