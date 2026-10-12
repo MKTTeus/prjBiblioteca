@@ -19,6 +19,14 @@ A tela `/admin/relatorios` mantém Empréstimos, Usuários em Atraso e Acervo po
 
 As consultas oferecem os filtros relevantes ao seu conteúdo: período, tipo de leitor, pessoa específica, série, turma, ano letivo, finalidade do empréstimo de professor, situação cadastral, participação e situação do exemplar. Busca, ordenação crescente/decrescente e limpeza de filtros complementam a consulta.
 
+### Navegação e apresentação
+
+Consultas e Controle organiza os relatórios em três grupos compactos: **Acervo**, **Leitores** e **Circulação**. O seletor mostra somente os relatórios do grupo escolhido e guarda a última escolha de cada grupo. O título e a descrição identificam o conteúdo antes da consulta.
+
+Busca, período e filtros frequentes de cada relatório ficam visíveis. **Filtros adicionais** expande os demais campos sem apagar os valores ao recolher, com uma indicação de quantos estão ativos. Os atalhos de participação indicam a opção selecionada. Uma ação principal aplica os filtros; limpar restaura a consulta inicial.
+
+Resultados têm uma faixa compacta de totais, contexto dos filtros aplicados e exportações próximas à tabela. As notas de contagem ficam em **Como interpretar este relatório**. A primeira coluna acompanha a rolagem horizontal, e a tabela pode receber foco para navegação por teclado. Em telas pequenas, os controles se reorganizam para a largura disponível.
+
 O relatório de Acervo por Grupo também permite categoria e ano de publicação e mostra reservados, indisponíveis/tombos fixos e desativados. Empréstimos e atrasos passam a incluir professores nos filtros, e o histórico individual aceita professores na busca. Alterar filtros bloqueia exportações até aplicar a consulta, preservando a correspondência entre dados e filtros.
 
 ## Como interpretar as contagens
