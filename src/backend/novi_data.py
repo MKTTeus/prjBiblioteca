@@ -16,6 +16,7 @@ MAX_TITULOS_AMOSTRA = 5    # títulos devolvidos numa amostra sem termo
 MAX_LINHAS_EXEMPLAR = 1000 # teto do PostgREST; ao atingi-lo a contagem não é confiável
 MAX_LINHAS_CATALOGO = 5000 # limite de segurança da busca sem acentos
 MAX_TOMBOS_POR_TITULO = 5
+MAX_NOMES_EQUIPE = 10
 
 
 def _contar(query) -> int:
@@ -99,9 +100,38 @@ def consultar(kind: str, admin: dict, term: str | None = None, filtro: str = "to
         scope = "ativos e não formados" if active else "cadastrados e não excluídos"
         return f"Há **{total} alunos {scope}** neste momento. Confira os filtros em Cadastro de Alunos para outros recortes.", "/admin/alunos"
 
+    if kind == "contar_comunidade":
+        total = _contar(supabase.table("Usuario").select("idUsuario", count="exact", head=True)
+                        .eq("usuTipo", "Comunidade").eq("usuExcluido", False))
+        return f"Há **{total} pessoas da comunidade cadastradas e não excluídas** neste momento.", "/admin/comunidade"
+
     if kind == "contar_professores":
         total = _contar(supabase.table("Administrador").select("idAdmin", count="exact", head=True).eq("admProfessor", True).eq("admStatus", True))
-        return f"Há **{total} professores ativos** cadastrados. Os nomes e dados das contas ficam na tela de Cadastro de Administradores.", "/admin/admins"
+        return f"Há **{total} professores ativos** cadastrados. Posso informar os nomes se desejar.", "/admin/admins"
+
+    if kind == "contar_gestores":
+        total = _contar(supabase.table("Administrador").select("idAdmin", count="exact", head=True)
+                        .eq("admProfessor", False).eq("admStatus", True))
+        return f"Há **{total} gestores ativos** cadastrados neste momento.", "/admin/admins"
+
+    if kind in ("listar_professores", "listar_gestores"):
+        is_professor = kind == "listar_professores"
+        label = "professores" if is_professor else "gestores"
+        result = (supabase.table("Administrador").select("admNome", count="exact")
+                  .eq("admProfessor", is_professor).eq("admStatus", True)
+                  .order("admNome").limit(MAX_NOMES_EQUIPE).execute())
+        if result.count is None:
+            raise RuntimeError("Contagem da equipe indisponível")
+        total = int(result.count)
+        if not total:
+            return f"Não há {label} ativos cadastrados neste momento.", "/admin/admins"
+        names = [name for row in (result.data or [])
+                 if (name := _texto_publico(row.get("admNome"))) and name != "[dado omitido]"]
+        suffix = (f" Mostro {len(names)} de {total}; confira os demais em Cadastro de Administradores."
+                  if total > len(names) else "")
+        if not names:
+            return f"Há **{total} {label} ativos**, mas não consegui exibir os nomes com segurança. Confira Cadastro de Administradores.", "/admin/admins"
+        return f"{label.capitalize()} ativos cadastrados ({total}): **{'**, **'.join(names)}**.{suffix}", "/admin/admins"
 
     if kind in ("contar_livros", "contar_exemplares", "contar_disponiveis"):
         if kind == "contar_disponiveis":
