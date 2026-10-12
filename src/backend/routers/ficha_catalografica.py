@@ -9,19 +9,19 @@ from database import supabase
 from core import executar_em_paralelo, get_admin, utc_now
 from routers.livros import enriquecer_livros
 from schemas import FichaCatalograficaUpdate
+from gemini_client import create_gemini_client, generate_content_with_fallback
 
 router = APIRouter()
 
-MODEL = "gemini-2.5-flash"
+# O Groq atende primeiro a catalogação; Gemini é a reserva entre provedores.
+MODEL = os.getenv("GEMINI_CATALOG_MODEL", "gemini-3.5-flash-lite")
+FALLBACK_MODEL = os.getenv("GEMINI_CATALOG_FALLBACK_MODEL", "gemini-2.5-flash")
+PRIMARY_PROVIDER = os.getenv("CATALOG_AI_PRIMARY_PROVIDER", "groq").lower()
+
 def _get_client():
-    from google import genai
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise HTTPException(
-            status_code=500,
-            detail="GEMINI_API_KEY não configurada no servidor.",
-        )
-    return genai.Client(api_key=api_key)
+    if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
+        raise HTTPException(status_code=500, detail="Configure GEMINI_API_KEY ou GROQ_API_KEY no servidor.")
+    return create_gemini_client()
 
 def int_to_roman(n: int) -> str:
     val = [10, 9, 5, 4, 1]
@@ -99,8 +99,11 @@ def sugerir_cdd_ia(livro_data: dict) -> str:
         "- Retorne apenas o código CDD como uma string simples (ex.: 823.914 ou 005.133), sem nenhuma pontuação extra ou explicação."
     )
     try:
-        resp = client.models.generate_content(
+        resp = generate_content_with_fallback(
+            client,
             model=MODEL,
+            fallback_model=FALLBACK_MODEL,
+            primary_provider=PRIMARY_PROVIDER,
             contents=prompt,
         )
         if resp.text:
@@ -123,18 +126,22 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
         f"Palavras-chave: {livro_data.get('livPalavrasChave') or ''}\n\n"
         "Regras:\n"
         "- Priorize as categorias, gêneros e palavras-chave já existentes.\n"
-        "- Responda APENAS com um array JSON de strings contendo de 3 a 5 assuntos (ex.: [\"Fantasia\", \"Literatura inglesa\", \"Magia\"]), sem texto explicativo."
+        "- Responda APENAS com um objeto JSON no formato {\"assuntos\":[\"Fantasia\", \"Literatura inglesa\", \"Magia\"]}, sem texto explicativo."
     )
     try:
-        resp = client.models.generate_content(
+        resp = generate_content_with_fallback(
+            client,
             model=MODEL,
+            fallback_model=FALLBACK_MODEL,
+            primary_provider=PRIMARY_PROVIDER,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
             )
         )
         if resp.text:
-            items = json.loads(resp.text)
+            parsed = json.loads(resp.text)
+            items = parsed.get("assuntos", []) if isinstance(parsed, dict) else parsed
             if isinstance(items, list):
                 return [str(i).strip().capitalize() for i in items[:5]]
     except Exception as e:
