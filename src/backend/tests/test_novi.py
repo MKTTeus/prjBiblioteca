@@ -155,6 +155,7 @@ def test_short_followup_searches_previous_task(monkeypatch):
                                  {"papel": "novi", "texto": "Você pode usar a tela de cadastro."}])
     assert any("Cadastre um livro para mim" in query and "Onde?" in query for query in seen)
     assert "Novo Livro" in result.json()["resposta"]
+    assert result.json()["destino"]["caminho"] == "/admin/livros"
 
 
 def test_why_followup_explains_actual_refusal_reason(monkeypatch):
