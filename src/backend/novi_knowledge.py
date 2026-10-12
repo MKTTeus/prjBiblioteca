@@ -9,6 +9,7 @@ import unicodedata
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = (
+    "docs/NOVI_FLUXOS_GESTOR.md",
     "docs/GUIA_DE_USO.md",
     "docs/REGRAS_E_FLUXOS.md",
     "docs/ARQUITETURA.md",
@@ -23,7 +24,8 @@ CODE = {
     "emprestimos": (("src/backend/routers/emprestimos.py", "criar_emprestimo"),
                     ("src/backend/routers/emprestimos.py", "devolver_emprestimo"),
                     ("src/backend/routers/emprestimos.py", "renovar_emprestimo")),
-    "livros": (("src/backend/routers/livros.py", "alterar_status_livro"),
+    "livros": (("src/backend/routers/livros.py", "criar_livro"),
+               ("src/backend/routers/livros.py", "alterar_status_livro"),
                ("src/backend/routers/livros.py", "adicionar_exemplares"),
                ("src/backend/routers/livros.py", "deletar_livro")),
     "autores": (("src/backend/routers/autores.py", "mesclar_autor"),),
@@ -44,7 +46,7 @@ CODE = {
 
 ROUTES = {
     "inicio": ("Início", "/admin"),
-    "biblioteca": ("Biblioteca", "/admin/biblioteca"),
+    "biblioteca": ("Acervo da Sala de Leitura", "/admin/biblioteca"),
     "livros": ("Cadastro de Livros", "/admin/livros"),
     "autores": ("Cadastros Auxiliares: Autores", "/admin/livros/cadastros-auxiliares/autores"),
     "generos": ("Cadastros Auxiliares: Gêneros", "/admin/livros/cadastros-auxiliares/generos"),
@@ -91,7 +93,9 @@ TOPIC_TERMS = {
 
 STOPWORDS = {"como", "qual", "quais", "para", "porque", "sobre", "onde", "uma", "uns", "dos",
              "das", "que", "com", "por", "meu", "minha", "essa", "esse", "isso", "tenho", "posso",
-             "faco", "fazer", "preciso", "sistema", "novi", "ajuda", "ajudar", "favor"}
+             "faco", "fazer", "preciso", "sistema", "novi", "ajuda", "ajudar", "favor",
+             "passo", "passos", "explique", "melhor", "mais", "detalhes", "detalhe", "pedido",
+             "continuacao"}
 
 
 def words(value: str) -> set[str]:
@@ -150,7 +154,10 @@ def retrieve_docs(question: str, count: int = 5) -> list[dict]:
         if score:
             ranked.append((score, entry))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    return [entry for _, entry in ranked[:count]]
+    # Com duas ou mais palavras relevantes, uma menção isolada a "livro" em
+    # outro fluxo não deve ocupar o lugar do procedimento solicitado.
+    relevant = [entry for score, entry in ranked if score >= 2] if len(query) > 1 else []
+    return relevant[:count] if relevant else [entry for _, entry in ranked[:count]]
 
 
 @lru_cache(maxsize=64)
