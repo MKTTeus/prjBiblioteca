@@ -125,6 +125,12 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+.novi-markdown { display: grid; gap: 5px; }
+.novi-markdown-item { display: flex; align-items: flex-start; gap: 7px; }
+.novi-markdown-item > span:first-child { min-width: 12px; }
+.novi-markdown-line:empty { min-height: 6px; }
+.novi-markdown strong { font-weight: 750; }
+.novi-markdown code { font-size: .95em; background: rgba(127,127,127,.14); border-radius: 4px; padding: 0 3px; }
 .novi-message--gestor .novi-bubble {
   border-radius: 16px 16px 5px 16px;
   background: var(--primary);

@@ -79,7 +79,7 @@ TOPIC_TERMS = {
     "relatorios": "relatorio relatorios indicador dados grafico atraso acervo",
     "ano_letivo": "ano letivo encerrar fechar promover formado retido serie",
     "backups": "backup backups restaurar restauracao recuperar exportar",
-    "configuracoes": "configuracao configurar limite prazo biblioteca tema salvar",
+    "configuracoes": "configuracao configurar limite prazo biblioteca tema salvar escuro claro aparencia noturno dark",
     "seguranca": "senha seguranca sessao timeout forte",
     "email": "email e-mail remetente envio",
     "notificacoes": "notificacao aviso cron circulacao",

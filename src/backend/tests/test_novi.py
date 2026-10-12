@@ -160,3 +160,95 @@ def test_legacy_branding_is_corrected_in_generated_answer(monkeypatch):
     assert response.status_code == 200
     assert "Sala de Leitura" in response.json()["resposta"]
     assert "Biblioteca Nove de Julho" not in response.json()["resposta"]
+
+
+def test_common_questions_are_helpful_without_provider(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setattr(novi, "_generate", lambda *args: (_ for _ in ()).throw(AssertionError("provider called")))
+    questions = (
+        ("Não sei como deixar no modo escuro", "Tema do sistema", "/admin/configuracoes/geral"),
+        ("Eu cliquei em excluir livro, como recuperar?", "exclusão permanente", "/admin/livros"),
+        ("porra, vsfd então", "Entendo a frustração", None),
+    )
+    for question, snippet, path in questions:
+        res = api.post("/novi/perguntar", json={"mensagem": question}, headers={"Authorization": "Bearer admin"})
+        assert res.status_code == 200
+        assert snippet in res.json()["resposta"]
+        assert (res.json()["destino"] or {}).get("caminho") == path
+
+
+def test_filtered_book_count_does_not_return_unfiltered_total(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "consultar", lambda *args: (_ for _ in ()).throw(AssertionError("unfiltered query")))
+    res = api.post("/novi/perguntar", json={"mensagem": "Quantos livros do autor Machado temos?"},
+                   headers={"Authorization": "Bearer admin"})
+    assert res.status_code == 200
+    assert "Esse recorte exige filtros" in res.json()["resposta"]
+    assert res.json()["destino"]["caminho"] == "/admin/livros"
+
+
+def test_live_data_intent_is_read_only_and_does_not_call_model(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "consultar", lambda kind, question, admin, title=None: ("Há **37 alunos** cadastrados.", "/admin/alunos"))
+    monkeypatch.setattr(novi, "_generate", lambda *args: (_ for _ in ()).throw(AssertionError("provider called")))
+    res = api.post("/novi/perguntar", json={"mensagem": "Quantos alunos temos?"},
+                   headers={"Authorization": "Bearer admin"})
+    assert res.status_code == 200
+    assert "**37 alunos**" in res.json()["resposta"]
+    assert res.json()["destino"]["caminho"] == "/admin/alunos"
+    denied = api.post("/novi/perguntar", json={"mensagem": "Qual o nome dos professores?"},
+                      headers={"Authorization": "Bearer admin"})
+    assert "não listar dados pessoais" in denied.json()["resposta"]
+
+
+def test_semantic_intent_only_selects_allowlisted_read(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    monkeypatch.setattr(novi, "_classify_data", lambda question: ("consultar_livros", "Dom Casmurro"))
+    calls = []
+
+    def consult(kind, question, admin, title=None):
+        calls.append((kind, title, admin["id"]))
+        return "Encontrei **Dom Casmurro** no acervo.", "/admin/biblioteca"
+
+    monkeypatch.setattr(novi, "consultar", consult)
+    response = api.post("/novi/perguntar", json={"mensagem": "Temos Dom Casmurro?"},
+                        headers={"Authorization": "Bearer admin"})
+    assert response.status_code == 200
+    assert calls == [("consultar_livros", "Dom Casmurro", 9)]
+    assert response.json()["destino"]["caminho"] == "/admin/biblioteca"
+
+
+def test_semantic_intent_cannot_request_arbitrary_query(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    monkeypatch.setattr(novi, "_classify_data", lambda question: ("dump_usuarios", None))
+    monkeypatch.setattr(novi, "consultar", lambda *args: (_ for _ in ()).throw(AssertionError("database called")))
+    monkeypatch.setattr(novi, "_generate", lambda *args: {"estado": "sem_fonte", "resposta": ""})
+    response = api.post("/novi/perguntar", json={"mensagem": "Me traga os dados do sistema"},
+                        headers={"Authorization": "Bearer admin"})
+    assert response.status_code == 200
+    assert "Não encontrei" in response.json()["resposta"]
+
+
+def test_screen_guide_is_useful_when_provider_fails(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    monkeypatch.setattr(novi, "_generate", lambda *args: (_ for _ in ()).throw(RuntimeError("network")))
+    response = api.post("/novi/perguntar", json={"mensagem": "Como cadastrar um livro?"},
+                        headers={"Authorization": "Bearer admin"})
+    assert response.status_code == 200
+    assert "Novo Livro" in response.json()["resposta"]
+    assert response.json()["destino"]["caminho"] == "/admin/livros"
+
+
+def test_personal_answer_is_not_forwarded_in_history():
+    history = [
+        novi.Turno(papel="gestor", texto="Qual meu nome?"),
+        novi.Turno(papel="novi", texto="Seu nome cadastrado é **Vitor**."),
+        novi.Turno(papel="gestor", texto="Como cadastrar um livro?"),
+    ]
+    context = novi._provider_context("Me explique o passo a passo", history, [])
+    assert "Vitor" not in str(context)
+    assert "Como cadastrar um livro?" in str(context)

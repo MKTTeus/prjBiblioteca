@@ -39,3 +39,14 @@ test("não apresenta navegação fora das rotas de gestor e fecha com Escape", a
   fireEvent.keyDown(document, { key: "Escape" });
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
+
+test("renderiza negrito e listas sem interpretar HTML enviado na resposta", async () => {
+  perguntarNovi.mockResolvedValue({ resposta: "Abra **Cadastro de Livros**.\n- **Novo Livro**\n<img src=x onerror=alert(1)>" });
+  const { container } = render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Como cadastrar um livro?" }));
+  await waitFor(() => expect(screen.getByText("Cadastro de Livros").tagName).toBe("STRONG"));
+  expect(screen.getByText("Novo Livro").tagName).toBe("STRONG");
+  expect(container.querySelector("img")).toBeNull();
+  expect(screen.getByText(/<img src=x onerror=/)).toBeInTheDocument();
+});
