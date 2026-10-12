@@ -40,3 +40,17 @@ Em **Relatórios**, escolha a visão de empréstimos, atrasos ou acervo e ajuste
 Em **Configurações Gerais**, confira os limites e prazos salvos antes de comunicá-los. **Configurações de Notificações** reúne preferências de lembretes; **Configurações de E-mail** mostra o estado do envio. A Novi não dispara mensagens.
 
 Para **Ano Letivo** e **Backups**, leia as confirmações na tela, confira os dados e envolva a equipe responsável. A Novi explica o processo, mas não encerra o ano, exporta dados ou restaura backup. Uma restauração substitui dados posteriores ao ponto escolhido e pode encerrar sessões.
+
+## Modo escuro e aparência
+
+No painel do gestor, abra **Configurações → Geral**. Na seção **Aparência**, altere o controle **Tema do sistema** de **Claro** para **Escuro**. A mudança é salva para a própria conta administrativa. Se falhar, a tela mostra um aviso e restaura o tema anterior. Não é necessário usar as Configurações de Segurança.
+
+## Excluí ou desativei um livro: como recuperar?
+
+Em **Cadastro de Livros**, o botão de exclusão permanente pede confirmação. Se o aviso ainda está aberto, cancele antes de confirmar. Se o título foi apenas **desativado**, a gestão pode reativá-lo na lista; o catálogo público voltará a exibi-lo quando houver exemplar ativo. Se a **exclusão permanente** foi concluída, não há desfazer na tela. Não prometa recuperação nem recrie o cadastro sem verificar vínculos: encaminhe o caso à equipe responsável para avaliar cópias de segurança e um ensaio de restauração em homologação. Restaurar o sistema inteiro pode substituir alterações posteriores.
+
+## Consultas simples e limites de dados
+
+A Novi pode responder diretamente ao gestor autenticado com o **nome da própria conta**, campos bibliográficos mínimos de até cinco livros (título, ISBN, páginas, ano e status), contagens de títulos e exemplares, contagens de alunos cadastrados não excluídos e de professores ativos, e indicadores agregados de circulação. Ela informa o critério da contagem e a tela de conferência. A disponibilidade e os totais podem mudar depois da consulta.
+
+A Novi não apresenta nomes, contatos, RA, CPF, histórico individual, lista de professores, planilhas ou linhas detalhadas de relatórios no chat. Para atender uma pessoa específica, use a tela autenticada apropriada. Ela não acessa senhas nem envia as linhas consultadas ao modelo de linguagem.

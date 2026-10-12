@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { FiBookOpen, FiMessageCircle, FiSend, FiX } from "react-icons/fi";
 import { perguntarNovi } from "../../services/api";
+import NoviMessage from "./NoviMessage";
 import "./NoviChat.css";
 
 const SUGESTOES = [
@@ -116,7 +117,7 @@ export default function NoviChat() {
           <div className="novi-scroll" aria-live="polite" aria-relevant="additions text">
             {mensagens.map((item, index) => (
               <div key={index} className={`novi-message novi-message--${item.papel}`}>
-                <div className="novi-bubble">{item.texto}</div>
+                <div className="novi-bubble"><NoviMessage texto={item.texto} /></div>
                 {item.destino && (
                   <button type="button" className="novi-destination" onClick={() => navegar(item.destino)}>
                     Abrir {item.destino.rotulo} <span aria-hidden="true">→</span>
