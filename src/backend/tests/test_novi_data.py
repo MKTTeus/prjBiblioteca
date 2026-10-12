@@ -99,6 +99,36 @@ def test_book_lookup_returns_only_selected_fields_and_limits_result(monkeypatch)
     assert all(q.table in ("Livro", "Exemplar") for q in db.calls)
 
 
+def test_natural_book_title_query_and_general_total_are_distinct(monkeypatch):
+    assert novi_data.intent("Há algum livro com o título Harry Potter?") == "consultar_livros"
+    assert novi_data._termo_livro("Há algum livro com o título Harry Potter?") == "Harry Potter"
+    assert novi_data.intent("Quantos livros há no acervo?") == "contar_livros"
+    assert novi_data._termo_livro("Quantos livros há no acervo?") is None
+
+    db = DB(lambda q: SimpleNamespace(data=[], count=None))
+    monkeypatch.setattr(novi_data, "supabase", db)
+    answer, path = novi_data.consultar("consultar_livros", "Há algum livro com o título Harry Potter?", {"id": 9})
+    assert "Não encontrei título" in answer and path == "/admin/biblioteca"
+    assert ("ilike", "livTitulo", "%Harry Potter%") in db.calls[0].filters
+
+
+def test_missing_search_title_prompts_for_title_without_listing_everything(monkeypatch):
+    monkeypatch.setattr(novi_data, "supabase", DB(lambda q: (_ for _ in ()).throw(AssertionError("database called"))))
+    answer, _ = novi_data.consultar("consultar_livros", "Há algum livro com o título?", {"id": 9})
+    assert "Qual é o título" in answer
+
+
+def test_books_without_copies_uses_anti_join_and_exact_count(monkeypatch):
+    db = DB(lambda q: SimpleNamespace(data=[{"idLivro": 8, "livTitulo": "Livro sem cópia"}], count=1))
+    monkeypatch.setattr(novi_data, "supabase", db)
+    assert novi_data.intent("Há algum livro sem exemplar cadastrado?") == "livros_sem_exemplar"
+    answer, path = novi_data.consultar("livros_sem_exemplar", "Há algum livro sem exemplar cadastrado?", {"id": 9})
+    assert "**1 título sem exemplar cadastrado**" in answer
+    assert "**Livro sem cópia**" in answer and path == "/admin/livros"
+    assert db.calls[0].columns == "idLivro,livTitulo,Exemplar()"
+    assert ("is", "Exemplar", "null") in db.calls[0].filters
+
+
 def test_inactive_book_does_not_claim_public_availability(monkeypatch):
     def result(q):
         if q.table == "Livro":
