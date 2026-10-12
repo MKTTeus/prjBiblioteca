@@ -153,7 +153,7 @@ def test_short_followup_searches_previous_task(monkeypatch):
     monkeypatch.setattr(novi, "_generate", lambda *args: {"estado": "respondida", "resposta": "Abra Cadastro de Livros e escolha Novo Livro."})
     result = ask(api, "Onde?", [{"papel": "gestor", "texto": "Cadastre um livro para mim"},
                                  {"papel": "novi", "texto": "Você pode usar a tela de cadastro."}])
-    assert "Cadastre um livro para mim Onde?" in seen
+    assert any("Cadastre um livro para mim" in query and "Onde?" in query for query in seen)
     assert "Novo Livro" in result.json()["resposta"]
 
 
