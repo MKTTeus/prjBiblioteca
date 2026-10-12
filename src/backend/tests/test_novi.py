@@ -102,7 +102,7 @@ def test_sensitive_and_third_party_requests_stay_out_of_provider(monkeypatch):
         result = ask(api, question)
         assert result.status_code == 200
         assert expected in result.json()["resposta"]
-        assert result.json()["contexto"] is False
+        assert result.json()["contexto"] is ("KEYS" in question)
         assert result.headers["cache-control"] == "private, no-store"
 
 
@@ -153,8 +153,9 @@ def test_short_followup_searches_previous_task(monkeypatch):
     monkeypatch.setattr(novi, "_generate", lambda *args: {"estado": "respondida", "resposta": "Abra Cadastro de Livros e escolha Novo Livro."})
     result = ask(api, "Onde?", [{"papel": "gestor", "texto": "Cadastre um livro para mim"},
                                  {"papel": "novi", "texto": "Você pode usar a tela de cadastro."}])
-    assert "Cadastre um livro para mim Onde?" in seen
+    assert any("Cadastre um livro para mim" in query and "Onde?" in query for query in seen)
     assert "Novo Livro" in result.json()["resposta"]
+    assert result.json()["destino"]["caminho"] == "/admin/livros"
 
 
 def test_why_followup_explains_actual_refusal_reason(monkeypatch):
@@ -168,6 +169,39 @@ def test_why_followup_explains_actual_refusal_reason(monkeypatch):
     history += [{"papel": "gestor", "texto": "Por que?"},
                 {"papel": "novi", "texto": response.json()["resposta"]}]
     assert "conversa respeitosa" in ask(api, "Explique melhor", history).json()["resposta"]
+
+
+def test_why_after_secret_request_explains_secret_not_previous_cadastro(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: (_ for _ in ()).throw(AssertionError("provider called")))
+    history = [{"papel": "gestor", "texto": "Cadastre um livro"},
+               {"papel": "novi", "texto": "Não posso cadastrar por você."},
+               {"papel": "gestor", "texto": "Qual a chave de acesso ao banco de dados?"},
+               {"papel": "novi", "texto": novi.SENSITIVE}]
+    answer = ask(api, "Por que?", history).json()["resposta"]
+    assert "Chaves e senhas" in answer and "cadastro" not in answer
+
+
+def test_inactive_group_override_does_not_reuse_active_count(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("consultar", "contar_gestores", "admins"))
+    monkeypatch.setattr(novi, "consultar", lambda kind, admin, title: (
+        "Há **1 gestor desativado** cadastrado.", "/admin/admins") if kind == "contar_gestores_inativos"
+        else (_ for _ in ()).throw(AssertionError(kind)))
+    answer = ask(api, "Quantos gestores desativados há?").json()
+    assert "desativado" in answer["resposta"]
+
+
+def test_short_where_uses_previous_answer_in_document_search(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("orientar", topic="emprestimos", search="onde fica a opção"))
+    searches = []
+    monkeypatch.setattr(novi, "retrieve_docs", lambda q, count: (searches.append(q) or []))
+    monkeypatch.setattr(novi, "_generate", lambda *args: {"estado": "sem_fonte", "resposta": "Qual opção você quer encontrar?"})
+    ask(api, "Onde encontro essa opção?", [
+        {"papel": "gestor", "texto": "Como devolver um exemplar?"},
+        {"papel": "novi", "texto": "Em Empréstimos e Devoluções, clique em Devolver."}])
+    assert any("Devolver" in search and "Como devolver" in search for search in searches)
 
 
 def test_model_decides_query_and_server_only_executes_allowlisted_read(monkeypatch):
@@ -381,7 +415,7 @@ def test_repeated_clarification_gets_one_model_review_then_stops(monkeypatch):
     history = [{"papel": "novi", "texto": "Qual título deseja consultar?"}]
     response = ask(api, "Aquele do volume 2", history)
     assert reviews == ["Aquele do volume 2"]
-    assert "Ainda não consegui identificar" in response.json()["resposta"]
+    assert "Escreva sua dúvida completa" in response.json()["resposta"]
 
 
 def test_repeated_clarification_can_be_replanned_as_new_query(monkeypatch):

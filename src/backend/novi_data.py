@@ -105,33 +105,46 @@ def consultar(kind: str, admin: dict, term: str | None = None, filtro: str = "to
                         .eq("usuTipo", "Comunidade").eq("usuExcluido", False))
         return f"Há **{total} pessoas da comunidade cadastradas e não excluídas** neste momento.", "/admin/comunidade"
 
-    if kind == "contar_professores":
-        total = _contar(supabase.table("Administrador").select("idAdmin", count="exact", head=True).eq("admProfessor", True).eq("admStatus", True))
-        return f"Há **{total} professores ativos** cadastrados. Posso informar os nomes se desejar.", "/admin/admins"
+    if kind == "contar_equipe_inativa":
+        professores = _contar(supabase.table("Administrador").select("idAdmin", count="exact", head=True)
+                             .eq("admProfessor", True).eq("admStatus", False))
+        gestores = _contar(supabase.table("Administrador").select("idAdmin", count="exact", head=True)
+                           .eq("admProfessor", False).eq("admStatus", False))
+        return (f"Há **{professores} professor{'es' if professores != 1 else ''} desativado{'s' if professores != 1 else ''}** "
+                f"e **{gestores} gestor{'es' if gestores != 1 else ''} desativado{'s' if gestores != 1 else ''}**.", "/admin/admins")
 
-    if kind == "contar_gestores":
+    staff = {
+        "professores": (True, True), "gestores": (False, True),
+        "professores_inativos": (True, False), "gestores_inativos": (False, False),
+    }
+    if kind.startswith("contar_") and kind[7:] in staff:
+        is_professor, active = staff[kind[7:]]
         total = _contar(supabase.table("Administrador").select("idAdmin", count="exact", head=True)
-                        .eq("admProfessor", False).eq("admStatus", True))
-        return f"Há **{total} gestores ativos** cadastrados neste momento.", "/admin/admins"
+                        .eq("admProfessor", is_professor).eq("admStatus", active))
+        label = "professor" if is_professor else "gestor"
+        status = "ativo" if active else "desativado"
+        suffix = " Posso informar os nomes se desejar." if is_professor and active else ""
+        return f"Há **{total} {label}{'es' if total != 1 else ''} {status}{'s' if total != 1 else ''}** cadastrados.{suffix}", "/admin/admins"
 
-    if kind in ("listar_professores", "listar_gestores"):
-        is_professor = kind == "listar_professores"
+    if kind.startswith("listar_") and kind[7:] in staff:
+        is_professor, active = staff[kind[7:]]
         label = "professores" if is_professor else "gestores"
         result = (supabase.table("Administrador").select("admNome", count="exact")
-                  .eq("admProfessor", is_professor).eq("admStatus", True)
+                  .eq("admProfessor", is_professor).eq("admStatus", active)
                   .order("admNome").limit(MAX_NOMES_EQUIPE).execute())
         if result.count is None:
             raise RuntimeError("Contagem da equipe indisponível")
         total = int(result.count)
+        status = "ativos" if active else "desativados"
         if not total:
-            return f"Não há {label} ativos cadastrados neste momento.", "/admin/admins"
+            return f"Não há {label} {status} cadastrados neste momento.", "/admin/admins"
         names = [name for row in (result.data or [])
                  if (name := _texto_publico(row.get("admNome"))) and name != "[dado omitido]"]
         suffix = (f" Mostro {len(names)} de {total}; confira os demais em Cadastro de Administradores."
                   if total > len(names) else "")
         if not names:
-            return f"Há **{total} {label} ativos**, mas não consegui exibir os nomes com segurança. Confira Cadastro de Administradores.", "/admin/admins"
-        return f"{label.capitalize()} ativos cadastrados ({total}): **{'**, **'.join(names)}**.{suffix}", "/admin/admins"
+            return f"Há **{total} {label} {status}**, mas não consegui exibir os nomes com segurança. Confira Cadastro de Administradores.", "/admin/admins"
+        return f"{label.capitalize()} {status} cadastrados ({total}): **{'**, **'.join(names)}**.{suffix}", "/admin/admins"
 
     if kind in ("contar_livros", "contar_exemplares", "contar_disponiveis"):
         if kind == "contar_disponiveis":

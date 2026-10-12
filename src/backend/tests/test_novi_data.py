@@ -117,6 +117,18 @@ def test_staff_roster_returns_only_names_and_discloses_limit(monkeypatch):
     assert query.table == "Administrador"
 
 
+def test_inactive_staff_counts_and_names_use_inactive_filter(monkeypatch):
+    db = DB(lambda q: SimpleNamespace(data=[{"admNome": "Ana"}], count=1))
+    monkeypatch.setattr(novi_data, "supabase", db)
+    for kind in ("contar_gestores_inativos", "listar_gestores_inativos", "contar_equipe_inativa"):
+        answer, route = novi_data.consultar(kind, {"id": 9})
+        assert route == "/admin/admins" and "desativado" in answer
+    assert {("eq", "admProfessor", False), ("eq", "admStatus", False)} <= set(db.calls[0].filters)
+    assert db.calls[1].columns == "admNome"
+    assert {("eq", "admProfessor", False), ("eq", "admStatus", False)} <= set(db.calls[1].filters)
+    assert {("eq", "admProfessor", True), ("eq", "admStatus", False)} <= set(db.calls[2].filters)
+
+
 def book(id_, title, active=True, year=2000):
     return {"idLivro": id_, "livTitulo": title, "livISBN": None, "livPaginas": 200,
             "livAnoPublicacao": year, "livAtivo": active}
