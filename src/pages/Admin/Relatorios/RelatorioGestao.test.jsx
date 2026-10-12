@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import RelatorioGestao, { Consulta } from './RelatorioGestao';
 import { CONSULTAS } from './consultas';
 import { getRelatorioGestao } from '../../../services/api';
@@ -13,12 +13,57 @@ const resultado = {itens:[{idLivro:1,titulo:'Livro A',emprestimos:2}],total:120,
 
 beforeEach(() => {jest.clearAllMocks(); getRelatorioGestao.mockResolvedValue(resultado);});
 
-test('dez novas consultas são acessíveis e a escolha consulta o endpoint correspondente', async () => {
+test('grupos mostram somente relatórios relacionados e a seleção consulta o endpoint correspondente', async () => {
   render(<RelatorioGestao />);
-  expect(screen.getByRole('button',{name:/Alunos, professores e comunidade/})).toBeInTheDocument();
   await screen.findByText('Livro A');
-  fireEvent.click(screen.getByRole('button',{name:/Devoluções no período/}));
+  const grupos = screen.getByRole('group',{name:'Grupos de relatórios'});
+  expect(within(grupos).getAllByRole('button')).toHaveLength(3);
+  expect(screen.getByRole('button',{name:'Acervo'})).toHaveAttribute('aria-pressed','true');
+  expect(within(screen.getByRole('combobox',{name:'Relatório de acervo'})).getAllByRole('option')).toHaveLength(4);
+  fireEvent.click(screen.getByRole('button',{name:'Leitores'}));
+  expect(within(screen.getByRole('combobox',{name:'Relatório de leitores'})).getAllByRole('option')).toHaveLength(2);
+  expect(screen.getByRole('combobox',{name:'Tipo de leitor'})).toBeVisible();
+  await waitFor(() => expect(getRelatorioGestao).toHaveBeenLastCalledWith('leitores',expect.any(Object)));
+  fireEvent.click(screen.getByRole('button',{name:'Circulação'}));
+  const selecao = screen.getByRole('combobox',{name:'Relatório de circulação'});
+  expect(within(selecao).getAllByRole('option')).toHaveLength(4);
+  fireEvent.change(selecao,{target:{value:'devolucoes'}});
   await waitFor(() => expect(getRelatorioGestao).toHaveBeenLastCalledWith('devolucoes',expect.any(Object)));
+});
+
+test('voltar ao grupo mantém o relatório escolhido sem apresentar os dez cards', async () => {
+  const {container} = render(<RelatorioGestao />);
+  await screen.findByText('Livro A');
+  fireEvent.change(screen.getByRole('combobox',{name:'Relatório de acervo'}),{target:{value:'inventario'}});
+  await waitFor(() => expect(getRelatorioGestao).toHaveBeenLastCalledWith('inventario',expect.any(Object)));
+  fireEvent.click(screen.getByRole('button',{name:'Circulação'}));
+  await screen.findByText('Livro A');
+  fireEvent.click(screen.getByRole('button',{name:'Acervo'}));
+  expect(screen.getByRole('combobox',{name:'Relatório de acervo'})).toHaveValue('inventario');
+  expect(container.querySelector('.rel-consultas-grid')).toBeNull();
+});
+
+test('filtros adicionais recolhem sem apagar valores e sinalizam os filtros ativos', async () => {
+  render(<Consulta config={CONSULTAS[0]} />);
+  await screen.findByText('Livro A');
+  const toggle = screen.getByRole('button',{name:'Filtros adicionais'});
+  expect(toggle).toHaveAttribute('aria-expanded','false');
+  expect(screen.queryByRole('combobox',{name:'Série'})).not.toBeInTheDocument();
+  fireEvent.click(toggle);
+  const serie = screen.getByRole('combobox',{name:'Série'});
+  fireEvent.change(serie,{target:{value:'6º Ano'}});
+  expect(toggle).toHaveTextContent('1 ativo');
+  fireEvent.click(toggle);
+  expect(serie).not.toBeVisible();
+  expect(screen.getByRole('button',{name:'PDF completo'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button',{name:'Consultar'}));
+  await waitFor(() => expect(getRelatorioGestao).toHaveBeenLastCalledWith('livros',expect.objectContaining({serie:'6º Ano'})));
+  await waitFor(() => expect(screen.getByRole('button',{name:'PDF completo'})).toBeEnabled());
+  fireEvent.click(toggle);
+  expect(serie).toHaveValue('6º Ano');
+  fireEvent.click(screen.getByRole('button',{name:'Limpar filtros'}));
+  await waitFor(() => expect(serie).toHaveValue(''));
+  expect(toggle).not.toHaveTextContent('ativo');
 });
 
 test('atalho de zero circulação filtra e exportação pede todos os registros', async () => {
@@ -58,7 +103,7 @@ test('troca de relatório descarta resposta pendente do relatório anterior', as
   let resolver;
   getRelatorioGestao.mockReturnValueOnce(new Promise(done => {resolver=done;}));
   render(<RelatorioGestao />);
-  fireEvent.click(screen.getByRole('button',{name:/Inventário por tombo/}));
+  fireEvent.change(screen.getByRole('combobox',{name:'Relatório de acervo'}),{target:{value:'inventario'}});
   await screen.findByText('Livro A');
   resolver({...resultado,itens:[{titulo:'Resposta antiga'}]});
   await waitFor(() => expect(screen.queryByText('Resposta antiga')).not.toBeInTheDocument());

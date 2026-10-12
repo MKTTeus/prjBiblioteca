@@ -3,6 +3,12 @@ const livro = [coluna('titulo','Livro'), coluna('autores','Autores'), coluna('is
 const leitor = [coluna('usuario','Leitor'), coluna('tipo','Tipo'), coluna('serie','Série'), coluna('turma','Turma')];
 const historico = [...leitor, coluna('finalidade','Finalidade'), coluna('titulo','Livro'), coluna('tombo','Tombo'), coluna('dataEmprestimo','Retirada',true), coluna('dataPrevistaDevolucao','Prazo',true), coluna('dataDevolucao','Devolução',true), coluna('situacao','Situação')];
 
+export const GRUPOS_CONSULTAS = [
+  { nome:'Acervo', descricao:'Livros, exemplares, autores e revisão do cadastro.' },
+  { nome:'Leitores', descricao:'Participação de alunos, professores, comunidade e turmas.' },
+  { nome:'Circulação', descricao:'Histórico, solicitações, devoluções e renovações.' },
+];
+
 export const CONSULTAS = [
   { id:'livros', titulo:'Circulação dos livros', descricao:'Mais emprestados, menos emprestados e títulos sem empréstimos no período.', grupo:'Acervo', periodo:true, publico:true, atividade:true, participacao:true,
     ordenar:'emprestimos', colunas:[...livro, coluna('editora','Editora'), coluna('exemplares','Exemplares'), coluna('disponiveis','Disponíveis hoje'), coluna('emprestimos','Empréstimos'), coluna('ultimoEmprestimo','Última retirada no período',true)],
