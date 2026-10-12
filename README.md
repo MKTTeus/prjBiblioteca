@@ -43,6 +43,7 @@ npm audit
 - [Arquitetura e pontos de extensão](docs/ARQUITETURA.md)
 - [Regras e fluxos da circulação](docs/REGRAS_E_FLUXOS.md)
 - [Guia de uso para alunos, comunidade, professores e gestores](docs/GUIA_DE_USO.md)
+- [Novi: escopo, fontes, segurança e configuração](docs/NOVI.md)
 
 ## Implantação e operação
 
