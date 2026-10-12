@@ -1,6 +1,6 @@
 import pytest
 
-from gemini_client import generate_content_with_fallback
+import gemini_client as ai
 
 
 class ApiError(Exception):
@@ -26,51 +26,62 @@ class FakeClient:
         self.models = FakeModels(results)
 
 
-def test_quota_error_retries_once_with_fallback_model(monkeypatch):
-    monkeypatch.delenv("GEMINI_FALLBACK_MODEL", raising=False)
-    client = FakeClient([ApiError(429), {"text": "ok"}])
-    config = {"response_mime_type": "application/json"}
+def test_gemini_quota_uses_groq_before_gemini_model_fallback(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    client = FakeClient([ApiError(429), {"text": "gemini reserva"}])
+    groq_result = object()
+    monkeypatch.setattr(ai, "_generate_groq", lambda **kwargs: groq_result)
 
-    result = generate_content_with_fallback(
-        client,
-        model="gemini-2.5-flash",
-        contents="pergunta",
-        config=config,
+    result = ai.generate_content_with_fallback(
+        client, model="gemini-2.5-flash", contents="pergunta",
     )
 
-    assert result == {"text": "ok"}
+    assert result is groq_result
+    assert [call["model"] for call in client.models.calls] == ["gemini-2.5-flash"]
+
+
+def test_gemini_quota_uses_gemini_model_when_groq_fails(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    client = FakeClient([ApiError(429), {"text": "flash lite"}])
+    monkeypatch.setattr(ai, "_generate_groq", lambda **kwargs: (_ for _ in ()).throw(RuntimeError()))
+
+    result = ai.generate_content_with_fallback(
+        client, model="gemini-2.5-flash", contents="pergunta",
+    )
+
+    assert result == {"text": "flash lite"}
     assert [call["model"] for call in client.models.calls] == [
-        "gemini-2.5-flash",
-        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash", "gemini-3.5-flash-lite",
     ]
-    assert all(call["contents"] == "pergunta" for call in client.models.calls)
-    assert all(call["config"] is config for call in client.models.calls)
 
 
-def test_non_quota_error_does_not_use_fallback():
-    client = FakeClient([ApiError(503)])
+def test_book_flow_uses_groq_first_and_gemini_as_reserve(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    client = FakeClient([{"text": "gemini"}])
+    calls = []
+    monkeypatch.setattr(ai, "_generate_groq", lambda **kwargs: (
+        calls.append("groq"), (_ for _ in ()).throw(RuntimeError("down"))
+    )[1])
 
-    with pytest.raises(ApiError):
-        generate_content_with_fallback(
-            client,
-            model="gemini-2.5-flash",
-            contents="pergunta",
-        )
+    result = ai.generate_content_with_fallback(
+        client, model="gemini-3.5-flash-lite", contents="book",
+        primary_provider="groq",
+    )
 
+    assert result == {"text": "gemini"}
+    assert calls == ["groq"]
     assert len(client.models.calls) == 1
 
 
-def test_flash_lite_primary_falls_back_to_flash(monkeypatch):
-    monkeypatch.setenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
-    client = FakeClient([ApiError(429), {"text": "ok"}])
+def test_transient_gemini_error_does_not_spend_groq_quota(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    client = FakeClient([ApiError(503)])
+    called = []
+    monkeypatch.setattr(ai, "_generate_groq", lambda **kwargs: called.append(True))
 
-    generate_content_with_fallback(
-        client,
-        model="gemini-3.5-flash-lite",
-        contents="livro",
-    )
+    with pytest.raises(ApiError):
+        ai.generate_content_with_fallback(
+            client, model="gemini-2.5-flash", contents="pergunta",
+        )
 
-    assert [call["model"] for call in client.models.calls] == [
-        "gemini-3.5-flash-lite",
-        "gemini-2.5-flash",
-    ]
+    assert called == []
