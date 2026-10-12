@@ -5,13 +5,14 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from core import get_admin
 from schemas import CompletarIARequest
+from gemini_client import create_gemini_client, generate_content_with_fallback
 
 router = APIRouter()
 
-# Gemini 2.5 Flash: modelo estável (não-preview) com tier gratuito no Google AI Studio
-# (sem cartão de crédito, cota diária generosa o suficiente para cadastro de livros).
-# Verifique limites atuais em https://ai.google.dev/gemini-api/docs/rate-limits
-MODEL = "gemini-2.5-flash"
+# O modelo Flash-Lite atende o fluxo de maior volume; use o Flash como reserva.
+# Os limites são por projeto e modelo, então isso distribui as chamadas entre cotas.
+MODEL = os.getenv("GEMINI_BOOK_MODEL", "gemini-3.5-flash-lite")
+FALLBACK_MODEL = os.getenv("GEMINI_BOOK_FALLBACK_MODEL", "gemini-2.5-flash")
 
 COMPLETAR_LIVRO_SCHEMA = {
     "type": "object",
@@ -112,14 +113,12 @@ COMPLETAR_LIVRO_SCHEMA = {
 
 
 def _get_client():
-    from google import genai
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+    if not os.getenv("GEMINI_API_KEY"):
         raise HTTPException(
             status_code=500,
             detail="GEMINI_API_KEY não configurada no servidor.",
         )
-    return genai.Client(api_key=api_key)
+    return create_gemini_client()
 
 
 def _montar_prompt(dados: CompletarIARequest) -> str:
@@ -195,8 +194,10 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
     prompt = _montar_prompt(dados)
 
     try:
-        resposta = client.models.generate_content(
+        resposta = generate_content_with_fallback(
+            client,
             model=MODEL,
+            fallback_model=FALLBACK_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
