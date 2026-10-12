@@ -25,6 +25,7 @@ CODE = {
                     ("src/backend/routers/emprestimos.py", "devolver_emprestimo"),
                     ("src/backend/routers/emprestimos.py", "renovar_emprestimo")),
     "livros": (("src/backend/routers/livros.py", "criar_livro"),
+               ("src/backend/routers/ia.py", "completar_com_ia"),
                ("src/backend/routers/livros.py", "alterar_status_livro"),
                ("src/backend/routers/livros.py", "adicionar_exemplares"),
                ("src/backend/routers/livros.py", "deletar_livro")),
@@ -82,9 +83,19 @@ def words(value: str) -> set[str]:
 def _split_sections(path: str) -> list[dict]:
     content = (ROOT / path).read_text(encoding="utf-8")
     heading = "Introdução"
-    paragraphs = []
-    buffer = []
+    sections = []
+    lines = []
     in_fence = False
+
+    def flush():
+        # Preserve a procedure and its caveats in the same source entry. The
+        # old paragraph split made repeated headings crowd out other flows.
+        body = "\n".join(lines).strip()
+        if len(body) > 35:
+            while body:
+                chunk, body = body[:1800], body[1800:]
+                sections.append({"fonte": path, "secao": heading, "texto": chunk})
+
     for line in content.splitlines():
         if line.startswith("```"):
             in_fence = not in_fence
@@ -92,20 +103,13 @@ def _split_sections(path: str) -> list[dict]:
         if in_fence:
             continue
         if line.startswith("## ") or line.startswith("### "):
-            if buffer:
-                paragraphs.append((heading, "\n".join(buffer)))
-                buffer = []
+            flush()
+            lines = []
             heading = line.lstrip("# ").strip()
-        elif not line.strip():
-            if buffer:
-                paragraphs.append((heading, "\n".join(buffer)))
-                buffer = []
-        else:
-            buffer.append(line)
-    if buffer:
-        paragraphs.append((heading, "\n".join(buffer)))
-    return [{"fonte": path, "secao": title, "texto": text[:1800]} for title, text in paragraphs
-            if len(text) > 35 and not text.startswith("|")]
+        elif not line.startswith("|"):
+            lines.append(line)
+    flush()
+    return sections
 
 
 @lru_cache(maxsize=1)
@@ -117,15 +121,18 @@ def retrieve_docs(question: str, count: int = 5) -> list[dict]:
     query = words(question)
     if not query:
         return []
+    # Short common roots match inflections such as cadastrar/cadastro and
+    # solicitar/solicitação without an exact phrase or a handpicked intent.
+    roots = {word[:6] if len(word) >= 6 else word for word in query}
     ranked = []
     for entry in doc_entries():
-        score = len(query & words(entry["texto"])) + 2 * len(query & words(entry["secao"]))
+        heading = {word[:6] if len(word) >= 6 else word for word in words(entry["secao"])}
+        body = {word[:6] if len(word) >= 6 else word for word in words(entry["texto"])}
+        score = len(roots & body) + 2 * len(roots & heading)
         if score:
             ranked.append((score, entry))
     ranked.sort(key=lambda item: item[0], reverse=True)
-    # Com duas ou mais palavras relevantes, uma menção isolada a "livro" em
-    # outro fluxo não deve ocupar o lugar do procedimento solicitado.
-    relevant = [entry for score, entry in ranked if score >= 2] if len(query) > 1 else []
+    relevant = [entry for score, entry in ranked if score >= 2] if len(roots) > 1 else []
     return relevant[:count] if relevant else [entry for _, entry in ranked[:count]]
 
 
