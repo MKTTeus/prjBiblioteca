@@ -20,7 +20,7 @@ Se não houver fonte suficiente sobre uma função específica, a Novi declara o
 
 ## Configuração e verificação
 
-Configure `GEMINI_API_KEY` **somente no backend** no ambiente local e na função Python do deploy. `NOVI_GEMINI_MODEL` é opcional e usa `gemini-2.5-flash` por padrão. Para o modelo padrão, desabilitamos o orçamento de pensamento para preservar o espaço da resposta estruturada. Sem a chave ou em falha do provedor, o endpoint responde 503: a Novi não pode interpretar a pergunta nem selecionar uma consulta. A interface informa a indisponibilidade. Não use o prefixo `REACT_APP_` para essas variáveis.
+Configure `GEMINI_API_KEY` **somente no backend** no ambiente local e na função Python do deploy. `NOVI_GEMINI_MODEL` é opcional e usa `gemini-2.5-flash` por padrão. Para o modelo padrão, desabilitamos o orçamento de pensamento para preservar o espaço da resposta estruturada. Sem a chave ou em falha do provedor, o endpoint responde 503: a Novi não pode interpretar a pergunta nem selecionar uma consulta. A ausência da chave gera mensagem de configuração para o gestor; falhas do provedor mantêm mensagem temporária. Os logs da função registram apenas a etapa, o tipo de exceção e o código HTTP, sem perguntas, respostas ou segredos. O SDK faz até duas tentativas por chamada com timeout de 20 segundos para evitar esperas prolongadas. Confira nos logs da Vercel a etapa e o status HTTP antes de alterar a configuração. Não use o prefixo `REACT_APP_` para essas variáveis.
 
 ```bash
 python -m pytest -q src/backend/tests/test_novi.py src/backend/tests/test_novi_data.py

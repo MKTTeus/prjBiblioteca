@@ -138,7 +138,18 @@ def test_provider_failure_is_honest_and_no_keyword_fallback(monkeypatch):
     assert result.status_code == 503
     assert "temporariamente indisponível" in result.json()["detail"]
     monkeypatch.delenv("GEMINI_API_KEY")
-    assert ask(api, "Oi").status_code == 503
+    missing = ask(api, "Oi")
+    assert missing.status_code == 503
+    assert "não está configurada" in missing.json()["detail"]
+
+
+def test_provider_failure_logs_only_phase_type_and_status(monkeypatch):
+    lines = []
+    monkeypatch.setattr(novi.logger, "warning", lambda *args: lines.append(args))
+    class ProviderError(Exception):
+        code = 503
+    novi._log_provider_failure("planejamento", ProviderError("segredo não deve ir ao log"))
+    assert lines == [("Falha da Novi em %s: tipo=%s status=%s", "planejamento", "ProviderError", 503)]
 
 
 def test_untrusted_generated_text_is_rejected(monkeypatch):
