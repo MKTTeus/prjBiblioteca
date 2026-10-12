@@ -180,7 +180,6 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
 @router.post("/livros/completar-com-ia")
 def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
     from google.genai import types
-    from google.genai.errors import APIError
     if not any([dados.isbn, dados.livTitulo, dados.livAutor]):
         raise HTTPException(
             status_code=400,
