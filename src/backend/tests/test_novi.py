@@ -101,6 +101,7 @@ def test_sensitive_and_third_party_requests_stay_out_of_provider(monkeypatch):
         result = ask(api, question)
         assert result.status_code == 200
         assert expected in result.json()["resposta"]
+        assert result.json()["contexto"] is False
         assert result.headers["cache-control"] == "private, no-store"
 
 
