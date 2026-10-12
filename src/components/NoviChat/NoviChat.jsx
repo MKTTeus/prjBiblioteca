@@ -35,7 +35,7 @@ function carregarConversa(email) {
     if (saved?.email !== email || !Array.isArray(saved?.mensagens)) return [BOAS_VINDAS];
     const validas = saved.mensagens.slice(-MAX_HISTORICO).filter((item) =>
       ["gestor", "novi"].includes(item?.papel) && typeof item.texto === "string" &&
-      item.texto.length > 0 && item.texto.length <= MAX_TEXTO_HISTORICO && !item.erro
+      item.texto.length > 0 && item.texto.length <= MAX_TEXTO_HISTORICO && !item.erro && item.contexto !== false
     ).map((item) => ({
       papel: item.papel,
       texto: item.texto,
@@ -84,17 +84,18 @@ export default function NoviChat() {
   useEffect(() => {
     if (!email) return;
     try {
-      const turnos = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro)
+      const turnos = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro && item.contexto !== false)
         .slice(-MAX_HISTORICO);
+      if (enviando && turnos.at(-1)?.papel === "gestor") turnos.pop();
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ email, mensagens: turnos }));
     } catch { /* Armazenamento indisponível: o chat segue funcionando em memória. */ }
-  }, [email, mensagens]);
+  }, [email, mensagens, enviando]);
 
   async function enviar(pergunta = texto) {
     const mensagem = pergunta.trim();
     if (!mensagem || enviando) return;
     // Boas-vindas e avisos de erro não fazem parte da conversa: só trocas reais servem de contexto.
-    const historico = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro).slice(-MAX_HISTORICO)
+    const historico = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro && item.contexto !== false).slice(-MAX_HISTORICO)
       .map((item) => ({ papel: item.papel, texto: item.texto.slice(0, MAX_TEXTO_HISTORICO) }));
     setMensagens((atuais) => [...atuais, { papel: "gestor", texto: mensagem }]);
     setTexto("");
@@ -104,9 +105,14 @@ export default function NoviChat() {
     try {
       const resposta = await perguntarNovi(mensagem, historico, controller.signal);
       if (pendingRef.current !== controller) return;
+      if (resposta.contexto === false) {
+        setMensagens((atuais) => atuais.map((item, index) =>
+          index === atuais.length - 1 && item.papel === "gestor" ? { ...item, contexto: false } : item));
+      }
       setMensagens((atuais) => [...atuais, {
         papel: "novi",
         texto: resposta.resposta,
+        contexto: resposta.contexto,
         destino: caminhoSeguro(resposta.destino?.caminho) ? resposta.destino : null,
       }]);
     } catch (error) {
