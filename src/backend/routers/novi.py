@@ -140,26 +140,22 @@ def _history(history: list[Turno]) -> list[dict]:
 
 
 def _call(system: str, payload: dict, schema: dict, max_tokens: int) -> dict:
-    from google import genai
     from google.genai import types
+    from gemini_client import create_gemini_client, generate_content_with_fallback
 
     model = os.getenv("NOVI_GEMINI_MODEL", "gemini-2.5-flash")
-    client = genai.Client(
-        api_key=os.environ["GEMINI_API_KEY"],
-        http_options=types.HttpOptions(
-            timeout=20000,
-            retry_options=types.HttpRetryOptions(
-                attempts=2, initial_delay=0.5, max_delay=1,
-                http_status_codes=[408, 429, 500, 502, 503, 504],
-            ),
-        ),
-    )
-    response = client.models.generate_content(
-        model=model, contents=json.dumps(payload, ensure_ascii=False),
+    client = create_gemini_client(timeout_ms=20_000)
+    response = generate_content_with_fallback(
+        client,
+        model=model,
+        fallback_model=os.getenv("NOVI_GEMINI_FALLBACK_MODEL") or None,
+        contents=json.dumps(payload, ensure_ascii=False),
         config=types.GenerateContentConfig(
-            system_instruction=system, response_mime_type="application/json",
-            response_json_schema=schema, temperature=0.2, max_output_tokens=max_tokens,
-            thinking_config=types.ThinkingConfig(thinking_budget=0) if model.startswith("gemini-2.5-") else None,
+            system_instruction=system,
+            response_mime_type="application/json",
+            response_json_schema=schema,
+            temperature=0.2,
+            max_output_tokens=max_tokens,
         ),
     )
     return json.loads(response.text or "{}")
