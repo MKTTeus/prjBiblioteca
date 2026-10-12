@@ -5,54 +5,9 @@ entregue ao modelo: selecionamos colunas e formatamos a resposta aqui.
 """
 
 import re
-import unicodedata
 
 from core import business_today
 from database import supabase
-
-
-def _normalizar(value: str) -> str:
-    normalized = unicodedata.normalize("NFKD", value.lower())
-    return "".join(char for char in normalized if not unicodedata.combining(char))
-
-
-def intent(question: str) -> str | None:
-    q = _normalizar(question)
-    if re.search(r"\b(meu nome|como me chamo|quem sou eu)\b", q):
-        return "meu_nome"
-    if (re.search(r"\b(livros?|titulos?|obras?)\b", q)
-            and re.search(r"\b(sem|nenhum|nao (?:tem|possui|temos))\s+(?:um[a]?\s+)?(?:exemplar(?:es)?|copias?)\b", q)):
-        return "livros_sem_exemplar"
-    if re.search(r"\b(relatorios?|indicadores?|resumo da circulacao|estatisticas?)\b", q) and re.search(
-        r"\b(quantos?|totais?|numeros?|resumo|dados|indicadores?|estatisticas?|mostr|consulta|situacao)\b", q
-    ):
-        return "indicadores"
-    if re.search(r"\b(quantos?|quantidade|total|numero de)\b", q):
-        if re.search(r"\b(alunos?|estudantes?)\b", q):
-            return "contar_alunos"
-        if re.search(r"\b(professores?|docentes?)\b", q):
-            return "contar_professores"
-        if re.search(r"\b(exemplares?|copias?)\b", q):
-            if _termo_livro(question):
-                return "consultar_livros"
-            if re.search(r"\b(disponiveis?|livres?)\b", q):
-                return "contar_disponiveis"
-            return "contar_exemplares"
-        if re.search(r"\b(livros?|titulos?|obras?)\b", q):
-            if _termo_livro(question):
-                return "consultar_livros"
-            if re.search(r"\b(disponiveis?|livres?)\b", q):
-                return "contar_disponiveis"
-            if re.search(r"\b(por autor|por genero|por editora)\b", q):
-                return None
-            return "contar_livros"
-    if re.search(r"\b(professores?|docentes?)\b", q) and re.search(r"\b(cadastrados?|temos|existem|listar|liste|mostre)\b", q):
-        return "contar_professores"
-    if re.search(r"\b(livros?|titulos?|obras?)\b", q) and re.search(
-        r"\b(ha|algum|tem|temos|existe|existem|buscar|procuro|encontro|dados|informacoes|disponibilidade|quais|liste|listar|mostre|sobre)\b", q
-    ):
-        return "consultar_livros"
-    return None
 
 
 def _contar(query) -> int:
@@ -60,20 +15,6 @@ def _contar(query) -> int:
     if response.count is None:
         raise RuntimeError("Contagem exata indisponível")
     return int(response.count)
-
-
-def _termo_livro(question: str) -> str | None:
-    question = question.split("\nPedido de continuação:", 1)[0]
-    quoted = re.search(r"[\"“”']([^\"“”']{2,80})[\"“”']", question)
-    if quoted:
-        term = quoted.group(1)
-    else:
-        match = re.search(r"\b(?:livros?|t[ií]tulos?|obras?)\s+(?:(?:com\s+o\s+t[ií]tulo|de\s+t[ií]tulo|chamad[oa]|intitulad[oa]|de|do|da)\s+)?(.+?)[?!.]*$", question, re.IGNORECASE)
-        term = match.group(1) if match else ""
-    term = re.sub(r"[%_*\\]", "", term).strip(" \t.,?!:;\"'")[:80]
-    if re.match(r"^(?:sem|com|no|na|em|do|da|algum|alguma|h[aá]|acervo|quantos|dispon[ií]ve(?:l|is)|cadastrad[oa]s?|ativos?|temos|existe|existem)\b", term, re.IGNORECASE):
-        return None
-    return term if len(term) >= 2 else None
 
 
 def _texto_publico(value) -> str:
@@ -85,7 +26,7 @@ def _texto_publico(value) -> str:
     return re.sub(r"[\\*`_\[\]<>]", "", value)
 
 
-def consultar(kind: str, question: str, admin: dict, term: str | None = None) -> tuple[str, str]:
+def consultar(kind: str, admin: dict, term: str | None = None) -> tuple[str, str]:
     """Retorna (mensagem, rota). Somente agregados, catálogo e nome próprio."""
     if kind == "meu_nome":
         rows = (supabase.table("Administrador").select("admNome").eq("idAdmin", admin["id"]).limit(1).execute().data or [])
@@ -93,9 +34,9 @@ def consultar(kind: str, question: str, admin: dict, term: str | None = None) ->
             raise RuntimeError("Conta não encontrada")
         return f"Seu nome cadastrado é **{_texto_publico(rows[0]['admNome'])}**.", "/admin/configuracoes/geral"
 
-    if kind == "contar_alunos":
+    if kind in ("contar_alunos", "contar_alunos_ativos"):
         query = supabase.table("Usuario").select("idUsuario", count="exact", head=True).eq("usuTipo", "Aluno").eq("usuExcluido", False)
-        active = bool(re.search(r"\bativos?\b", _normalizar(question)))
+        active = kind == "contar_alunos_ativos"
         if active:
             query = query.eq("usuStatus", True).eq("usuFormado", False)
         total = _contar(query)
@@ -143,14 +84,13 @@ def consultar(kind: str, question: str, admin: dict, term: str | None = None) ->
         return (f"Resumo atual da circulação:\n- **{active} empréstimos ativos**\n- **{pending} solicitações pendentes**\n"
                 f"- **{late} exemplares em atraso**\nAbra Relatórios para filtros e detalhes autorizados.", "/admin/relatorios")
 
-    if kind == "consultar_livros":
-        term = term if term is not None else _termo_livro(question)
-        if term is not None:
-            term = re.sub(r"[%_*\\]", "", term).strip()[:80]
-            if len(term) < 2:
-                term = None
-        if term is None and re.search(r"\b(?:h[aá]|algum[a]?|existe|existem|tem|temos)\b", question, re.IGNORECASE):
+    if kind in ("consultar_livros", "listar_livros"):
+        if kind == "consultar_livros":
+            term = re.sub(r"[%_*\\]", "", str(term or "")).strip(" \t.,?!:;\"'")[:80]
+        if kind == "consultar_livros" and len(term) < 2:
             return "Qual é o título que você quer buscar? Posso conferir o cadastro e indicar a tela do acervo.", "/admin/biblioteca"
+        if kind == "listar_livros":
+            term = None
         query = supabase.table("Livro").select("idLivro,livTitulo,livISBN,livPaginas,livAnoPublicacao,livAtivo")
         if term:
             query = query.ilike("livTitulo", f"%{term}%")

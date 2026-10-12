@@ -51,7 +51,7 @@ Em **Cadastro de Livros**, o botão de exclusão permanente pede confirmação. 
 
 ## Consultas simples e limites de dados
 
-A Novi pode responder diretamente ao gestor autenticado com o **nome da própria conta**, campos bibliográficos mínimos de até cinco livros (título, ISBN, páginas, ano e status), contagens de títulos e exemplares, contagens de alunos cadastrados não excluídos e de professores ativos, e indicadores agregados de circulação. Ela informa o critério da contagem e a tela de conferência. A disponibilidade e os totais podem mudar depois da consulta.
+A Novi pode responder diretamente ao gestor autenticado com o **nome da própria conta**, campos bibliográficos mínimos de até cinco livros (título, ISBN, páginas, ano e status), contagens de títulos e exemplares, contagens de alunos cadastrados não excluídos ou ativos não formados e de professores ativos, e indicadores agregados de circulação. Ela informa o critério da contagem e a tela de conferência. A disponibilidade e os totais podem mudar depois da consulta. Para recortes por turma, autor, gênero ou período que não fazem parte dessas consultas, indique a tela com seus filtros; não apresente um total geral como se fosse o recorte solicitado.
 
 Perguntas como **“Há algum livro com o título Harry Potter?”** buscam por parte do título no cadastro e mostram até cinco resultados; se houver um único título, a Novi informa a quantidade de exemplares e o status de disponibilidade. **“Há algum livro sem exemplar cadastrado?”** consulta a relação entre títulos e exemplares e informa o total e até cinco títulos nessa condição, incluindo inativos. A Novi não substitui a conferência na tela antes de alterar um cadastro.
 

@@ -66,31 +66,6 @@ ROUTES = {
     "avancado": ("Configurações Avançadas", "/admin/configuracoes/avancado"),
 }
 
-TOPIC_TERMS = {
-    "solicitacoes": "solicitacao solicitar pedido aprovar rejeitar retirada retirar reservado prazo expirar confirmacao",
-    "emprestimos": "emprestimo emprestar devolver devolucao renovar renovacao tombo atraso",
-    "livros": "livro acervo cadastrar titulo exemplar capa isbn ativar desativar excluir",
-    "autores": "autor autores mesclar",
-    "generos": "genero generos categoria categorias mesclar",
-    "alunos": "aluno alunos importar ra cadastro retido",
-    "comunidade": "comunidade cpf importar cadastro",
-    "admins": "administrador gestor professor perfil cadastrar desativar",
-    "professor": "professor turma emprestimo coletivo finalidade",
-    "relatorios": "relatorio relatorios indicador dados grafico atraso acervo",
-    "ano_letivo": "ano letivo encerrar fechar promover formado retido serie",
-    "backups": "backup backups restaurar restauracao recuperar exportar",
-    "configuracoes": "configuracao configurar limite prazo biblioteca tema salvar escuro claro aparencia noturno dark",
-    "seguranca": "senha seguranca sessao timeout forte",
-    "email": "email e-mail remetente envio",
-    "notificacoes": "notificacao aviso cron circulacao",
-    "config_notificacoes": "lembrete antecedencia preferencia notificar",
-    "ficha": "ficha catalografica cdd catalogacao inteligencia artificial",
-    "recomendacoes": "recomendacao avaliacao nota aluno leitura",
-    "biblioteca": "buscar pesquisar procurar catalogo biblioteca",
-    "inicio": "inicio dashboard painel resumo",
-    "avancado": "avancado log api",
-}
-
 STOPWORDS = {"como", "qual", "quais", "para", "porque", "sobre", "onde", "uma", "uns", "dos",
              "das", "que", "com", "por", "meu", "minha", "essa", "esse", "isso", "tenho", "posso",
              "faco", "fazer", "preciso", "sistema", "novi", "ajuda", "ajudar", "favor",
@@ -102,12 +77,6 @@ def words(value: str) -> set[str]:
     folded = unicodedata.normalize("NFKD", value.lower())
     folded = "".join(char for char in folded if not unicodedata.combining(char))
     return {word for word in re.findall(r"[a-z0-9]{3,}", folded) if word not in STOPWORDS}
-
-
-def topic_for(question: str) -> str | None:
-    query = words(question)
-    ranked = sorted(((len(query & words(terms)), topic) for topic, terms in TOPIC_TERMS.items()), reverse=True)
-    return ranked[0][1] if ranked and ranked[0][0] else None
 
 
 def _split_sections(path: str) -> list[dict]:
