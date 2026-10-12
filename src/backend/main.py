@@ -86,11 +86,8 @@ def register_routes(prefix: str = "") -> None:
         app.include_router(router, prefix=prefix)
 
 
-# A Vercel pode encaminhar à função compartilhada tanto o caminho original
-# (/api/...) quanto o caminho sem o prefixo (/...). Exponha ambos no deploy
-# para que os rewrites existentes não transformem POSTs em "Method Not Allowed".
+# O middleware da Vercel restaura o caminho original /api antes do roteamento.
 if os.getenv("VERCEL"):
-    register_routes()
     register_routes(prefix="/api")
 else:
     register_routes()
