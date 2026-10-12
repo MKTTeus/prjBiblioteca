@@ -9,19 +9,21 @@ from database import supabase
 from core import executar_em_paralelo, get_admin, utc_now
 from routers.livros import enriquecer_livros
 from schemas import FichaCatalograficaUpdate
+from gemini_client import create_gemini_client, generate_content_with_fallback
 
 router = APIRouter()
 
-MODEL = "gemini-2.5-flash"
+# Fluxo de catalogação frequente usa o modelo leve e reserva o Flash para 429.
+MODEL = os.getenv("GEMINI_CATALOG_MODEL", "gemini-3.5-flash-lite")
+FALLBACK_MODEL = os.getenv("GEMINI_CATALOG_FALLBACK_MODEL", "gemini-2.5-flash")
+
 def _get_client():
-    from google import genai
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
+    if not os.getenv("GEMINI_API_KEY"):
         raise HTTPException(
             status_code=500,
             detail="GEMINI_API_KEY não configurada no servidor.",
         )
-    return genai.Client(api_key=api_key)
+    return create_gemini_client()
 
 def int_to_roman(n: int) -> str:
     val = [10, 9, 5, 4, 1]
@@ -99,8 +101,10 @@ def sugerir_cdd_ia(livro_data: dict) -> str:
         "- Retorne apenas o código CDD como uma string simples (ex.: 823.914 ou 005.133), sem nenhuma pontuação extra ou explicação."
     )
     try:
-        resp = client.models.generate_content(
+        resp = generate_content_with_fallback(
+            client,
             model=MODEL,
+            fallback_model=FALLBACK_MODEL,
             contents=prompt,
         )
         if resp.text:
@@ -126,8 +130,10 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
         "- Responda APENAS com um array JSON de strings contendo de 3 a 5 assuntos (ex.: [\"Fantasia\", \"Literatura inglesa\", \"Magia\"]), sem texto explicativo."
     )
     try:
-        resp = client.models.generate_content(
+        resp = generate_content_with_fallback(
+            client,
             model=MODEL,
+            fallback_model=FALLBACK_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
