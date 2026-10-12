@@ -8,6 +8,14 @@ import { API_URL } from "./apiConfig";
 
 export const getToken = () => localStorage.getItem("token");
 
+// Novi oferece orientações e links; este endpoint não executa ações do sistema.
+export const perguntarNovi = (mensagem, historico = [], signal) =>
+  apiFetch("/novi/perguntar", {
+    method: "POST",
+    body: JSON.stringify({ mensagem, historico }),
+    signal,
+  });
+
 // ========================
 // FETCH BASE
 // ========================
