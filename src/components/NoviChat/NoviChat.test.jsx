@@ -50,3 +50,11 @@ test("renderiza negrito e listas sem interpretar HTML enviado na resposta", asyn
   expect(container.querySelector("img")).toBeNull();
   expect(screen.getByText(/<img src=x onerror=/)).toBeInTheDocument();
 });
+
+test("informa quando a análise da pergunta está indisponível", async () => {
+  perguntarNovi.mockRejectedValue({ status: 503 });
+  render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Como cadastrar um livro?" }));
+  expect(await screen.findByText(/temporariamente indisponível para analisar sua pergunta/)).toBeInTheDocument();
+});
