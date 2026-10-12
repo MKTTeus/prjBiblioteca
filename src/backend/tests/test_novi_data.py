@@ -14,6 +14,7 @@ class Query:
         self.filters = []
         self.columns = None
         self.head = False
+        self.start = None
 
     def select(self, columns, **kwargs):
         self.columns = columns
@@ -45,6 +46,11 @@ class Query:
 
     def limit(self, value):
         assert value <= 1000
+        return self
+
+    def range(self, start, end):
+        assert end - start < 1000
+        self.start = start
         return self
 
     def execute(self):
@@ -213,3 +219,42 @@ def test_missing_count_fails_instead_of_reporting_zero(monkeypatch):
         assert "Contagem exata" in str(exc)
     else:
         raise AssertionError("contagem ausente foi tratada como zero")
+
+
+def test_accession_lookup_folds_accents_and_filters_available_copies(monkeypatch):
+    def result(q):
+        if q.table == "Livro" and q.start is None:
+            return SimpleNamespace(data=[], count=0)
+        if q.table == "Livro":
+            return SimpleNamespace(data=[book(8, "Harry Potter e o Calice de Fogo")], count=None)
+        return SimpleNamespace(data=[{"idLivro": 8, "exeLivTombo": "HP-017", "exeLivStatus": "Disponível"},
+                                     {"idLivro": 8, "exeLivTombo": "HP-019", "exeLivStatus": "Emprestado"}], count=None)
+    db = DB(result)
+    monkeypatch.setattr(novi_data, "supabase", db)
+    answer, path = novi_data.consultar("consultar_exemplares", {"id": 9}, "Cálice de Fogo", "disponiveis")
+    assert "HP-017" in answer and "HP-019" not in answer
+    assert "1 exemplar(es) disponível(is)" in answer and path == "/admin/biblioteca"
+    assert db.calls[-1].columns == "idLivro,exeLivTombo,exeLivStatus"
+    assert all(q.columns != "*" for q in db.calls)
+
+
+def test_accession_lookup_multiple_titles_does_not_require_exact_title(monkeypatch):
+    def result(q):
+        if q.table == "Livro":
+            return SimpleNamespace(data=[book(1, "Saga Um"), book(2, "Saga Dois")], count=2)
+        return SimpleNamespace(data=[{"idLivro": 1, "exeLivTombo": "T-1", "exeLivStatus": "Disponível"},
+                                     {"idLivro": 2, "exeLivTombo": "T-2", "exeLivStatus": "Disponível"}], count=None)
+    monkeypatch.setattr(novi_data, "supabase", DB(result))
+    answer, _ = novi_data.consultar("consultar_exemplares", {"id": 9}, "Saga", "disponiveis")
+    assert "Saga Um" in answer and "T-1" in answer and "Saga Dois" in answer and "T-2" in answer
+
+
+def test_accession_lookup_caps_output_and_discloses_truncation(monkeypatch):
+    def result(q):
+        if q.table == "Livro":
+            return SimpleNamespace(data=[book(8, "Muitas cópias")], count=1)
+        return SimpleNamespace(data=[{"idLivro": 8, "exeLivTombo": f"T-{i}", "exeLivStatus": "Disponível"}
+                                     for i in range(9)], count=None)
+    monkeypatch.setattr(novi_data, "supabase", DB(result))
+    answer, _ = novi_data.consultar("consultar_exemplares", {"id": 9}, "Muitas", "disponiveis")
+    assert "T-4" in answer and "T-5" not in answer and "mais 4 na tela" in answer

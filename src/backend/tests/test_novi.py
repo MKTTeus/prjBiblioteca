@@ -27,9 +27,9 @@ def ask(api, question, history=None):
                     headers={"Authorization": "Bearer admin"})
 
 
-def plan(action, kind="nenhuma", topic="nenhum", search="", title="", answer=""):
+def plan(action, kind="nenhuma", topic="nenhum", search="", title="", answer="", filtro="todos"):
     return {"acao": action, "consulta": kind, "tema": topic, "busca": search,
-            "titulo": title, "resposta": answer}
+            "titulo": title, "filtro": filtro, "resposta": answer}
 
 
 def test_only_authenticated_manager_can_ask(monkeypatch):
@@ -226,3 +226,46 @@ def test_own_name_is_never_sent_to_composition(monkeypatch):
 def test_composed_answer_keeps_book_titles_untouched():
     assert novi._safe_answer("Temos A Biblioteca da Meia-Noite.", rename=False) == "Temos A Biblioteca da Meia-Noite."
     assert "Sala de Leitura" in novi._safe_answer("Abra a biblioteca escolar.")
+
+
+def test_accession_followup_passes_title_and_scope_without_sending_identifiers_to_model(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("consultar", "consultar_exemplares", "biblioteca",
+                                                       title="Cálice de Fogo", filtro="disponiveis"))
+    calls = []
+    monkeypatch.setattr(novi, "consultar", lambda *args: (calls.append(args) or
+                        ("Tombo **HP-017** disponível.", "/admin/biblioteca")))
+    monkeypatch.setattr(novi, "_compose", lambda *args: (_ for _ in ()).throw(AssertionError("identificador enviado ao modelo")))
+    history = [{"papel": "gestor", "texto": "Quais exemplares de Harry Potter estão disponíveis?"},
+               {"papel": "novi", "texto": "Há Harry Potter e o Calice de Fogo: 4 exemplares."},
+               {"papel": "gestor", "texto": "Quais os tombos de cada?"},
+               {"papel": "novi", "texto": "Qual título?"}]
+    response = ask(api, "Cálice de Fogo", history)
+    assert response.status_code == 200 and "HP-017" in response.json()["resposta"]
+    assert calls == [("consultar_exemplares", {"id": 9, "tipo": "admin", "admProfessor": False, "senhaProvisoria": False},
+                      "Cálice de Fogo", "disponiveis")]
+
+
+def test_repeated_clarification_gets_one_model_review_then_stops(monkeypatch):
+    api = client(monkeypatch)
+    repeated = plan("esclarecer", answer="Qual título deseja consultar?")
+    monkeypatch.setattr(novi, "_plan", lambda *args: repeated)
+    reviews = []
+    def review(question, history, first):
+        reviews.append(question)
+        return repeated
+    monkeypatch.setattr(novi, "_review_plan", review)
+    history = [{"papel": "novi", "texto": "Qual título deseja consultar?"}]
+    response = ask(api, "Aquele do volume 2", history)
+    assert reviews == ["Aquele do volume 2"]
+    assert "Ainda não consegui identificar" in response.json()["resposta"]
+
+
+def test_repeated_clarification_can_be_replanned_as_new_query(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_plan", lambda *args: plan("esclarecer", answer="Qual título deseja consultar?"))
+    monkeypatch.setattr(novi, "_review_plan", lambda *args: plan("consultar", "consultar_exemplares", "biblioteca",
+                                                                title="Cálice de Fogo", filtro="todos"))
+    monkeypatch.setattr(novi, "consultar", lambda *args: ("Tombo **T-12**.", "/admin/biblioteca"))
+    response = ask(api, "Cálice de Fogo", [{"papel": "novi", "texto": "Qual título deseja consultar?"}])
+    assert "T-12" in response.json()["resposta"]
