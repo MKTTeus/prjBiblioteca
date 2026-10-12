@@ -85,3 +85,48 @@ def test_transient_gemini_error_does_not_spend_groq_quota(monkeypatch):
         )
 
     assert called == []
+
+
+def test_groq_request_keeps_prompt_and_schema_private_from_logs(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-secret")
+    captured = {}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"choices": [{"message": {"content": '{"ok": true}'}}]}
+
+    class FakeHTTPClient:
+        def __init__(self, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def post(self, url, **kwargs):
+            captured["url"] = url
+            captured.update(kwargs)
+            return FakeResponse()
+
+    monkeypatch.setattr(ai.httpx, "Client", FakeHTTPClient)
+    config = type("Config", (), {
+        "system_instruction": "system prompt",
+        "temperature": 0.2,
+        "max_output_tokens": 100,
+        "response_mime_type": "application/json",
+        "response_json_schema": {"type": "object", "required": ["ok"]},
+    })()
+
+    result = ai._generate_groq(contents="ISBN 123", config=config)
+
+    assert result.text == '{"ok": true}'
+    assert captured["url"] == "https://api.groq.com/openai/v1/chat/completions"
+    assert captured["headers"]["Authorization"] == "Bearer test-secret"
+    assert "ISBN 123" in captured["json"]["messages"][-1]["content"]
+    assert "system prompt" in captured["json"]["messages"][0]["content"]
+    assert captured["json"]["response_format"] == {"type": "json_object"}
