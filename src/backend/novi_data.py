@@ -5,6 +5,7 @@ entregue ao modelo: selecionamos colunas e formatamos a resposta aqui.
 """
 
 import re
+import unicodedata
 
 from core import business_today
 from database import supabase
@@ -13,6 +14,8 @@ from database import supabase
 MAX_TITULOS_BUSCA = 8      # títulos devolvidos numa busca por nome
 MAX_TITULOS_AMOSTRA = 5    # títulos devolvidos numa amostra sem termo
 MAX_LINHAS_EXEMPLAR = 1000 # teto do PostgREST; ao atingi-lo a contagem não é confiável
+MAX_LINHAS_CATALOGO = 5000 # limite de segurança da busca sem acentos
+MAX_TOMBOS_POR_TITULO = 5
 
 
 def _contar(query) -> int:
@@ -46,12 +49,40 @@ def _texto_publico(value) -> str:
     value = re.sub(r"[\x00-\x1f\x7f]", " ", str(value or ""))[:110].strip()
     if re.search(r"[\w.+-]+@[\w.-]+\.[a-z]{2,}|\b\d{3}[. ]?\d{3}[. ]?\d{3}[- ]?\d{2}\b|"
                  r"\b(?:\+55[ .-]?)?\(?\d{2}\)?[ .-]?\d{4,5}[ .-]?\d{4}\b|"
-                 r"\bRA[\s:#-]*\d{3,}\b|\b(?:sk-|AIza)[A-Za-z0-9_-]{15,}\b", value, re.IGNORECASE):
+                 r"\bRA[\s:#-]*\d{3,}\b|\b(?:sk-|AIza)[A-Za-z0-9_-]{15,}\b|"
+                 r"\b(?:Bearer\s+)?eyJ[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b", value, re.IGNORECASE):
         return "[dado omitido]"
     return re.sub(r"[\\*`_\[\]<>]", "", value)
 
 
-def consultar(kind: str, admin: dict, term: str | None = None) -> tuple[str, str]:
+def _normalizar(value: str) -> str:
+    return "".join(char for char in unicodedata.normalize("NFKD", value.casefold())
+                   if not unicodedata.combining(char))
+
+
+def _buscar_titulos(term: str, columns: str, limit: int) -> tuple[list[dict], int]:
+    """Busca primeiro no banco; se não houver resultado, tenta equivalência de
+    acentos no catálogo paginado. Nunca retorna uma contagem parcial."""
+    result = (supabase.table("Livro").select(columns, count="exact")
+              .ilike("livTitulo", f"%{term}%").order("livTitulo").limit(limit).execute())
+    if result.data:
+        if result.count is None:
+            raise RuntimeError("Contagem de títulos indisponível")
+        return result.data, int(result.count)
+
+    matches = []
+    needle = _normalizar(term)
+    page_size = 500
+    for start in range(0, MAX_LINHAS_CATALOGO, page_size):
+        page = (supabase.table("Livro").select(columns).order("livTitulo")
+                .range(start, start + page_size - 1).execute().data or [])
+        matches.extend(row for row in page if needle in _normalizar(str(row.get("livTitulo") or "")))
+        if len(page) < page_size:
+            return matches[:limit], len(matches)
+    raise RuntimeError("Catálogo excede limite da busca sem acentos")
+
+
+def consultar(kind: str, admin: dict, term: str | None = None, filtro: str = "todos") -> tuple[str, str]:
     """Retorna (mensagem, rota). Somente agregados, catálogo e nome próprio."""
     if kind == "meu_nome":
         rows = (supabase.table("Administrador").select("admNome").eq("idAdmin", admin["id"]).limit(1).execute().data or [])
@@ -109,22 +140,53 @@ def consultar(kind: str, admin: dict, term: str | None = None) -> tuple[str, str
         return (f"Resumo atual da circulação:\n- **{active} empréstimos ativos**\n- **{pending} solicitações pendentes**\n"
                 f"- **{late} exemplares em atraso**\nAbra Relatórios para filtros e detalhes autorizados.", "/admin/relatorios")
 
-    if kind in ("consultar_livros", "listar_livros"):
-        if kind == "consultar_livros":
+    if kind in ("consultar_livros", "listar_livros", "consultar_exemplares"):
+        if kind != "listar_livros":
             term = re.sub(r"[%_*\\]", "", str(term or "")).strip(" \t.,?!:;\"'")[:80]
-        if kind == "consultar_livros" and len(term) < 2:
+        if kind != "listar_livros" and len(term) < 2:
             return "Qual é o título que você quer buscar? Posso conferir o cadastro e indicar a tela do acervo.", "/admin/biblioteca"
-        if kind == "listar_livros":
-            term = None
-        query = supabase.table("Livro").select("idLivro,livTitulo,livISBN,livPaginas,livAnoPublicacao,livAtivo", count="exact")
-        if term:
-            query = query.ilike("livTitulo", f"%{term}%")
+        columns = ("idLivro,livTitulo,livAtivo" if kind == "consultar_exemplares" else
+                   "idLivro,livTitulo,livISBN,livPaginas,livAnoPublicacao,livAtivo")
         limit = MAX_TITULOS_BUSCA if term else MAX_TITULOS_AMOSTRA
-        result = query.order("livTitulo").limit(limit).execute()
-        rows = result.data or []
+        if term:
+            rows, found = _buscar_titulos(term, columns, limit)
+        else:
+            result = supabase.table("Livro").select(columns, count="exact").order("livTitulo").limit(limit).execute()
+            rows, found = result.data or [], int(result.count) if result.count is not None else len(result.data or [])
         if not rows:
             return "Não encontrei título com esse nome no cadastro. Confira a grafia ou pesquise no acervo.", "/admin/biblioteca"
-        found = int(result.count) if result.count is not None else len(rows)
+        if kind == "consultar_exemplares":
+            if filtro not in ("todos", "disponiveis"):
+                raise ValueError("Filtro de exemplares não permitido")
+            ids = [row["idLivro"] for row in rows if row.get("livAtivo") is not False or filtro == "todos"]
+            exemplares = (supabase.table("Exemplar").select("idLivro,exeLivTombo,exeLivStatus")
+                          .in_("idLivro", ids).limit(MAX_LINHAS_EXEMPLAR).execute().data or []) if ids else []
+            if len(exemplares) >= MAX_LINHAS_EXEMPLAR:
+                raise RuntimeError("Consulta de exemplares incompleta")
+            parts = []
+            for row in rows:
+                title = _texto_publico(row.get("livTitulo"))
+                if row.get("livAtivo") is False and filtro == "disponiveis":
+                    continue
+                matching = [ex for ex in exemplares if ex.get("idLivro") == row["idLivro"]
+                            and (filtro == "todos" or ex.get("exeLivStatus") == "Disponível")]
+                tombos = [_texto_publico(ex.get("exeLivTombo")) for ex in matching]
+                omitted = sum(value == "[dado omitido]" for value in tombos)
+                tombos = [value for value in tombos if value and value != "[dado omitido]"]
+                preview = ", ".join(f"**{value}**" for value in tombos[:MAX_TOMBOS_POR_TITULO]) or "nenhum"
+                extra = f"; mais {len(tombos) - MAX_TOMBOS_POR_TITULO} na tela" if len(tombos) > MAX_TOMBOS_POR_TITULO else ""
+                if omitted:
+                    extra += f"; {omitted} identificador(es) omitido(s) por segurança"
+                inactive = " (título inativo)" if row.get("livAtivo") is False else ""
+                parts.append(f"- {title}{inactive}: {len(matching)} exemplar(es)"
+                             f"{' disponível(is)' if filtro == 'disponiveis' else ''}; tombos: {preview}{extra}")
+            scope = "disponíveis" if filtro == "disponiveis" else "cadastrados (com seus status na tela)"
+            header = f"Tombos dos exemplares {scope} para \"{_texto_publico(term)}\":"
+            if found > len(rows):
+                header += f" mostro {len(rows)} de {found} títulos; refine a busca para ver os demais."
+            if not parts:
+                return f"Não há títulos ativos com exemplares disponíveis nessa busca. Confira o acervo.", "/admin/biblioteca"
+            return "\n".join([header, *parts, "A disponibilidade pode mudar; confira no acervo."]), "/admin/biblioteca"
         counts = _exemplares_por_livro([row["idLivro"] for row in rows])
         parts, copies_sum, available_sum = [], 0, 0
         for row in rows:
