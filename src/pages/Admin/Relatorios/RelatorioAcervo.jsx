@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiDownload, FiFileText, FiBook, FiLayers, FiLoader } from "react-icons/fi";
 
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -18,6 +18,8 @@ function hojeISO() {
 
 export default function RelatorioAcervo() {
   const [agrupador, setAgrupador] = useState("genero");
+  const [agrupadorAplicado, setAgrupadorAplicado] = useState('genero');
+  const requisicao = useRef(0);
   const [itens, setItens] = useState([]);
   const [resumo, setResumo] = useState({ totalLivros: 0, totalExemplares: 0, totalGrupos: 0 });
   const [carregando, setCarregando] = useState(false);
@@ -30,22 +32,27 @@ export default function RelatorioAcervo() {
   const [erroTitulos, setErroTitulos] = useState(null);
 
   async function buscar(agrupadorAtual = agrupador) {
+    const id = ++requisicao.current;
     setCarregando(true);
     setErro(null);
     try {
       const resultado = await getRelatorioAcervo(agrupadorAtual);
+      if (id !== requisicao.current) return;
+      setAgrupadorAplicado(agrupadorAtual);
       setItens(resultado.itens || []);
       setResumo(resultado.resumo || { totalLivros: 0, totalExemplares: 0, totalGrupos: 0 });
     } catch (error) {
+      if (id !== requisicao.current) return;
       console.error(error);
       setErro("Não foi possível carregar o relatório. Tente novamente.");
     } finally {
-      setCarregando(false);
+      if (id === requisicao.current) setCarregando(false);
     }
   }
 
   useEffect(() => {
     buscar();
+    return () => { requisicao.current += 1; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -79,27 +86,27 @@ export default function RelatorioAcervo() {
     setErroTitulos(null);
   }
 
-  const LABEL_GRUPO = { genero: "Gênero", autor: "Autor", editora: "Editora" };
-  const LABEL_GRUPO_PLURAL = { genero: "Gêneros", autor: "Autores", editora: "Editoras" };
-  const labelGrupo = LABEL_GRUPO[agrupador] || "Gênero";
-  const labelGrupoPlural = LABEL_GRUPO_PLURAL[agrupador] || "Gêneros";
+  const LABEL_GRUPO = { categoria: "Categoria", genero: "Gênero", autor: "Autor", editora: "Editora", ano_publicacao:"Ano de publicação" };
+  const LABEL_GRUPO_PLURAL = { categoria:"Categorias", genero: "Gêneros", autor: "Autores", editora: "Editoras", ano_publicacao:"Anos de publicação" };
+  const labelGrupo = LABEL_GRUPO[agrupadorAplicado] || "Gênero";
+  const labelGrupoPlural = LABEL_GRUPO_PLURAL[agrupadorAplicado] || "Gêneros";
 
   function handleExportarPDF() {
     exportarPDF({
       titulo: `Relatório de Acervo por ${labelGrupo}`,
       subtitulo: `Gerado em: ${formatarData(hojeISO())}`,
-      colunas: colunasExportAcervo(agrupador),
+      colunas: colunasExportAcervo(agrupadorAplicado),
       linhas: linhasParaExportAcervo(itens),
-      nomeArquivo: `relatorio-acervo-${agrupador}-${hojeISO()}`,
+      nomeArquivo: `relatorio-acervo-${agrupadorAplicado}-${hojeISO()}`,
     });
   }
 
   function handleExportarExcel() {
     exportarExcel({
       nomeAba: "Acervo",
-      colunas: colunasExportAcervo(agrupador),
+      colunas: colunasExportAcervo(agrupadorAplicado),
       linhas: linhasParaExportAcervo(itens),
-      nomeArquivo: `relatorio-acervo-${agrupador}-${hojeISO()}`,
+      nomeArquivo: `relatorio-acervo-${agrupadorAplicado}-${hojeISO()}`,
     });
   }
 
@@ -113,7 +120,7 @@ export default function RelatorioAcervo() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarExcel}
-            disabled={carregando || itens.length === 0}
+            disabled={carregando || itens.length === 0 || Boolean(erro) || agrupador !== agrupadorAplicado}
           >
             <FiDownload /> Excel
           </button>
@@ -121,7 +128,7 @@ export default function RelatorioAcervo() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarPDF}
-            disabled={carregando || itens.length === 0}
+            disabled={carregando || itens.length === 0 || Boolean(erro) || agrupador !== agrupadorAplicado}
           >
             <FiFileText /> PDF
           </button>
@@ -155,6 +162,8 @@ export default function RelatorioAcervo() {
 
       {erro && <div className="rel-erro">{erro}</div>}
 
+      <p className="rel-nota">Situação atual do acervo. Obras com vários autores, gêneros ou categorias aparecem em cada grupo; o resumo conta títulos e exemplares únicos.</p>
+
       <div className="rel-table-box">
         <table>
           <thead>
@@ -164,16 +173,19 @@ export default function RelatorioAcervo() {
               <th>Exemplares</th>
               <th>Disponíveis</th>
               <th>Emprestados</th>
+              <th>Reservados</th>
+              <th>Indisponíveis / fixos</th>
+              <th>Desativados</th>
             </tr>
           </thead>
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan="5" className="rel-empty">Carregando...</td>
+                <td colSpan="8" className="rel-empty">Carregando...</td>
               </tr>
             ) : itens.length === 0 ? (
               <tr>
-                <td colSpan="5" className="rel-empty">Nenhum livro ativo encontrado no acervo.</td>
+                <td colSpan="8" className="rel-empty">Nenhum livro ativo encontrado no acervo.</td>
               </tr>
             ) : (
               itens.map((item) => (
@@ -192,6 +204,9 @@ export default function RelatorioAcervo() {
                   <td>{item.quantidadeExemplares}</td>
                   <td>{item.quantidadeDisponiveis}</td>
                   <td>{item.quantidadeEmprestados}</td>
+                  <td>{item.quantidadeReservados}</td>
+                  <td>{item.quantidadeIndisponiveis}</td>
+                  <td>{item.quantidadeDesativados}</td>
                 </tr>
               ))
             )}

@@ -25,13 +25,15 @@ export function exportarPDF({ titulo, subtitulo, colunas, linhas, nomeArquivo })
 
   doc.setFontSize(10);
   doc.setTextColor(100, 116, 139);
-  if (subtitulo) doc.text(subtitulo, 40, 58);
-  doc.text(`Gerado em: ${dataGeracao}`, 40, subtitulo ? 74 : 58);
+  const linhasSubtitulo = subtitulo ? doc.splitTextToSize(subtitulo, doc.internal.pageSize.getWidth() - 80) : [];
+  if (linhasSubtitulo.length) doc.text(linhasSubtitulo, 40, 58);
+  const yGeracao = 58 + linhasSubtitulo.length * 12;
+  doc.text(`Gerado em: ${dataGeracao}`, 40, yGeracao);
 
   autoTable(doc, {
     head: [colunas],
     body: linhas,
-    startY: subtitulo ? 90 : 74,
+    startY: yGeracao + 16,
     styles: { fontSize: 9, cellPadding: 6 },
     headStyles: { fillColor: [79, 70, 229], textColor: 255 },
     alternateRowStyles: { fillColor: [248, 250, 252] },
@@ -129,11 +131,26 @@ export function exportarFichaCatalografica({ tituloLivro, paragrafos, nomeArquiv
  * @param {Array<Array<string|number>>} opcoes.linhas - Linhas da tabela.
  * @param {string} opcoes.nomeArquivo - Nome do arquivo (sem extensão).
  */
-export async function exportarExcel({ nomeAba, colunas, linhas, nomeArquivo }) {
+export async function exportarExcel({ nomeAba, colunas, linhas, nomeArquivo, detalhes = [] }) {
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet((nomeAba || 'Dados').replace(/[\\/*?:\[\]]/g,' ').slice(0,31));
   sheet.addRows([colunas,...linhas]);
+  sheet.views = [{ state: 'frozen', ySplit: 1 }];
+  sheet.autoFilter = { from: {row:1,column:1}, to: {row:Math.max(1,linhas.length+1),column:colunas.length} };
+  sheet.getRow(1).font = { bold:true, color:{argb:'FFFFFFFF'} };
+  sheet.getRow(1).fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF4F46E5'} };
+  sheet.columns.forEach((col,index) => {
+    col.width = Math.min(55, Math.max(14, ...[colunas[index],...linhas.slice(0,100).map(l => l[index])].map(v => String(v ?? '').length + 2)));
+    col.alignment = { vertical:'top', wrapText:true };
+  });
+  if (detalhes.length) {
+    const contexto = workbook.addWorksheet('Filtros e notas');
+    contexto.addRows([['Relatório',nomeAba], ['Gerado em',new Date().toLocaleString('pt-BR')], ...detalhes.map(d => [d])]);
+    contexto.getColumn(1).width = 95;
+    contexto.getColumn(1).alignment = { wrapText:true };
+    contexto.getColumn(2).width = 40;
+  }
   const bytes = await workbook.xlsx.writeBuffer();
   const url = URL.createObjectURL(new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
   const a = document.createElement('a');a.href=url;a.download=`${nomeArquivo}.xlsx`;a.click();

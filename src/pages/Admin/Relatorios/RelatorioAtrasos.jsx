@@ -28,6 +28,7 @@ export default function RelatorioAtrasos() {
     agrupador: "",
   });
   const [itens, setItens] = useState([]);
+  const [filtrosAplicados, setFiltrosAplicados] = useState(filtros);
   const [ranking, setRanking] = useState(null);
   const [resumo, setResumo] = useState({ usuariosInadimplentes: 0, itensAtrasados: 0, diasAtrasoMedio: 0 });
   const [carregando, setCarregando] = useState(false);
@@ -38,6 +39,7 @@ export default function RelatorioAtrasos() {
     setErro(null);
     try {
       const resultado = await getRelatorioAtrasos(filtros);
+      setFiltrosAplicados(filtros);
       setItens(resultado.itens || []);
       setRanking(resultado.ranking || null);
       setResumo(resultado.resumo || { usuariosInadimplentes: 0, itensAtrasados: 0, diasAtrasoMedio: 0 });
@@ -54,7 +56,8 @@ export default function RelatorioAtrasos() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const emModoRanking = Boolean(filtros.agrupador) && Array.isArray(ranking);
+  const emModoRanking = Boolean(filtrosAplicados.agrupador) && Array.isArray(ranking);
+  const filtrosEditados = JSON.stringify(filtros) !== JSON.stringify(filtrosAplicados);
 
   // Agrupa os itens (um por empréstimo atrasado) por usuário, só para dar um
   // resumo visual de quantos livros cada um está devendo — a tabela em si
@@ -62,7 +65,7 @@ export default function RelatorioAtrasos() {
   const usuariosAgrupados = useMemo(() => {
     const mapa = new Map();
     itens.forEach((item) => {
-      const chave = item.idUsuario ?? item.usuario;
+      const chave = item.idAdminProfessor ? `professor:${item.idAdminProfessor}` : `usuario:${item.idUsuario ?? item.usuario}`;
       if (!mapa.has(chave)) mapa.set(chave, 0);
       mapa.set(chave, mapa.get(chave) + 1);
     });
@@ -113,7 +116,7 @@ export default function RelatorioAtrasos() {
     <div className="rel-tab-content">
       <div className="rel-subheader">
         <p>
-          {filtros.apenasAtivos
+          {filtrosAplicados.apenasAtivos
             ? "Usuários com empréstimos ativos que já passaram da data de devolução."
             : "Histórico completo de atrasos, incluindo os já devolvidos fora do prazo."}
         </p>
@@ -123,7 +126,7 @@ export default function RelatorioAtrasos() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarExcel}
-            disabled={carregando || semResultado}
+            disabled={carregando || semResultado || filtrosEditados || Boolean(erro)}
           >
             <FiDownload /> Excel
           </button>
@@ -131,7 +134,7 @@ export default function RelatorioAtrasos() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarPDF}
-            disabled={carregando || semResultado}
+            disabled={carregando || semResultado || filtrosEditados || Boolean(erro)}
           >
             <FiFileText /> PDF
           </button>
@@ -140,7 +143,7 @@ export default function RelatorioAtrasos() {
 
       <section className="stats-cards-grid" aria-label="Resumo de atrasos">
         <StatsCard title="Usuários Inadimplentes" value={resumo.usuariosInadimplentes} icon={<FiUsers />} color="red" />
-        <StatsCard title="Itens em Atraso" value={resumo.itensAtrasados} icon={<FiAlertTriangle />} color="red" />
+        <StatsCard title={filtrosAplicados.apenasAtivos ? "Itens em Atraso" : "Ocorrências de Atraso"} value={resumo.itensAtrasados} icon={<FiAlertTriangle />} color="red" />
         <StatsCard title="Atraso Médio (dias)" value={resumo.diasAtrasoMedio} icon={<FiClock />} color="blue" />
       </section>
 
@@ -211,13 +214,14 @@ export default function RelatorioAtrasos() {
       </div>
 
       {erro && <div className="rel-erro">{erro}</div>}
+      {filtrosEditados && <p className="rel-nota">Clique em Filtrar para aplicar as alterações antes de exportar.</p>}
 
       {emModoRanking ? (
         <div className="rel-table-box">
           <table>
             <thead>
               <tr>
-                <th>{AGRUPADOR_ATRASOS_OPTIONS.find((o) => o.valor === filtros.agrupador)?.label || "Item"}</th>
+                <th>{AGRUPADOR_ATRASOS_OPTIONS.find((o) => o.valor === filtrosAplicados.agrupador)?.label || "Item"}</th>
                 <th>Ocorrências</th>
                 <th>Dias de Atraso (total)</th>
               </tr>
@@ -268,9 +272,9 @@ export default function RelatorioAtrasos() {
                   <tr key={`${item.idUsuario ?? item.usuario}-${item.tombo}-${index}`}>
                     <td>
                       {item.usuario}
-                      {usuariosAgrupados.get(item.idUsuario ?? item.usuario) > 1 && (
+                      {usuariosAgrupados.get(item.idAdminProfessor ? `professor:${item.idAdminProfessor}` : `usuario:${item.idUsuario ?? item.usuario}`) > 1 && (
                         <span className="rel-badge-contagem">
-                          {usuariosAgrupados.get(item.idUsuario ?? item.usuario)} itens
+                          {usuariosAgrupados.get(item.idAdminProfessor ? `professor:${item.idAdminProfessor}` : `usuario:${item.idUsuario ?? item.usuario}`)} itens
                         </span>
                       )}
                     </td>

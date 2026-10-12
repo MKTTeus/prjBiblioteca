@@ -632,6 +632,14 @@ export const getRelatorioAcervo = (agrupador = "genero") =>
 export const getRelatorioAcervoTitulos = (idLivros = []) =>
   apiFetch(`/relatorios/acervo/titulos?ids=${idLivros.join(",")}`);
 
+export const getRelatorioGestao = (tipo, filtros = {}) => {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([chave, valor]) => {
+    if (valor !== undefined && valor !== null && valor !== '' && valor !== 'todos') params.set(chave, valor);
+  });
+  return apiFetch(`/relatorios/gestao/${encodeURIComponent(tipo)}?${params}`);
+};
+
 export const getExemplares = () =>
   apiFetch("/exemplares");
 

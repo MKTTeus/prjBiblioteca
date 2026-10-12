@@ -5,7 +5,7 @@ import { buscarUsuariosRelatorio } from "../../../services/api";
 
 /**
  * Campo de busca com autocomplete para selecionar um único usuário (aluno
- * ou comunidade) — usado para filtrar o relatório de empréstimos pelo
+ * professor ou comunidade) — usado para filtrar o relatório de empréstimos pelo
  * histórico de uma pessoa específica. Ao selecionar, mostra um "chip" com
  * o nome escolhido no lugar do input, com botão para limpar a seleção.
  */
@@ -28,6 +28,7 @@ export default function BuscaUsuarioInput({ usuarioSelecionado, onSelecionar, on
   }, []);
 
   useEffect(() => {
+    let atual = true;
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (termo.trim().length < 2) {
@@ -40,16 +41,16 @@ export default function BuscaUsuarioInput({ usuarioSelecionado, onSelecionar, on
     debounceRef.current = setTimeout(async () => {
       try {
         const resultado = await buscarUsuariosRelatorio(termo.trim());
-        setSugestoes(resultado.itens || []);
+        if (atual) setSugestoes(resultado.itens || []);
       } catch (error) {
         console.error(error);
-        setSugestoes([]);
+        if (atual) setSugestoes([]);
       } finally {
-        setBuscando(false);
+        if (atual) setBuscando(false);
       }
     }, 300);
 
-    return () => clearTimeout(debounceRef.current);
+    return () => { atual = false; clearTimeout(debounceRef.current); };
   }, [termo]);
 
   function handleSelecionar(usuario) {
@@ -66,9 +67,9 @@ export default function BuscaUsuarioInput({ usuarioSelecionado, onSelecionar, on
         <span className="rel-aluno-chip-meta">
           {usuarioSelecionado.usuTipo === "Aluno"
             ? `${usuarioSelecionado.usuSerie || "-"} · ${usuarioSelecionado.usuTurma || "-"}`
-            : "Comunidade"}
+            : usuarioSelecionado.usuTipo}
         </span>
-        <button type="button" className="rel-aluno-chip-remover" onClick={onLimpar} title="Remover filtro de aluno">
+        <button type="button" className="rel-aluno-chip-remover" onClick={onLimpar} aria-label="Remover filtro de leitor" title="Remover filtro de leitor">
           <FiX />
         </button>
       </div>
@@ -83,7 +84,8 @@ export default function BuscaUsuarioInput({ usuarioSelecionado, onSelecionar, on
         value={termo}
         onChange={(e) => setTermo(e.target.value)}
         onFocus={() => setOpen(true)}
-        placeholder="Buscar aluno ou comunidade..."
+        placeholder="Buscar aluno, professor ou comunidade..."
+        aria-label="Buscar leitor específico"
         autoComplete="off"
       />
       {buscando && <FiLoader className="rel-busca-aluno-spinner rel-spinner" />}
@@ -96,11 +98,13 @@ export default function BuscaUsuarioInput({ usuarioSelecionado, onSelecionar, on
             <li className="rel-busca-aluno-vazio">Nenhum usuário encontrado.</li>
           ) : (
             sugestoes.map((usuario) => (
-              <li key={usuario.idUsuario} onClick={() => handleSelecionar(usuario)}>
+              <li key={usuario.idAdminProfessor ? `professor:${usuario.idAdminProfessor}` : `usuario:${usuario.idUsuario}`}>
+                <button type="button" onClick={() => handleSelecionar(usuario)}>
                 <span className="rel-busca-aluno-nome">{usuario.usuNome}</span>
                 <span className="rel-busca-aluno-meta">
-                  {usuario.usuTipo === "Aluno" ? `${usuario.usuSerie || "-"} · ${usuario.usuTurma || "-"}` : "Comunidade"}
+                  {usuario.usuTipo === "Aluno" ? `${usuario.usuSerie || "-"} · ${usuario.usuTurma || "-"}` : usuario.usuTipo}
                 </span>
+                </button>
               </li>
             ))
           )}

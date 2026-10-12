@@ -46,9 +46,12 @@ export default function RelatorioEmprestimos() {
     serie: "",
     anoLetivo: "",
     idUsuario: "",
+    idAdminProfessor: "",
+    q: "",
     agrupador: "",
   });
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [filtrosAplicados, setFiltrosAplicados] = useState(filtros);
 
   const [itens, setItens] = useState([]);
   const [ranking, setRanking] = useState(null);
@@ -71,12 +74,14 @@ export default function RelatorioEmprestimos() {
   });
   const [carregandoMensal, setCarregandoMensal] = useState(false);
   const [erroMensal, setErroMensal] = useState(null);
+  const [mensalAplicados, setMensalAplicados] = useState(filtrosMensal);
 
   async function buscar() {
     setCarregando(true);
     setErro(null);
     try {
       const resultado = await getRelatorioEmprestimos(filtros);
+      setFiltrosAplicados(filtros);
       setItens(resultado.itens || []);
       setRanking(resultado.ranking || null);
       setResumo(resultado.resumo || { ativos: 0, atrasados: 0, devolvidos: 0, total: 0 });
@@ -93,6 +98,7 @@ export default function RelatorioEmprestimos() {
     setErroMensal(null);
     try {
       const resultado = await getRelatorioEmprestimosMensal(filtrosAtuais);
+      setMensalAplicados(filtrosAtuais);
       setDadosMensal({
         anoLetivo: resultado.anoLetivo ?? filtrosAtuais.anoLetivo,
         anosDisponiveis: resultado.anosDisponiveis || [],
@@ -124,12 +130,12 @@ export default function RelatorioEmprestimos() {
     // Ao escolher um aluno específico, faz sentido mostrar o histórico
     // completo dele — limpa o recorte de data e o agrupador em ranking,
     // que não fazem sentido pra uma pessoa só.
-    setFiltros((f) => ({ ...f, idUsuario: usuario.idUsuario, dataInicio: "", dataFim: "", agrupador: "" }));
+    setFiltros((f) => ({ ...f, idUsuario: usuario.idUsuario || "", idAdminProfessor: usuario.idAdminProfessor || "", tipoUsuario: "todos", serie: "", turma: "", dataInicio: "", dataFim: "", agrupador: "" }));
   }
 
   function handleLimparAluno() {
     setUsuarioSelecionado(null);
-    setFiltros((f) => ({ ...f, idUsuario: "" }));
+    setFiltros((f) => ({ ...f, idUsuario: "", idAdminProfessor: "" }));
   }
 
   const anosLetivosOptions = useMemo(() => {
@@ -139,11 +145,12 @@ export default function RelatorioEmprestimos() {
   }, [filtrosMensal.anoLetivo, dadosMensal.anosDisponiveis]);
 
   const periodoLabel = useMemo(() => {
-    if (!filtros.dataInicio && !filtros.dataFim) return "Todo o período";
-    return `${formatarData(filtros.dataInicio)} a ${formatarData(filtros.dataFim)}`;
-  }, [filtros.dataInicio, filtros.dataFim]);
+    if (!filtrosAplicados.dataInicio && !filtrosAplicados.dataFim) return "Todo o período";
+    return `${formatarData(filtrosAplicados.dataInicio)} a ${formatarData(filtrosAplicados.dataFim)}`;
+  }, [filtrosAplicados.dataInicio, filtrosAplicados.dataFim]);
 
-  const emModoRanking = Boolean(filtros.agrupador) && Array.isArray(ranking);
+  const emModoRanking = Boolean(filtrosAplicados.agrupador) && Array.isArray(ranking);
+  const filtrosEditados = JSON.stringify(modoVisualizacao === 'mensal' ? filtrosMensal : filtros) !== JSON.stringify(modoVisualizacao === 'mensal' ? mensalAplicados : filtrosAplicados);
 
   function handleExportarPDF() {
     if (modoVisualizacao === "mensal") {
@@ -238,7 +245,7 @@ export default function RelatorioEmprestimos() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarExcel}
-            disabled={carregandoAtual || semResultado}
+            disabled={carregandoAtual || semResultado || filtrosEditados || Boolean(modoVisualizacao === 'mensal' ? erroMensal : erro)}
           >
             <FiDownload /> Excel
           </button>
@@ -246,12 +253,14 @@ export default function RelatorioEmprestimos() {
             type="button"
             className="rel-btn-export"
             onClick={handleExportarPDF}
-            disabled={carregandoAtual || semResultado}
+            disabled={carregandoAtual || semResultado || filtrosEditados || Boolean(modoVisualizacao === 'mensal' ? erroMensal : erro)}
           >
             <FiFileText /> PDF
           </button>
         </div>
       </div>
+
+      {filtrosEditados && <p className="rel-nota">Clique em Filtrar para aplicar as alterações antes de exportar.</p>}
 
       {modoVisualizacao === "mensal" ? (
         <>
@@ -455,12 +464,17 @@ export default function RelatorioEmprestimos() {
         </div>
 
         <div className="rel-filtro-campo">
-          <label htmlFor="rel-busca-aluno">Histórico de aluno</label>
+          <label>Histórico de leitor</label>
           <BuscaUsuarioInput
             usuarioSelecionado={usuarioSelecionado}
             onSelecionar={handleSelecionarAluno}
             onLimpar={handleLimparAluno}
           />
+        </div>
+
+        <div className="rel-filtro-campo">
+          <label htmlFor="rel-busca-livro">Livro ou tombo</label>
+          <input id="rel-busca-livro" type="search" value={filtros.q} placeholder="Título, tombo ou ISBN" onChange={e => setFiltros(f => ({...f,q:e.target.value}))} />
         </div>
 
         <div className="rel-filtro-campo">
@@ -490,7 +504,7 @@ export default function RelatorioEmprestimos() {
           <table>
             <thead>
               <tr>
-                <th>{AGRUPADOR_EMPRESTIMOS_OPTIONS.find((o) => o.valor === filtros.agrupador)?.label || "Item"}</th>
+                <th>{AGRUPADOR_EMPRESTIMOS_OPTIONS.find((o) => o.valor === filtrosAplicados.agrupador)?.label || "Item"}</th>
                 <th>Total</th>
                 <th>Ativos</th>
                 <th>Atrasados</th>
