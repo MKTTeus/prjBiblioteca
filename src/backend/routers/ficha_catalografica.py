@@ -126,7 +126,7 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
         f"Palavras-chave: {livro_data.get('livPalavrasChave') or ''}\n\n"
         "Regras:\n"
         "- Priorize as categorias, gêneros e palavras-chave já existentes.\n"
-        "- Responda APENAS com um array JSON de strings contendo de 3 a 5 assuntos (ex.: [\"Fantasia\", \"Literatura inglesa\", \"Magia\"]), sem texto explicativo."
+        "- Responda APENAS com um objeto JSON no formato {\"assuntos\":[\"Fantasia\", \"Literatura inglesa\", \"Magia\"]}, sem texto explicativo."
     )
     try:
         resp = generate_content_with_fallback(
