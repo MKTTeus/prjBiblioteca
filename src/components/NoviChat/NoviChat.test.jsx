@@ -116,3 +116,19 @@ test("retoma a conversa após remontagem e limpa o contexto quando solicitado", 
   fireEvent.click(screen.getByRole("button", { name: "Limpar" }));
   expect(JSON.parse(sessionStorage.getItem("novi-conversa-v1")).mensagens).toEqual([]);
 });
+
+test("não guarda nem reenvia uma pergunta recusada por privacidade", async () => {
+  perguntarNovi.mockResolvedValueOnce({ resposta: "Retire os dados pessoais da pergunta.", contexto: false })
+    .mockResolvedValueOnce({ resposta: "Posso orientar sobre o procedimento." });
+  render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  const campo = screen.getByLabelText("Digite sua pergunta para a Novi");
+  fireEvent.change(campo, { target: { value: "CPF 123.456.789-09" } });
+  fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+  expect(await screen.findByText("Retire os dados pessoais da pergunta.")).toBeInTheDocument();
+  expect(JSON.parse(sessionStorage.getItem("novi-conversa-v1")).mensagens).toEqual([]);
+  fireEvent.change(campo, { target: { value: "Como é o procedimento?" } });
+  fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+  expect(await screen.findByText("Posso orientar sobre o procedimento.")).toBeInTheDocument();
+  expect(perguntarNovi).toHaveBeenLastCalledWith("Como é o procedimento?", [], expect.any(AbortSignal));
+});
