@@ -12,7 +12,7 @@ A Novi aparece no canto inferior direito de todas as telas administrativas. Ela 
 
 ## Fontes e resposta
 
-O backend recupera trechos de `GUIA_DE_USO.md`, `REGRAS_E_FLUXOS.md` e `ARQUITETURA.md`. Quando esses trechos não bastam, oferece à IA somente funções selecionadas no índice `src/backend/novi_knowledge.py` do mesmo deploy. Não há ferramenta de leitura livre de arquivos, acesso ao GitHub ou a segredos. A resposta indica apenas documentos públicos consultados; o código serve para entender a regra, sem ser exibido no chat.
+O backend recupera trechos de `NOVI_FLUXOS_GESTOR.md`, `GUIA_DE_USO.md`, `REGRAS_E_FLUXOS.md` e `ARQUITETURA.md`. Perguntas curtas de continuação reaproveitam o assunto recente do gestor para buscar a fonte certa. Quando os documentos não bastam, a IA recebe somente funções selecionadas no índice `src/backend/novi_knowledge.py` do mesmo deploy. Não há ferramenta de leitura livre de arquivos, acesso ao GitHub ou a segredos. A resposta indica apenas documentos consultados; o código serve para entender a regra, sem ser exibido no chat.
 
 Se não houver fonte suficiente, a Novi declara o limite e encaminha o gestor à tela relacionada ou à equipe técnica. Prazos, disponibilidade, status e totais atuais devem ser conferidos na aplicação. Alterações nos fluxos exigem revisão dos guias, do índice de código e das rotas permitidas antes de publicar um novo deploy.
 
