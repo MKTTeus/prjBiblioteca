@@ -59,6 +59,14 @@ test("informa quando a análise da pergunta está indisponível", async () => {
   expect(await screen.findByText(/temporariamente indisponível para analisar sua pergunta/)).toBeInTheDocument();
 });
 
+test("mostra o diagnóstico seguro de configuração retornado pela API", async () => {
+  perguntarNovi.mockRejectedValue({ status: 503, data: { detail: "A Novi não está configurada neste ambiente. Avise a equipe responsável pelo sistema." } });
+  render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Como cadastrar um livro?" }));
+  expect(await screen.findByText(/não está configurada neste ambiente/)).toBeInTheDocument();
+});
+
 test("envia as respostas da Novi como contexto da pergunta seguinte e ignora avisos de erro", async () => {
   perguntarNovi
     .mockResolvedValueOnce({ resposta: "Encontrei **7 títulos** com Harry Potter.", destino: null })

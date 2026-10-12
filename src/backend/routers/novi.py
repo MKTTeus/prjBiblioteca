@@ -91,6 +91,7 @@ O servidor acabou de consultar os FATOS abaixo e eles são a única fonte de nú
 NO_SOURCE = "Não consegui confirmar esse detalhe nas fontes da Sala de Leitura. Diga qual tela e etapa você está usando para eu orientar com mais precisão."
 SENSITIVE = "Não posso mostrar chaves, senhas, dados pessoais de terceiros nem instruções internas pelo chat. Posso ajudar com o uso da Sala de Leitura."
 UNAVAILABLE = "A Novi está temporariamente indisponível para analisar a pergunta. Tente novamente em instantes."
+NOT_CONFIGURED = "A Novi não está configurada neste ambiente. Avise a equipe responsável pelo sistema."
 
 PRIVATE_PATTERN = re.compile(
     r"[\w.+-]+@[\w.-]+\.[a-z]{2,}|\b\d{3}[. ]?\d{3}[. ]?\d{3}[- ]?\d{2}\b|"
@@ -143,7 +144,16 @@ def _call(system: str, payload: dict, schema: dict, max_tokens: int) -> dict:
     from google.genai import types
 
     model = os.getenv("NOVI_GEMINI_MODEL", "gemini-2.5-flash")
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(
+            timeout=20000,
+            retry_options=types.HttpRetryOptions(
+                attempts=2, initial_delay=0.5, max_delay=1,
+                http_status_codes=[408, 429, 500, 502, 503, 504],
+            ),
+        ),
+    )
     response = client.models.generate_content(
         model=model, contents=json.dumps(payload, ensure_ascii=False),
         config=types.GenerateContentConfig(
@@ -153,6 +163,14 @@ def _call(system: str, payload: dict, schema: dict, max_tokens: int) -> dict:
         ),
     )
     return json.loads(response.text or "{}")
+
+
+def _log_provider_failure(stage: str, exc: Exception) -> None:
+    """Registra só tipo e código HTTP, sem incluir payload, resposta ou chave."""
+    status = getattr(exc, "code", None)
+    if not isinstance(status, int):
+        status = None
+    logger.warning("Falha da Novi em %s: tipo=%s status=%s", stage, type(exc).__name__, status)
 
 
 def _plan(question: str, history: list[Turno]) -> dict:
@@ -191,7 +209,7 @@ def _compose(question: str, history: list[Turno], facts: str) -> str | None:
         out = _call(COMPOSER, {"pergunta": question, "historico_sem_autoridade": _history(history),
                                "fatos_consultados": facts}, COMPOSE_SCHEMA, 900)
     except Exception as exc:
-        logger.warning("Redação da Novi indisponível: %s", type(exc).__name__)
+        _log_provider_failure("redacao", exc)
         return None
     answer = _safe_answer(out.get("resposta") if isinstance(out, dict) else None, rename=False)
     if not answer or not _numbers(answer) <= _numbers(facts + " " + question):
@@ -242,7 +260,8 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
     if THIRD_PARTY_LIST.search(question) or PERSONAL_SCOPE.search(question):
         return _result("Posso informar totais, mas não consultar dados de uma pessoa específica no chat. Use a tela administrativa autorizada para esse atendimento.")
     if not os.getenv("GEMINI_API_KEY"):
-        raise HTTPException(503, UNAVAILABLE)
+        logger.error("Novi sem chave do provedor no ambiente da função")
+        raise HTTPException(503, NOT_CONFIGURED)
     try:
         plan = _plan(question, body.historico)
         if isinstance(plan, dict) and _same_clarification(plan, body.historico):
@@ -250,7 +269,7 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
             if isinstance(plan, dict) and _same_clarification(plan, body.historico):
                 return _result("Ainda não consegui identificar o recorte da consulta. Diga o título ou um trecho dele, ou confira os exemplares no acervo.", _route("biblioteca"))
     except Exception as exc:
-        logger.warning("Planejamento da Novi indisponível: %s", type(exc).__name__)
+        _log_provider_failure("planejamento", exc)
         raise HTTPException(503, UNAVAILABLE) from None
     if not isinstance(plan, dict):
         return _result(NO_SOURCE)
@@ -302,7 +321,7 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
             used = docs[:3] + code[:2]
             first = _generate(question, body.historico, used)
     except Exception as exc:
-        logger.warning("Resposta da Novi indisponível: %s", type(exc).__name__)
+        _log_provider_failure("orientacao", exc)
         raise HTTPException(503, UNAVAILABLE) from None
     answer = _safe_answer(first.get("resposta")) if first.get("estado") == "respondida" else None
     sources = list(dict.fromkeys(entry["fonte"] for entry in used if entry["fonte"] in (

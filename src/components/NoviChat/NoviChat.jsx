@@ -85,7 +85,9 @@ export default function NoviChat() {
           texto: error.status === 429
             ? "Recebi muitas perguntas em pouco tempo. Aguarde alguns minutos e tente novamente."
             : error.status === 503
-              ? "Estou temporariamente indisponível para analisar sua pergunta. Tente novamente em instantes."
+              ? (typeof error.data?.detail === "string" && error.data.detail.length <= 180
+                ? error.data.detail
+                : "Estou temporariamente indisponível para analisar sua pergunta. Tente novamente em instantes.")
               : "Não consegui responder agora. Tente novamente em instantes ou use o menu do sistema.",
         }]);
       }
