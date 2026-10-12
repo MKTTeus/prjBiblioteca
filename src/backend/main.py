@@ -29,6 +29,8 @@ from routers.relatorios import router as relatorios_router
 from routers.professor import router as professor_router
 from routers.recomendacoes import router as recomendacoes_router
 from routers.novi import router as novi_router
+from vercel_path import VercelRewritePathMiddleware
+
 
 def _split_env_list(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -54,6 +56,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(VercelRewritePathMiddleware)
 
 ROUTERS = [
     auth_router,
@@ -83,11 +86,8 @@ def register_routes(prefix: str = "") -> None:
         app.include_router(router, prefix=prefix)
 
 
-# A Vercel pode encaminhar à função compartilhada tanto o caminho original
-# (/api/...) quanto o caminho sem o prefixo (/...). Exponha ambos no deploy
-# para que os rewrites existentes não transformem POSTs em "Method Not Allowed".
+# O middleware da Vercel restaura o caminho original /api antes do roteamento.
 if os.getenv("VERCEL"):
-    register_routes()
     register_routes(prefix="/api")
 else:
     register_routes()
