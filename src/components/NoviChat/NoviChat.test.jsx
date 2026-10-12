@@ -58,3 +58,30 @@ test("informa quando a análise da pergunta está indisponível", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Como cadastrar um livro?" }));
   expect(await screen.findByText(/temporariamente indisponível para analisar sua pergunta/)).toBeInTheDocument();
 });
+
+test("envia as respostas da Novi como contexto da pergunta seguinte e ignora avisos de erro", async () => {
+  perguntarNovi
+    .mockResolvedValueOnce({ resposta: "Encontrei **7 títulos** com Harry Potter.", destino: null })
+    .mockRejectedValueOnce({ status: 503 })
+    .mockResolvedValueOnce({ resposta: "Cada título tem de 2 a 4 exemplares.", destino: null });
+  render(<NoviChat />);
+  fireEvent.click(screen.getByRole("button", { name: "Abrir chat da Novi" }));
+  const campo = screen.getByLabelText("Digite sua pergunta para a Novi");
+  const enviar = async (texto, esperado) => {
+    fireEvent.change(campo, { target: { value: texto } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+    expect(await screen.findByText(esperado)).toBeInTheDocument();
+  };
+  await enviar("Quantos livros de Harry Potter?", /Encontrei/);
+  await enviar("E o segundo?", /temporariamente indisponível/);
+  await enviar("Quantos exemplares há de cada?", /Cada título tem/);
+  expect(perguntarNovi).toHaveBeenLastCalledWith(
+    "Quantos exemplares há de cada?",
+    [
+      { papel: "gestor", texto: "Quantos livros de Harry Potter?" },
+      { papel: "novi", texto: "Encontrei **7 títulos** com Harry Potter." },
+      { papel: "gestor", texto: "E o segundo?" },
+    ],
+    expect.any(AbortSignal),
+  );
+});

@@ -18,6 +18,10 @@ const BOAS_VINDAS = {
   texto: "Oi! Eu sou a Novi 👋 Posso te explicar os fluxos da Sala de Leitura e indicar a tela certa. Como posso ajudar?",
 };
 
+// Mensagens recentes enviadas como contexto (precisa acompanhar MAX_HISTORY do backend).
+const MAX_HISTORICO = 10;
+const MAX_TEXTO_HISTORICO = 1600;
+
 function caminhoSeguro(caminho) {
   return typeof caminho === "string" && /^\/admin(?:\/[a-z-]+)*$/.test(caminho);
 }
@@ -57,8 +61,9 @@ export default function NoviChat() {
   async function enviar(pergunta = texto) {
     const mensagem = pergunta.trim();
     if (!mensagem || enviando) return;
-    const historico = mensagens.filter((item) => item !== BOAS_VINDAS).slice(-6)
-      .map((item) => ({ papel: item.papel, texto: item.texto.slice(0, 800) }));
+    // Boas-vindas e avisos de erro não fazem parte da conversa: só trocas reais servem de contexto.
+    const historico = mensagens.filter((item) => item !== BOAS_VINDAS && !item.erro).slice(-MAX_HISTORICO)
+      .map((item) => ({ papel: item.papel, texto: item.texto.slice(0, MAX_TEXTO_HISTORICO) }));
     setMensagens((atuais) => [...atuais, { papel: "gestor", texto: mensagem }]);
     setTexto("");
     setEnviando(true);
@@ -76,6 +81,7 @@ export default function NoviChat() {
       if (pendingRef.current === controller && error.name !== "AbortError") {
         setMensagens((atuais) => [...atuais, {
           papel: "novi",
+          erro: true,
           texto: error.status === 429
             ? "Recebi muitas perguntas em pouco tempo. Aguarde alguns minutos e tente novamente."
             : error.status === 503

@@ -10,11 +10,36 @@ from core import business_today
 from database import supabase
 
 
+MAX_TITULOS_BUSCA = 8      # títulos devolvidos numa busca por nome
+MAX_TITULOS_AMOSTRA = 5    # títulos devolvidos numa amostra sem termo
+MAX_LINHAS_EXEMPLAR = 1000 # teto do PostgREST; ao atingi-lo a contagem não é confiável
+
+
 def _contar(query) -> int:
     response = query.execute()
     if response.count is None:
         raise RuntimeError("Contagem exata indisponível")
     return int(response.count)
+
+
+def _exemplares_por_livro(ids: list) -> dict:
+    """Lê idLivro/status dos exemplares dos títulos pedidos numa única consulta e
+    conta no servidor: {idLivro: [cadastrados, disponíveis]}. Nunca devolve contagem
+    parcial: se o teto de linhas for atingido, falha em vez de subestimar."""
+    totals = {i: [0, 0] for i in ids}
+    if not ids:
+        return totals
+    rows = (supabase.table("Exemplar").select("idLivro,exeLivStatus").in_("idLivro", ids)
+            .limit(MAX_LINHAS_EXEMPLAR).execute().data or [])
+    if len(rows) >= MAX_LINHAS_EXEMPLAR:
+        raise RuntimeError("Contagem de exemplares incompleta")
+    for row in rows:
+        entry = totals.get(row.get("idLivro"))
+        if entry is not None:
+            entry[0] += 1
+            if row.get("exeLivStatus") == "Disponível":
+                entry[1] += 1
+    return totals
 
 
 def _texto_publico(value) -> str:
@@ -91,33 +116,43 @@ def consultar(kind: str, admin: dict, term: str | None = None) -> tuple[str, str
             return "Qual é o título que você quer buscar? Posso conferir o cadastro e indicar a tela do acervo.", "/admin/biblioteca"
         if kind == "listar_livros":
             term = None
-        query = supabase.table("Livro").select("idLivro,livTitulo,livISBN,livPaginas,livAnoPublicacao,livAtivo")
+        query = supabase.table("Livro").select("idLivro,livTitulo,livISBN,livPaginas,livAnoPublicacao,livAtivo", count="exact")
         if term:
             query = query.ilike("livTitulo", f"%{term}%")
-        rows = query.order("livTitulo").limit(5).execute().data or []
+        limit = MAX_TITULOS_BUSCA if term else MAX_TITULOS_AMOSTRA
+        result = query.order("livTitulo").limit(limit).execute()
+        rows = result.data or []
         if not rows:
             return "Não encontrei título com esse nome no cadastro. Confira a grafia ou pesquise no acervo.", "/admin/biblioteca"
-        parts = []
+        found = int(result.count) if result.count is not None else len(rows)
+        counts = _exemplares_por_livro([row["idLivro"] for row in rows])
+        parts, copies_sum, available_sum = [], 0, 0
         for row in rows:
-            title = _texto_publico(row.get("livTitulo"))
+            copies, available = counts[row["idLivro"]]
+            active = row.get("livAtivo") is not False
+            summary = f"**{_texto_publico(row.get('livTitulo'))}** — {'ativo' if active else 'inativo'}"
+            if row.get("livAnoPublicacao") is not None: summary += f", {row['livAnoPublicacao']}"
+            if row.get("livPaginas") is not None: summary += f", {row['livPaginas']} páginas"
             isbn = _texto_publico(row.get("livISBN"))
-            year = row.get("livAnoPublicacao")
-            pages = row.get("livPaginas")
-            summary = f"**{title}** — {'ativo' if row.get('livAtivo') is not False else 'inativo'}"
-            if year is not None: summary += f", {year}"
-            if pages is not None: summary += f", {pages} páginas"
             if isbn: summary += f", ISBN {isbn}"
-            if term and len(rows) == 1:
-                copies = _contar(supabase.table("Exemplar").select("idExemplar", count="exact", head=True).eq("idLivro", row["idLivro"]))
-                summary += f", {copies} exemplares cadastrados"
-                if row.get("livAtivo") is False:
-                    summary += "; título desativado no catálogo"
-                else:
-                    available = _contar(supabase.table("Exemplar").select("idExemplar", count="exact", head=True)
-                                        .eq("idLivro", row["idLivro"]).eq("exeLivStatus", "Disponível"))
-                    summary += f" e {available} disponíveis"
+            summary += f", {copies} exemplares cadastrados"
+            copies_sum += copies
+            if not active:
+                summary += "; título desativado no catálogo"
+            else:
+                summary += f" e {available} disponíveis"
+                available_sum += available
             parts.append(f"- {summary}")
-        ending = "Resultados do cadastro (até cinco títulos). A disponibilidade de exemplares pode mudar; confira no acervo."
-        return "\n".join(parts) + "\n" + ending, "/admin/biblioteca"
+        plural = "s" if found != 1 else ""
+        header = (f"Encontrei **{found} título{plural}** com \"{_texto_publico(term)}\" no cadastro"
+                  if term else f"Amostra de títulos do cadastro (há {found} no total)")
+        if found > len(rows):
+            header += f"; mostro os {len(rows)} primeiros em ordem alfabética"
+        lines = [header + ":", *parts]
+        if len(rows) > 1:
+            lines.append(f"Somando os títulos listados: **{copies_sum} exemplares cadastrados** e "
+                         f"**{available_sum} disponíveis** (apenas títulos ativos).")
+        lines.append("A disponibilidade de exemplares pode mudar; confira no acervo.")
+        return "\n".join(lines), "/admin/biblioteca"
 
     raise ValueError("Consulta não permitida")
