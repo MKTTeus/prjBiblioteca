@@ -93,6 +93,30 @@ def test_student_and_professor_counts_use_exact_filters(monkeypatch):
     assert {("eq", "admProfessor", True), ("eq", "admStatus", True)} <= set(db.calls[1].filters)
 
 
+def test_community_and_manager_counts_use_distinct_scopes(monkeypatch):
+    db = DB(lambda q: SimpleNamespace(data=None, count=2 if q.table == "Usuario" else 3))
+    monkeypatch.setattr(novi_data, "supabase", db)
+    community, community_route = novi_data.consultar("contar_comunidade", {"id": 9})
+    managers, manager_route = novi_data.consultar("contar_gestores", {"id": 9})
+    assert "2 pessoas da comunidade" in community and community_route == "/admin/comunidade"
+    assert "3 gestores ativos" in managers and manager_route == "/admin/admins"
+    assert {("eq", "usuTipo", "Comunidade"), ("eq", "usuExcluido", False)} <= set(db.calls[0].filters)
+    assert {("eq", "admProfessor", False), ("eq", "admStatus", True)} <= set(db.calls[1].filters)
+    assert all(q.head and q.columns.startswith("id") for q in db.calls)
+
+
+def test_staff_roster_returns_only_names_and_discloses_limit(monkeypatch):
+    db = DB(lambda q: SimpleNamespace(data=[{"admNome": "Ana"}, {"admNome": "Bruno"}], count=11))
+    monkeypatch.setattr(novi_data, "supabase", db)
+    answer, route = novi_data.consultar("listar_professores", {"id": 9})
+    assert "Ana" in answer and "Bruno" in answer and "Mostro 2 de 11" in answer
+    assert route == "/admin/admins"
+    query = db.calls[0]
+    assert query.columns == "admNome" and not query.head
+    assert {("eq", "admProfessor", True), ("eq", "admStatus", True)} <= set(query.filters)
+    assert query.table == "Administrador"
+
+
 def book(id_, title, active=True, year=2000):
     return {"idLivro": id_, "livTitulo": title, "livISBN": None, "livPaginas": 200,
             "livAnoPublicacao": year, "livAtivo": active}
