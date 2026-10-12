@@ -20,6 +20,9 @@ def intent(question: str) -> str | None:
     q = _normalizar(question)
     if re.search(r"\b(meu nome|como me chamo|quem sou eu)\b", q):
         return "meu_nome"
+    if (re.search(r"\b(livros?|titulos?|obras?)\b", q)
+            and re.search(r"\b(sem|nenhum|nao (?:tem|possui|temos))\s+(?:um[a]?\s+)?(?:exemplar(?:es)?|copias?)\b", q)):
+        return "livros_sem_exemplar"
     if re.search(r"\b(relatorios?|indicadores?|resumo da circulacao|estatisticas?)\b", q) and re.search(
         r"\b(quantos?|totais?|numeros?|resumo|dados|indicadores?|estatisticas?|mostr|consulta|situacao)\b", q
     ):
@@ -46,7 +49,7 @@ def intent(question: str) -> str | None:
     if re.search(r"\b(professores?|docentes?)\b", q) and re.search(r"\b(cadastrados?|temos|existem|listar|liste|mostre)\b", q):
         return "contar_professores"
     if re.search(r"\b(livros?|titulos?|obras?)\b", q) and re.search(
-        r"\b(tem|temos|existe|existem|buscar|procuro|encontro|dados|informacoes|disponibilidade|quais|liste|listar|mostre|sobre)\b", q
+        r"\b(ha|algum|tem|temos|existe|existem|buscar|procuro|encontro|dados|informacoes|disponibilidade|quais|liste|listar|mostre|sobre)\b", q
     ):
         return "consultar_livros"
     return None
@@ -60,14 +63,17 @@ def _contar(query) -> int:
 
 
 def _termo_livro(question: str) -> str | None:
+    question = question.split("\nPedido de continuação:", 1)[0]
     quoted = re.search(r"[\"“”']([^\"“”']{2,80})[\"“”']", question)
     if quoted:
         term = quoted.group(1)
     else:
-        match = re.search(r"\b(?:livro|t[ií]tulo|obra)\s+(?:(?:chamado|intitulado|de|do|da)\s+)?(.+?)[?!.]*$", question, re.IGNORECASE)
+        match = re.search(r"\b(?:livros?|t[ií]tulos?|obras?)\s+(?:(?:com\s+o\s+t[ií]tulo|de\s+t[ií]tulo|chamad[oa]|intitulad[oa]|de|do|da)\s+)?(.+?)[?!.]*$", question, re.IGNORECASE)
         term = match.group(1) if match else ""
     term = re.sub(r"[%_*\\]", "", term).strip(" \t.,?!:;\"'")[:80]
-    return term if len(term) >= 2 and term.lower() not in ("temos", "existe", "disponivel", "disponível", "s") else None
+    if re.match(r"^(?:sem|com|no|na|em|do|da|algum|alguma|h[aá]|acervo|quantos|dispon[ií]ve(?:l|is)|cadastrad[oa]s?|ativos?|temos|existe|existem)\b", term, re.IGNORECASE):
+        return None
+    return term if len(term) >= 2 else None
 
 
 def _texto_publico(value) -> str:
@@ -112,6 +118,22 @@ def consultar(kind: str, question: str, admin: dict, term: str | None = None) ->
         total = _contar(supabase.table(table).select(column, count="exact", head=True))
         return f"Há **{total} {label}** no cadastro, incluindo itens inativos. Para conferir disponibilidade, abra o acervo.", route
 
+    if kind == "livros_sem_exemplar":
+        # Filtro anti-join do PostgREST: conta títulos sem qualquer cópia,
+        # sem transferir o catálogo inteiro e sem depender de texto do modelo.
+        result = (supabase.table("Livro").select("idLivro,livTitulo,Exemplar()", count="exact")
+                  .is_("Exemplar", "null").order("livTitulo").limit(5).execute())
+        if result.count is None:
+            raise RuntimeError("Contagem exata indisponível")
+        total = int(result.count)
+        if total == 0:
+            return "Não há **títulos sem exemplar** no cadastro neste momento.", "/admin/livros"
+        titles = [f"- **{_texto_publico(row.get('livTitulo'))}**" for row in (result.data or [])]
+        listagem = "\n" + "\n".join(titles) if titles else ""
+        return (f"Há **{total} título{'s' if total != 1 else ''} sem exemplar cadastrado**"
+                f" (incluindo inativos).{' Alguns deles:' if titles else ''}{listagem}\n"
+                "Abra Cadastro de Livros para conferir os registros e adicionar cópias, se necessário.", "/admin/livros")
+
     if kind == "indicadores":
         active = _contar(supabase.table("Movimentacao").select("idMovimentacao", count="exact", head=True).eq("movStatus", "Ativo"))
         pending = _contar(supabase.table("Movimentacao").select("idMovimentacao", count="exact", head=True).eq("movStatus", "Pendente"))
@@ -127,6 +149,8 @@ def consultar(kind: str, question: str, admin: dict, term: str | None = None) ->
             term = re.sub(r"[%_*\\]", "", term).strip()[:80]
             if len(term) < 2:
                 term = None
+        if term is None and re.search(r"\b(?:h[aá]|algum[a]?|existe|existem|tem|temos)\b", question, re.IGNORECASE):
+            return "Qual é o título que você quer buscar? Posso conferir o cadastro e indicar a tela do acervo.", "/admin/biblioteca"
         query = supabase.table("Livro").select("idLivro,livTitulo,livISBN,livPaginas,livAnoPublicacao,livAtivo")
         if term:
             query = query.ilike("livTitulo", f"%{term}%")

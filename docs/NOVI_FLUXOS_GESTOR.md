@@ -35,7 +35,7 @@ Use **Cadastro de Alunos**, **Cadastro da Comunidade** ou **Cadastro de Administ
 
 ## Relatórios, configurações e ações sensíveis
 
-Em **Relatórios**, escolha a visão de empréstimos, atrasos ou acervo e ajuste os filtros disponíveis. Os números atuais e dados pessoais só aparecem na tela autenticada, não na resposta da Novi.
+Em **Relatórios**, escolha a visão de empréstimos, atrasos ou acervo e ajuste os filtros disponíveis. A Novi pode mostrar contagens agregadas previamente autorizadas; filtros detalhados e dados pessoais ficam na tela autenticada.
 
 Em **Configurações Gerais**, confira os limites e prazos salvos antes de comunicá-los. **Configurações de Notificações** reúne preferências de lembretes; **Configurações de E-mail** mostra o estado do envio. A Novi não dispara mensagens.
 
@@ -52,5 +52,7 @@ Em **Cadastro de Livros**, o botão de exclusão permanente pede confirmação. 
 ## Consultas simples e limites de dados
 
 A Novi pode responder diretamente ao gestor autenticado com o **nome da própria conta**, campos bibliográficos mínimos de até cinco livros (título, ISBN, páginas, ano e status), contagens de títulos e exemplares, contagens de alunos cadastrados não excluídos e de professores ativos, e indicadores agregados de circulação. Ela informa o critério da contagem e a tela de conferência. A disponibilidade e os totais podem mudar depois da consulta.
+
+Perguntas como **“Há algum livro com o título Harry Potter?”** buscam por parte do título no cadastro e mostram até cinco resultados; se houver um único título, a Novi informa a quantidade de exemplares e o status de disponibilidade. **“Há algum livro sem exemplar cadastrado?”** consulta a relação entre títulos e exemplares e informa o total e até cinco títulos nessa condição, incluindo inativos. A Novi não substitui a conferência na tela antes de alterar um cadastro.
 
 A Novi não apresenta nomes, contatos, RA, CPF, histórico individual, lista de professores, planilhas ou linhas detalhadas de relatórios no chat. Para atender uma pessoa específica, use a tela autenticada apropriada. Ela não acessa senhas nem envia as linhas consultadas ao modelo de linguagem.

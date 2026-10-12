@@ -252,3 +252,85 @@ def test_personal_answer_is_not_forwarded_in_history():
     context = novi._provider_context("Me explique o passo a passo", history, [])
     assert "Vitor" not in str(context)
     assert "Como cadastrar um livro?" in str(context)
+
+
+def test_greeting_plus_personal_question_is_not_swallowed(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "consultar", lambda kind, *args: ("Seu nome cadastrado é **Ketriri Diretora**.", "/admin/configuracoes/geral"))
+    res = api.post("/novi/perguntar", json={"mensagem": "Oi, Novi! Qual meu nome?"},
+                   headers={"Authorization": "Bearer admin"})
+    assert res.status_code == 200
+    assert "Ketriri Diretora" in res.json()["resposta"]
+
+
+def test_book_existence_and_missing_copies_are_live_questions(monkeypatch):
+    api = client(monkeypatch)
+    queries = []
+    def consult(kind, question, admin, title=None):
+        queries.append((kind, question))
+        return ("Há **1 título sem exemplar**." if kind == "livros_sem_exemplar" else
+                "Encontrei **Harry Potter** no cadastro.", "/admin/livros")
+    monkeypatch.setattr(novi, "consultar", consult)
+    monkeypatch.setattr(novi, "_generate", lambda *args: (_ for _ in ()).throw(AssertionError("model called")))
+    headers = {"Authorization": "Bearer admin"}
+    a = api.post("/novi/perguntar", json={"mensagem": "Há algum livro com o título Harry Potter?"}, headers=headers)
+    b = api.post("/novi/perguntar", json={"mensagem": "Há algum livro sem exemplar cadastrado?"}, headers=headers)
+    assert a.status_code == b.status_code == 200
+    assert [kind for kind, _ in queries] == ["consultar_livros", "livros_sem_exemplar"]
+    assert "Harry Potter" in a.json()["resposta"]
+
+
+def test_correction_retries_previous_question_instead_of_unrelated_guide(monkeypatch):
+    api = client(monkeypatch)
+    calls = []
+    def consult(kind, question, admin, title=None):
+        calls.append(kind)
+        return "Há **2 títulos sem exemplar** no cadastro.", "/admin/livros"
+    monkeypatch.setattr(novi, "consultar", consult)
+    response = api.post("/novi/perguntar", json={
+        "mensagem": "não foi isso que perguntei",
+        "historico": [
+            {"papel": "gestor", "texto": "Há algum livro sem exemplar cadastrado?"},
+            {"papel": "novi", "texto": "Abra Cadastro de Livros e clique em Novo Livro."},
+        ],
+    }, headers={"Authorization": "Bearer admin"})
+    assert response.status_code == 200
+    assert calls == ["livros_sem_exemplar"]
+    assert "Desculpe" in response.json()["resposta"]
+    assert "2 títulos sem exemplar" in response.json()["resposta"]
+
+
+def test_general_programming_is_out_of_scope(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setattr(novi, "_generate", lambda *args: (_ for _ in ()).throw(AssertionError("model called")))
+    response = api.post("/novi/perguntar", json={"mensagem": "Como inverter uma árvore binária em Python?"},
+                        headers={"Authorization": "Bearer admin"})
+    assert response.status_code == 200
+    assert "Sala de Leitura" in response.json()["resposta"]
+    assert "árvore" not in response.json()["resposta"]
+
+
+def test_provider_receives_a_specific_question_and_not_a_fixed_answer(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.setenv("GEMINI_API_KEY", "fake-key")
+    seen = []
+    def generate(question, history, sources):
+        seen.append((question, sources))
+        return {"estado": "respondida", "resposta": "Na seção Aparência, selecione Escuro em Tema do sistema."}
+    monkeypatch.setattr(novi, "_generate", generate)
+    res = api.post("/novi/perguntar", json={"mensagem": "Como mudar o tema para escuro?"},
+                   headers={"Authorization": "Bearer admin"})
+    assert res.status_code == 200
+    assert seen and seen[0][0] == "Como mudar o tema para escuro?"
+    assert "Aparência" in res.json()["resposta"]
+    assert res.json()["destino"]["caminho"] == "/admin/configuracoes/geral"
+
+
+def test_provider_outage_does_not_copy_an_unrelated_guide(monkeypatch):
+    api = client(monkeypatch)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    res = api.post("/novi/perguntar", json={"mensagem": "Como pesquisar um livro pelo título?"},
+                   headers={"Authorization": "Bearer admin"})
+    assert res.status_code == 200
+    assert "Não consigo analisar esse detalhe" in res.json()["resposta"]
+    assert "Novo Livro" not in res.json()["resposta"]
