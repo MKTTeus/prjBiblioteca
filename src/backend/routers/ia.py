@@ -9,10 +9,10 @@ from gemini_client import create_gemini_client, generate_content_with_fallback
 
 router = APIRouter()
 
-# O modelo Flash-Lite atende o fluxo de maior volume; use o Flash como reserva.
-# Os limites são por projeto e modelo, então isso distribui as chamadas entre cotas.
+# O Groq atende primeiro o fluxo frequente de enriquecimento; Gemini fica como reserva.
 MODEL = os.getenv("GEMINI_BOOK_MODEL", "gemini-3.5-flash-lite")
 FALLBACK_MODEL = os.getenv("GEMINI_BOOK_FALLBACK_MODEL", "gemini-2.5-flash")
+PRIMARY_PROVIDER = os.getenv("BOOK_AI_PRIMARY_PROVIDER", "groq").lower()
 
 COMPLETAR_LIVRO_SCHEMA = {
     "type": "object",
@@ -113,11 +113,8 @@ COMPLETAR_LIVRO_SCHEMA = {
 
 
 def _get_client():
-    if not os.getenv("GEMINI_API_KEY"):
-        raise HTTPException(
-            status_code=500,
-            detail="GEMINI_API_KEY não configurada no servidor.",
-        )
+    if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
+        raise HTTPException(status_code=500, detail="Configure GEMINI_API_KEY ou GROQ_API_KEY no servidor.")
     return create_gemini_client()
 
 
@@ -198,15 +195,16 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
             client,
             model=MODEL,
             fallback_model=FALLBACK_MODEL,
+            primary_provider=PRIMARY_PROVIDER,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_json_schema=COMPLETAR_LIVRO_SCHEMA,
             ),
         )
-    except APIError as e:
-        print("Erro na API do Gemini:", 'falha de operação')
-        raise HTTPException(status_code=502, detail='Não foi possível concluir a operação')
+    except Exception:
+        print("Falha no provedor de IA ao completar cadastro do livro")
+        raise HTTPException(status_code=502, detail='Não foi possível concluir a operação') from None
 
     if not resposta.text:
         raise HTTPException(status_code=502, detail="A IA não retornou dados estruturados.")
