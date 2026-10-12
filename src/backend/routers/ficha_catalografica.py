@@ -140,7 +140,8 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
             )
         )
         if resp.text:
-            items = json.loads(resp.text)
+            parsed = json.loads(resp.text)
+            items = parsed.get("assuntos", []) if isinstance(parsed, dict) else parsed
             if isinstance(items, list):
                 return [str(i).strip().capitalize() for i in items[:5]]
     except Exception as e:
