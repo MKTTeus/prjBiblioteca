@@ -356,6 +356,13 @@ def _route_path(path: str) -> dict | None:
     return None
 
 
+def _route_for_answer(answer: str, fallback: dict | None) -> dict | None:
+    """Prefer the screen actually named in the public answer over a planner topic."""
+    matches = [(answer.casefold().find(label.casefold()), {"rotulo": label, "caminho": path})
+               for label, path in ROUTES.values() if len(label) > 6 and label.casefold() in answer.casefold()]
+    return min(matches, key=lambda item: item[0])[1] if matches else fallback
+
+
 def _safe_answer(answer: object, rename: bool = True) -> str | None:
     if not isinstance(answer, str):
         return None
@@ -449,7 +456,7 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
         answer = _safe_answer(plan.get("resposta"))
         if not answer:
             return _result(NO_SOURCE)
-        return _result(answer, destination if action in ("esclarecer", "recusar") else None)
+        return _result(answer, _route_for_answer(answer, destination) if action in ("esclarecer", "recusar") else None)
 
     if action != "orientar":
         return _result(NO_SOURCE)
@@ -476,4 +483,5 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
     answer = _safe_answer(first.get("resposta")) if state == "respondida" and used else None
     gap = _source_gap(first) if state == "sem_fonte" else None
     # Os caminhos das fontes servem somente ao raciocínio interno, não à API.
-    return _result(answer or gap or NO_SOURCE, destination)
+    final = answer or gap or NO_SOURCE
+    return _result(final, _route_for_answer(final, destination) if answer else destination)
