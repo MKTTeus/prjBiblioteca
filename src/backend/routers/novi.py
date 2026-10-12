@@ -149,6 +149,7 @@ def _call(system: str, payload: dict, schema: dict, max_tokens: int) -> dict:
         client,
         model=model,
         fallback_model=os.getenv("NOVI_GEMINI_FALLBACK_MODEL") or None,
+        primary_provider=os.getenv("NOVI_PRIMARY_PROVIDER", "gemini").lower(),
         contents=json.dumps(payload, ensure_ascii=False),
         config=types.GenerateContentConfig(
             system_instruction=system,
@@ -255,7 +256,7 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
         return _result(SENSITIVE)
     if THIRD_PARTY_LIST.search(question) or PERSONAL_SCOPE.search(question):
         return _result("Posso informar totais, mas não consultar dados de uma pessoa específica no chat. Use a tela administrativa autorizada para esse atendimento.")
-    if not os.getenv("GEMINI_API_KEY"):
+    if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
         logger.error("Novi sem chave do provedor no ambiente da função")
         raise HTTPException(503, NOT_CONFIGURED)
     try:
