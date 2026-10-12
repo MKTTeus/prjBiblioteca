@@ -266,8 +266,9 @@ def _safe_answer(answer: object, rename: bool = True) -> str | None:
     return re.sub(r"\bbiblioteca(?: nove de julho| escolar)?\b", "Sala de Leitura", answer, flags=re.IGNORECASE)
 
 
-def _result(answer: str, destination: dict | None = None, sources: list[str] | None = None) -> dict:
-    return {"resposta": answer, "destino": destination, "fontes": sources or []}
+def _result(answer: str, destination: dict | None = None, sources: list[str] | None = None,
+            context: bool = True) -> dict:
+    return {"resposta": answer, "destino": destination, "fontes": sources or [], "contexto": context}
 
 
 @router.post("/novi/perguntar")
@@ -278,11 +279,11 @@ def perguntar(body: Pergunta, response: Response, admin=Depends(get_admin)):
     if not question:
         raise HTTPException(422, "Informe uma pergunta")
     if PRIVATE_PATTERN.search(question):
-        return _result("Retire dados pessoais ou credenciais da pergunta. Posso explicar o procedimento sem esses dados.")
+        return _result("Retire dados pessoais ou credenciais da pergunta. Posso explicar o procedimento sem esses dados.", context=False)
     if any(pattern.search(question) for pattern in (SENSITIVE_REQUEST, DIRECT_SECRET_REQUEST, OVERRIDE_REQUEST)):
-        return _result(SENSITIVE)
+        return _result(SENSITIVE, context=False)
     if THIRD_PARTY_LIST.search(question) or PERSONAL_SCOPE.search(question):
-        return _result("Posso informar totais, mas não consultar dados de uma pessoa específica no chat. Use a tela administrativa autorizada para esse atendimento.")
+        return _result("Posso informar totais, mas não consultar dados de uma pessoa específica no chat. Use a tela administrativa autorizada para esse atendimento.", context=False)
     if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
         logger.error("Novi sem chave do provedor no ambiente da função")
         raise HTTPException(503, NOT_CONFIGURED)
