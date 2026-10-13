@@ -7,6 +7,8 @@ Esta documentação descreve o código da `main` após o PR #16 (referência: `f
 | [Arquitetura](ARQUITETURA.md) | Desenvolvedores: componentes, limites de confiança, banco e pontos de extensão. |
 | [Regras e fluxos](REGRAS_E_FLUXOS.md) | Equipe e desenvolvedores: circulação, perfis, catálogo, recomendações e fechamento letivo. |
 | [Guia de uso](GUIA_DE_USO.md) | Alunos, comunidade, professores e gestores: tarefas e dúvidas frequentes. Base inicial de conteúdo público do futuro chatbot. |
+| [Teste local com dados](TESTE_LOCAL_COM_DADOS.md) | Desenvolvedores e avaliadores: recriação do Supabase local, contas de demonstração e roteiro de validação. |
+| [Relatórios](RELATORIOS.md) | Gestores e desenvolvedores: consultas disponíveis, filtros, contagens e exportações. |
 | [Novi](NOVI.md) | Gestores e desenvolvedores: limites, fontes, configuração e validação do assistente. |
 | [Fluxos da Novi](NOVI_FLUXOS_GESTOR.md) | Gestores: passos conferidos nas telas para dúvidas de uso. |
 | [Migrations](APLICACAO_MIGRATIONS.md) | Implantação coordenada e histórico de migração. |

@@ -149,5 +149,12 @@ if(batch.length){
  assert.equal(await scalar('SELECT concluir_email($1,$2,false)',[batch[0].id,batch[0].lease_token]),true);
  assert.equal(await scalar('SELECT concluir_email($1,$2,true)',[batch[0].id,'11111111-1111-4111-8111-111111111111']),false);
 }
+await db.exec(readFileSync('supabase/seed.sql','utf8'));
+assert.equal(await scalar(`SELECT count(*) FROM "Livro" WHERE "livISBN" LIKE '978650000%'`),17);
+assert.equal(await scalar(`SELECT count(*) FROM "Exemplar" WHERE "exeLivTombo" LIKE 'D%'`),40);
+assert.equal(await scalar(`SELECT count(*) FROM "Usuario" WHERE "usuEmail" LIKE '%@biblioteca.local'`),16);
+assert.equal(await scalar(`SELECT count(*) FROM "Movimentacao" WHERE "movUsuarioNome" IN ('Ana Souza','Bruno Lima','Carla Mendes','Diego Alves','Elisa Rocha','Fábio Nunes','Gabriela Reis','Heitor Costa','Iara Fernandes','Marina da Silva','Paulo Ribeiro','Professora Helena','Professor Ricardo')`),18);
+assert.equal(await scalar(`SELECT count(*) FROM "MovimentacaoExemplar" WHERE renovacoes=2`),1);
+console.log('Seed local: acervo, leitores, circulação, avaliações e estados OK.');
 console.log('Banco: migrations, permissões, múltiplas cópias, rollback, idempotência, estados e sessões OK.');
 await db.close();
