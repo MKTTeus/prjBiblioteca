@@ -57,9 +57,9 @@ schema_paths = []
 
 [db.seed]
 # If enabled, seeds the database after migrations during a db reset.
-enabled = false
-# Este projeto não inclui dados de demonstração; não referencie seed.sql inexistente.
-sql_paths = []
+enabled = true
+# Massa exclusivamente local para validar relatórios e fluxos da aplicação.
+sql_paths = ["./seed.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.

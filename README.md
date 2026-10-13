@@ -14,7 +14,7 @@ python -m pip install -r requirements-dev.txt
 cp .env.example .env
 ```
 
-Preencha `.env` com as credenciais do seu ambiente local/homologação. Nunca publique esse arquivo. Use uma chave service_role somente no backend. Em banco vazio, aplique os SQL timestampados em `supabase/migrations`, em ordem, e execute `python scripts/criar_gestor.py` para cadastrar o primeiro gestor com senha individual. Os arquivos em `legacy_migrations` ficam preservados para consulta histórica.
+Preencha `.env` com as credenciais do seu ambiente local/homologação. Nunca publique esse arquivo. Use uma chave service_role somente no backend. Para recriar o Supabase local do Docker com uma massa completa de demonstração, siga o [guia de teste local](docs/TESTE_LOCAL_COM_DADOS.md). Em banco persistente vazio, aplique os SQL timestampados em `supabase/migrations`, em ordem, e execute `python scripts/criar_gestor.py` para cadastrar o primeiro gestor com senha individual. Os arquivos em `legacy_migrations` ficam preservados para consulta histórica.
 
 Em dois terminais:
 
@@ -43,6 +43,8 @@ npm audit
 - [Arquitetura e pontos de extensão](docs/ARQUITETURA.md)
 - [Regras e fluxos da circulação](docs/REGRAS_E_FLUXOS.md)
 - [Guia de uso para alunos, comunidade, professores e gestores](docs/GUIA_DE_USO.md)
+- [Teste local com dados de demonstração](docs/TESTE_LOCAL_COM_DADOS.md)
+- [Relatórios administrativos](docs/RELATORIOS.md)
 - [Novi: escopo, fontes, segurança e configuração](docs/NOVI.md)
 
 ## Implantação e operação
