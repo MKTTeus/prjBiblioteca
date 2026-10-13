@@ -45,3 +45,13 @@ stateDiagram-v2
 ## Notificações e falhas
 
 E-mails são enfileirados no banco e enviados por processo autenticado. O job de circulação processa prazos e fila; `CRON_SECRET` protege o endpoint. Agendamentos podem atrasar; uma mensagem de e-mail não prova por si só o estado atual da reserva. Em falha de rede ou erro 5xx, consulte o estado da solicitação antes de reenviar a operação. Clientes podem enviar `Idempotency-Key` nas criações para evitar duplicação após repetição.
+
+## Busca
+
+Todas as pesquisas de texto (catálogo, listas do painel, empréstimos, relatórios e Novi) seguem a mesma regra, implementada em `src/backend/busca.py`, `src/utils/busca.js` e na função SQL `public.busca_normalizar`:
+
+- **Busca exata:** ignora acentos, maiúsculas e pontuação, e exige que todas as palavras digitadas apareçam no texto, em qualquer ordem e em qualquer campo pesquisável. Códigos como tombo, RA e CPF são comparados sem pontuação (`t001` encontra `T-001`).
+- **Busca aproximada:** só roda quando a exata não encontra nada. Tolera uma ou duas letras trocadas, faltando ou invertidas. Números, códigos e palavras com menos de quatro letras nunca usam a aproximada. No catálogo público a API devolve `aproximado: true` e a tela avisa que os resultados são parecidos com o que foi digitado.
+
+Alterar a normalização exige ajustar os três pontos juntos. Os casos de `src/utils/buscaCasos.json` são testados em Jest e pytest e servem de referência para conferir a função SQL.
+

@@ -16,6 +16,7 @@ import {
   mesclarAutor,
 } from "../../../../../../services/api";
 import { getErrorMessage } from "../../../../../../utils/apiError";
+import { filtrarPorBusca } from "../../../../../../utils/busca";
 
 export default function AutoresTab() {
   const { addToast } = useToast();
@@ -52,9 +53,7 @@ export default function AutoresTab() {
     carregar();
   }, [carregar]);
 
-  const autoresFiltrados = autores.filter((a) =>
-    (a.autNome || "").toLowerCase().includes(busca.toLowerCase().trim())
-  );
+  const autoresFiltrados = filtrarPorBusca(autores, busca, (a) => [a.autNome]);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(autoresFiltrados);
 

@@ -3,6 +3,7 @@ import json
 import logging
 from time import monotonic
 
+import busca
 from core import consultar_completo, consultar_lote
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
@@ -290,10 +291,31 @@ def listar_catalogo_paginado(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=40),
 ):
-    return executar_rpc('catalogo_livros', {
+    resultado = executar_rpc('catalogo_livros', {
         'p_busca': q, 'p_pagina': page, 'p_por_pagina': per_page,
         'p_incluir_inativos': False, 'p_incluir_sem_exemplares': False,
     })
+    termo = (q or "").strip()
+    if termo and not (resultado or {}).get('total'):
+        return _catalogo_aproximado(termo, page, per_page) or resultado
+    return resultado
+
+
+def _catalogo_aproximado(termo: str, page: int, per_page: int) -> dict | None:
+    """Quando a busca exata (já sem acentos) não acha nada, tenta tolerar erros de
+    digitação sobre o catálogo ativo. Só roda nesse caso, então o custo é raro."""
+    todos = executar_rpc('catalogo_livros', {
+        'p_busca': None, 'p_pagina': 1, 'p_por_pagina': 5000,
+        'p_incluir_inativos': False, 'p_incluir_sem_exemplares': False,
+    })
+    achados, aproximado = busca.filtrar(
+        (todos or {}).get('itens') or [], termo,
+        lambda i: [i.get('livTitulo'), i.get('livAutor'), i.get('livGenero')],
+    )
+    if not achados:
+        return None
+    inicio = (page - 1) * per_page
+    return {'itens': achados[inicio:inicio + per_page], 'total': len(achados), 'aproximado': aproximado}
 
 
 @router.get("/livros/resumo")
@@ -318,34 +340,39 @@ def _listar_livros(
         allowed_ids = None
 
         if q:
-            q_str = f"%{q}%"
+            # Comparação sem acentos/caixa/pontuação feita aqui (o PostgREST só tem ILIKE).
+            # Tombos só são lidos quando a busca tem número, que é quando faz sentido.
+            procura_codigo = any(c.isdigit() for c in q)
 
-            def buscar_por_titulo():
-                return consultar_completo(lambda: supabase.table('Livro').select('idLivro').ilike('livTitulo', q_str), 'Livro')
+            def carregar_titulos():
+                return consultar_completo(lambda: supabase.table('Livro').select('idLivro,livTitulo'), 'Livro').data or []
 
-            def buscar_por_tombo():
-                return consultar_completo(lambda: supabase.table('Exemplar').select('idLivro').ilike('exeLivTombo', q_str), 'Exemplar')
+            def carregar_autores():
+                return consultar_completo(lambda: supabase.table('Autor').select('idAutor,autNome'), 'Autor').data or []
 
-            def buscar_por_autor():
-                # Passo interno em 2 etapas (autor → LivroAutor), mas essa
-                # cadeia inteira roda em paralelo com as outras duas buscas.
-                autores = consultar_completo(lambda: supabase.table('Autor').select('idAutor').ilike('autNome', q_str), 'Autor').data or []
-                if not autores:
+            def carregar_tombos():
+                if not procura_codigo:
                     return []
-                autor_ids = [a["idAutor"] for a in autores]
+                return consultar_completo(lambda: supabase.table('Exemplar').select('idLivro,exeLivTombo'), 'Exemplar').data or []
+
+            titulos, autores, tombos = executar_em_paralelo(carregar_titulos, carregar_autores, carregar_tombos)
+
+            def ids_por_autor(autores_achados):
+                if not autores_achados:
+                    return []
+                autor_ids = [a["idAutor"] for a in autores_achados]
                 la = consultar_lote(lambda ids_lote: supabase.table('LivroAutor').select('idLivro').in_('idAutor', ids_lote), 'LivroAutor', autor_ids).data or []
                 return [r["idLivro"] for r in la]
 
-            resp_titulo, resp_tombo, ids_por_autor = executar_em_paralelo(
-                buscar_por_titulo, buscar_por_tombo, buscar_por_autor
-            )
+            def resolver(permitir_aproximado):
+                por_titulo, _ = busca.filtrar(titulos, q, lambda l: [l.get('livTitulo')], permitir_aproximado)
+                por_autor, _ = busca.filtrar(autores, q, lambda a: [a.get('autNome')], permitir_aproximado)
+                por_tombo, _ = busca.filtrar(tombos, q, lambda e: [e.get('exeLivTombo')], False)
+                encontrados = {l["idLivro"] for l in por_titulo} | {e["idLivro"] for e in por_tombo}
+                return encontrados | set(ids_por_autor(por_autor))
 
-            ids = set()
-            ids.update(l["idLivro"] for l in (resp_titulo.data or []))
-            ids.update(e["idLivro"] for e in (resp_tombo.data or []))
-            ids.update(ids_por_autor)
-
-            allowed_ids = ids
+            # Exata primeiro; só se nada for encontrado tolera erros de digitação.
+            allowed_ids = resolver(False) or resolver(True)
 
         if categoria and categoria != "todas":
             try:

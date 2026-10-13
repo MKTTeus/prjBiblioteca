@@ -19,3 +19,17 @@ test('navegar entre páginas busca somente os livros da página escolhida', asyn
   expect(await screen.findByText('Livro da página 2')).toBeInTheDocument();
   expect(getBooksPage).toHaveBeenLastCalledWith({ page: 2, per_page: 20 });
 });
+
+test('avisa quando os livros exibidos são resultados parecidos com a busca', async () => {
+  getBooksPage.mockResolvedValue({ itens: [{ idLivro: 1, livTitulo: 'Dom Casmurro' }], total: 1, aproximado: true });
+  render(<Biblioteca />);
+  expect(await screen.findByText('Dom Casmurro')).toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('resultados parecidos');
+});
+
+test('não mostra o aviso quando a busca é exata', async () => {
+  getBooksPage.mockResolvedValue({ itens: [{ idLivro: 1, livTitulo: 'Dom Casmurro' }], total: 1 });
+  render(<Biblioteca />);
+  expect(await screen.findByText('Dom Casmurro')).toBeInTheDocument();
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+});

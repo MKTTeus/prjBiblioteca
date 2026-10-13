@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./Biblioteca.css";
 import { getBooks, getBook } from "../../../services/api";
 import BookInfoModal from "../CadastroLivros/components/BookInfo/BookInfoModal";
+import { filtrarPorBusca } from "../../../utils/busca";
 
 function Biblioteca() {
   const [books, setBooks] = useState([]);
@@ -23,13 +24,7 @@ function Biblioteca() {
   }, []);
 
   useEffect(() => {
-    const result = books.filter(
-      (b) =>
-        (b.livTitulo || "").toLowerCase().includes(search.toLowerCase()) ||
-        (b.livAutor || "").toLowerCase().includes(search.toLowerCase())
-    );
-
-    setFiltered(result);
+    setFiltered(filtrarPorBusca(books, search, (b) => [b.livTitulo, b.livAutor]));
   }, [search, books]);
 
   async function abrirInfo(book) {

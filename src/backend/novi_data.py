@@ -5,8 +5,8 @@ entregue ao modelo: selecionamos colunas e formatamos a resposta aqui.
 """
 
 import re
-import unicodedata
 
+import busca
 from core import business_today
 from database import supabase
 
@@ -56,14 +56,10 @@ def _texto_publico(value) -> str:
     return re.sub(r"[\\*`_\[\]<>]", "", value)
 
 
-def _normalizar(value: str) -> str:
-    return "".join(char for char in unicodedata.normalize("NFKD", value.casefold())
-                   if not unicodedata.combining(char))
-
-
 def _buscar_titulos(term: str, columns: str, limit: int) -> tuple[list[dict], int]:
-    """Busca primeiro no banco; se não houver resultado, tenta equivalência de
-    acentos no catálogo paginado. Nunca retorna uma contagem parcial."""
+    """Busca primeiro no banco (rápida); se não houver resultado, compara no catálogo
+    paginado ignorando acentos/ordem das palavras e tolerando erros de digitação.
+    Nunca retorna uma contagem parcial."""
     result = (supabase.table("Livro").select(columns, count="exact")
               .ilike("livTitulo", f"%{term}%").order("livTitulo").limit(limit).execute())
     if result.data:
@@ -71,15 +67,15 @@ def _buscar_titulos(term: str, columns: str, limit: int) -> tuple[list[dict], in
             raise RuntimeError("Contagem de títulos indisponível")
         return result.data, int(result.count)
 
-    matches = []
-    needle = _normalizar(term)
+    catalogo = []
     page_size = 500
     for start in range(0, MAX_LINHAS_CATALOGO, page_size):
         page = (supabase.table("Livro").select(columns).order("livTitulo")
                 .range(start, start + page_size - 1).execute().data or [])
-        matches.extend(row for row in page if needle in _normalizar(str(row.get("livTitulo") or "")))
+        catalogo.extend(page)
         if len(page) < page_size:
-            return matches[:limit], len(matches)
+            achados, _ = busca.filtrar(catalogo, term, lambda row: [row.get("livTitulo")])
+            return achados[:limit], len(achados)
     raise RuntimeError("Catálogo excede limite da busca sem acentos")
 
 

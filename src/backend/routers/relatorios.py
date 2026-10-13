@@ -1,3 +1,4 @@
+import busca
 from core import consultar_completo, consultar_lote
 from typing import Optional, Literal
 from datetime import date
@@ -39,8 +40,9 @@ def _buscar_itens_emprestimos(dataInicio=None,dataFim=None,tipoUsuario='todos',t
         (not anoLetivo or (i.get('movAnoLetivo') or str(i.get('dataEmprestimo',''))[:4]) in (anoLetivo,str(anoLetivo))) and
         (not status or status=='todos' or i['status']==status) and
         (not idLivro or i.get('idLivro')==idLivro) and
-        (not finalidade or i.get('movFinalidade')==finalidade) and
-        (not q or q.casefold() in ' '.join(str(i.get(k) or '') for k in ('usuario','titulo','codigo','isbn')).casefold())]
+        (not finalidade or i.get('movFinalidade')==finalidade)]
+    if q:
+        itens, _ = busca.filtrar(itens, q, lambda i: [i.get(k) for k in ('usuario','titulo','codigo','isbn')])
     return sorted(itens,key=lambda i:(i.get('dataEmprestimo') or '',i['idExemplar']),reverse=True)
 
 
@@ -148,9 +150,8 @@ def relatorio_gestao(
         idUsuario=idUsuario, idAdminProfessor=idAdminProfessor, finalidade=finalidade)
     try:
         itens, notas = montar_gestao(tipo, filtros, _buscar_itens_emprestimos)
-        termos = texto(q).split()
-        if termos:
-            itens = [i for i in itens if all(t in texto(' '.join(str(v) for v in i.values() if v is not None)) for t in termos)]
+        if q:
+            itens, _ = busca.filtrar(itens, q, lambda i: [v for v in i.values() if v is not None])
         if status:
             itens = [i for i in itens if texto(i.get('status') or i.get('situacao')) == texto(status)]
         if participacao != 'todos' and tipo in ('livros','leitores','autores','turmas'):
@@ -274,18 +275,17 @@ def relatorio_usuarios_busca(
         if len(termo) < 2:
             return {"itens": []}
 
-        resp = (
-            supabase.table("Usuario")
-            .select("idUsuario, usuNome, usuTipo, usuTurma, usuSerie")
-            .eq("usuExcluido", False)
-            .ilike("usuNome", f"%{termo}%")
-            .order("usuNome")
-            .limit(15)
-            .execute()
-        )
-        professores = supabase.table('Administrador').select('idAdmin,admNome').eq('admProfessor',True).ilike('admNome',f'%{termo}%').order('admNome').limit(15).execute()
-        itens = (resp.data or []) + [{'idAdminProfessor':p['idAdmin'],'usuNome':p['admNome'],'usuTipo':'Professor'} for p in professores.data or []]
-        return {"itens": sorted(itens,key=lambda i:i['usuNome'].casefold())[:20]}
+        # O PostgREST só oferece ILIKE (sensível a acentos): carrega os nomes e compara aqui.
+        usuarios = consultar_completo(
+            lambda: supabase.table("Usuario").select("idUsuario, usuNome, usuTipo, usuTurma, usuSerie")
+            .eq("usuExcluido", False), "Usuario").data or []
+        professores = consultar_completo(
+            lambda: supabase.table("Administrador").select("idAdmin,admNome").eq("admProfessor", True),
+            "Administrador").data or []
+        itens = usuarios + [{"idAdminProfessor": p["idAdmin"], "usuNome": p["admNome"], "usuTipo": "Professor"}
+                            for p in professores]
+        achados, _ = busca.filtrar(itens, termo, lambda i: [i.get("usuNome")])
+        return {"itens": sorted(achados, key=lambda i: busca.normalizar(i["usuNome"]))[:20]}
     except Exception as e:
         raise HTTPException(503,'Serviço temporariamente indisponível') from e
 
