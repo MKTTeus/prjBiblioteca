@@ -1,0 +1,36 @@
+{
+  "_doc": "Casos compartilhados por src/utils/busca.test.js e src/backend/tests/test_busca.py. A mesma normalização vale para public.busca_normalizar (SQL).",
+  "normalizar": [
+    ["  João   D'Ávila-Çã!  ", "joao davilaca"],
+    ["123.456.789-09", "12345678909"],
+    ["Guarda-chuva Mágico", "guardachuva magico"],
+    ["MEMÓRIAS PÓSTUMAS", "memorias postumas"],
+    ["Antoine de Saint-Exupéry", "antoine de saintexupery"],
+    ["T-001", "t001"],
+    ["Coração das Trevas", "coracao das trevas"],
+    ["Ñandú Ýü", "nandu yu"],
+    ["", ""]
+  ],
+  "exata": [
+    ["Memórias Póstumas de Brás Cubas", "memorias postumas", true],
+    ["Memórias Póstumas de Brás Cubas", "BRAS cubas", true],
+    ["O Pequeno Príncipe", "principe pequeno", true],
+    ["Guarda-chuva Mágico", "guarda chuva", true],
+    ["Guarda-chuva Mágico", "guardachuva", true],
+    ["T-001", "t001", true],
+    ["123.456.789-09", "123456", true],
+    ["Dom Casmurro", "casmuro", false],
+    ["Dom Casmurro", "xadrez", false],
+    ["RA 12345", "12346", false]
+  ],
+  "aproximada": [
+    ["Dom Casmurro", "casmuro", true],
+    ["Dom Casmurro", "casmrurro", true],
+    ["Harry Potter e a Pedra Filosofal", "hary poter", true],
+    ["Harry Potter e a Pedra Filosofal", "filosofl", true],
+    ["O Pequeno Príncipe", "pricipe", true],
+    ["Ana Lima", "anu", false],
+    ["RA 12345", "12346", false],
+    ["Dom Casmurro", "xadrez", false]
+  ]
+}

@@ -19,6 +19,7 @@ export default function Biblioteca() {
   const [solicitando, setSolicitando] = useState({});
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalItens, setTotalItens] = useState(0);
+  const [resultadoAproximado, setResultadoAproximado] = useState(false);
   const { user } = useAuth();
   const isAluno = user?.tipo?.toLowerCase() === "aluno";
   const cooldownRef = useRef({});
@@ -95,6 +96,7 @@ export default function Biblioteca() {
         if (ativo) {
           setBooks(Array.isArray(data?.itens) ? data.itens : []);
           setTotalItens(Number(data?.total ?? 0));
+          setResultadoAproximado(Boolean(data?.aproximado));
         }
       } catch (err) {
         if (!ativo) return;
@@ -134,6 +136,11 @@ export default function Biblioteca() {
         <div className="user-empty-state">{error}</div>
       ) : books.length > 0 ? (
         <section className="user-library-results">
+          {resultadoAproximado && (
+            <p className="user-library-notice" role="status">
+              Não encontramos exatamente o que você digitou. Estes são resultados parecidos com “{search.trim()}”.
+            </p>
+          )}
           <div className="shared-book-grid">
             {books.map((book, index) => {
               const id = book.idLivro ?? book.id;

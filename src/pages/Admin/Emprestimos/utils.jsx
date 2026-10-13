@@ -1,4 +1,5 @@
 import { resolverStatus, dataBiblioteca } from "../../../utils/loanStatus";
+import { filtrarPorBusca } from "../../../utils/busca";
 import {
   FiAlertCircle,
   FiAlertTriangle,
@@ -110,13 +111,16 @@ export function criarCardsResumo(metricas) {
 }
 
 export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios, mapExemplares) {
-  const termoBusca = (busca || "").toLowerCase();
+  const elegiveis = emprestimos.filter((emprestimo) => {
+    const isPendente = emprestimo.movStatus === "Pendente" || emprestimo.movTipo === "SOLICITACAO";
+    if (isPendente) return false;
+    return filtroStatus === "todos" || getStatusEmprestimo(emprestimo) === filtroStatus;
+  });
 
-  return emprestimos.filter((emprestimo) => {
+  return filtrarPorBusca(elegiveis, busca, (emprestimo) => {
     const usuario = mapUsuarios[emprestimo.idUsuario];
     const exemplar = mapExemplares[emprestimo.idExemplar];
-
-    const textoBusca = [
+    return [
       emprestimo.idEmprestimo,
       emprestimo.usuario,
       emprestimo.titulo,
@@ -128,33 +132,16 @@ export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios
       exemplar?.tombo,
       exemplar?.isbn,
       exemplar?.exeLivISBN,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    const isPendente = emprestimo.movStatus === "Pendente" || emprestimo.movTipo === "SOLICITACAO";
-    if (isPendente) return false;
-
-    const correspondeBusca = textoBusca.includes(termoBusca);
-    const statusOk = filtroStatus === "todos" || getStatusEmprestimo(emprestimo) === filtroStatus;
-
-    return correspondeBusca && statusOk;
+    ];
   });
 }
 
 export function filtrarUsuarios(usuarios, buscaUsuario) {
-  const termoBusca = (buscaUsuario || "").toLowerCase();
-  return usuarios.filter((usuario) =>
-    `${usuario.nome} ${usuario.documento} ${usuario.tipo}`.toLowerCase().includes(termoBusca)
-  );
+  return filtrarPorBusca(usuarios, buscaUsuario, (usuario) => [usuario.nome, usuario.documento, usuario.tipo]);
 }
 
 export function filtrarExemplares(exemplares, buscaExemplar) {
-  const termoBusca = (buscaExemplar || "").toLowerCase();
-  return exemplares.filter((exemplar) =>
-    `${exemplar.nome} ${exemplar.tombo} ${exemplar.isbn || ""}`.toLowerCase().includes(termoBusca)
-  );
+  return filtrarPorBusca(exemplares, buscaExemplar, (exemplar) => [exemplar.nome, exemplar.tombo, exemplar.isbn]);
 }
 
 export function formatarData(data) {

@@ -20,6 +20,7 @@ import { getErrorMessage } from "../../../utils/apiError";
 import NoticeBanner from "../../../components/NoticeBanner/NoticeBanner";
 
 import "./cadastroLivros.css";
+import { filtrarPorBusca } from "../../../utils/busca";
 
 export default function CadastroLivros() {
   const { user } = useAuth();
@@ -43,26 +44,13 @@ export default function CadastroLivros() {
     exemplares: "todos",
   });
 
-  const filteredBooks = books.filter((b) => {
+  const livrosPorFiltro = books.filter((b) => {
     const cadastrados = Number(b.exemplares_cadastrados ?? b.total_exemplares ?? 0);
     const utilizaveis = Number(b.total_exemplares ?? 0);
     if (filters.exemplares === "sem" && cadastrados > 0) return false;
     if (filters.exemplares === "desativados" && (cadastrados === 0 || utilizaveis > 0)) return false;
     if (filters.exemplares === "pendentes" && utilizaveis > 0) return false;
     if (filters.exemplares === "com" && utilizaveis === 0) return false;
-    const q = (filters.q || "").toLowerCase().trim();
-
-    if (q) {
-      const matchTitulo = (b.livTitulo || "").toLowerCase().includes(q);
-      const matchAutor = (b.livAutor || "").toLowerCase().includes(q);
-      const matchIsbn = String(b.livISBN || b.exeLivISBN || b.exemplarISBN || "")
-        .toLowerCase()
-        .includes(q);
-      const matchTombo = String(b.tombo || b.idLivro || "").toLowerCase().includes(q);
-
-      if (!(matchTitulo || matchAutor || matchIsbn || matchTombo)) return false;
-    }
-
     if (filters.genero && filters.genero !== "todos") {
       const genId = String(b.idGenero ?? "");
       if (genId !== String(filters.genero)) return false;
@@ -76,6 +64,14 @@ export default function CadastroLivros() {
 
     return true;
   });
+
+  // Texto digitado: ignora acentos, caixa e pontuação e tolera erros de digitação.
+  const filteredBooks = filtrarPorBusca(livrosPorFiltro, filters.q, (b) => [
+    b.livTitulo,
+    b.livAutor,
+    b.livISBN || b.exeLivISBN || b.exemplarISBN,
+    b.tombo || b.idLivro,
+  ]);
 
   const pendentes = books.filter((b) => b.livAtivo !== false && Number(b.total_exemplares ?? 0) === 0);
 

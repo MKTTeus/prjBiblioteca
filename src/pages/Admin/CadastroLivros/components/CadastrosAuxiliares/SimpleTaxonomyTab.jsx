@@ -7,6 +7,7 @@ import Pagination from "../../../../../components/Pagination/Pagination";
 import usePagination from "../../../../../hooks/usePagination";
 import MergeModal from "./MergeModal";
 import { getErrorMessage } from "../../../../../utils/apiError";
+import { filtrarPorBusca } from "../../../../../utils/busca";
 
 /**
  * SimpleTaxonomyTab
@@ -69,9 +70,7 @@ export default function SimpleTaxonomyTab({
     carregar();
   }, [carregar]);
 
-  const itensFiltrados = itens.filter((item) =>
-    (item[nomeField] || "").toLowerCase().includes(busca.toLowerCase().trim())
-  );
+  const itensFiltrados = filtrarPorBusca(itens, busca, (item) => [item[nomeField]]);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(itensFiltrados);
 

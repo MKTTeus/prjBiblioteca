@@ -21,6 +21,7 @@ import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
 import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
 import { getErrorMessage } from "../../../utils/apiError";
+import { filtrarPorBusca } from "../../../utils/busca";
 
 const EMPTY_MEMBRO = {
   nome: "",
@@ -320,14 +321,7 @@ const handleSalvar = async () => {
   const membrosAtivos = membros.filter((m) => m.status === "Ativo").length;
   const membrosInativos = membros.filter((m) => m.status === "Inativo").length;
   const totalLivros = membros.reduce((acc, membro) => acc + membro.livros, 0);
-  const membrosFiltrados = membros.filter((membro) => {
-    const termo = pesquisa.toLowerCase();
-    return (
-      membro.nome.toLowerCase().includes(termo) ||
-      membro.email.toLowerCase().includes(termo) ||
-      membro.cpf.toLowerCase().includes(termo)
-    );
-  });
+  const membrosFiltrados = filtrarPorBusca(membros, pesquisa, (membro) => [membro.nome, membro.email, membro.cpf]);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(membrosFiltrados);
 

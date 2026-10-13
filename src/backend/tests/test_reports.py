@@ -160,6 +160,27 @@ def test_individual_search_finds_professors_and_keeps_account_type(client):
     assert rows==[{'idAdminProfessor':1,'usuNome':'Professor','usuTipo':'Professor'}]
 
 
+def test_individual_search_ignores_accents_and_tolerates_typos(client,dados):
+    dados['Usuario'].append({'idUsuario':5,'usuNome':'João Álvares','usuTipo':'Aluno','usuStatus':True,'usuExcluido':False,'usuSerie':'7º Ano','usuTurma':'B'})
+    for digitado in ('joao alvares','JOÃO','alvares joao','joão álvares'):
+        rows = client.get('/relatorios/usuarios/busca',params={'q':digitado}).json()['itens']
+        assert [r['usuNome'] for r in rows]==['João Álvares'], digitado
+    assert [r['usuNome'] for r in client.get('/relatorios/usuarios/busca?q=alvarez').json()['itens']]==['João Álvares']
+    assert client.get('/relatorios/usuarios/busca?q=a').json()['itens']==[]  # menos de 2 letras
+    assert client.get('/relatorios/usuarios/busca?q=Excluído').json()['itens']==[]  # excluídos não aparecem
+
+
+def test_individual_search_never_returns_account_secrets(client):
+    body = client.get('/relatorios/usuarios/busca?q=Professor').text
+    assert 'SEGREDO' not in body and 'admSenha' not in body
+
+
+def test_loan_report_filter_ignores_accents(client):
+    todos = client.get('/relatorios/emprestimos').json()['itens']
+    achados = client.get('/relatorios/emprestimos?q=arvore').json()['itens']
+    assert 0 < len(achados) <= len(todos) and all('Árvore' in i['titulo'] for i in achados)
+
+
 def test_grouped_collection_accounts_for_deactivated_copies(client):
     result = client.get('/relatorios/acervo?agrupador=ano_publicacao').json()
     assert result['resumo']['totalExemplares']==3

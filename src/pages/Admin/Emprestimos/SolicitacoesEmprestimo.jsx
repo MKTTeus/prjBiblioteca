@@ -16,6 +16,7 @@ import {
 import "./Emprestimos.css";
 import LoadingButton from "../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../contexts/ToastContext";
+import { filtrarPorBusca } from "../../../utils/busca";
 const statusLabel = {
   ativo: "Aceita",
   aceito: "Aceito",
@@ -34,24 +35,15 @@ const statusLabel = {
 // };
 
 function filtrarSolicitacoes(solicitacoes, busca) {
-  const termo = String(busca || "").trim().toLowerCase();
-  if (!termo) {
-    return solicitacoes;
-  }
-  return solicitacoes.filter((solicitacao) => {
-    const titulo = String(solicitacao.titulo || solicitacao.empLiv_Titulo || "").toLowerCase();
-    const codigo = String(solicitacao.codigo || solicitacao.empLiv_Tombo || "").toLowerCase();
-    const id = String(solicitacao.idEmprestimo || solicitacao.idMovimentacao || "").toLowerCase();
+  return filtrarPorBusca(solicitacoes, busca, (solicitacao) => {
     const status = String(solicitacao.status || solicitacao.movStatus || "").toLowerCase();
-    const buscaUsuario = String(solicitacao.usuario || solicitacao.nome || "").toLowerCase();
-    const termoStatus = statusLabel[status] ? statusLabel[status].toLowerCase() : status;
-    return (
-      id.includes(termo) ||
-      titulo.includes(termo) ||
-      codigo.includes(termo) ||
-      buscaUsuario.includes(termo) ||
-      termoStatus.includes(termo)
-    );
+    return [
+      solicitacao.idEmprestimo || solicitacao.idMovimentacao,
+      solicitacao.titulo || solicitacao.empLiv_Titulo,
+      solicitacao.codigo || solicitacao.empLiv_Tombo,
+      solicitacao.usuario || solicitacao.nome,
+      statusLabel[status] || status,
+    ];
   });
 }
 function calcHorasRestantes(dataLimite) {

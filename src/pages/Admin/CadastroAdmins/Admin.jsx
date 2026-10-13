@@ -11,6 +11,7 @@ import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getErrorMessage } from "../../../utils/apiError";
+import { filtrarPorBusca } from "../../../utils/busca";
 
 
 const EMPTY_ADMIN = {
@@ -297,10 +298,7 @@ export default function Admin() {
   const totalAdmins = admins.length;
   const adminsAtivos = admins.filter((a) => a.status === "Ativo").length;
   const adminsInativos = admins.filter((a) => a.status === "Inativo").length;
-  const adminsFiltrados = admins.filter((admin) => {
-    const termo = pesquisa.toLowerCase();
-    return admin.nome.toLowerCase().includes(termo) || admin.email.toLowerCase().includes(termo);
-  });
+  const adminsFiltrados = filtrarPorBusca(admins, pesquisa, (admin) => [admin.nome, admin.email]);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(adminsFiltrados);
 

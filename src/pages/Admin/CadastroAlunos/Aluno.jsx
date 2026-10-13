@@ -14,6 +14,7 @@ import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
 import { reativarAluno } from "../../../services/api";
 import { getErrorMessage } from "../../../utils/apiError";
+import { filtrarPorBusca } from "../../../utils/busca";
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -436,16 +437,11 @@ const handleSalvar = async () => {
   const alunosInativos = alunosNaoFormados.filter((a) => a.status === "Inativo").length;
   const totalFormados = alunosFormados.length;
 
-  const alunosFiltrados = (verFormados ? alunosFormados : alunosNaoFormados).filter((aluno) => {
-    const termo = pesquisa.toLowerCase();
-    return (
-      aluno.nome.toLowerCase().includes(termo) ||
-      aluno.email.toLowerCase().includes(termo) ||
-      aluno.ra.toLowerCase().includes(termo) ||
-      aluno.serie.toLowerCase().includes(termo) ||
-      aluno.turma.toLowerCase().includes(termo)
-    );
-  });
+  const alunosFiltrados = filtrarPorBusca(
+    verFormados ? alunosFormados : alunosNaoFormados,
+    pesquisa,
+    (aluno) => [aluno.nome, aluno.email, aluno.ra, aluno.serie, aluno.turma]
+  );
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(alunosFiltrados);
 
