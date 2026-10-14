@@ -31,6 +31,8 @@
   font-size: 25px;
   transition: transform .18s ease, box-shadow .18s ease;
 }
+.novi-launcher--brand { background: #fff; border: 1px solid var(--surface-border); }
+.novi-launcher img { display: block; width: 48px; height: 48px; object-fit: contain; }
 .novi-launcher:hover { transform: translateY(-3px); box-shadow: 0 18px 38px rgba(20, 83, 170, .38); }
 
 .novi-panel {
@@ -63,18 +65,20 @@
 .novi-avatar {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  flex: none;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: rgba(255,255,255,.18);
+  background: #fff;
   border: 1px solid rgba(255,255,255,.4);
   font-size: 21px;
 }
-.novi-heading { display: flex; flex-direction: column; line-height: 1.25; }
+.novi-avatar img { display: block; width: 44px; height: 44px; object-fit: contain; }
+.novi-heading { display: flex; flex: 1; min-width: 0; flex-direction: column; line-height: 1.25; }
 .novi-heading strong { font-size: 17px; }
 .novi-heading small { font-size: 12px; color: rgba(255,255,255,.88); }
 .novi-clear {
-  margin-left: auto;
+  flex: none;
   border: 0;
   border-radius: 7px;
   padding: 6px;
@@ -84,6 +88,7 @@
 }
 .novi-clear:hover { background: rgba(255,255,255,.17); }
 .novi-close {
+  flex: none;
   display: grid;
   place-items: center;
   width: 34px;
