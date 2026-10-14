@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { FiBookOpen, FiMessageCircle, FiSend, FiX } from "react-icons/fi";
+import { FiSend, FiX } from "react-icons/fi";
 import { perguntarNovi } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import NoviMessage from "./NoviMessage";
@@ -148,7 +148,11 @@ export default function NoviChat() {
       {aberto && (
         <section className="novi-panel" role="dialog" aria-label="Conversa com Novi">
           <header className="novi-header">
-            <span className="novi-avatar" aria-hidden="true"><FiBookOpen /></span>
+            <button type="button" className="novi-close" aria-label="Fechar chat" onClick={() => {
+              setAberto(false);
+              launcherRef.current?.focus();
+            }}><FiX /></button>
+            <span className="novi-avatar" aria-hidden="true"><img src="/novi-logo.png" alt="" width="48" height="48" /></span>
             <span className="novi-heading"><strong>Novi</strong><small>Assistente da Sala de Leitura</small></span>
             {mensagens.length > 1 && <button type="button" className="novi-clear" onClick={() => {
               pendingRef.current?.abort();
@@ -158,10 +162,6 @@ export default function NoviChat() {
               setTexto("");
               inputRef.current?.focus();
             }}>Limpar</button>}
-            <button type="button" className="novi-close" aria-label="Fechar chat" onClick={() => {
-              setAberto(false);
-              launcherRef.current?.focus();
-            }}><FiX /></button>
           </header>
           <div className="novi-intro">Vamos encontrar o caminho certo juntos.</div>
           <div className="novi-scroll" aria-live="polite" aria-relevant="additions text">
@@ -207,11 +207,11 @@ export default function NoviChat() {
       <button
         type="button"
         ref={launcherRef}
-        className="novi-launcher"
+        className={`novi-launcher${aberto ? "" : " novi-launcher--brand"}`}
         aria-label={aberto ? "Fechar Novi" : "Abrir chat da Novi"}
         aria-expanded={aberto}
         onClick={() => setAberto((value) => !value)}
-      >{aberto ? <FiX /> : <FiMessageCircle />}<span className="novi-sr-only">Novi</span></button>
+      >{aberto ? <FiX /> : <img src="/novi-logo.png" alt="" width="48" height="48" />}<span className="novi-sr-only">Novi</span></button>
     </div>,
     document.body,
   );
