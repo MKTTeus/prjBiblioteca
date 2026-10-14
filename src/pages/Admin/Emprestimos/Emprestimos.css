@@ -838,3 +838,92 @@
     flex: 1;
   }
 }
+
+/* Empréstimo manual: janela contida na viewport e listas com rolagem própria. */
+.emp-modal-overlay:has(.emp-modal-novo) {
+  box-sizing: border-box;
+  padding: clamp(12px, 3vh, 28px) 16px;
+  overflow: auto;
+}
+
+.emp-modal-novo {
+  width: min(720px, 100%);
+  max-height: min(780px, calc(100dvh - 48px));
+  min-height: 0;
+}
+
+.emp-modal-novo .emp-modal-topbar {
+  padding: 22px 26px 18px;
+}
+
+.emp-modal-title-group { min-width: 0; }
+.emp-modal-title-group h2 { font-size: clamp(1.35rem, 2vw, 1.75rem); }
+.emp-modal-title-group p {
+  margin: 5px 0 0;
+  color: var(--text-muted);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.emp-modal-novo .emp-modal-content {
+  min-height: 0;
+  padding: 18px 26px;
+  gap: 14px;
+}
+
+.emp-modal-novo .emp-step-card { flex: none; }
+.emp-modal-novo .emp-step-header { padding: 14px 18px; }
+.emp-modal-novo .emp-step-header h3 { font-size: 1rem; }
+.emp-modal-novo .emp-step-search { margin: 12px 14px; padding: 10px 13px; }
+.emp-modal-novo .emp-step-search input { min-width: 0; }
+.emp-modal-novo .emp-list-box {
+  height: clamp(150px, 27dvh, 250px);
+  border-radius: 0 0 12px 12px;
+  overscroll-behavior: contain;
+}
+.emp-modal-novo .emp-list-box-placeholder { height: 90px; }
+.emp-modal-novo .emp-list-item {
+  min-height: 58px;
+  padding: 11px 16px;
+}
+.emp-modal-novo .emp-list-main { min-width: 0; align-items: center; }
+.emp-modal-novo .emp-list-main strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.emp-list-identifier {
+  color: var(--text-muted);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+}
+.emp-modal-novo .emp-modal-actions {
+  flex: none;
+  padding: 14px 26px 18px;
+}
+
+@media (max-width: 640px) {
+  .emp-modal-overlay:has(.emp-modal-novo) {
+    padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+    align-items: center;
+  }
+  .emp-modal-novo {
+    max-height: calc(100dvh - max(20px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+    border-radius: 16px;
+  }
+  .emp-modal-novo .emp-modal-topbar { padding: 15px 16px 13px; }
+  .emp-modal-novo .emp-modal-close { width: 38px; height: 38px; flex: none; }
+  .emp-modal-novo .emp-modal-content { padding: 14px; gap: 12px; }
+  .emp-modal-novo .emp-step-header { padding: 12px; }
+  .emp-modal-novo .emp-step-header div { gap: 7px; }
+  .emp-modal-novo .emp-step-header h3 { font-size: .92rem; }
+  .emp-modal-novo .emp-step-subtitle { font-size: .75rem; }
+  .emp-modal-novo .emp-list-box { height: clamp(140px, 24dvh, 210px); }
+  .emp-modal-novo .emp-list-item { padding: 10px 12px; }
+  .emp-modal-novo .emp-list-main { align-items: flex-start; }
+  .emp-modal-novo .emp-modal-actions {
+    padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    flex-direction: row;
+  }
+  .emp-modal-novo .emp-modal-actions button { min-width: 0; min-height: 44px; font-size: .9rem; }
+}
