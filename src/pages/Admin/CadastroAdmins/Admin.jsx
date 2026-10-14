@@ -390,23 +390,23 @@ export default function Admin() {
           <tbody>
             {paginaItens.map((admin) => (
               <tr key={admin.idAdmin} className={selecionados.includes(admin.idAdmin) ? "row-selecionada" : ""}>
-                <td className="col-check">
+                <td className="col-check" data-label="Selecionar">
                   <input
                     type="checkbox"
                     checked={selecionados.includes(admin.idAdmin)}
                     onChange={() => toggleSelecionado(admin.idAdmin)}
                   />
                 </td>
-                <td>{admin.nome}</td>
-                <td>{admin.email}</td>
-                <td>{admin.perfil}</td>
-                <td>
+                <td data-label="Nome">{admin.nome}</td>
+                <td data-label="E-mail">{admin.email}</td>
+                <td data-label="Perfil">{admin.perfil}</td>
+                <td data-label="Status">
                   <span className={admin.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {admin.status}
                   </span>
                 </td>
 
-                <td className="acoes-cell">
+                <td className="acoes-cell" data-label="Ações">
                   <div className="acoes">
                     <button className="btn-status" onClick={() => handleToggleStatus(admin.idAdmin)} title="Alterar status">
                       {admin.status === "Ativo" ? (

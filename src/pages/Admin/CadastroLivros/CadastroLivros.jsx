@@ -184,8 +184,8 @@ export default function CadastroLivros() {
 
       <div className="cadastro-header">
         <div>
-          <h1>Bem-vindo ao Cadastro de Livros</h1>
-          <p>Gerencie todos os títulos, inclusive os que ainda não aparecem no acervo.</p>
+          <h1>Acervo e gestão de livros</h1>
+          <p>Consulte títulos, gerencie exemplares e mantenha os dados bibliográficos atualizados.</p>
         </div>
 
         {isAdmin && (

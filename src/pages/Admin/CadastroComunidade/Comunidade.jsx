@@ -441,25 +441,25 @@ const handleSalvar = async () => {
           <tbody>
             {paginaItens.map((membro) => (
               <tr key={membro.idUsuario} className={selecionados.includes(membro.idUsuario) ? "row-selecionada" : ""}>
-                <td className="col-check">
+                <td className="col-check" data-label="Selecionar">
                   <input
                     type="checkbox"
                     checked={selecionados.includes(membro.idUsuario)}
                     onChange={() => toggleSelecionado(membro.idUsuario)}
                   />
                 </td>
-                <td>{membro.nome}</td>
-                <td>{formatarCPF(membro.cpf)}</td>
-                <td>{membro.email}</td>
-                <td className="col-telefone-cell">{formatarTelefone(membro.telefone)}</td>
-                <td className="col-livros">{membro.livros}</td>
-                <td>
+                <td data-label="Nome">{membro.nome}</td>
+                <td data-label="CPF/CIN">{formatarCPF(membro.cpf)}</td>
+                <td data-label="E-mail">{membro.email}</td>
+                <td className="col-telefone-cell" data-label="Telefone">{formatarTelefone(membro.telefone)}</td>
+                <td className="col-livros" data-label="Livros">{membro.livros}</td>
+                <td data-label="Status">
                   <span className={membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
                     {membro.status}
                   </span>
                 </td>
 
-                <td className="acoes-cell">
+                <td className="acoes-cell" data-label="Ações">
                   <div className="acoes">
                     <button className="btn-status" onClick={() => handleToggleStatus(membro.idUsuario)}>
                       {membro.status === "Ativo" ? (
