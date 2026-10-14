@@ -315,49 +315,33 @@
 }
 
 @media (max-width: 640px) {
-  .comunidade-page .table-container { padding: 10px; overflow: visible; }
-  .comunidade-page table,
-  .comunidade-page tbody { display: block; width: 100%; min-width: 0; }
-  .comunidade-page thead { display: none; }
-  .comunidade-page tbody { display: grid; gap: 12px; }
-  .comunidade-page tbody tr {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 14px;
-    padding: 14px;
-    border: 1px solid var(--surface-border);
-    border-radius: 12px;
-    background: var(--surface-bg);
-    box-shadow: var(--shadow-soft);
+  .comunidade-page .table-container {
+    padding: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
+  .comunidade-page table {
+    display: table;
+    width: 100%;
+    min-width: 980px;
+    table-layout: auto;
+  }
+  .comunidade-page thead { display: table-header-group; }
+  .comunidade-page tbody { display: table-row-group; }
+  .comunidade-page tbody tr { display: table-row; }
   .comunidade-page tbody td {
-    display: flex;
+    display: table-cell;
     min-width: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    padding: 0;
-    border: 0;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-    font-size: .86rem;
+    padding: 10px 12px;
+    overflow-wrap: normal;
+    word-break: normal;
+    white-space: normal;
   }
-  .comunidade-page tbody td::before {
-    content: attr(data-label);
-    color: var(--text-muted);
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .03em;
-    text-transform: uppercase;
-  }
-  .comunidade-page tbody td.col-check { align-items: flex-start; }
-  .comunidade-page tbody td.col-telefone-cell { white-space: normal; }
-  .comunidade-page .col-acoes,
+  .comunidade-page tbody td::before { content: none; }
   .comunidade-page .acoes-coluna,
-  .comunidade-page .acoes-cell { width: auto; min-width: 0; text-align: left; }
-  .comunidade-page tbody td.acoes-cell { grid-column: 1 / -1; }
-  .comunidade-page .acoes { justify-content: flex-start; }
-  .comunidade-page .titulo-acoes { flex-direction: column; }
+  .comunidade-page .acoes-cell { width: 132px; min-width: 132px; text-align: right; }
+  .comunidade-page .acoes { justify-content: flex-end; }
   .comunidade-page .topo-lista { gap: 12px; }
   .comunidade-page .topo-lista h2 { font-size: 1.15rem; }
   .comunidade-page .batch-bar { align-items: stretch; flex-direction: column; }
