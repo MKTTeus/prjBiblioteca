@@ -40,7 +40,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
+
+.cadastro-header > div { min-width: 0; }
+.cadastro-header h1 { line-height: 1.2; }
+.cadastro-header p { line-height: 1.5; }
 
 .cadastro-header h1 {
   margin: 0;
@@ -59,6 +64,7 @@
 
 .btn-add {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
 
@@ -74,6 +80,20 @@
 
   cursor: pointer;
   transition: 0.2s;
+}
+
+@media (max-width: 640px) {
+  .cadastro-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .cadastro-header h1 { font-size: clamp(1.35rem, 6vw, 1.65rem); }
+  .cadastro-header p { margin-bottom: 0; font-size: .92rem; }
+  .btn-add { justify-content: center; min-height: 44px; }
 }
 
 .btn-add:hover {
