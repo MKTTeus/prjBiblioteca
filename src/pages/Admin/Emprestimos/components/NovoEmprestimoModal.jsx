@@ -78,9 +78,12 @@ export default function NovoEmprestimoModal({
 
   return (
     <div className="emp-modal-overlay" onClick={handleRequestClose}>
-      <div className="emp-modal emp-modal-sequencial" onClick={(event) => event.stopPropagation()}>
+      <div className="emp-modal emp-modal-sequencial emp-modal-novo" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="emp-modal-title">
         <div className="emp-modal-topbar">
-          <h2>Novo Empréstimo</h2>
+          <div className="emp-modal-title-group">
+            <h2 id="emp-modal-title">Novo Empréstimo</h2>
+            <p>Selecione quem receberá o exemplar e escolha o livro.</p>
+          </div>
           <button className="emp-modal-close" onClick={handleRequestClose} aria-label="Fechar">
             <HiOutlineX />
           </button>
@@ -109,6 +112,7 @@ export default function NovoEmprestimoModal({
                   <span className="emp-step-number">1.</span>
                   <h3>Selecionar Usuário</h3>
                 </div>
+                <span className="emp-step-subtitle">{usuariosFiltrados.length} {usuariosFiltrados.length === 1 ? "usuário" : "usuários"}</span>
               </div>
 
               <div className="emp-step-search">
@@ -135,6 +139,9 @@ export default function NovoEmprestimoModal({
                       <div className="emp-list-main">
                         <strong>{usuario.nome}</strong>
                         <span className="emp-list-badge">{usuario.tipo}</span>
+                        {usuario.tipo === "Aluno" && usuario.documento && (
+                          <span className="emp-list-identifier">RA {usuario.documento}</span>
+                        )}
                       </div>
                     </button>
                   ))
