@@ -60,13 +60,6 @@ function getLocationText(book) {
   return locationCandidates.find(Boolean) || "Localização não informada";
 }
 
-function getBookCode(book) {
-  if (book?.tombo) return book.tombo;
-  if (book?.codigo) return book.codigo;
-  const numericId = book?.idLivro ?? book?.id ?? 0;
-  return `L${String(numericId).padStart(4, "0")}`;
-}
-
 export default function BookCard({
   book,
   genreName,
@@ -99,7 +92,6 @@ export default function BookCard({
   const reservados = Number(book?.reservados ?? 0);
   const status = getBookStatus(book);
   const locationText = getLocationText(book);
-  const tombo = getBookCode(book);
   const tags = [genreName || book?.genero].filter(Boolean);
   const [mostrarDescricao, setMostrarDescricao] = useState(false);
 
@@ -119,7 +111,6 @@ export default function BookCard({
     <div className="shared-book-card">
       <div className="shared-book-card__media">
         <div className="shared-book-card__badges">
-          <span className="shared-book-card__code">{tombo}</span>
           <span className={`shared-book-card__status ${status.className}`}>{status.label}</span>
         </div>
         <img
