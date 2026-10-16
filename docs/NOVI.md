@@ -20,7 +20,7 @@ Se houver fonte suficiente apenas para parte da orientação, a Novi explica ess
 
 A integração usa provedores configurados no backend. A Novi mantém Gemini como principal e, ao receber HTTP 429 por cota, tenta Groq (GROQ_MODEL, padrão openai/gpt-oss-20b); se Groq falhar, tenta o modelo Gemini alternativo configurado. Groq recebe a pergunta atual, histórico recente após os filtros de dados sensíveis e instruções/fontes selecionadas. Em respostas factuais, recebe somente os fatos agregados consultados pelo servidor; a consulta direta ao banco nunca é delegada ao provedor.
 
-O preenchimento de um livro e a geração de ficha usam Groq primeiro por padrão, com Gemini como reserva. São enviados somente os dados bibliográficos informados para aquele livro (por exemplo, título, ISBN, autor, editora, descrição e opções de categoria/gênero), não uma exportação do acervo. A função enriquecer_livros das listagens apenas combina dados consultados no Supabase e não chama IA. As chaves ficam somente no backend; os logs guardam tipo/status de erro, sem prompts, respostas ou chaves.
+O preenchimento de um livro e a geração de ficha usam Groq primeiro por padrão, com Gemini como reserva. São enviados somente os dados bibliográficos informados para aquele livro (por exemplo, título, ISBN, autor, editora, descrição e opções de gênero), não uma exportação do acervo. A função enriquecer_livros das listagens apenas combina dados consultados no Supabase e não chama IA. As chaves ficam somente no backend; os logs guardam tipo/status de erro, sem prompts, respostas ou chaves.
 
 ## Configuração e verificação
 

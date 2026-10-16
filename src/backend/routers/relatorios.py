@@ -323,10 +323,10 @@ def relatorio_atrasos(tipoUsuario='todos',turma=None,serie=None,apenasAtivos:boo
 
 @router.get("/relatorios/acervo")
 def relatorio_acervo(
-    agrupador: Optional[str] = "categoria",  # categoria | genero | autor | editora | ano_publicacao
+    agrupador: Optional[str] = "genero",  # genero | autor | editora | ano_publicacao
     admin=Depends(get_admin),
 ):
-    """Acervo agrupado por categoria, gênero, autor, editora ou ano de
+    """Acervo agrupado por gênero, autor, editora ou ano de
     publicação: quantidade de títulos e de exemplares (cópias físicas,
     detalhadas por status) em cada grupo."""
     try:
@@ -336,6 +336,8 @@ def relatorio_acervo(
         if not livro_ids:
             return {"itens": [], "resumo": {"totalLivros": 0, "totalExemplares": 0, "totalGrupos": 0}}
 
+        if agrupador not in {"genero", "autor", "editora", "ano_publicacao"}:
+            raise HTTPException(status_code=422, detail="Agrupador inválido")
         if agrupador == "genero":
             tabela_vinculo, tabela_grupo, campo_id, campo_nome = "LivroGenero", "Genero", "idGenero", "genNome"
         elif agrupador == "autor":
@@ -344,9 +346,6 @@ def relatorio_acervo(
             tabela_vinculo = None  # Editora é FK direta em Livro, não tabela de vínculo N:N
         elif agrupador == "ano_publicacao":
             tabela_vinculo = None
-        else:
-            agrupador = "categoria"
-            tabela_vinculo, tabela_grupo, campo_id, campo_nome = "LivroCategoria", "Categoria", "idCategoria", "catNome"
 
         if agrupador == "editora":
             editora_ids = list({l.get("idEditora") for l in livros if l.get("idEditora")})
@@ -378,7 +377,7 @@ def relatorio_acervo(
 
             vinculos = resp_vinculo.data or []
 
-            # nome do grupo por livro (um livro pode ter só 1 categoria/gênero hoje,
+            # nome do grupo por livro (um livro pode ter só 1 gênero hoje,
             # mas o vínculo é N:N, então tratamos como lista)
             grupos_por_livro = {}
             for v in vinculos:
@@ -413,14 +412,13 @@ def relatorio_acervo(
         disponiveis_por_livro = {lid: b.get("disponiveis", 0) for lid, b in status_por_livro.items()}
 
         nome_sem_grupo = {
-            "categoria": "Sem categoria",
             "genero": "Sem gênero",
             "autor": "Sem autor",
             "editora": "Sem editora",
             "ano_publicacao": "Sem ano",
         }[agrupador]
 
-        # agregados agrupados por id do grupo (None = bucket "sem categoria/gênero"),
+        # agregados agrupados por id do grupo (None = bucket "sem grupo"),
         # guardando também os idLivro de cada grupo para permitir consultar os
         # títulos depois (ver /relatorios/acervo/titulos)
         agregados = {}  # id_grupo -> {"nome": str, "livros": set(idLivro), "exemplares": int, status...: int}
@@ -543,7 +541,7 @@ def relatorio_acervo_titulos(
     ids: str,  # idLivro separados por vírgula, ex.: "3,7,12"
     admin=Depends(get_admin),
 ):
-    """Detalha os títulos de um grupo específico (categoria ou gênero) do
+    """Detalha os títulos de um grupo específico do
     relatório de acervo — usado pelo modal que abre ao clicar no nome do grupo."""
     try:
         livro_ids = [int(i) for i in ids.split(",") if i.strip().isdigit()]

@@ -59,8 +59,8 @@ def consultar_em_lotes(criar_consulta, ids: list[int], ordem: str = "idLivro", *
 def enriquecer_livros(livros: list) -> list:
     """
     Recebe uma lista de dicts de Livro e injeta:
-    livAutor, livEditora, livCategoria (nome), livGenero (nome),
-    idCategoria, idGenero, ediCidade, ediEstado, ediPais
+    livAutor, livEditora, livGenero (nome), idGenero,
+    ediCidade, ediEstado, ediPais
     a partir das tabelas de relacionamento.
     """
     if not livros:
@@ -69,7 +69,7 @@ def enriquecer_livros(livros: list) -> list:
     ids = [l["idLivro"] for l in livros]
     ed_ids = list({l["idEditora"] for l in livros if l.get("idEditora")})
 
-    # As 4 consultas abaixo são independentes entre si (cada uma só depende
+    # As consultas abaixo são independentes entre si (cada uma só depende
     # da lista de ids de livros), então rodam em paralelo em vez de uma
     # atrás da outra — é o principal ponto de lentidão ao carregar livros,
     # já que esta função é chamada em toda listagem/detalhe/salvamento.
@@ -77,10 +77,6 @@ def enriquecer_livros(livros: list) -> list:
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroAutor").select("idLivro, Autor(idAutor, autNome, autAnoNascimento, autAnoFalecimento)").in_("idLivro", ids_lote),
             lote, "idLivro,idAutor", paralelo=False,
-        ),
-        lambda lote: consultar_em_lotes(
-            lambda ids_lote: supabase.table("LivroCategoria").select("idLivro, Categoria(idCategoria, catNome)").in_("idLivro", ids_lote),
-            lote, "idLivro,idCategoria", paralelo=False,
         ),
         lambda lote: consultar_em_lotes(
             lambda ids_lote: supabase.table("LivroGenero").select("idLivro, Genero(idGenero, genNome)").in_("idLivro", ids_lote),
@@ -96,10 +92,10 @@ def enriquecer_livros(livros: list) -> list:
         )
 
     respostas = executar_em_paralelo(
-        *(lambda consulta=consulta, lote=(ed_ids if i == 3 else ids): consulta(lote)
+        *(lambda consulta=consulta, lote=(ed_ids if i == 2 else ids): consulta(lote)
           for i, consulta in enumerate(consultas))
     )
-    la, lc, lg, *resto = respostas
+    la, lg, *resto = respostas
 
     autores_por_livro: dict[int, list[dict]] = {}
     for r in la:
@@ -107,9 +103,6 @@ def enriquecer_livros(livros: list) -> list:
         if not autor:
             continue
         autores_por_livro.setdefault(r["idLivro"], []).append(autor)
-
-    cat_map    = {r["idLivro"]: r["Categoria"]["catNome"]    for r in lc if r.get("Categoria")}
-    cat_id_map = {r["idLivro"]: r["Categoria"]["idCategoria"] for r in lc if r.get("Categoria")}
 
     gen_map    = {r["idLivro"]: r["Genero"]["genNome"]    for r in lg if r.get("Genero")}
     gen_id_map = {r["idLivro"]: r["Genero"]["idGenero"]   for r in lg if r.get("Genero")}
@@ -141,9 +134,7 @@ def enriquecer_livros(livros: list) -> list:
             "autorAnoNascimento": autores_livro[0].get("autAnoNascimento") if autores_livro else None,
             "autorAnoFalecimento": autores_livro[0].get("autAnoFalecimento") if autores_livro else None,
             "livEditora":  ed_map.get(l.get("idEditora"), ""),
-            "livCategoria": cat_map.get(lid, ""),
             "livGenero":    gen_map.get(lid, ""),
-            "idCategoria":  cat_id_map.get(lid),
             "idGenero":     gen_id_map.get(lid),
             "ediCidade":   ed_cidade_map.get(l.get("idEditora"), ""),
             "ediEstado":   ed_estado_map.get(l.get("idEditora"), ""),
@@ -262,12 +253,11 @@ def adicionar_exemplares(idLivro: int, quantidade: int = Query(ge=1,le=500), pre
 def listar_livros(
     request: Request,
     q: str | None = None,
-    categoria: str | None = "todas",
     status: str | None = "todos",
     page: int = Query(1, ge=1),
     per_page: int = Query(10000, ge=1, le=10000),
 ):
-    return _listar_livros(q, categoria, status, page, per_page, False,
+    return _listar_livros(q, status, page, per_page, False,
                           request_id=getattr(request.state, "request_id", None))
 
 
@@ -275,13 +265,12 @@ def listar_livros(
 def listar_livros_gestao(
     request: Request,
     q: str | None = None,
-    categoria: str | None = "todas",
     status: str | None = "todos",
     page: int = Query(1, ge=1),
     per_page: int = Query(10000, ge=1, le=10000),
     admin=Depends(get_admin)
 ):
-    return _listar_livros(q, categoria, status, page, per_page, True, True,
+    return _listar_livros(q, status, page, per_page, True, True,
                           request_id=getattr(request.state, "request_id", None))
 
 
@@ -325,7 +314,6 @@ def resumo_acervo():
 
 def _listar_livros(
     q: str | None = None,
-    categoria: str | None = "todas",
     status: str | None = "todos",
     page: int = 1,
     per_page: int = 10000,
@@ -373,16 +361,6 @@ def _listar_livros(
 
             # Exata primeiro; só se nada for encontrado tolera erros de digitação.
             allowed_ids = resolver(False) or resolver(True)
-
-        if categoria and categoria != "todas":
-            try:
-                cat_id = int(categoria)
-                # Filtrar por categoria via LivroCategoria
-                lc = consultar_completo(lambda: supabase.table('LivroCategoria').select('idLivro').eq('idCategoria', cat_id), 'LivroCategoria').data or []
-                cat_ids = {r["idLivro"] for r in lc}
-                allowed_ids = cat_ids if allowed_ids is None else allowed_ids & cat_ids
-            except Exception:
-                pass
 
         if status and status.lower() != "todos":
             mapa = {
@@ -473,7 +451,7 @@ def _listar_livros(
             if incluir_sem_exemplares or mapa_ex.get(l["idLivro"], {}).get("total_exemplares", 0) > 0
         ]
 
-        # Enriquecer com autor, editora, categoria, gênero
+        # Enriquecer com autor, editora e gênero
         etapa = "relacionamentos"
         return enriquecer_livros(livros_ativos)
 
@@ -535,7 +513,7 @@ def alterar_status_livro(idLivro: int, data: LivroStatusUpdate, admin=Depends(ge
     Um livro desativado (livAtivo = false) some do catálogo dos usuários
     (GET /livros sem incluir_inativos), mas continua no banco com todos os
     seus dados intactos — Exemplares, histórico de empréstimos, vínculos de
-    autor/categoria/gênero — e pode ser reativado a qualquer momento.
+    autor/gênero — e pode ser reativado a qualquer momento.
     """
     livro = consultar_completo(lambda: supabase.table('Livro').select('idLivro').eq('idLivro', idLivro), 'Livro')
     if not livro.data:

@@ -25,7 +25,7 @@ Este guia descreve as funções disponíveis no sistema em 11/10/2026. Prazos, d
 
 ## Gestores da biblioteca
 
-- **Acervo:** cadastre e edite títulos, cópias e tombos; gerencie autores, gêneros, categorias, capas e fichas catalográficas. Um título inativo fica fora do catálogo público, mas segue acessível na gestão.
+- **Acervo:** cadastre e edite títulos, cópias e tombos; gerencie autores, gêneros, capas e fichas catalográficas. Um título inativo fica fora do catálogo público, mas segue acessível na gestão.
 - **Circulação:** examine solicitações pendentes; aprove ou rejeite; na entrega física, registre a retirada. Registre devoluções por exemplar e renovações com novo prazo. Confira a solicitação antes de repetir uma ação após falha de rede.
 - **Pessoas:** cadastre alunos, comunidade, administradores e professores, importe listas e gerencie status. Trate dados pessoais somente na área autenticada.
 - **Relatórios e configuração:** use as telas de relatórios para empréstimos, atrasos e acervo. Ajuste prazos e limites nas configurações; confirme o valor salvo antes de comunicá-lo aos leitores.

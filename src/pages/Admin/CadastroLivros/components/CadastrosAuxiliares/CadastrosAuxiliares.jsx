@@ -1,7 +1,6 @@
 import React from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import NoticeBanner from "../../../../../components/NoticeBanner/NoticeBanner";
 import "./CadastrosAuxiliares.css";
 
 const abas = [
@@ -14,12 +13,6 @@ export default function CadastrosAuxiliares() {
 
   return (
     <div className="tab-aux page-shell">
-      <NoticeBanner
-        id="categoria-removida-2026-08"
-        message="A aba Categorias foi removida. Agora apenas Gênero é utilizado para organizar o acervo — os dados antigos de categoria não foram apagados, só deixaram de ser exibidos."
-        expiresAt="2026-10-01"
-      />
-
       <div className="cadastro-header">
         <div>
           <h1>Cadastros Auxiliares</h1>

@@ -75,7 +75,7 @@ await rejected(`SELECT consumir_reset('valid','hash')`);
 await db.exec(`SET TIME ZONE 'UTC'`);
 // Catálogo atômico: FK inválida reverte o livro e qualquer autor/editora criado.
 const before=await scalar('SELECT count(*) FROM "Livro"');
-await rejected(`SELECT salvar_livro(NULL,'{"livTitulo":"Falha","livPaginas":100,"livAutor":"Novo autor","livEditora":"Nova editora","idCategoria":999}',1,'T')`);
+await rejected(`SELECT salvar_livro(NULL,'{"livTitulo":"Falha","livPaginas":100,"livAutor":"Novo autor","livEditora":"Nova editora","idGenero":999}',1,'T')`);
 assert.equal(await scalar('SELECT count(*) FROM "Livro"'),before);
 assert.equal(await scalar(`SELECT count(*) FROM "Autor" WHERE "autNome"='Novo autor'`),0);
 await db.exec(`INSERT INTO "Exemplar"("idLivro","exeLivTombo","exeLivStatus") VALUES(2,'T9999','Disponível'),(2,'T10000','Disponível')`);

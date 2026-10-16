@@ -30,10 +30,10 @@ def caracteristicas(livro):
     # Palavras-chave e descrição devem compartilhar o mesmo vocabulário.
     for p in palavras(livro.get('livPalavrasChave')):
         tokens[p] += 3
-    for field in ('livCategoria', 'livGenero', 'livAutor', 'livCDD'):
+    for field in ('livGenero', 'livAutor', 'livCDD'):
         if livro.get(field):
             tokens[f'{field}:{normalizar(livro[field])}'] = 3
-    for rel, nested, field in [('LivroCategoria', 'Categoria', 'catNome'), ('LivroGenero', 'Genero', 'genNome')]:
+    for rel, nested, field in [('LivroGenero', 'Genero', 'genNome')]:
         for row in livro.get(rel, []):
             if row.get(nested):
                 tokens[f'{rel}:{normalizar(row[nested][field])}'] = 3

@@ -12,7 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from routers.auth import router as auth_router
 from routers.livros import router as livros_router
-from routers.categorias import router as categorias_router
 from routers.generos import router as generos_router
 from routers.admins import router as admins_router
 from routers.usuarios import router as usuarios_router
@@ -61,7 +60,6 @@ app.add_middleware(VercelRewritePathMiddleware)
 ROUTERS = [
     auth_router,
     livros_router,
-    categorias_router,
     generos_router,
     autores_router,
     admins_router,

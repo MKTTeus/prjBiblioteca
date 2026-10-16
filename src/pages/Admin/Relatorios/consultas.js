@@ -34,7 +34,7 @@ export const CONSULTAS = [
   { id:'solicitacoes', titulo:'Solicitações e retiradas', descricao:'Pedidos pendentes, aprovados, expirados, negados e retirados; acompanhe reservas para retirada.', grupo:'Circulação', periodo:true, publico:true, pessoa:true, status:true,
     ordenar:'dataSolicitacao', colunas:[...leitor, coluna('finalidade','Finalidade'), coluna('titulo','Livro'), coluna('tombo','Tombo'), coluna('dataSolicitacao','Solicitação',true), coluna('situacao','Exemplar'), coluna('statusConfirmacao','Confirmação'), coluna('dataEmprestimo','Retirada',true)],
     ordenacoes:[['dataSolicitacao','Solicitação'],['usuario','Leitor'],['titulo','Livro'],['situacao','Situação']] },
-  { id:'cadastro', titulo:'Revisão do cadastro do acervo', descricao:'Obras sem autor, editora, ISBN, gênero, categoria, CDD ou exemplares para revisão.', grupo:'Acervo', atividade:true,
+  { id:'cadastro', titulo:'Revisão do cadastro do acervo', descricao:'Obras sem autor, editora, ISBN, gênero, CDD ou exemplares para revisão.', grupo:'Acervo', atividade:true,
     ordenar:'titulo', ordem:'asc', colunas:[...livro, coluna('editora','Editora'), coluna('exemplares','Exemplares'), coluna('pendencias','Campos para revisar')],
     ordenacoes:[['titulo','Título'],['pendencias','Pendências'],['exemplares','Exemplares']] },
 ];

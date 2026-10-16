@@ -4,7 +4,7 @@ Referência: routers, schemas e migrations da `main` em `f324048` (11/10/2026). 
 
 ## Catálogo e cópias
 
-- `Livro` representa o título; `Exemplar` representa uma cópia com tombo e estado físico. Um título pode ter várias cópias. O gestor cadastra títulos, exemplares, autores, gêneros, categorias e ficha catalográfica.
+- `Livro` representa o título; `Exemplar` representa uma cópia com tombo e estado físico. Um título pode ter várias cópias. O gestor cadastra títulos, exemplares, autores, gêneros e ficha catalográfica.
 - O catálogo público mostra títulos ativos com exemplar ativo. O detalhe público retorna 404 para título inativo ou sem cópia ativa. A gestão usa `/livros/gestao` e `/livros/gestao/{idLivro}` autenticados; o total de títulos do dashboard administrativo usa a regra de `/livros/resumo`.
 - Uma solicitação só seleciona uma cópia disponível, de título ativo. Ao solicitar, a cópia fica `Reservado`; na retirada, `Emprestado`; após devolução ou encerramento da reserva, `Disponível`, conforme a transição autorizada.
 

@@ -48,7 +48,6 @@ class Livro(BaseModel):
     autorAnoNascimento: Optional[int] = None  # → coluna Autor.autAnoNascimento
     autorAnoFalecimento: Optional[int] = None # → coluna Autor.autAnoFalecimento
     livEditora: Optional[str] = None     # → tabela Editora (FK idEditora)
-    idCategoria: Optional[int] = None   # → tabela LivroCategoria
     idGenero: Optional[int] = None      # → tabela LivroGenero
     exemplarISBN: Optional[str] = None  # → Exemplar (não em Livro)
     
@@ -99,9 +98,7 @@ class CompletarIARequest(BaseModel):
     livAnoPublicacao: Optional[int] = None
     livPaginas: Optional[int] = None
     livDescricao: Optional[str] = None
-    categoriaNome: Optional[str] = None
     generoNome: Optional[str] = None
-    categorias_existentes: Optional[list[str]] = None
     generos_existentes: Optional[list[str]] = None
 
 class EmprestimoSolicitacao(BaseModel):
@@ -140,14 +137,6 @@ class ItemDevolucaoProfessor(BaseModel):
 
 class DevolucaoProfessor(BaseModel):
     itens: list[ItemDevolucaoProfessor]
-
-
-class Categoria(BaseModel):
-    catNome: str
-
-
-class CategoriaUpdate(BaseModel):
-    catNome: str = Field(min_length=1)
 
 
 class MesclarPayload(BaseModel):

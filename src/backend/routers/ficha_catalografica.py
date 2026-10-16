@@ -92,7 +92,6 @@ def sugerir_cdd_ia(livro_data: dict) -> str:
         f"Título: {livro_data.get('livTitulo')}\n"
         f"Subtítulo: {livro_data.get('livSubtitulo') or ''}\n"
         f"Descrição: {livro_data.get('livDescricao') or ''}\n"
-        f"Categoria: {livro_data.get('livCategoria') or ''}\n"
         f"Gênero: {livro_data.get('livGenero') or ''}\n"
         f"Palavras-chave: {livro_data.get('livPalavrasChave') or ''}\n\n"
         "Regras:\n"
@@ -121,11 +120,10 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
         f"Título: {livro_data.get('livTitulo')}\n"
         f"Subtítulo: {livro_data.get('livSubtitulo') or ''}\n"
         f"Descrição: {livro_data.get('livDescricao') or ''}\n"
-        f"Categoria do sistema: {livro_data.get('livCategoria') or ''}\n"
         f"Gênero do sistema: {livro_data.get('livGenero') or ''}\n"
         f"Palavras-chave: {livro_data.get('livPalavrasChave') or ''}\n\n"
         "Regras:\n"
-        "- Priorize as categorias, gêneros e palavras-chave já existentes.\n"
+        "- Priorize os gêneros e palavras-chave já existentes.\n"
         "- Responda APENAS com um objeto JSON no formato {\"assuntos\":[\"Fantasia\", \"Literatura inglesa\", \"Magia\"]}, sem texto explicativo."
     )
     try:
@@ -147,8 +145,6 @@ def sugerir_assuntos_ia(livro_data: dict) -> List[str]:
     except Exception as e:
         print("Erro Gemini sugerir_assuntos_ia:", 'falha de operação')
     fallback = []
-    if livro_data.get("livCategoria"):
-        fallback.append(livro_data["livCategoria"])
     if livro_data.get("livGenero"):
         fallback.append(livro_data["livGenero"])
     if livro_data.get("livPalavrasChave"):

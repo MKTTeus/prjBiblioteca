@@ -291,8 +291,8 @@ def get_admin_id(admin):
 
 _CHAVES_TABELAS = {
     'Administrador':'idAdmin','Usuario':'idUsuario','Livro':'idLivro','Exemplar':'idExemplar',
-    'Autor':'idAutor','Editora':'idEditora','Categoria':'idCategoria','Genero':'idGenero',
-    'LivroAutor':'idLivro,idAutor','LivroCategoria':'idLivro,idCategoria','LivroGenero':'idLivro,idGenero',
+    'Autor':'idAutor','Editora':'idEditora','Genero':'idGenero',
+    'LivroAutor':'idLivro,idAutor','LivroGenero':'idLivro,idGenero',
     'Movimentacao':'idMovimentacao','MovimentacaoExemplar':'idMovimentacao,idExemplar',
     'Configuracoes':'chave','FichaCatalografica':'idFicha','RedefinicaoSenha':'idRedefinicao'}
 

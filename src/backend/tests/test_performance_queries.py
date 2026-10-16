@@ -63,7 +63,6 @@ def test_exemplars_keep_every_page_with_multiple_book_batches():
 def test_enrichment_uses_book_ids_for_relations_and_publisher_ids_for_publishers(monkeypatch):
     tables = {
         "LivroAutor": [{"idLivro": 101, "Autor": {"idAutor": 1, "autNome": "Autor"}}],
-        "LivroCategoria": [{"idLivro": 101, "Categoria": {"idCategoria": 2, "catNome": "Literatura"}}],
         "LivroGenero": [{"idLivro": 101, "Genero": {"idGenero": 3, "genNome": "Romance"}}],
         "Editora": [{"idEditora": 7, "ediNome": "Editora"}],
     }
@@ -83,7 +82,6 @@ def test_enrichment_uses_book_ids_for_relations_and_publisher_ids_for_publishers
     monkeypatch.setattr(livros, "supabase", SimpleNamespace(table=lambda name: Query(name)))
     result = livros.enriquecer_livros([{"idLivro": 101, "idEditora": 7}])
     assert result[0]["livAutor"] == "Autor"
-    assert result[0]["livCategoria"] == "Literatura"
     assert result[0]["livGenero"] == "Romance"
     assert result[0]["livEditora"] == "Editora"
 

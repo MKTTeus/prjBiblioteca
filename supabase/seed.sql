@@ -94,13 +94,6 @@ INSERT INTO public."Editora" ("ediNome", "ediCidade", "ediEstado", "ediPais") VA
   ('Editora Escola', 'Curitiba', 'PR', 'Brasil'),
   ('Editora Inativa Demo', 'Taquaritinga', 'SP', 'Brasil');
 
-INSERT INTO public."Categoria" ("catNome", "catDescricao") VALUES
-  ('Literatura', 'Obras literárias e narrativas'),
-  ('Didáticos', 'Material de apoio curricular'),
-  ('Referência', 'Consulta local e pesquisa'),
-  ('Biografias', 'Memórias e relatos pessoais'),
-  ('Juvenil', 'Leitura destinada ao público juvenil');
-
 INSERT INTO public."Genero" ("genNome", "genDescricao") VALUES
   ('Romance', 'Narrativas longas de ficção'),
   ('Fantasia', 'Narrativas fantásticas'),
@@ -111,26 +104,26 @@ INSERT INTO public."Genero" ("genNome", "genDescricao") VALUES
   ('Aventura', 'Narrativas de aventura');
 
 INSERT INTO public."Livro"
-  ("livTitulo", "livDescricao", "livAnoPublicacao", "livPaginas", "livStatus", "idEditora",
+  ("livTitulo", "livDescricao", "livAnoPublicacao", "livPaginas", "idEditora",
    "livISBN", "livAtivo", "livIdioma", "livFaixaEtaria", "livPalavrasChave", "livCDD", "livEdicao", "livIlustrado") VALUES
-  ('O Pequeno Príncipe', 'Clássico sobre amizade e responsabilidade.', 2015, 96, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000001', true, 'Português', '10+', 'amizade, clássico', '843.912', 1, true),
-  ('Dom Casmurro', 'Romance brasileiro para leitura orientada.', 2019, 256, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000002', true, 'Português', '14+', 'realismo, literatura brasileira', '869.3', 2, false),
-  ('Harry Potter e a Pedra Filosofal', 'Primeiro volume da série de fantasia.', 2017, 264, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000003', true, 'Português', '10+', 'magia, amizade, aventura', '823.914', 1, false),
-  ('O Diário de Anne Frank', 'Diário histórico e relato pessoal.', 2018, 352, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000004', true, 'Português', '12+', 'história, memória', '940.5318', 1, true),
-  ('Extraordinário', 'Narrativa sobre convivência e empatia.', 2016, 320, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000005', true, 'Português', '10+', 'empatia, escola', '813.6', 1, false),
-  ('A Revolução dos Bichos', 'Fábula política em edição escolar.', 2020, 152, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000006', true, 'Português', '14+', 'política, fábula', '823.912', 1, false),
-  ('Capitães da Areia', 'Romance social brasileiro.', 2014, 288, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000007', true, 'Português', '14+', 'literatura brasileira, juventude', '869.3', 3, false),
-  ('Quarto de Despejo', 'Diário e memória social brasileira.', 2019, 200, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000008', true, 'Português', '14+', 'memória, sociedade', '869.8', 1, false),
-  ('O Hobbit', 'Aventura fantástica em edição ilustrada.', 2021, 336, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000009', true, 'Português', '12+', 'fantasia, aventura', '823.912', 2, true),
-  ('Vidas Secas', 'Romance do modernismo brasileiro.', 2018, 176, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000010', true, 'Português', '14+', 'sertão, modernismo', '869.3', 1, false),
-  ('Torto Arado', 'Romance brasileiro contemporâneo.', 2022, 264, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000011', true, 'Português', '14+', 'Brasil, identidade', '869.3', 1, false),
-  ('Alice no País das Maravilhas', 'Clássico de fantasia e aventura.', 2017, 192, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000012', true, 'Português', '10+', 'fantasia, aventura', '823.8', 1, true),
-  ('Manual de Ciências', 'Material interdisciplinar para uso em sala.', 2026, 224, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000013', true, 'Português', '11+', 'ciências, escola', '500', 1, true),
-  ('Atlas Histórico Escolar', 'Mapas e linhas do tempo para consulta.', 2025, 160, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000014', true, 'Português', '11+', 'história, mapas', '900', 1, true),
-  ('Dicionário Escolar de Português', 'Obra de referência para consulta local.', 2024, 640, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000015', true, 'Português', '10+', 'referência, português', '469.3', 4, false),
-  ('Livro com Cadastro Incompleto', NULL, NULL, 80, 'Pendente de revisão', NULL, NULL, true, NULL, NULL, NULL, NULL, NULL, false),
-  ('Obra Desativada', 'Título preservado para histórico de controle.', 1998, 120, 'Desativado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Inativa Demo'), '9786500000017', false, 'Português', NULL, NULL, '869.3', 1, false),
-  ('Exemplar em Conservação', 'Título usado para testar indisponibilidade física.', 2012, 144, 'Cadastrado', (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000018', true, 'Português', '12+', 'conservação, teste', '028.5', 1, false);
+  ('O Pequeno Príncipe', 'Clássico sobre amizade e responsabilidade.', 2015, 96, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000001', true, 'Português', '10+', 'amizade, clássico', '843.912', 1, true),
+  ('Dom Casmurro', 'Romance brasileiro para leitura orientada.', 2019, 256, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000002', true, 'Português', '14+', 'realismo, literatura brasileira', '869.3', 2, false),
+  ('Harry Potter e a Pedra Filosofal', 'Primeiro volume da série de fantasia.', 2017, 264, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000003', true, 'Português', '10+', 'magia, amizade, aventura', '823.914', 1, false),
+  ('O Diário de Anne Frank', 'Diário histórico e relato pessoal.', 2018, 352, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000004', true, 'Português', '12+', 'história, memória', '940.5318', 1, true),
+  ('Extraordinário', 'Narrativa sobre convivência e empatia.', 2016, 320, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000005', true, 'Português', '10+', 'empatia, escola', '813.6', 1, false),
+  ('A Revolução dos Bichos', 'Fábula política em edição escolar.', 2020, 152, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000006', true, 'Português', '14+', 'política, fábula', '823.912', 1, false),
+  ('Capitães da Areia', 'Romance social brasileiro.', 2014, 288, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000007', true, 'Português', '14+', 'literatura brasileira, juventude', '869.3', 3, false),
+  ('Quarto de Despejo', 'Diário e memória social brasileira.', 2019, 200, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000008', true, 'Português', '14+', 'memória, sociedade', '869.8', 1, false),
+  ('O Hobbit', 'Aventura fantástica em edição ilustrada.', 2021, 336, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000009', true, 'Português', '12+', 'fantasia, aventura', '823.912', 2, true),
+  ('Vidas Secas', 'Romance do modernismo brasileiro.', 2018, 176, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Saber'), '9786500000010', true, 'Português', '14+', 'sertão, modernismo', '869.3', 1, false),
+  ('Torto Arado', 'Romance brasileiro contemporâneo.', 2022, 264, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000011', true, 'Português', '14+', 'Brasil, identidade', '869.3', 1, false),
+  ('Alice no País das Maravilhas', 'Clássico de fantasia e aventura.', 2017, 192, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Horizonte'), '9786500000012', true, 'Português', '10+', 'fantasia, aventura', '823.8', 1, true),
+  ('Manual de Ciências', 'Material interdisciplinar para uso em sala.', 2026, 224, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000013', true, 'Português', '11+', 'ciências, escola', '500', 1, true),
+  ('Atlas Histórico Escolar', 'Mapas e linhas do tempo para consulta.', 2025, 160, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000014', true, 'Português', '11+', 'história, mapas', '900', 1, true),
+  ('Dicionário Escolar de Português', 'Obra de referência para consulta local.', 2024, 640, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000015', true, 'Português', '10+', 'referência, português', '469.3', 4, false),
+  ('Livro com Cadastro Incompleto', NULL, NULL, 80, NULL, NULL, true, NULL, NULL, NULL, NULL, NULL, false),
+  ('Obra Desativada', 'Título preservado para histórico de controle.', 1998, 120, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Inativa Demo'), '9786500000017', false, 'Português', NULL, NULL, '869.3', 1, false),
+  ('Exemplar em Conservação', 'Título usado para testar indisponibilidade física.', 2012, 144, (SELECT "idEditora" FROM public."Editora" WHERE "ediNome"='Editora Escola'), '9786500000018', true, 'Português', '12+', 'conservação, teste', '028.5', 1, false);
 
 WITH vinculos(titulo, autor) AS (VALUES
   ('O Pequeno Príncipe','Antoine de Saint-Exupéry'), ('Dom Casmurro','Machado de Assis'),
@@ -147,21 +140,6 @@ INSERT INTO public."LivroAutor" ("idLivro", "idAutor")
 SELECT l."idLivro", a."idAutor" FROM vinculos v
 JOIN public."Livro" l ON l."livTitulo"=v.titulo
 JOIN public."Autor" a ON a."autNome"=v.autor;
-
-WITH vinculos(titulo, categoria) AS (VALUES
-  ('O Pequeno Príncipe','Literatura'), ('Dom Casmurro','Literatura'),
-  ('Harry Potter e a Pedra Filosofal','Juvenil'), ('O Diário de Anne Frank','Biografias'),
-  ('Extraordinário','Juvenil'), ('A Revolução dos Bichos','Literatura'),
-  ('Capitães da Areia','Literatura'), ('Quarto de Despejo','Biografias'),
-  ('O Hobbit','Juvenil'), ('Vidas Secas','Literatura'), ('Torto Arado','Literatura'),
-  ('Alice no País das Maravilhas','Juvenil'), ('Manual de Ciências','Didáticos'),
-  ('Atlas Histórico Escolar','Referência'), ('Dicionário Escolar de Português','Referência'),
-  ('Obra Desativada','Literatura'), ('Exemplar em Conservação','Didáticos')
-)
-INSERT INTO public."LivroCategoria" ("idLivro", "idCategoria")
-SELECT l."idLivro", c."idCategoria" FROM vinculos v
-JOIN public."Livro" l ON l."livTitulo"=v.titulo
-JOIN public."Categoria" c ON c."catNome"=v.categoria;
 
 WITH vinculos(titulo, genero) AS (VALUES
   ('O Pequeno Príncipe','Clássico'), ('Dom Casmurro','Romance'),
@@ -256,19 +234,19 @@ BEGIN
   resposta := public.criar_movimentacao(ana,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-100, "movDataEmprestimo"=current_date-100 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '100 days', "movDataEmprestimo"=current_date-100 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-86, "dataDevolucao"=current_date-92 WHERE "idMovimentacao"=mov;
 
   resposta := public.criar_movimentacao(bruno,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-75, "movDataEmprestimo"=current_date-75 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '75 days', "movDataEmprestimo"=current_date-75 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-61, "dataDevolucao"=current_date-64 WHERE "idMovimentacao"=mov;
 
   resposta := public.criar_movimentacao(carla,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-45, "movDataEmprestimo"=current_date-45 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '45 days', "movDataEmprestimo"=current_date-45 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-31, "dataDevolucao"=current_date-35 WHERE "idMovimentacao"=mov;
 
   -- Outros históricos devolvidos alimentam relatórios, recomendações e avaliações.
@@ -276,42 +254,42 @@ BEGIN
   resposta := public.criar_movimentacao(ana,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-70, "movDataEmprestimo"=current_date-70 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '70 days', "movDataEmprestimo"=current_date-70 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-56, "dataDevolucao"=current_date-58 WHERE "idMovimentacao"=mov;
 
   exemplar := (SELECT "idExemplar" FROM public."Exemplar" WHERE "exeLivTombo"='D0021');
   resposta := public.criar_movimentacao(carla,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-55, "movDataEmprestimo"=current_date-55 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '55 days', "movDataEmprestimo"=current_date-55 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-41, "dataDevolucao"=current_date-43 WHERE "idMovimentacao"=mov;
 
   exemplar := (SELECT "idExemplar" FROM public."Exemplar" WHERE "exeLivTombo"='D0091');
   resposta := public.criar_movimentacao(marina,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-30, "movDataEmprestimo"=current_date-30 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '30 days', "movDataEmprestimo"=current_date-30 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-16, "dataDevolucao"=current_date-20 WHERE "idMovimentacao"=mov;
 
   -- Empréstimo ativo no prazo.
   exemplar := (SELECT "idExemplar" FROM public."Exemplar" WHERE "exeLivTombo"='D0022');
   resposta := public.criar_movimentacao(ana,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-4, "movDataEmprestimo"=current_date-4 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '4 days', "movDataEmprestimo"=current_date-4 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date+10 WHERE "idMovimentacao"=mov;
 
   -- Empréstimo atrasado.
   exemplar := (SELECT "idExemplar" FROM public."Exemplar" WHERE "exeLivTombo"='D0051');
   resposta := public.criar_movimentacao(bruno,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-25, "movDataEmprestimo"=current_date-25 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '25 days', "movDataEmprestimo"=current_date-25 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-5 WHERE "idMovimentacao"=mov;
 
   -- Empréstimo ativo para pessoa da comunidade.
   exemplar := (SELECT "idExemplar" FROM public."Exemplar" WHERE "exeLivTombo"='D0081');
   resposta := public.criar_movimentacao(paulo,NULL,gestor,'[]'::jsonb,exemplar,true);
   mov := (resposta->>'idMovimentacao')::integer;
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-2, "movDataEmprestimo"=current_date-2 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '2 days', "movDataEmprestimo"=current_date-2 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date+12 WHERE "idMovimentacao"=mov;
 
   -- Empréstimo coletivo de aluno com devolução parcial.
@@ -325,7 +303,7 @@ BEGIN
   exemplar := (SELECT me."idExemplar" FROM public."MovimentacaoExemplar" me
     WHERE me."idMovimentacao"=mov ORDER BY me."idExemplar" LIMIT 1);
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor,NULL,ARRAY[exemplar]);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-12, "movDataEmprestimo"=current_date-10 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '12 days', "movDataEmprestimo"=current_date-10 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date+4 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataDevolucao"=current_date-1 WHERE "idMovimentacao"=mov AND "idExemplar"=exemplar;
 
@@ -335,14 +313,14 @@ BEGIN
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'renovar',gestor,NULL,ARRAY[exemplar],current_date+20);
   PERFORM public.transicionar_movimentacao(mov,'renovar',gestor,NULL,ARRAY[exemplar],current_date+35);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-11, "movDataEmprestimo"=current_date-11 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '11 days', "movDataEmprestimo"=current_date-11 WHERE "idMovimentacao"=mov;
 
   -- Solicitação pendente.
   resposta := public.criar_movimentacao(elisa,NULL,gestor,jsonb_build_array(
     jsonb_build_object('idLivro',(SELECT "idLivro" FROM public."Livro" WHERE "livTitulo"='O Pequeno Príncipe'),'quantidade',1)
   ));
   mov := (resposta->>'idMovimentacao')::integer;
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-1, data_solicitacao=now()-interval '1 day' WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '1 day' WHERE "idMovimentacao"=mov;
 
   -- Solicitação aprovada aguardando retirada.
   resposta := public.criar_movimentacao(fabio,NULL,gestor,jsonb_build_array(
@@ -350,7 +328,7 @@ BEGIN
   ));
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'aprovar',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date, data_solicitacao=now()-interval '3 hours' WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '3 hours' WHERE "idMovimentacao"=mov;
 
   -- Solicitação negada.
   resposta := public.criar_movimentacao(gabriela,NULL,gestor,jsonb_build_array(
@@ -358,7 +336,7 @@ BEGIN
   ));
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'rejeitar',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-8, data_solicitacao=now()-interval '8 days' WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '8 days' WHERE "idMovimentacao"=mov;
 
   -- Solicitação aprovada e expirada.
   resposta := public.criar_movimentacao(heitor,NULL,gestor,jsonb_build_array(
@@ -366,7 +344,7 @@ BEGIN
   ));
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'aprovar',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-5, data_solicitacao=now()-interval '5 days', data_confirmacao=now()-interval '72 hours' WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '5 days', data_confirmacao=now()-interval '72 hours' WHERE "idMovimentacao"=mov;
   PERFORM public.transicionar_movimentacao(mov,'expirar',gestor);
 
   -- Professor: empréstimo pessoal ativo.
@@ -376,7 +354,7 @@ BEGIN
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'aprovar',gestor);
   PERFORM public.transicionar_movimentacao(mov,'retirar',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-6, "movDataEmprestimo"=current_date-5 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '6 days', "movDataEmprestimo"=current_date-5 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date+9 WHERE "idMovimentacao"=mov;
 
   -- Professor: dois títulos para a turma 6º A.
@@ -387,7 +365,7 @@ BEGIN
   mov := (resposta->>'idMovimentacao')::integer;
   PERFORM public.transicionar_movimentacao(mov,'aprovar',gestor);
   PERFORM public.transicionar_movimentacao(mov,'retirar',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-3, "movDataEmprestimo"=current_date-2 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '3 days', "movDataEmprestimo"=current_date-2 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date+12 WHERE "idMovimentacao"=mov;
 
   -- Professor: uso em sala já devolvido para a turma 7º B.
@@ -398,7 +376,7 @@ BEGIN
   PERFORM public.transicionar_movimentacao(mov,'aprovar',gestor);
   PERFORM public.transicionar_movimentacao(mov,'retirar',gestor);
   PERFORM public.transicionar_movimentacao(mov,'devolver',gestor);
-  UPDATE public."Movimentacao" SET "movDataSolicitacao"=current_date-40, "movDataEmprestimo"=current_date-39 WHERE "idMovimentacao"=mov;
+  UPDATE public."Movimentacao" SET data_solicitacao=now()-interval '40 days', "movDataEmprestimo"=current_date-39 WHERE "idMovimentacao"=mov;
   UPDATE public."MovimentacaoExemplar" SET "dataPrevistaDevolucao"=current_date-25, "dataDevolucao"=current_date-28 WHERE "idMovimentacao"=mov;
 
   -- Avaliações válidas sobre livros já devolvidos por alunos.

@@ -453,7 +453,7 @@ export default function SolicitacoesEmprestimo() {
                       <small>Tombo: {tombo}</small>
                     </td>
                     <td>{item.usuarioTipo || item.tipo || "-"}</td>
-                    <td>{item.movDataSolicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo || "-"}</td>
+                    <td>{formatDataLimite(item.data_solicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</td>
                     <td className="emp-confirmacao-cell">
                       {statusConf === "CONFIRMADA" && item.dataLimite ? (
                         <div className="confirmacao-info">

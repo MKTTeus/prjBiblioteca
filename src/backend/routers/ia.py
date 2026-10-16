@@ -54,10 +54,6 @@ COMPLETAR_LIVRO_SCHEMA = {
             "type": "string",
             "description": "Sinopse objetiva de 2 a 4 frases, sem spoilers do final.",
         },
-        "categoria_sugerida": {
-            "type": "string",
-            "description": "Categoria bibliotecária ampla (ex.: Fantasia, Romance, História, Ciências).",
-        },
         "genero_sugerido": {
             "type": "string",
             "description": "Gênero literário (ex.: Aventura, Suspense, Poesia).",
@@ -134,19 +130,12 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
         conhecidos.append(f"Páginas já conhecidas: {dados.livPaginas}")
     if dados.livDescricao:
         conhecidos.append(f"Descrição já existente: {dados.livDescricao}")
-    if dados.categoriaNome:
-        conhecidos.append(f"Categoria já sugerida: {dados.categoriaNome}")
     if dados.generoNome:
         conhecidos.append(f"Gênero já sugerido: {dados.generoNome}")
 
     bloco_conhecidos = "\n".join(f"- {c}" for c in conhecidos) or "- (nenhum dado conhecido ainda)"
 
     bloco_opcoes = ""
-    if dados.categorias_existentes:
-        bloco_opcoes += (
-            "\n\nCategorias já cadastradas no sistema (prefira reaproveitar uma destas se fizer sentido, "
-            "em vez de inventar uma nova): " + ", ".join(dados.categorias_existentes)
-        )
     if dados.generos_existentes:
         bloco_opcoes += (
             "\n\nGêneros já cadastrados no sistema (prefira reaproveitar um destes se fizer sentido, "
@@ -161,7 +150,7 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
         "- Se você reconhece esta obra com segurança, preencha os dados factuais (autor, editora, ano, páginas) "
         "com os valores reais.\n"
         "- Se você NÃO tem certeza de um dado factual específico (ano exato, número de páginas, editora exata), "
-        "é preferível deixar o campo de fora a inventar um valor. Não faça isso para categoria, gênero, "
+        "é preferível deixar o campo de fora a inventar um valor. Não faça isso para gênero, "
         "palavras-chave e faixa etária — para esses, sempre dê sua melhor sugestão com base no título/contexto "
         "disponível, mesmo que a obra não seja reconhecida.\n"
         "- Edição, se ilustrado, e a cidade/estado/país da editora só devem ser preenchidos se você reconhece "

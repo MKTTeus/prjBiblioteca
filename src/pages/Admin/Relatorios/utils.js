@@ -139,7 +139,6 @@ export const COLUNAS_EXPORT_RANKING_ATRASOS = [
 
 // ── Relatório: Acervo por gênero/autor/editora ───────────
 export const AGRUPADOR_OPTIONS = [
-  { valor: "categoria", label: "Categoria" },
   { valor: "genero", label: "Gênero" },
   { valor: "autor", label: "Autor" },
   { valor: "editora", label: "Editora" },
@@ -147,7 +146,6 @@ export const AGRUPADOR_OPTIONS = [
 ];
 
 const LABEL_AGRUPADOR = {
-  categoria: "Categoria",
   genero: "Gênero",
   autor: "Autor",
   editora: "Editora",

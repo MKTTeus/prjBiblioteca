@@ -24,7 +24,6 @@ CATALOGO = {
     'Autor': 'idAutor,autNome,autABNT',
     'LivroAutor': 'idLivro,idAutor',
     'Editora': 'idEditora,ediNome',
-    'Categoria': 'idCategoria,catNome', 'LivroCategoria': 'idLivro,idCategoria',
     'Genero': 'idGenero,genNome', 'LivroGenero': 'idLivro,idGenero',
 }
 LEITORES = {
@@ -50,7 +49,6 @@ def _vinculos(dados, tabela, campo_id, campo_nome):
 
 def _livros(dados, atividade):
     autores = _vinculos(dados, 'Autor', 'idAutor', 'autNome')
-    categorias = _vinculos(dados, 'Categoria', 'idCategoria', 'catNome')
     generos = _vinculos(dados, 'Genero', 'idGenero', 'genNome')
     editoras = {e['idEditora']: e.get('ediNome') for e in dados['Editora']}
     return {l['idLivro']: {
@@ -59,7 +57,6 @@ def _livros(dados, atividade):
         'situacao': 'Ativo' if l.get('livAtivo') else 'Inativo',
         'autores': ', '.join(autores[l['idLivro']].values()),
         'editora': editoras.get(l.get('idEditora')),
-        'categorias': ', '.join(categorias[l['idLivro']].values()),
         'generos': ', '.join(generos[l['idLivro']].values()),
     } for l in dados['Livro'] if atividade == 'todos' or bool(l.get('livAtivo')) == (atividade == 'ativos')}
 
@@ -102,8 +99,8 @@ def montar_gestao(tipo, filtros, buscar_emprestimos):
     elif tipo == 'solicitacoes':
         def consulta():
             q = supabase.table('Movimentacao').select('*').order('idMovimentacao')
-            if filtros['dataInicio']: q = q.gte('movDataSolicitacao', filtros['dataInicio'])
-            if filtros['dataFim']: q = q.lte('movDataSolicitacao', filtros['dataFim'])
+            if filtros['dataInicio']: q = q.gte('data_solicitacao', filtros['dataInicio'])
+            if filtros['dataFim']: q = q.lte('data_solicitacao', f"{filtros['dataFim']}T23:59:59.999999Z")
             if filtros['idUsuario']: q = q.eq('idUsuario', filtros['idUsuario'])
             if filtros['idAdminProfessor']: q = q.eq('idAdminProfessor', filtros['idAdminProfessor'])
             return q
@@ -124,7 +121,7 @@ def montar_gestao(tipo, filtros, buscar_emprestimos):
     if tipo in ('historico','devolucoes','renovacoes','solicitacoes'):
         itens = [{**i, 'tipo':i.get('usuarioTipo'), 'tombo':i.get('codigo'),
             'finalidade':i.get('movFinalidade'), 'renovacoes':i.get('renovacoes') or 0,
-            'dataSolicitacao':i.get('movDataSolicitacao'),
+            'dataSolicitacao':i.get('data_solicitacao'),
             'situacao':i.get('itemStatus') if tipo=='solicitacoes' else i.get('status')} for i in emprestimos]
         if tipo == 'devolucoes':
             itens = [i for i in itens if i.get('dataDevolucao') and
@@ -164,7 +161,7 @@ def montar_gestao(tipo, filtros, buscar_emprestimos):
             notas.append('Obras com coautoria contam para cada autor; os totais por autor não devem ser somados como total da biblioteca.')
         else:
             for lid, livro in livros.items():
-                pendencias = [nome for campo, nome in [('isbn','ISBN'),('autores','Autor'),('editora','Editora'),('categorias','Categoria'),('generos','Gênero'),('cdd','CDD')] if not livro.get(campo)]
+                pendencias = [nome for campo, nome in [('isbn','ISBN'),('autores','Autor'),('editora','Editora'),('generos','Gênero'),('cdd','CDD')] if not livro.get(campo)]
                 if not exemplares[lid]: pendencias.append('Sem exemplares')
                 itens.append({**livro, 'exemplares':len(exemplares[lid]),
                     'disponiveis':sum(texto(e.get('exeLivStatus'))=='disponivel' for e in exemplares[lid]),

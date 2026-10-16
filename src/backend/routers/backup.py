@@ -44,9 +44,9 @@ BACKUP_SEGURANCA_RETENCAO_HORAS = _ler_horas_retencao_seguranca()
 # tabelas ou a estrutura do payload mudar de forma incompatível com
 # restaurações antigas — /backup/restaurar usa isso para recusar backups de
 # um formato mais novo do que o que este código sabe restaurar.
-BACKUP_VERSAO = 4
-TABELAS = ['Administrador','Usuario','Autor','Editora','Categoria','Genero','Livro','Exemplar',
-    'LivroAutor','LivroCategoria','LivroGenero','Movimentacao','MovimentacaoExemplar','Configuracoes',
+BACKUP_VERSAO = 5
+TABELAS = ['Administrador','Usuario','Autor','Editora','Genero','Livro','Exemplar',
+    'LivroAutor','LivroGenero','Movimentacao','MovimentacaoExemplar','Configuracoes',
     'FichaCatalografica','ResultadoAnoLetivo','TomboContador','EmailOutbox','RedefinicaoSenha','AvaliacaoLivro']
 
 

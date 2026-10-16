@@ -15,7 +15,7 @@ A tela `/admin/relatorios` mantém Empréstimos, Usuários em Atraso e Acervo po
 | Devoluções no período | Exemplares devolvidos dentro do intervalo escolhido, inclusive empréstimos iniciados antes do intervalo. |
 | Empréstimos renovados | Quantidade acumulada de renovações e prazo atual de cada exemplar. |
 | Solicitações e retiradas | Pedidos pendentes, aprovados, negados, expirados e retirados, uma linha por exemplar. |
-| Revisão do cadastro do acervo | Campos ausentes para revisão, como autor, editora, ISBN, categoria, gênero, CDD e exemplares. |
+| Revisão do cadastro do acervo | Campos ausentes para revisão, como autor, editora, ISBN, gênero, CDD e exemplares. |
 
 As consultas oferecem os filtros relevantes ao seu conteúdo: período, tipo de leitor, pessoa específica, série, turma, ano letivo, finalidade do empréstimo de professor, situação cadastral, participação e situação do exemplar. Busca, ordenação crescente/decrescente e limpeza de filtros complementam a consulta.
 
@@ -27,7 +27,7 @@ Busca, período e filtros frequentes de cada relatório ficam visíveis. **Filtr
 
 Resultados têm uma faixa compacta de totais, contexto dos filtros aplicados e exportações próximas à tabela. As notas de contagem ficam em **Como interpretar este relatório**. A primeira coluna acompanha a rolagem horizontal, e a tabela pode receber foco para navegação por teclado. Em telas pequenas, os controles se reorganizam para a largura disponível.
 
-O relatório de Acervo por Grupo também permite categoria e ano de publicação e mostra reservados, indisponíveis/tombos fixos e desativados. Empréstimos e atrasos passam a incluir professores nos filtros, e o histórico individual aceita professores na busca. Alterar filtros bloqueia exportações até aplicar a consulta, preservando a correspondência entre dados e filtros.
+O relatório de Acervo por Grupo permite gênero, autor, editora e ano de publicação e mostra reservados, indisponíveis/tombos fixos e desativados. Empréstimos e atrasos passam a incluir professores nos filtros, e o histórico individual aceita professores na busca. Alterar filtros bloqueia exportações até aplicar a consulta, preservando a correspondência entre dados e filtros.
 
 ## Como interpretar as contagens
 
@@ -56,4 +56,4 @@ Não há alterações de schema nem migrações nesta implementação. Não fora
 3. Devolva apenas um exemplar de um empréstimo com vários itens. Ele deve aparecer em Devoluções no período e os outros devem continuar em posse no histórico.
 4. Em Leitura por turma e série, confira a coluna Uso em sala após uma retirada de professor para a turma.
 5. Gere uma consulta com mais de 50 resultados e exporte. Compare o total do arquivo com o total da consulta, não somente com a página visível.
-6. Em Acervo por Grupo, confira Categoria e Ano de publicação e a coluna Desativados.
+6. Em Acervo por Grupo, confira Gênero e Ano de publicação e a coluna Desativados.

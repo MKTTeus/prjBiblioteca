@@ -86,8 +86,8 @@ export default function RelatorioAcervo() {
     setErroTitulos(null);
   }
 
-  const LABEL_GRUPO = { categoria: "Categoria", genero: "Gênero", autor: "Autor", editora: "Editora", ano_publicacao:"Ano de publicação" };
-  const LABEL_GRUPO_PLURAL = { categoria:"Categorias", genero: "Gêneros", autor: "Autores", editora: "Editoras", ano_publicacao:"Anos de publicação" };
+  const LABEL_GRUPO = { genero: "Gênero", autor: "Autor", editora: "Editora", ano_publicacao:"Ano de publicação" };
+  const LABEL_GRUPO_PLURAL = { genero: "Gêneros", autor: "Autores", editora: "Editoras", ano_publicacao:"Anos de publicação" };
   const labelGrupo = LABEL_GRUPO[agrupadorAplicado] || "Gênero";
   const labelGrupoPlural = LABEL_GRUPO_PLURAL[agrupadorAplicado] || "Gêneros";
 
@@ -162,7 +162,7 @@ export default function RelatorioAcervo() {
 
       {erro && <div className="rel-erro">{erro}</div>}
 
-      <p className="rel-nota">Situação atual do acervo. Obras com vários autores, gêneros ou categorias aparecem em cada grupo; o resumo conta títulos e exemplares únicos.</p>
+      <p className="rel-nota">Situação atual do acervo. Obras com vários autores ou gêneros aparecem em cada grupo; o resumo conta títulos e exemplares únicos.</p>
 
       <div className="rel-table-box">
         <table>

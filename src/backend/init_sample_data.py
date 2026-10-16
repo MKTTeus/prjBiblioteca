@@ -15,7 +15,7 @@ def init_sample_data():
         book = supabase.table("Livro").insert({
             "livTitulo": "Teste Empréstimo",
             "livAutor": "Autor Teste"
-            # defaults idCategoria=1 etc handled by DB?
+            # Relacionamentos bibliográficos são tratados pelo fluxo de cadastro.
         }).execute().data[0]
         book_id = book["idLivro"]
         print(f"✓ Created book ID: {book_id}")
