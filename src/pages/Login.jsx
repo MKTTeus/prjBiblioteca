@@ -15,7 +15,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [userType, setUserType] = useState("aluno");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => sessionStorage.getItem("session-expired-message") || "");
 
   const tipoMap = {
     admin: "Administrador",
@@ -51,7 +51,10 @@ export default function Login() {
         result.tipo === "admin"
           ? (result.professor ? "/professor" : "/admin")
           : "/user";
-      navigate(destino, { replace: true });
+      const previousPath = sessionStorage.getItem("session-return-path");
+      sessionStorage.removeItem("session-return-path");
+      sessionStorage.removeItem("session-expired-message");
+      navigate(result.tipo === "admin" && !result.professor && /^\/admin\/(livros|alunos|comunidade|admins)$/.test(previousPath || "") ? previousPath : destino, { replace: true });
     } catch (error) {
       console.error("Erro login:", error);
       setError("Não foi possível concluir o login. Verifique sua conexão com a Sala de Leitura e tente novamente.");

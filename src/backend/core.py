@@ -25,7 +25,6 @@ if not SECRET_KEY:
 if os.getenv('VERCEL') and (len(SECRET_KEY)<32 or SECRET_KEY.startswith('replace-')):
     raise RuntimeError('SECRET_KEY deve ser um segredo forte e exclusivo no ambiente de produção')
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 6
 
 def get_session_epoch() -> str:
     try:
@@ -195,7 +194,7 @@ def create_token(data: dict, token_version: int = 1) -> str:
     minutes, epoch = executar_em_paralelo(get_session_timeout_minutes, get_session_epoch)
     minutes = max(1, min(1440, minutes))
     expire = utc_now() + timedelta(minutes=minutes)
-    data = {**data, "exp": expire, "tv": token_version, "epoch": epoch}
+    data = {**data, "exp": expire, "ttl": minutes, "tv": token_version, "epoch": epoch}
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
 

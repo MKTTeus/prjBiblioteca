@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addExemplares,
   createBook,
@@ -14,6 +14,8 @@ import {
 import { HiOutlineSave, HiOutlineX, HiOutlineBookOpen, HiOutlineOfficeBuilding, HiOutlineClipboardList } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
 import { useToast } from "../../../../../contexts/ToastContext";
+import { useAuth } from "../../../../../contexts/AuthContext";
+import useRegistrationDraft, { readRegistrationDraft } from "../../../../../hooks/useRegistrationDraft";
 import BasicInfoSection from "./BasicInfoSection";
 import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
@@ -243,6 +245,7 @@ const DEFAULT_EDIT_ADD_CONFIG = {
 
 export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initialSection = "basic" }) {
   const { addToast } = useToast();
+  const { user } = useAuth();
   const [generos, setGeneros] = useState([]);
   const [autores, setAutores] = useState([]);
   const [editoras, setEditoras] = useState([]);
@@ -255,6 +258,14 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   const [initialExemplares, setInitialExemplares] = useState([]);
   const [addConfig, setAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
   const [initialAddConfig, setInitialAddConfig] = useState(DEFAULT_CREATE_ADD_CONFIG);
+  const draftExtra = useMemo(() => ({ exemplares, addConfig }), [exemplares, addConfig]);
+  const { clearDraft } = useRegistrationDraft("livros", user, {
+    open: true,
+    dirty: !loadingDetails && (!bookToEdit || loadedBookId === bookToEdit.idLivro) && formTemAlteracoes(),
+    form,
+    recordId: bookToEdit?.idLivro || null,
+    extra: draftExtra,
+  });
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [confirmandoCamposEmBranco, setConfirmandoCamposEmBranco] = useState(false);
   const [camposEmBrancoDetectados, setCamposEmBrancoDetectados] = useState([]);
@@ -331,12 +342,15 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     setIsbnFilledFields(new Set());
 
     if (!bookToEdit) {
-      setForm(DEFAULT_FORM);
+      const draft = readRegistrationDraft("livros", user);
+      const restored = draft && !draft.recordId;
+      setForm(restored ? { ...DEFAULT_FORM, ...draft.form } : DEFAULT_FORM);
       setInitialForm(DEFAULT_FORM);
-      setExemplares([]);
+      setExemplares(restored ? draft.extra?.exemplares || [] : []);
       setInitialExemplares([]);
-      setAddConfig(DEFAULT_CREATE_ADD_CONFIG);
+      setAddConfig(restored ? { ...DEFAULT_CREATE_ADD_CONFIG, ...draft.extra?.addConfig } : DEFAULT_CREATE_ADD_CONFIG);
       setInitialAddConfig(DEFAULT_CREATE_ADD_CONFIG);
+      if (restored) addToast("Rascunho de livro recuperado.", "success");
       return;
     }
 
@@ -380,20 +394,23 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
         ediPais: livro.ediPais || "Brasil",
       };
 
-      setForm(nextForm);
+      const draft = readRegistrationDraft("livros", user);
+      const restored = draft && draft.recordId === bookToEdit.idLivro;
+      setForm(restored ? { ...nextForm, ...draft.form } : nextForm);
       setInitialForm(nextForm);
-      setExemplares(exemplaresCarregados);
+      setExemplares(restored ? draft.extra?.exemplares || exemplaresCarregados : exemplaresCarregados);
       setInitialExemplares(exemplaresCarregados);
-      setAddConfig(DEFAULT_EDIT_ADD_CONFIG);
+      setAddConfig(restored ? { ...DEFAULT_EDIT_ADD_CONFIG, ...draft.extra?.addConfig } : DEFAULT_EDIT_ADD_CONFIG);
       setInitialAddConfig(DEFAULT_EDIT_ADD_CONFIG);
       setLoadedBookId(bookToEdit.idLivro);
+      if (restored) addToast("Rascunho de livro recuperado.", "success");
     } catch (err) {
       console.error(err);
       addToast("Falha ao carregar detalhes do livro", "error");
     } finally {
       setLoadingDetails(false);
     }
-  }, [bookToEdit, addToast]);
+  }, [bookToEdit, addToast, user?.email]);
 
   const carregarMetadados = useCallback(async () => {
     try {
@@ -628,12 +645,14 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     if (formTemAlteracoes()) {
       setConfirmandoSaida(true);
     } else {
+      clearDraft();
       onClose();
     }
   }
 
   function confirmarSaida() {
     setConfirmandoSaida(false);
+    clearDraft();
     onClose();
   }
 
@@ -758,6 +777,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       }
 
       addToast(bookToEdit ? "Livro atualizado com sucesso" : "Livro cadastrado com sucesso", "success");
+      clearDraft();
       if (onBookSaved) onBookSaved();
     } catch (err) {
       console.error(err);

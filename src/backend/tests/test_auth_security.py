@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from datetime import timedelta
 import pytest
 from fastapi import HTTPException
 from jose import jwt
@@ -33,6 +34,24 @@ def test_login_emits_current_version(monkeypatch):
     monkeypatch.setattr(core, 'get_session_timeout_minutes', lambda: 30)
     result = auth.login(Login(email='user@example.com', senha='password', UserType='Aluno'), SimpleNamespace())
     assert jwt.decode(result['access_token'], core.SECRET_KEY, algorithms=['HS256'])['tv'] == 4
+
+def test_renew_session_checks_account_and_uses_current_timeout(monkeypatch):
+    db = DB(account()); monkeypatch.setattr(core, 'supabase', db)
+    monkeypatch.setattr(core, 'get_session_timeout_minutes', lambda: 12)
+    refreshed = auth.renovar_sessao(token())['access_token']
+    claims = jwt.decode(refreshed, core.SECRET_KEY, algorithms=['HS256'])
+    assert claims['ttl'] == 12
+    assert claims['tv'] == 4
+    assert claims['sub'] == 'user@example.com'
+    db.account = account(usuStatus=False)
+    with pytest.raises(HTTPException) as exc: auth.renovar_sessao(token())
+    assert exc.value.status_code == 401
+
+def test_renew_session_rejects_expired_token(monkeypatch):
+    monkeypatch.setattr(core, 'supabase', DB(account()))
+    expired = token(exp=core.utc_now() - timedelta(seconds=1))
+    with pytest.raises(HTTPException) as exc: auth.renovar_sessao(expired)
+    assert exc.value.status_code == 401
 
 @pytest.mark.parametrize('changes', [{'usuStatus': False}, {'usuExcluido': True}, {'usuTokenVersion': 5}])
 def test_rejects_revoked_account(monkeypatch, changes):

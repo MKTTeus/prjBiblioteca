@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Aluno.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Users, UserCheck, UserX, GraduationCap, Pencil, Trash2, Upload } from "lucide-react";
@@ -15,6 +15,8 @@ import { importarAlunos } from "../../../services/api";
 import { reativarAluno } from "../../../services/api";
 import { getErrorMessage, isInactiveUserError } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
+import { useAuth } from "../../../contexts/AuthContext";
+import useRegistrationDraft from "../../../hooks/useRegistrationDraft";
 
 const EMPTY_ALUNO = {
   nome: "",
@@ -56,6 +58,25 @@ export default function Aluno() {
   const [pendingBatchStatus, setPendingBatchStatus] = useState(null); // "Ativo" | "Inativo"
   const [verFormados, setVerFormados] = useState(false);
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const { draft, clearDraft } = useRegistrationDraft("alunos", user, {
+    open: modalAberto, dirty: isDirty, form: novoAluno,
+    recordId: modoEdicao ? alunos[indexEditando]?.idUsuario : null,
+  });
+  const restoredDraft = useRef(false);
+
+  useEffect(() => {
+    if (!draft || restoredDraft.current) return;
+    const index = draft.recordId ? alunos.findIndex((a) => a.idUsuario === draft.recordId) : null;
+    if (draft.recordId && index < 0) return;
+    restoredDraft.current = true;
+    setNovoAluno({ ...EMPTY_ALUNO, ...draft.form, senha: "" });
+    setModoEdicao(index !== null);
+    setIndexEditando(index);
+    setIsDirty(true);
+    setModalAberto(true);
+    addToast("Rascunho de aluno recuperado. Informe a senha novamente, se necessário.", "success");
+  }, [draft, alunos, addToast]);
 
 const fetchAlunos = async () => {
   try {
@@ -95,6 +116,7 @@ useEffect(() => {
   };
 
   const fecharModal = () => {
+    clearDraft();
     setModalAberto(false);
     setModoEdicao(false);
     setIndexEditando(null);
@@ -227,11 +249,11 @@ const handleSalvar = async () => {
     );
   } finally {
     setTimeout(() => setIsProcessing(false), 600);
-    setIsDirty(false);
   }
 };
 
   const abrirCriacao = () => {
+    clearDraft();
     setNovoAluno(EMPTY_ALUNO);
     setModoEdicao(false);
     setIndexEditando(null);

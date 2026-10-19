@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
@@ -12,6 +12,8 @@ import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getErrorMessage } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
+import { useAuth } from "../../../contexts/AuthContext";
+import useRegistrationDraft from "../../../hooks/useRegistrationDraft";
 
 
 const EMPTY_ADMIN = {
@@ -34,6 +36,25 @@ export default function Admin() {
   const [admins, setAdmins] = useState([]);
   const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null);
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const { draft, clearDraft } = useRegistrationDraft("admins", user, {
+    open: modalAberto, dirty: isDirty, form: novoAdmin,
+    recordId: modoEdicao ? admins[indexEditando]?.idAdmin : null,
+  });
+  const restoredDraft = useRef(false);
+
+  useEffect(() => {
+    if (!draft || restoredDraft.current) return;
+    const index = draft.recordId ? admins.findIndex((a) => a.idAdmin === draft.recordId) : null;
+    if (draft.recordId && index < 0) return;
+    restoredDraft.current = true;
+    setNovoAdmin({ ...EMPTY_ADMIN, ...draft.form, senha: "" });
+    setModoEdicao(index !== null);
+    setIndexEditando(index);
+    setIsDirty(true);
+    setModalAberto(true);
+    addToast("Rascunho de administrador recuperado. Informe a senha novamente, se necessário.", "success");
+  }, [draft, admins, addToast]);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
   const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
@@ -72,6 +93,7 @@ export default function Admin() {
   };
 
   const fecharModal = () => {
+    clearDraft();
     setModalAberto(false);
     setModoEdicao(false);
     setIndexEditando(null);
@@ -166,11 +188,11 @@ export default function Admin() {
       );
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
-      setIsDirty(false);
     }
   };
 
   const abrirCriacao = () => {
+    clearDraft();
     setNovoAdmin(EMPTY_ADMIN);
     setModoEdicao(false);
     setIndexEditando(null);

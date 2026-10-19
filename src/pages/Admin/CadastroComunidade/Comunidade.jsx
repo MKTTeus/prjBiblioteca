@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Comunidade.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
@@ -23,6 +23,8 @@ import { importarComunidade } from "../../../services/api";
 import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
 import { getErrorMessage, isInactiveUserError } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
+import { useAuth } from "../../../contexts/AuthContext";
+import useRegistrationDraft from "../../../hooks/useRegistrationDraft";
 
 const EMPTY_MEMBRO = {
   nome: "",
@@ -58,6 +60,25 @@ export default function Comunidade() {
   const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
   const [pendingBatchStatus, setPendingBatchStatus] = useState(null);
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const { draft, clearDraft } = useRegistrationDraft("comunidade", user, {
+    open: modalAberto, dirty: isDirty, form: novoMembro,
+    recordId: modoEdicao ? membros[indexEditando]?.idUsuario : null,
+  });
+  const restoredDraft = useRef(false);
+
+  useEffect(() => {
+    if (!draft || restoredDraft.current) return;
+    const index = draft.recordId ? membros.findIndex((m) => m.idUsuario === draft.recordId) : null;
+    if (draft.recordId && index < 0) return;
+    restoredDraft.current = true;
+    setNovoMembro({ ...EMPTY_MEMBRO, ...draft.form, senha: "" });
+    setModoEdicao(index !== null);
+    setIndexEditando(index);
+    setIsDirty(true);
+    setModalAberto(true);
+    addToast("Rascunho da comunidade recuperado. Informe a senha novamente, se necessário.", "success");
+  }, [draft, membros, addToast]);
 
 const fetchMembros = async () => {
   try {
@@ -94,6 +115,7 @@ useEffect(() => {
   };
 
   const fecharModal = () => {
+    clearDraft();
     setModalAberto(false);
     setModoEdicao(false);
     setIndexEditando(null);
@@ -201,7 +223,6 @@ const handleSalvar = async () => {
       addToast(getErrorMessage(err, fallback), "error");
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
-      setIsDirty(false);
     }
   };
 
@@ -244,6 +265,7 @@ const handleSalvar = async () => {
   };
 
   const abrirCriacao = () => {
+    clearDraft();
     setNovoMembro(EMPTY_MEMBRO);
     setModoEdicao(false);
     setIndexEditando(null);

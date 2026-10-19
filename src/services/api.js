@@ -1,6 +1,7 @@
 // src/services/api.js
 
 import { API_URL } from "./apiConfig";
+import { ensureFreshSession, expireSession, renewSession, tokenLifetime, setSessionTimeout, scheduleRenewal } from "./session";
 
 // ========================
 // TOKEN
@@ -23,11 +24,16 @@ export const perguntarNovi = (mensagem, historico = [], signal) =>
 const pendingMutations = new Map();
 
 async function apiFetch(endpoint, options = {}) {
-  const token = getToken();
+  const token = await ensureFreshSession();
   const isFormData = options.body instanceof FormData;
   const mutation = options.method && options.method !== "GET";
 
-  const identity = mutation && !isFormData ? JSON.stringify([token, options.method, endpoint, options.body || '']) : null;
+  let sessionIdentity = token;
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "null");
+    if (user?.email && user?.tipo) sessionIdentity = `${user.tipo}:${user.email}`;
+  } catch { /* Usa o token se o perfil local estiver indisponível. */ }
+  const identity = mutation && !isFormData ? JSON.stringify([sessionIdentity, options.method, endpoint, options.body || '']) : null;
   let requestKey = options.headers?.['Idempotency-Key'];
   if (mutation && !requestKey) {
     requestKey = (identity && pendingMutations.get(identity)) || crypto.randomUUID();
@@ -58,10 +64,7 @@ async function apiFetch(endpoint, options = {}) {
     if (identity && res.status < 500) pendingMutations.delete(identity);
 
     if (res.status === 401) {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("tipo");
-      window.location.href = "/#/login";
+      expireSession();
       throw new Error("Sessão expirada");
     }
     const text = await res.text();
@@ -77,7 +80,10 @@ async function apiFetch(endpoint, options = {}) {
   if (identity) pendingMutations.delete(identity);
   if (data?.access_token) {
     localStorage.setItem("token", data.access_token);
+    const { timeoutMs } = tokenLifetime(data.access_token);
+    if (timeoutMs) setSessionTimeout(timeoutMs);
     window.dispatchEvent(new CustomEvent("session-token", { detail: data.access_token }));
+    scheduleRenewal();
   }
   return data;
 }
@@ -193,7 +199,7 @@ export const updateAutor = (idAutor, payload) =>
 
 export async function uploadCover(file) {
 
-  const token = getToken();
+  const token = await ensureFreshSession();
   const formData = new FormData();
 
   formData.append("file", file);
@@ -208,10 +214,7 @@ export async function uploadCover(file) {
 
   if (!res.ok) {
     if (res.status === 401) {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("tipo");
-      window.location.href = "/#/login";
+      expireSession();
       throw new Error("Sessão expirada");
     }
     const text = await res.text();
@@ -230,7 +233,7 @@ export async function uploadCover(file) {
 // externo — ou da própria capa já salva — e devolve como File, pronto para
 // abrir no CoverImageEditor exatamente como um arquivo escolhido localmente.
 export async function fetchCoverFromUrl(url) {
-  const token = getToken();
+  const token = await ensureFreshSession();
 
   const res = await fetch(`${API_URL}/buscar-capa-por-url?url=${encodeURIComponent(url)}`, {
     cache: "no-store",
@@ -241,10 +244,7 @@ export async function fetchCoverFromUrl(url) {
 
   if (!res.ok) {
     if (res.status === 401) {
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("tipo");
-      window.location.href = "/#/login";
+      expireSession();
       throw new Error("Sessão expirada");
     }
     const text = await res.text();
@@ -308,11 +308,17 @@ export const mesclarAutor = (idAutor, idDestino) =>
 export const getConfiguracoes = () =>
   apiFetch("/configuracoes");
 
-export const updateConfiguracao = (payload) =>
-  apiFetch("/configuracoes", {
+export const updateConfiguracao = async (payload) => {
+  const result = await apiFetch("/configuracoes", {
     method: "PUT",
     body: JSON.stringify(payload),
   });
+  if (payload.chave === "timeout_sessao") {
+    setSessionTimeout(Number(payload.valor) * 60000);
+    renewSession().catch(() => {});
+  }
+  return result;
+};
   
 // ANO LETIVO
 // ========================
@@ -376,7 +382,7 @@ export const atualizarStatusAdminsLote = (ids, status) =>
 // ========================
 
 export async function baixarBackup() {
-  const token = getToken();
+  const token = await ensureFreshSession();
   const res = await fetch(`${API_URL}/backup/completo`, {
     headers: { Authorization: `Bearer ${token}` },
   });

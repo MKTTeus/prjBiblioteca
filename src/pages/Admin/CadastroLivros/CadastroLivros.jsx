@@ -17,6 +17,7 @@ import FiltroBusca from "./components/FiltroBusca/FiltroBusca";
 import { useAuth } from "../../../contexts/AuthContext";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getErrorMessage } from "../../../utils/apiError";
+import { readRegistrationDraft } from "../../../hooks/useRegistrationDraft";
 
 import "./cadastroLivros.css";
 import { filtrarPorBusca } from "../../../utils/busca";
@@ -100,6 +101,16 @@ export default function CadastroLivros() {
   useEffect(() => {
     loadBooks();
   }, [loadBooks]);
+
+  useEffect(() => {
+    if (!booksLoaded || !isAdmin) return;
+    const draft = readRegistrationDraft("livros", user);
+    if (!draft) return;
+    const book = draft.recordId ? books.find((item) => item.idLivro === draft.recordId) : null;
+    if (draft.recordId && !book) return;
+    setCurrentBook(book);
+    setModalOpen(true);
+  }, [booksLoaded, isAdmin, user?.email]);
 
   function handleAdd() {
     setCurrentBook(null);

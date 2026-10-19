@@ -3,7 +3,7 @@ import os
 import secrets
 from datetime import timedelta
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from database import supabase
 from core import (
@@ -15,6 +15,8 @@ from core import (
     utc_now,
     verify_password,
     create_token,
+    oauth2_scheme,
+    _authenticate,
     invalidate_token_version_cache,
 )
 from rate_limit import checar_rate_limit, limitar_login, limitar_esqueci_senha, limitar_redefinir_senha
@@ -28,6 +30,18 @@ MENSAGEM_RESET_GENERICA = {
     "message": "Se o e-mail informado estiver cadastrado, enviaremos um link de redefinição de senha."
 }
 TOKEN_INVALIDO_OU_EXPIRADO = "Link inválido ou expirado. Solicite uma nova redefinição de senha."
+
+
+@router.post("/sessao/renovar")
+def renovar_sessao(token: str = Depends(oauth2_scheme)):
+    # Revalidar status, versão e epoch antes de emitir um novo token. Nunca
+    # aceitar um token já expirado para renovar a sessão.
+    perfil = _authenticate(token)
+    novo = create_token(
+        {"sub": perfil["sub"], "tipo": perfil["tipo"]},
+        token_version=perfil["tv"],
+    )
+    return {"access_token": novo}
 
 
 def _hash_token(token: str) -> str:
