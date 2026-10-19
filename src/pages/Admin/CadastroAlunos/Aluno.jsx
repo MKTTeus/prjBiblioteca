@@ -13,7 +13,7 @@ import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
 import { reativarAluno } from "../../../services/api";
-import { getErrorMessage } from "../../../utils/apiError";
+import { getErrorMessage, isInactiveUserError } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
 
 const EMPTY_ALUNO = {
@@ -78,6 +78,7 @@ const fetchAlunos = async () => {
     );
   } catch (err) {
     console.error("Erro ao carregar alunos:", err);
+    addToast(getErrorMessage(err, "Não foi possível carregar a lista de alunos. Atualize a página e tente novamente."), "error");
   }
 };
 
@@ -160,11 +161,8 @@ const handleSalvar = async () => {
 
     // ===== CRIAÇÃO =====
     else {
-      if (!novoAluno.senha || novoAluno.senha.length < 6) {
-        addToast(
-          "A senha deve possuir pelo menos 6 caracteres",
-          "error"
-        );
+      if (!novoAluno.senha || novoAluno.senha.length < 8) {
+        addToast("A senha deve ter pelo menos 8 caracteres.", "error");
         return;
       }
 
@@ -204,11 +202,7 @@ const handleSalvar = async () => {
         addToast("Cadastro realizado com sucesso", "success");
       } catch (err) {
         // Usuário existe, mas está inativo
-        if (
-          err.status === 409 ||
-          err.data?.detail === "USUARIO_INATIVO" ||
-          err.message?.includes("USUARIO_INATIVO")
-        ) {
+        if (isInactiveUserError(err)) {
           setPendingReativar({ ...novoAluno });
           fecharModal();
           return;
@@ -282,7 +276,7 @@ const handleSalvar = async () => {
       addToast("Usuário excluído com sucesso", "success");
     } catch (err) {
       console.error("Erro ao excluir aluno:", err);
-      addToast("Falha ao excluir o usuário", "error");
+      addToast(getErrorMessage(err, "Não foi possível excluir este aluno. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingDeleteAluno(null);
     }
@@ -324,7 +318,7 @@ const handleSalvar = async () => {
       addToast(`Aluno ${novoStatus === "Ativo" ? "ativado" : "desativado"} com sucesso`, "success");
     } catch (err) {
       console.error("Erro ao alterar status do aluno:", err);
-      addToast("Falha ao alterar status", "error");
+      addToast(getErrorMessage(err, "Não foi possível alterar o status deste aluno. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingToggleAluno(null);
     }
@@ -367,7 +361,7 @@ const handleSalvar = async () => {
       addToast("Aluno reativado com sucesso", "success");
     } catch (err) {
       console.error("Erro ao reativar aluno:", err);
-      addToast("Falha ao reativar o aluno", "error");
+      addToast(getErrorMessage(err, "Não foi possível reativar este aluno. Confira o cadastro e tente novamente."), "error");
     } finally {
       setPendingReativar(null);
     }
@@ -405,7 +399,7 @@ const handleSalvar = async () => {
       addToast(`${selecionados.length} aluno(s) excluído(s) com sucesso`, "success");
       setSelecionados([]);
     } catch (err) {
-      addToast("Falha ao excluir alunos", "error");
+      addToast(getErrorMessage(err, "Não foi possível excluir os alunos selecionados. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingBatchExcluir(false);
     }
@@ -423,7 +417,7 @@ const handleSalvar = async () => {
       addToast(`${selecionados.length} aluno(s) ${novoStatus ? "ativados" : "desativados"} com sucesso`, "success");
       setSelecionados([]);
     } catch (err) {
-      addToast("Falha ao atualizar status", "error");
+      addToast(getErrorMessage(err, "Não foi possível atualizar o status dos alunos selecionados. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingBatchStatus(null);
     }

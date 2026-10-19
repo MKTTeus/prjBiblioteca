@@ -9,6 +9,7 @@ from schemas import UsuarioCreate, UsuarioUpdate, BatchIds, BatchStatus
 from routers.ano_letivo import get_ano_letivo_atual
 import io
 import csv
+import unicodedata
 from pydantic import BaseModel, Field
 from typing import Optional as Opt
 
@@ -59,6 +60,8 @@ def _mensagem_conflito_importacao(usuario: dict, email: str, ra: str = None, cpf
     amigável para uso nas linhas de erro da importação em massa."""
     if usuario.get("usuExcluido"):
         return "pertence a um cadastro excluído — reative pela tela de cadastro"
+    if usuario.get("usuStatus") is not True:
+        return "pertence a um cadastro inativo — ative o cadastro existente pela tela de cadastro"
     if usuario.get("usuEmail") == email:
         campo = "Email"
     elif ra and usuario.get("usuRA") == ra:
@@ -80,24 +83,80 @@ def _tratar_erro_unicidade(e: Exception, campos: dict):
     return HTTPException(status_code=409, detail="Já existe um cadastro com esses dados")
 
 
-def _parse_upload(contents: bytes, filename: str) -> list[dict]:
+def _mensagem_erro_importacao(e: Exception, linha: int, campos: dict) -> str:
+    conflito = _tratar_erro_unicidade(e, campos)
+    if conflito:
+        return f"Linha {linha}: {conflito.detail}."
+    return (
+        f"Linha {linha}: não foi possível salvar este cadastro. Revise os dados e tente novamente; "
+        "se o problema continuar, informe esta linha e o horário à equipe."
+    )
+
+
+def _normalizar_cabecalho_importacao(valor: str) -> str:
+    texto = unicodedata.normalize("NFKD", str(valor)).encode("ascii", "ignore").decode("ascii")
+    chave = texto.strip().lower().replace(" ", "_").replace("-", "_")
+    aliases = {
+        "e_mail": "email",
+        "nome_completo": "nome",
+        "telefone_do_responsavel": "telefone_responsavel",
+        "telefone_responsavel": "telefone_responsavel",
+        "cpf_cin": "cpf",
+    }
+    return aliases.get(chave, chave)
+
+
+def _parse_upload(contents: bytes, filename: str, required_columns: tuple[str, ...] = ()) -> list[dict]:
     """Retorna lista de dicts com as linhas do arquivo (xlsx ou csv)."""
-    if filename.lower().endswith(".csv"):
-        text = contents.decode("utf-8-sig")
+    nome_arquivo = (filename or "").lower()
+    if not contents:
+        raise HTTPException(status_code=400, detail="O arquivo está vazio. Selecione um CSV ou Excel preenchido.")
+
+    if nome_arquivo.endswith(".csv"):
+        try:
+            text = contents.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            raise HTTPException(status_code=400, detail="Não foi possível ler o CSV. Salve-o em UTF-8 e tente novamente.")
         reader = csv.DictReader(io.StringIO(text))
-        return [
-            {k.strip().lower(): (v.strip() if v else "") for k, v in row.items()}
+        headers = reader.fieldnames or []
+        rows = [
+            {_normalizar_cabecalho_importacao(k): (v.strip() if v else "") for k, v in row.items() if k}
             for row in reader
         ]
-    else:
+    elif nome_arquivo.endswith(".xlsx"):
         import openpyxl
         wb = openpyxl.load_workbook(io.BytesIO(contents))
         ws = wb.active
-        headers = [str(c.value).strip().lower() if c.value else "" for c in ws[1]]
+        headers = [_normalizar_cabecalho_importacao(c.value) if c.value else "" for c in ws[1]]
         rows = []
         for row in ws.iter_rows(min_row=2, values_only=True):
-            rows.append({headers[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(row)})
-        return rows
+            dados = {headers[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(row) if i < len(headers) and headers[i]}
+            if any(dados.values()):
+                rows.append(dados)
+    else:
+        raise HTTPException(status_code=400, detail="Formato não reconhecido. Envie um arquivo .xlsx ou .csv.")
+
+    headers_normalizados = {_normalizar_cabecalho_importacao(header) for header in headers if header}
+    faltando = [coluna for coluna in required_columns if coluna not in headers_normalizados]
+    if faltando:
+        rotulos = {"nome": "nome", "email": "e-mail", "ra": "RA", "serie": "série"}
+        colunas = ", ".join(rotulos.get(coluna, coluna) for coluna in faltando)
+        raise HTTPException(status_code=400, detail=f"O arquivo precisa conter estas colunas: {colunas}.")
+    if not rows:
+        raise HTTPException(status_code=400, detail="O arquivo não contém linhas de cadastro para importar.")
+    return rows
+
+
+def _parse_upload_or_explain(contents: bytes, filename: str, required_columns: tuple[str, ...]) -> list[dict]:
+    try:
+        return _parse_upload(contents, filename, required_columns)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Não foi possível ler este arquivo. Confira se ele é um CSV ou Excel válido e tente novamente.",
+        )
 
 
 # ── ALUNOS ────────────────────────────────────────────────────────
@@ -210,8 +269,8 @@ def reativar_aluno(data: UsuarioCreate, admin=Depends(get_admin)):
 @router.post("/alunos/importar")
 async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)):
     contents = await file.read(5*1024*1024+1)
-    if len(contents)>5*1024*1024: raise HTTPException(413,'Arquivo maior que 5 MB')
-    linhas = _parse_upload(contents, file.filename)
+    if len(contents)>5*1024*1024: raise HTTPException(413,'O arquivo ultrapassa o limite de 5 MB. Escolha um arquivo menor.')
+    linhas = _parse_upload_or_explain(contents, file.filename, ("nome", "email", "ra", "serie"))
     resultados = {"importados": 0, "ignorados": 0, "erros": [], "orientacao": "Usuários importados devem usar Esqueci minha senha para definir uma senha individual."}
     ano_letivo = get_ano_letivo_atual()
 
@@ -264,7 +323,7 @@ async def importar_alunos(file: UploadFile = File(...), admin=Depends(get_admin)
             supabase.table("Usuario").insert(novo).execute()
             resultados["importados"] += 1
         except Exception as e:
-            resultados["erros"].append(f"Linha {i}: cadastro não inserido; verifique dados e duplicidades")
+            resultados["erros"].append(_mensagem_erro_importacao(e, i, {"usuEmail": "E-mail", "usuRA": "RA"}))
             resultados["ignorados"] += 1
 
     return resultados
@@ -496,8 +555,8 @@ def reativar_comunidade(data: UsuarioCreate, admin=Depends(get_admin)):
 @router.post("/comunidade/importar")
 async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_admin)):
     contents = await file.read(5*1024*1024+1)
-    if len(contents)>5*1024*1024: raise HTTPException(413,'Arquivo maior que 5 MB')
-    linhas = _parse_upload(contents, file.filename)
+    if len(contents)>5*1024*1024: raise HTTPException(413,'O arquivo ultrapassa o limite de 5 MB. Escolha um arquivo menor.')
+    linhas = _parse_upload_or_explain(contents, file.filename, ("nome", "email"))
     resultados = {"importados": 0, "ignorados": 0, "erros": [], "orientacao": "Usuários importados devem usar Esqueci minha senha para definir uma senha individual."}
     cpfs_vistos = set()
 
@@ -551,7 +610,7 @@ async def importar_comunidade(file: UploadFile = File(...), admin=Depends(get_ad
             if cpf:
                 cpfs_vistos.add(cpf)
         except Exception as e:
-            resultados["erros"].append(f"Linha {i}: cadastro não inserido; verifique dados e duplicidades")
+            resultados["erros"].append(_mensagem_erro_importacao(e, i, {"usuEmail": "E-mail", "usuCPF": "CPF"}))
             resultados["ignorados"] += 1
 
     return resultados

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import "./ImportarModal.css";
 import { Upload, FileSpreadsheet, X, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { getErrorMessage } from "../../utils/apiError";
 
 export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
   const [arquivo, setArquivo] = useState(null);
@@ -22,7 +23,11 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
       const res = await onImportar(arquivo);
       setResultado(res);
     } catch (err) {
-      setResultado({ importados: 0, ignorados: 0, erros: ["Falha na importação. Verifique o arquivo."] });
+      setResultado({
+        importados: 0,
+        ignorados: 1,
+        erros: [getErrorMessage(err, "Não foi possível importar este arquivo. Confira o formato e os dados e tente novamente.")],
+      });
     } finally {
       setCarregando(false);
     }
@@ -52,7 +57,7 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
 
           <div className="importar-senha-aviso">
             <Info size={15} />
-            Os usuários serão cadastrados com a senha padrão <strong>&nbsp;mudar@123</strong>
+            Cada conta recebe uma senha temporária única. O usuário deve usar <strong>&nbsp;Esqueci minha senha</strong> para definir o acesso.
           </div>
 
           <div

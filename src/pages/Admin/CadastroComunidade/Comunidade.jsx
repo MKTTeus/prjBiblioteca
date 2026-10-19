@@ -9,6 +9,7 @@ import {
   deleteComunidade,
   excluirComunidadeLote,
   atualizarStatusComunidadeLote,
+  reativarComunidade,
 } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -20,7 +21,7 @@ import StatsCard from "../../../components/StatsCard/StatsCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
 import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
-import { getErrorMessage } from "../../../utils/apiError";
+import { getErrorMessage, isInactiveUserError } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
 
 const EMPTY_MEMBRO = {
@@ -51,6 +52,7 @@ export default function Comunidade() {
   const [novoMembro, setNovoMembro] = useState(EMPTY_MEMBRO);
   const [membros, setMembros] = useState([]);
   const [pendingDeleteMembro, setPendingDeleteMembro] = useState(null);
+  const [pendingReativar, setPendingReativar] = useState(null);
   const [modalImportar, setModalImportar] = useState(false);
   const [selecionados, setSelecionados] = useState([]);
   const [pendingBatchExcluir, setPendingBatchExcluir] = useState(false);
@@ -75,6 +77,7 @@ const fetchMembros = async () => {
     );
   } catch (err) {
     console.error("Erro ao carregar comunidade:", err);
+    addToast(getErrorMessage(err, "Não foi possível carregar a lista da comunidade. Atualize a página e tente novamente."), "error");
   }
 };
 
@@ -147,22 +150,32 @@ const handleSalvar = async () => {
         );
         addToast("Informações atualizadas com sucesso", "success");
       } else {
-        if (!novoMembro.senha || novoMembro.senha.length < 6) {
-          addToast("A senha deve possuir pelo menos 6 caracteres", "error");
+        if (!novoMembro.senha || novoMembro.senha.length < 8) {
+          addToast("A senha deve ter pelo menos 8 caracteres.", "error");
           return;
         }
 
-        const created = await createComunidade({
-          nome: novoMembro.nome,
-          email: novoMembro.email,
-          senha: novoMembro.senha,
-          telefone: novoMembro.telefone,
-          telefoneResponsavel: novoMembro.telefone2,
-          endereco: novoMembro.endereco,
-          cpf: novoMembro.cpf,
-          tipo: "Comunidade",
-          status: novoMembro.status === "Ativo",
-        });
+        let created;
+        try {
+          created = await createComunidade({
+            nome: novoMembro.nome,
+            email: novoMembro.email,
+            senha: novoMembro.senha,
+            telefone: novoMembro.telefone,
+            telefoneResponsavel: novoMembro.telefone2,
+            endereco: novoMembro.endereco,
+            cpf: novoMembro.cpf,
+            tipo: "Comunidade",
+            status: novoMembro.status === "Ativo",
+          });
+        } catch (err) {
+          if (isInactiveUserError(err)) {
+            setPendingReativar({ ...novoMembro });
+            fecharModal();
+            return;
+          }
+          throw err;
+        }
 
         setMembros((prev) => [
           ...prev,
@@ -189,6 +202,44 @@ const handleSalvar = async () => {
     } finally {
       setTimeout(() => setIsProcessing(false), 600);
       setIsDirty(false);
+    }
+  };
+
+  const confirmReativar = async () => {
+    if (!pendingReativar) return;
+
+    try {
+      const reativado = await reativarComunidade({
+        nome: pendingReativar.nome,
+        email: pendingReativar.email,
+        senha: pendingReativar.senha,
+        telefone: pendingReativar.telefone,
+        telefoneResponsavel: pendingReativar.telefone2,
+        endereco: pendingReativar.endereco,
+        cpf: pendingReativar.cpf,
+        tipo: "Comunidade",
+        status: true,
+      });
+      setMembros((prev) => [
+        ...prev,
+        {
+          idUsuario: reativado.idUsuario,
+          nome: reativado.usuNome,
+          cpf: reativado.usuCPF || "",
+          email: reativado.usuEmail || "",
+          telefone: reativado.usuTelefone || "",
+          telefone2: reativado.usuTelefoneResponsavel || "",
+          endereco: reativado.usuEndereco || "",
+          livros: 0,
+          status: "Ativo",
+        },
+      ]);
+      addToast("Membro reativado com sucesso", "success");
+    } catch (err) {
+      console.error("Erro ao reativar membro:", err);
+      addToast(getErrorMessage(err, "Não foi possível reativar este membro. Confira o cadastro e tente novamente."), "error");
+    } finally {
+      setPendingReativar(null);
     }
   };
 
@@ -235,7 +286,7 @@ const handleSalvar = async () => {
       addToast("Usuário excluído com sucesso", "success");
     } catch (err) {
       console.error("Erro ao excluir membro:", err);
-      addToast("Falha ao excluir o usuário", "error");
+      addToast(getErrorMessage(err, "Não foi possível excluir este membro. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingDeleteMembro(null);
     }
@@ -266,6 +317,7 @@ const handleSalvar = async () => {
       );
     } catch (err) {
       console.error("Erro ao alterar status do membro:", err);
+      addToast(getErrorMessage(err, "Não foi possível alterar o status deste membro. Atualize a lista e tente novamente."), "error");
     }
   };
 
@@ -295,7 +347,7 @@ const handleSalvar = async () => {
       addToast(`${selecionados.length} membro(s) excluído(s) com sucesso`, "success");
       setSelecionados([]);
     } catch (err) {
-      addToast("Falha ao excluir membros", "error");
+      addToast(getErrorMessage(err, "Não foi possível excluir os membros selecionados. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingBatchExcluir(false);
     }
@@ -311,7 +363,7 @@ const handleSalvar = async () => {
       addToast(`${selecionados.length} membro(s) ${novoStatusBool ? "ativados" : "desativados"} com sucesso`, "success");
       setSelecionados([]);
     } catch (err) {
-      addToast("Falha ao atualizar status", "error");
+      addToast(getErrorMessage(err, "Não foi possível atualizar o status dos membros selecionados. Atualize a lista e tente novamente."), "error");
     } finally {
       setPendingBatchStatus(null);
     }
@@ -518,6 +570,15 @@ const handleSalvar = async () => {
         confirmText="Excluir"
         cancelText="Cancelar"
         irreversivel
+      />
+      <ConfirmModal
+        show={Boolean(pendingReativar)}
+        title="Cadastro já existente"
+        message={`Já existe um cadastro inativo para "${pendingReativar?.nome}". Deseja reativá-lo com os dados informados?`}
+        onConfirm={confirmReativar}
+        onCancel={() => setPendingReativar(null)}
+        confirmText="Reativar"
+        cancelText="Cancelar"
       />
       <ConfirmModal
         show={pendingBatchExcluir}

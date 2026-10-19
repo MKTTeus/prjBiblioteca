@@ -59,6 +59,7 @@ export default function Admin() {
         );
       } catch (err) {
         console.error("Erro ao carregar administradores:", err);
+        addToast(getErrorMessage(err, "Não foi possível carregar a lista de administradores. Atualize a página e tente novamente."), "error");
       }
     }
 
@@ -79,9 +80,21 @@ export default function Admin() {
   };
 
   const handleSalvar = async () => {
-    if (!novoAdmin.nome || !novoAdmin.email) return;
     if (isProcessing) return;
     if (modoEdicao && !isDirty) return;
+
+    if (!novoAdmin.nome?.trim()) {
+      addToast("Informe o nome do administrador.", "error");
+      return;
+    }
+    if (!novoAdmin.email?.trim()) {
+      addToast("Informe o e-mail do administrador.", "error");
+      return;
+    }
+    if (!modoEdicao && (!novoAdmin.senha || novoAdmin.senha.length < 8)) {
+      addToast("A senha deve ter pelo menos 8 caracteres.", "error");
+      return;
+    }
 
     setIsProcessing(true);
 

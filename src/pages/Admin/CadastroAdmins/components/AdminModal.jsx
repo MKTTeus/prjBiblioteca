@@ -106,11 +106,12 @@ export default function AdminModal({
                         value={admin.senha}
                         onChange={onChange}
                         disabled={modoEdicao}
-                        min={6}
+                        minLength={modoEdicao ? undefined : 8}
+                        autoComplete="new-password"
                         placeholder={
                           modoEdicao
                             ? "Senha bloqueada durante a edição"
-                            : "Mínimo de 6 caracteres"
+                            : "Mínimo de 8 caracteres"
                         }
                       />
                       <button
