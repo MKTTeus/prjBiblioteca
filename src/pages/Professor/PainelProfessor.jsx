@@ -1,13 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppShell from "../../components/AppShell/AppShell";
 import DashboardProfessor from "./Dashboard/DashboardProfessor";
 import NovoEmprestimo from "./NovoEmprestimo/NovoEmprestimo";
 import MeusEmprestimos from "./MeusEmprestimos/MeusEmprestimos";
 import "./PainelProfessor.css";
 
-// Área restrita do professor. Segue o mesmo padrão de orquestração de
-// páginas usado em UserDashboard: cada item do menu troca a página
-// exibida dentro do mesmo AppShell, sem depender de rotas próprias.
+// O endereço acompanha a página para permitir histórico, atualização e links diretos.
 const pages = {
   dashboard: DashboardProfessor,
   "novo-emprestimo": NovoEmprestimo,
@@ -15,7 +14,11 @@ const pages = {
 };
 
 export default function PainelProfessor() {
-  const [activePage, setActivePage] = useState("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const requestedPage = location.pathname.split("/")[2] || "dashboard";
+  const activePage = pages[requestedPage] ? requestedPage : "dashboard";
+  const setActivePage = (page) => { if (pages[page]) navigate(page === "dashboard" ? "/professor" : `/professor/${page}`); };
   const CurrentPage = pages[activePage] || DashboardProfessor;
 
   return (

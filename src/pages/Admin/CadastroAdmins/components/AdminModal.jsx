@@ -12,6 +12,7 @@ export default function AdminModal({
   onChange,
   onClose,
   onSave,
+  errors = {},
 }) {
   const [showSenha, setShowSenha] = useState(false);
 
@@ -62,6 +63,10 @@ export default function AdminModal({
           <div className="editor-divider" />
 
           <div className="editor-content admin-editor-content">
+            {Object.keys(errors).length > 0 && <div className="editor-copies-warning" role="alert">
+              <strong>Revise os campos destacados:</strong>
+              <ul>{Object.entries(errors).filter(([, message]) => message).map(([name, message]) => <li key={name}>{message}</li>)}</ul>
+            </div>}
             <div className="editor-section-grid admin-editor-grid">
               <div className="editor-form-panel basic-column">
                 <div className="basic-column-header">
@@ -73,6 +78,7 @@ export default function AdminModal({
                     <span>Nome *</span>
                     <input
                       name="nome"
+                      aria-invalid={Boolean(errors.nome)}
                       value={admin.nome}
                       onChange={onChange}
                       placeholder="Digite o nome do administrador"
@@ -83,6 +89,7 @@ export default function AdminModal({
                     <span>E-mail</span>
                     <input
                       name="email"
+                      aria-invalid={Boolean(errors.email)}
                       value={admin.email}
                       onChange={onChange}
                       placeholder="admin@sistema.com"
@@ -103,6 +110,7 @@ export default function AdminModal({
                       <input
                         type={showSenha ? "text" : "password"}
                         name="senha"
+                        aria-invalid={Boolean(errors.senha)}
                         value={admin.senha}
                         onChange={onChange}
                         disabled={modoEdicao}

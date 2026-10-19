@@ -8,55 +8,86 @@ import {
 } from "react-icons/fi";
 import BookCard from "../../../components/BookCard/BookCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
+import Pagination from "../../../components/Pagination/Pagination";
 import { useToast } from "../../../contexts/ToastContext";
 import { useAuth } from "../../../contexts/AuthContext";
-import { getBooks, getTurmasProfessor, criarEmprestimoProfessor } from "../../../services/api";
+import { getBooksPage, getTurmasProfessor, criarEmprestimoProfessor } from "../../../services/api";
 import { getErrorMessage } from "../../../utils/apiError";
 import "../../user/UserArea.css";
 import "./NovoEmprestimo.css";
 
 const OUTRA_TURMA = "__outra__";
+const PAGE_SIZE = 20;
+
+function lerRascunho(chave) {
+  if (!chave) return {};
+  try {
+    const draft = JSON.parse(sessionStorage.getItem(chave) || "{}");
+    return draft && typeof draft === "object" ? draft : {};
+  } catch { return {}; }
+}
 
 export default function NovoEmprestimo({ onNavigate }) {
   const { user } = useAuth();
   const { addToast } = useToast();
+  const draftKey = user?.email ? `emprestimo-professor:${encodeURIComponent(user.email.toLowerCase())}` : null;
+  const [draft] = useState(() => lerRascunho(draftKey));
+  const [rascunhoRestaurado] = useState(() => Boolean(draft.cart && Object.keys(draft.cart).length));
 
-  const [finalidade, setFinalidade] = useState(null); // "PESSOAL" | "TURMA"
+  const [finalidade, setFinalidade] = useState(draft.finalidade || null); // "PESSOAL" | "TURMA"
 
   const [turmas, setTurmas] = useState([]);
-  const [turmaSelecionadaKey, setTurmaSelecionadaKey] = useState("");
-  const [serieManual, setSerieManual] = useState("");
-  const [turmaManual, setTurmaManual] = useState("");
-  const [turmaConfirmada, setTurmaConfirmada] = useState(false);
+  const [turmaSelecionadaKey, setTurmaSelecionadaKey] = useState(draft.turmaSelecionadaKey || "");
+  const [serieManual, setSerieManual] = useState(draft.serieManual || "");
+  const [turmaManual, setTurmaManual] = useState(draft.turmaManual || "");
+  const [turmaConfirmada, setTurmaConfirmada] = useState(Boolean(draft.turmaConfirmada));
 
   const [search, setSearch] = useState("");
   const [books, setBooks] = useState([]);
   const [isLoadingBooks, setIsLoadingBooks] = useState(true);
+  const [erroLivros, setErroLivros] = useState("");
+  const [erroTurmas, setErroTurmas] = useState("");
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [totalLivros, setTotalLivros] = useState(0);
+  const [tentativaLivros, setTentativaLivros] = useState(0);
   const [pendingQty, setPendingQty] = useState({}); // idLivro -> quantidade selecionada antes de adicionar
 
-  const [cart, setCart] = useState({}); // idLivro -> { titulo, quantidade, disponiveis }
+  const [cart, setCart] = useState(draft.cart || {}); // idLivro -> { titulo, quantidade, disponiveis }
   const [enviando, setEnviando] = useState(false);
   const [resumoFinal, setResumoFinal] = useState(null);
 
   useEffect(() => {
+    if (!draftKey || resumoFinal) return;
+    try {
+      sessionStorage.setItem(draftKey, JSON.stringify({ finalidade, turmaSelecionadaKey, serieManual, turmaManual, turmaConfirmada, cart }));
+    } catch { /* A tela continua disponível mesmo sem armazenamento. */ }
+  }, [draftKey, finalidade, turmaSelecionadaKey, serieManual, turmaManual, turmaConfirmada, cart, resumoFinal]);
+
+  const [tentativaTurmas, setTentativaTurmas] = useState(0);
+
+  useEffect(() => {
     if (finalidade === "TURMA" && turmas.length === 0) {
       getTurmasProfessor()
-        .then((data) => setTurmas(Array.isArray(data) ? data : []))
-        .catch(() => setTurmas([]));
+        .then((data) => { setTurmas(Array.isArray(data) ? data : []); setErroTurmas(""); })
+        .catch((err) => setErroTurmas(getErrorMessage(err, "Não foi possível carregar suas turmas. Tente novamente ou informe a turma manualmente.")));
     }
-  }, [finalidade, turmas.length]);
+  }, [finalidade, tentativaTurmas]);
 
   useEffect(() => {
     let cancelado = false;
     async function buscar() {
       setIsLoadingBooks(true);
+      setErroLivros("");
       try {
-        const params = {};
+        const params = { page: paginaAtual, per_page: PAGE_SIZE };
         if (search.trim()) params.q = search.trim();
-        const data = await getBooks(params);
-        if (!cancelado) setBooks(Array.isArray(data) ? data : []);
-      } catch {
-        if (!cancelado) setBooks([]);
+        const data = await getBooksPage(params);
+        if (!cancelado) {
+          setBooks(Array.isArray(data?.itens) ? data.itens : []);
+          setTotalLivros(Number(data?.total ?? 0));
+        }
+      } catch (err) {
+        if (!cancelado) { setBooks([]); setErroLivros(getErrorMessage(err, "Não foi possível consultar o acervo. Verifique sua conexão e tente novamente.")); }
       } finally {
         if (!cancelado) setIsLoadingBooks(false);
       }
@@ -65,10 +96,11 @@ export default function NovoEmprestimo({ onNavigate }) {
     // já foram definidas — evita montar o carrinho antes de saber para
     // quem é o empréstimo.
     if (finalidade === "PESSOAL" || (finalidade === "TURMA" && turmaConfirmada)) {
-      buscar();
+      const timer = setTimeout(buscar, search.trim() ? 250 : 0);
+      return () => { cancelado = true; clearTimeout(timer); };
     }
     return () => { cancelado = true; };
-  }, [search, finalidade, turmaConfirmada]);
+  }, [search, paginaAtual, finalidade, turmaConfirmada, tentativaLivros]);
 
   const totalExemplaresCarrinho = useMemo(
     () => Object.values(cart).reduce((soma, item) => soma + item.quantidade, 0),
@@ -129,7 +161,7 @@ export default function NovoEmprestimo({ onNavigate }) {
   }, [turmas]);
 
   const confirmarTurma = () => {
-    if (turmaSelecionadaKey === OUTRA_TURMA) {
+    if (turmaSelecionadaKey === OUTRA_TURMA || turmaOptions.length === 0) {
       if (!turmaManual.trim()) {
         addToast("Informe a turma.", "error");
         return;
@@ -157,6 +189,7 @@ export default function NovoEmprestimo({ onNavigate }) {
     setPendingQty({});
     setResumoFinal(null);
     setSearch("");
+    if (draftKey) sessionStorage.removeItem(draftKey);
   };
 
   const handleConfirmarEmprestimo = async () => {
@@ -178,6 +211,7 @@ export default function NovoEmprestimo({ onNavigate }) {
       const resultado = await criarEmprestimoProfessor(payload);
       setResumoFinal(resultado);
       setCart({});
+      if (draftKey) sessionStorage.removeItem(draftKey);
       addToast("Solicitação enviada. Aguarde a aprovação do administrador.", "success");
     } catch (err) {
       addToast(getErrorMessage(err, "Erro ao criar empréstimo"), "error");
@@ -185,8 +219,8 @@ export default function NovoEmprestimo({ onNavigate }) {
       // confirmação, atualiza a lista para refletir o estoque real.
       if (err?.status === 409) {
         try {
-          const data = await getBooks(search.trim() ? { q: search.trim() } : {});
-          setBooks(Array.isArray(data) ? data : []);
+          const data = await getBooksPage({ q: search.trim(), page: paginaAtual, per_page: PAGE_SIZE });
+          setBooks(Array.isArray(data?.itens) ? data.itens : []);
         } catch { /* silencioso */ }
       }
     } finally {
@@ -290,6 +324,11 @@ export default function NovoEmprestimo({ onNavigate }) {
             <FiArrowLeft /> Alterar finalidade
           </button>
 
+          {erroTurmas && <div role="alert" className="user-empty-state">
+            <p>{erroTurmas}</p>
+            <button type="button" onClick={() => setTentativaTurmas((n) => n + 1)}>Tentar novamente</button>
+          </div>}
+
           {turmaOptions.length > 0 && (
             <label className="professor-form-field">
               <span>Selecionar turma já cadastrada</span>
@@ -359,18 +398,29 @@ export default function NovoEmprestimo({ onNavigate }) {
         <FiArrowLeft /> {finalidade === "TURMA" ? "Alterar turma" : "Alterar finalidade"}
       </button>
 
+      {rascunhoRestaurado && <p role="status">Seu pedido em andamento foi recuperado nesta aba. Confira as quantidades e a disponibilidade antes de confirmar.</p>}
+      <details className="user-section-card">
+        <summary>Como funciona a solicitação?</summary>
+        <p>Escolha os títulos e as quantidades. Após enviar, acompanhe a aprovação em Meus empréstimos. A retirada precisa ser registrada pela equipe da biblioteca.</p>
+      </details>
+
       <div className="professor-emprestimo-layout">
         <div className="professor-emprestimo-livros">
           <section className="user-section-card professor-search-toolbar">
             <SearchBar
               value={search}
-              onChange={setSearch}
+              onChange={(value) => { setSearch(value); setPaginaAtual(1); }}
               placeholder="Buscar por título, autor ou ISBN..."
             />
           </section>
 
           {isLoadingBooks ? (
             <div className="user-empty-state">Carregando livros...</div>
+          ) : erroLivros ? (
+            <div className="user-empty-state" role="alert">
+              <p>{erroLivros}</p>
+              <button type="button" onClick={() => setTentativaLivros((n) => n + 1)}>Tentar novamente</button>
+            </div>
           ) : books.length > 0 ? (
             <div className="shared-book-grid">
               {books.map((book, index) => {
@@ -393,6 +443,12 @@ export default function NovoEmprestimo({ onNavigate }) {
           ) : (
             <div className="user-empty-state">Nenhum livro encontrado.</div>
           )}
+          {!erroLivros && !isLoadingBooks && <Pagination
+            paginaAtual={paginaAtual}
+            totalPaginas={Math.max(1, Math.ceil(totalLivros / PAGE_SIZE))}
+            totalItens={totalLivros}
+            onChange={setPaginaAtual}
+          />}
         </div>
 
         <aside className="professor-carrinho">

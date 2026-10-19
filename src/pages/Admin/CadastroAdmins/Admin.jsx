@@ -33,6 +33,7 @@ export default function Admin() {
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
   const [novoAdmin, setNovoAdmin] = useState(EMPTY_ADMIN);
+  const [errosFormulario, setErrosFormulario] = useState({});
   const [admins, setAdmins] = useState([]);
   const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null);
   const { addToast } = useToast();
@@ -88,11 +89,13 @@ export default function Admin() {
   }, []);
 
   const handleChange = (e) => {
+    setErrosFormulario((prev) => ({ ...prev, [e.target.name]: undefined }));
     setNovoAdmin((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     setIsDirty(true);
   };
 
   const fecharModal = () => {
+    setErrosFormulario({});
     clearDraft();
     setModalAberto(false);
     setModoEdicao(false);
@@ -105,16 +108,13 @@ export default function Admin() {
     if (isProcessing) return;
     if (modoEdicao && !isDirty) return;
 
-    if (!novoAdmin.nome?.trim()) {
-      addToast("Informe o nome do administrador.", "error");
-      return;
-    }
-    if (!novoAdmin.email?.trim()) {
-      addToast("Informe o e-mail do administrador.", "error");
-      return;
-    }
-    if (!modoEdicao && (!novoAdmin.senha || novoAdmin.senha.length < 8)) {
-      addToast("A senha deve ter pelo menos 8 caracteres.", "error");
+    const errors = {};
+    if (!novoAdmin.nome?.trim()) errors.nome = "Informe o nome do administrador.";
+    if (!novoAdmin.email?.trim()) errors.email = "Informe o e-mail do administrador.";
+    if (!modoEdicao && (!novoAdmin.senha || novoAdmin.senha.length < 8)) errors.senha = "A senha deve ter pelo menos 8 caracteres.";
+    if (Object.keys(errors).length > 0) {
+      setErrosFormulario(errors);
+      document.querySelector(`.admin-editor-modal [name="${Object.keys(errors)[0]}"]`)?.focus();
       return;
     }
 
@@ -482,6 +482,7 @@ export default function Admin() {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+        errors={errosFormulario}
       />
 
       <ConfirmModal

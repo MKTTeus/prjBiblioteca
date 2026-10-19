@@ -250,6 +250,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   const [autores, setAutores] = useState([]);
   const [editoras, setEditoras] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [saveErrors, setSaveErrors] = useState([]);
+  const [savedParts, setSavedParts] = useState(0);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [loadedBookId, setLoadedBookId] = useState(null);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -683,6 +685,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
 
   async function executarSalvar() {
     setLoading(true);
+    setSaveErrors([]);
+    setSavedParts(0);
     try {
       let formResolvido;
       try {
@@ -716,14 +720,17 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
           JSON.stringify(normalizeAddConfig(addConfig)) !==
             JSON.stringify(normalizeAddConfig(initialAddConfig));
 
-        const saveErrors = [];
+        const errors = [];
+        let succeeded = 0;
 
         if (formChanged) {
           try {
             await updateBook(bookToEdit.idLivro, normalizedForm);
+            setInitialForm(formResolvido);
+            succeeded += 1;
           } catch (err) {
             console.error("Erro ao salvar dados do livro:", err);
-            saveErrors.push(`Livro: ${getErrorMessage(err)}`);
+            errors.push(`Dados do livro: ${getErrorMessage(err)}`);
           }
         }
 
@@ -740,9 +747,13 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
           exemplarResults.forEach((result, index) => {
             if (result.status === "rejected") {
               const exemplar = changedExemplares[index];
-              saveErrors.push(
+              errors.push(
                 `Tombo ${exemplar.exeLivTombo || exemplar.idExemplar}: ${getErrorMessage(result.reason)}`
               );
+            } else {
+              const exemplar = changedExemplares[index];
+              setInitialExemplares((prev) => prev.map((item) => item.idExemplar === exemplar.idExemplar ? exemplar : item));
+              succeeded += 1;
             }
           });
         }
@@ -754,13 +765,18 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
               Number(addConfig.quantidade),
               addConfig.prefixo || "T"
             );
+            setAddConfig(DEFAULT_EDIT_ADD_CONFIG);
+            setInitialAddConfig(DEFAULT_EDIT_ADD_CONFIG);
+            succeeded += 1;
           } catch (err) {
-            saveErrors.push(`Novos tombos: ${getErrorMessage(err)}`);
+            errors.push(`Novos tombos: ${getErrorMessage(err)}`);
           }
         }
 
-        if (saveErrors.length > 0) {
-          addToast("Falha ao atualizar o livro", "error");
+        if (errors.length > 0) {
+          setSaveErrors(errors);
+          setSavedParts(succeeded);
+          addToast("Algumas alterações não foram salvas. Consulte os detalhes no formulário.", "error", 8000);
           return;
         }
       } else {
@@ -781,7 +797,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       if (onBookSaved) onBookSaved();
     } catch (err) {
       console.error(err);
-      addToast(bookToEdit ? "Falha ao atualizar o livro" : "Falha ao cadastrar o livro", "error");
+      const message = getErrorMessage(err, bookToEdit ? "Não foi possível atualizar o livro. Confira o cadastro e tente novamente." : "Não foi possível cadastrar o livro. Confira os dados e tente novamente.");
+      setSaveErrors([message]);
+      addToast(message, "error", 8000);
     } finally {
       setLoading(false);
     }
@@ -910,6 +928,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
           <div className="editor-divider" />
 
           <div className="editor-content">
+            {saveErrors.length > 0 && <div className="editor-copies-warning editor-save-errors" role="alert">
+              <p><strong>Não foi possível salvar todas as alterações.</strong> {savedParts > 0 ? `${savedParts} parte(s) já foram salvas; ao tentar novamente, somente as pendências serão enviadas.` : "Revise os erros e tente novamente."}</p>
+              <ul>{saveErrors.map((message, index) => <li key={`${index}-${message}`}>{message}</li>)}</ul>
+            </div>}
             {semExemplares && (
               <div className="editor-copies-warning" role="status">
                 <p><strong>{exemplares.length === 0 ? "Nenhum exemplar cadastrado." : "Todos os exemplares estão desativados."}</strong> Adicione ou reative um exemplar para exibir o livro no acervo.{bookToEdit?.livAtivo === false ? " O título também precisa ser reativado." : ""}</p>

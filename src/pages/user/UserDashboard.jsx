@@ -1,4 +1,5 @@
-import React, { lazy, Suspense, useState } from "react";
+import React, { lazy, Suspense } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppShell from "../../components/AppShell/AppShell";
 const Biblioteca = lazy(() => import("./Biblioteca/Biblioteca"));
 const DashboardHome = lazy(() => import("./Dashboard/DashboardHome"));
@@ -15,7 +16,11 @@ const pages = {
 };
 
 export default function UserDashboard() {
-  const [activePage, setActivePage] = useState("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
+  const requestedPage = location.pathname.split("/")[2] || "dashboard";
+  const activePage = pages[requestedPage] ? requestedPage : "dashboard";
+  const setActivePage = (page) => { if (pages[page]) navigate(page === "dashboard" ? "/user" : `/user/${page}`); };
   const CurrentPage = pages[activePage] || DashboardHome;
 
   return (

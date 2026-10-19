@@ -116,7 +116,18 @@ export const getResumoAcervo = () => apiFetch('/livros/resumo');
 export const getBook = (idLivro) =>
   apiFetch(`/livros/gestao/${idLivro}`);
 
-export const getBooksForManagement = () => apiFetch("/livros/gestao");
+// A API limita cada resposta a 10 mil títulos. Percorrer páginas evita que
+// livros posteriores sumam da gestão e que a contagem local fique incorreta.
+export const getBooksForManagement = async () => {
+  const perPage = 1000;
+  const books = [];
+  for (let page = 1; ; page += 1) {
+    const batch = await apiFetch(`/livros/gestao?page=${page}&per_page=${perPage}`);
+    if (!Array.isArray(batch)) throw new Error("Resposta inválida ao carregar o acervo.");
+    books.push(...batch);
+    if (batch.length < perPage) return books;
+  }
+};
 
 export const createBook = (payload) =>
   apiFetch("/livros", {

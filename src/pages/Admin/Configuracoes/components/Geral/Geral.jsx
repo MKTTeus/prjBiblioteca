@@ -2,15 +2,14 @@ import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { FiBookOpen, FiMoon, FiSliders } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
+import { salvarConfiguracoes } from "../../utils/saveSettings";
 import {
   getConfiguracoes,
-  updateConfiguracao,
   getMeuPerfilAdmin,
   atualizarMeuPerfilAdmin,
 } from "../../../../../services/api";
 import { getConfigValue, configToNumber } from "../../utils/configUtils";
 import { applyTheme, getSavedTheme } from "../../../../../utils/theme";
-import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Geral.css";
 
 export default function Geral() {
@@ -57,11 +56,11 @@ export default function Geral() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await Promise.all([
-        updateConfiguracao({ chave: "nome_biblioteca", valor: nome }),
-        updateConfiguracao({ chave: "dias_emprestimo", valor: String(dias) }),
-        updateConfiguracao({ chave: "maximo_renovacoes", valor: String(renovacoes) }),
-        updateConfiguracao({ chave: "livros_por_aluno", valor: String(livrosPorAluno) }),
+      await salvarConfiguracoes([
+        ["Nome da biblioteca", "nome_biblioteca", nome],
+        ["Dias de empréstimo", "dias_emprestimo", dias],
+        ["Máximo de renovações", "maximo_renovacoes", renovacoes],
+        ["Livros por aluno", "livros_por_aluno", livrosPorAluno],
       ]);
 
       localStorage.setItem("nomeBiblioteca", nome);
@@ -69,14 +68,13 @@ export default function Geral() {
 
       addToast("Configurações gerais salvas com sucesso", "success");
     } catch (error) {
-      addToast("Erro ao salvar configurações gerais", "error");
-      throw error; // re-throw so saveAll() can detect failure
+      addToast(error.message, "error", 10000);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Tema salva na hora, sem passar pelo "Salvar Tudo" — igual ao comportamento
+  // Tema salva imediatamente, enquanto os demais campos usam o botão desta aba.
   // da tela de configurações do usuário. É preferência individual: fica
   // salva apenas para o admin logado, não afeta os demais usuários.
   const handleToggleTema = async (checked) => {
@@ -96,8 +94,6 @@ export default function Geral() {
     }
   };
 
-  // Register this tab's save handler in the shared context
-  useRegisterSave("geral", handleSave);
 
   return (
     <div className="geral-sections">

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { FiBell } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
-import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
+import { salvarConfiguracoes } from "../../utils/saveSettings";
+import { getConfiguracoes } from "../../../../../services/api";
 import { configToBool, configToNumber } from "../../utils/configUtils";
-import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Notificacoes.css";
 
 export default function Notificacoes() {
@@ -34,22 +34,20 @@ export default function Notificacoes() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await Promise.all([
-        updateConfiguracao({ chave: "notificacao_email", valor: String(email) }),
-        updateConfiguracao({ chave: "lembrete_atraso", valor: String(atraso) }),
-        updateConfiguracao({ chave: "lembrete_devolucao", valor: String(devolucao) }),
-        updateConfiguracao({ chave: "dias_antecedencia_lembrete", valor: String(dias) }),
+      await salvarConfiguracoes([
+        ["Notificações por e-mail", "notificacao_email", email],
+        ["Lembrete de atraso", "lembrete_atraso", atraso],
+        ["Lembrete de devolução", "lembrete_devolucao", devolucao],
+        ["Antecedência do lembrete", "dias_antecedencia_lembrete", dias],
       ]);
       addToast("Configurações de notificações salvas com sucesso", "success");
     } catch (error) {
-      addToast("Erro ao salvar configurações de notificações", "error");
-      throw error;
+      addToast(error.message, "error", 10000);
     } finally {
       setIsSaving(false);
     }
   };
 
-  useRegisterSave("notificacoes", handleSave);
 
   const switchStyle = {
     offColor: "#cbd5e1",

@@ -83,45 +83,49 @@ export default function Login() {
           <h2>Fazer Login</h2>
           <p className="login-subtitle">Selecione seu tipo de usuário</p>
 
-          <div className="user-types">
-            <div
+          <div className="user-types" role="group" aria-label="Tipo de usuário">
+            <button type="button"
               className={`user-option admin ${userType === "admin" ? "selected" : ""}`}
               onClick={() => setUserType("admin")}
+              aria-pressed={userType === "admin"}
             >
               <FiShield className="user-icon" />
               <div>
                 <strong>Equipe Escolar</strong>
                 <span>Equipe gestora e professores</span>
               </div>
-            </div>
+            </button>
 
-            <div
+            <button type="button"
               className={`user-option aluno ${userType === "aluno" ? "selected" : ""}`}
               onClick={() => setUserType("aluno")}
+              aria-pressed={userType === "aluno"}
             >
               <FiUser className="user-icon" />
               <div>
                 <strong>Aluno</strong>
                 <span>Consultar e alugar livros</span>
               </div>
-            </div>
+            </button>
 
-            <div
+            <button type="button"
               className={`user-option comunidade ${userType === "comunidade" ? "selected" : ""}`}
               onClick={() => setUserType("comunidade")}
+              aria-pressed={userType === "comunidade"}
             >
               <FiUsers className="user-icon" />
               <div>
                 <strong>Comunidade</strong>
                 <span>Acesso para visitantes</span>
               </div>
-            </div>
+            </button>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label>{userType === "aluno" ? "RA ou E-mail" : userType === "comunidade" ? "CPF ou E-mail" : "E-mail"}</label>
+              <label htmlFor="login-identificador">{userType === "aluno" ? "RA ou E-mail" : userType === "comunidade" ? "CPF ou E-mail" : "E-mail"}</label>
               <input
+                id="login-identificador"
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -131,9 +135,10 @@ export default function Login() {
             </div>
 
             <div className="input-group">
-              <label>Senha</label>
+              <label htmlFor="login-senha">Senha</label>
               <div className="password-input-wrapper">
                 <input
+                  id="login-senha"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -145,7 +150,6 @@ export default function Login() {
                   className="password-toggle-btn"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                  tabIndex={-1}
                 >
                   {showPassword ? <FiEyeOff /> : <FiEye />}
                 </button>
@@ -153,10 +157,10 @@ export default function Login() {
             </div>
 
             <p className="forgot-password-link">
-              <span onClick={() => navigate("/esqueci-senha")}>Esqueci minha senha</span>
+              <button type="button" onClick={() => navigate("/esqueci-senha")}>Esqueci minha senha</button>
             </p>
 
-            {error && <div className="error">{error}</div>}
+            {error && <div className="error" role="alert">{error}</div>}
 
             <LoadingButton
               type="submit"

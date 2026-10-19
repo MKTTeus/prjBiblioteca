@@ -52,6 +52,7 @@ export default function Comunidade() {
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
   const [novoMembro, setNovoMembro] = useState(EMPTY_MEMBRO);
+  const [errosFormulario, setErrosFormulario] = useState({});
   const [membros, setMembros] = useState([]);
   const [pendingDeleteMembro, setPendingDeleteMembro] = useState(null);
   const [pendingReativar, setPendingReativar] = useState(null);
@@ -107,6 +108,7 @@ useEffect(() => {
 }, []);
 
   const handleChange = (e) => {
+    setErrosFormulario((prev) => ({ ...prev, [e.target.name]: undefined }));
     setNovoMembro((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -115,6 +117,7 @@ useEffect(() => {
   };
 
   const fecharModal = () => {
+    setErrosFormulario({});
     clearDraft();
     setModalAberto(false);
     setModoEdicao(false);
@@ -127,16 +130,14 @@ const handleSalvar = async () => {
   if (isProcessing) return;
   if (modoEdicao && !isDirty) return;
 
-  const faltando = CAMPOS_OBRIGATORIOS_MEMBRO.find(({ chave }) => !novoMembro[chave]);
-  if (faltando) {
-    addToast(`O campo "${faltando.rotulo}" não pode ficar em branco.`, "error");
+  const errors = Object.fromEntries(CAMPOS_OBRIGATORIOS_MEMBRO.filter(({ chave }) => !String(novoMembro[chave] || "").trim()).map(({ chave, rotulo }) => [chave, `Informe ${rotulo.toLowerCase()}.`]));
+  if (!validarCPF(novoMembro.cpf)) errors.cpf = "Informe um CPF válido.";
+  if (!modoEdicao && (!novoMembro.senha || novoMembro.senha.length < 8)) errors.senha = "A senha deve ter pelo menos 8 caracteres.";
+  if (Object.keys(errors).length > 0) {
+    setErrosFormulario(errors);
+    document.querySelector(`.comunidade-editor-modal [name="${Object.keys(errors)[0]}"]`)?.focus();
     return;
   }
-
-    if (!validarCPF(novoMembro.cpf)) {
-      addToast("O CPF informado é inválido", "error");
-      return;
-    }
 
     setIsProcessing(true);
 
@@ -172,11 +173,6 @@ const handleSalvar = async () => {
         );
         addToast("Informações atualizadas com sucesso", "success");
       } else {
-        if (!novoMembro.senha || novoMembro.senha.length < 8) {
-          addToast("A senha deve ter pelo menos 8 caracteres.", "error");
-          return;
-        }
-
         let created;
         try {
           created = await createComunidade({
@@ -574,6 +570,7 @@ const handleSalvar = async () => {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+        errors={errosFormulario}
       />
 
       <ImportarModal

@@ -30,6 +30,8 @@ function Header() {
     ? "Professor"
     : {
         admin: "Administrador",
+        Aluno: "Aluno",
+        Comunidade: "Comunidade",
         aluno: "Aluno",
         comunidade: "Comunidade",
         user: "Usuário",

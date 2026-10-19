@@ -4,6 +4,7 @@ import "./Emprestimos.css";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import { useToast } from "../../../contexts/ToastContext";
+import { getErrorMessage } from "../../../utils/apiError";
 import {
   criarEmprestimo,
   devolverEmprestimo,
@@ -54,12 +55,17 @@ export default function Emprestimos() {
 
   const [emprestimoDevolver, setEmprestimoDevolver] = useState(null);
   const [devolvendo, setDevolvendo] = useState(false);
+  const [carregando, setCarregando] = useState(true);
+  const [erroCarga, setErroCarga] = useState("");
+  const [dadosCarregados, setDadosCarregados] = useState(false);
 
   useEffect(() => {
     carregarDados();
   }, []);
 
   async function carregarDados() {
+    setCarregando(true);
+    setErroCarga("");
     try {
       const [dadosEmprestimos, alunos, comunidade, dadosExemplaresDisponiveis] = await Promise.all([
         getEmprestimos(),
@@ -75,8 +81,12 @@ export default function Emprestimos() {
       setMapUsuarios(criarMapaPorId(usuariosFormatados));
       setExemplares(dadosExemplaresDisponiveis);
       setMapExemplares(criarMapaPorId(dadosExemplaresDisponiveis));
+      setDadosCarregados(true);
     } catch (error) {
       console.error(error);
+      setErroCarga(getErrorMessage(error, "Não foi possível carregar empréstimos e usuários. Verifique sua conexão e tente novamente."));
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -110,7 +120,7 @@ export default function Emprestimos() {
       carregarDados();
     } catch (error) {
       console.error(error);
-      addToast("Falha ao realizar o empréstimo", "error");
+      addToast(getErrorMessage(error, "Não foi possível registrar o empréstimo. Verifique os dados e tente novamente."), "error");
     } finally {
       setSalvando(false);
     }
@@ -135,7 +145,7 @@ export default function Emprestimos() {
       carregarDados();
     } catch (error) {
       console.error(error);
-      addToast("Falha ao devolver o empréstimo", "error");
+      addToast(getErrorMessage(error, "Não foi possível registrar a devolução. Confira o status do exemplar antes de tentar novamente."), "error");
     } finally {
       setDevolvendo(false);
     }
@@ -192,6 +202,14 @@ export default function Emprestimos() {
     <div className="emp-page page-shell">
       <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
 
+      {carregando && <p role="status">Carregando empréstimos e usuários…</p>}
+      {erroCarga && <div role="alert" className="acervo-pendencia">
+        <p>{erroCarga} {dadosCarregados && "Os números abaixo são da última atualização concluída."}</p>
+        <button type="button" onClick={carregarDados}>Tentar novamente</button>
+      </div>}
+
+      {dadosCarregados && <>
+
       <section className="stats-cards-grid" aria-label="Resumo de empréstimos">
         {cardsResumo.map((card) => (
           <StatsCard
@@ -220,6 +238,7 @@ export default function Emprestimos() {
         onDevolver={abrirDevolver}
         onRenovar={abrirRenovar}
       />
+      </>}
 
       <NovoEmprestimoModal
         aberto={modalAberto}

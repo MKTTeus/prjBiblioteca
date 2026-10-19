@@ -15,6 +15,7 @@ export default function Biblioteca() {
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [tentativa, setTentativa] = useState(0);
   const [solicitados, setSolicitados] = useState({});
   const [solicitando, setSolicitando] = useState({});
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -111,7 +112,7 @@ export default function Biblioteca() {
     setError(null);
     const timer = setTimeout(fetchBooks, search.trim() ? 250 : 0);
     return () => { ativo = false; clearTimeout(timer); };
-  }, [search, paginaAtual]);
+  }, [search, paginaAtual, tentativa]);
 
   return (
     <div className="user-page user-library-page page-shell">
@@ -121,6 +122,11 @@ export default function Biblioteca() {
           <p>Explore livros com pelo menos um exemplar não desativado.</p>
         </div>
       </section>
+
+      <details className="user-section-card">
+        <summary>Como solicitar e retirar um livro?</summary>
+        <p>Escolha um título disponível e envie a solicitação. Acompanhe a aprovação em Empréstimos. Aguarde a confirmação e as orientações na tela antes de ir à biblioteca; a equipe registrará a retirada.</p>
+      </details>
 
       <section className="user-section-card user-library-toolbar">
         <SearchBar
@@ -133,7 +139,10 @@ export default function Biblioteca() {
       {isLoading ? (
         <div className="user-empty-state">Carregando livros...</div>
       ) : error ? (
-        <div className="user-empty-state">{error}</div>
+        <div className="user-empty-state" role="alert">
+          <p>{error}</p>
+          <button type="button" onClick={() => setTentativa((n) => n + 1)}>Tentar novamente</button>
+        </div>
       ) : books.length > 0 ? (
         <section className="user-library-results">
           {resultadoAproximado && (

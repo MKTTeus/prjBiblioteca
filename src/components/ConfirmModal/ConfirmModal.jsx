@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useId } from "react";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
 import "./ConfirmModal.css";
 import LoadingButton from "../LoadingButton/LoadingButton";
+import useDialogFocus from "../../hooks/useDialogFocus";
 
 export default function ConfirmModal({
   show,
@@ -14,17 +15,19 @@ export default function ConfirmModal({
   confirming = false,
   irreversivel = false,
 }) {
+  const titleId = useId();
+  const dialogRef = useDialogFocus(show, confirming ? null : onCancel);
   if (!show) return null;
 
   return (
      <div
-      className="confirm-modal-overlay" onClick={confirming ? undefined : onCancel} role="dialog" aria-modal="true">
-      <div className="confirm-modal-card" onClick={(event) => event.stopPropagation()}>
+      className="confirm-modal-overlay" onClick={confirming ? undefined : onCancel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={dialogRef} className="confirm-modal-card" onClick={(event) => event.stopPropagation()} tabIndex={-1}>
         <div className="confirm-modal-icon">
           <HiOutlineExclamationCircle />
         </div>
         <div className="confirm-modal-body">
-          <h2>{title}</h2>
+          <h2 id={titleId}>{title}</h2>
           <div className="confirm-modal-message">{message}</div>
           {irreversivel && <p className="confirm-modal-warning">Essa ação não poderá ser desfeita.</p>}
         </div>

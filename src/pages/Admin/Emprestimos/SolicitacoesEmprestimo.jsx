@@ -15,6 +15,7 @@ import {
 } from "../../../services/api";
 import "./Emprestimos.css";
 import LoadingButton from "../../../components/LoadingButton/LoadingButton";
+import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import { useToast } from "../../../contexts/ToastContext";
 import { filtrarPorBusca } from "../../../utils/busca";
 const statusLabel = {
@@ -100,6 +101,7 @@ export default function SolicitacoesEmprestimo() {
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [processando, setProcessando] = useState({});
+  const [solicitacaoParaExpirar, setSolicitacaoParaExpirar] = useState(null);
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const { addToast } = useToast();
   const OPCOES_FILTRO = [
@@ -337,13 +339,12 @@ export default function SolicitacoesEmprestimo() {
       setProcessando((prev) => ({ ...prev, [id]: false }));
     }
   }
-  async function handleExpirarSolicitacao(item) {
+  async function confirmarExpiracao() {
+    const item = solicitacaoParaExpirar;
+    if (!item) return;
     const id = item.idEmprestimo || item.idMovimentacao;
     if (!id) {
       addToast("Erro: ID da solicitação não encontrado", "error");
-      return;
-    }
-    if (!window.confirm("Tem certeza que deseja expirar esta solicitação? O exemplar será liberado.")) {
       return;
     }
     setProcessando((prev) => ({ ...prev, [id]: true }));
@@ -362,6 +363,7 @@ export default function SolicitacoesEmprestimo() {
         )
       );
       addToast("Solicitação expirada com sucesso", "success");
+      setSolicitacaoParaExpirar(null);
     } catch (error) {
       console.error(error);
       const mensagem = error.data?.detail || error.message || "Erro ao expirar solicitação";
@@ -523,7 +525,7 @@ export default function SolicitacoesEmprestimo() {
                             </LoadingButton>
                             <LoadingButton
                               className="emp-btn-expirar"
-                              onClick={() => handleExpirarSolicitacao(item)}
+                              onClick={() => setSolicitacaoParaExpirar(item)}
                               disabled={isProcessando || horasRestantes === null || horasRestantes > 0}
                               title="Expirar manualmente esta solicitação"
                             >
@@ -547,6 +549,15 @@ export default function SolicitacoesEmprestimo() {
           totalItens={solicitacoesFiltradas.length}
         />
       </section>
+      <ConfirmModal
+        show={Boolean(solicitacaoParaExpirar)}
+        title="Expirar solicitação"
+        message="A solicitação será expirada e o exemplar será liberado. Confirme apenas após verificar o prazo."
+        confirmText="Expirar solicitação"
+        confirming={Boolean(processando[solicitacaoParaExpirar?.idEmprestimo || solicitacaoParaExpirar?.idMovimentacao])}
+        onConfirm={confirmarExpiracao}
+        onCancel={() => setSolicitacaoParaExpirar(null)}
+      />
     </div>
   );
 }

@@ -92,6 +92,11 @@ body {
 }
 
 .user-option {
+  width: 100%;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
   padding: 12px;
   border: 1px solid var(--input-border-alt);
   border-radius: 8px;
@@ -224,11 +229,15 @@ body {
   font-size: 13px;
 }
 
-.forgot-password-link span {
+.forgot-password-link button {
   color: var(--accent-blue);
   cursor: pointer;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  padding: 0;
 }
 
-.forgot-password-link span:hover {
+.forgot-password-link button:hover {
   text-decoration: underline;
 }

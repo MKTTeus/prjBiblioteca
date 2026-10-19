@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import {
   FiHome,
   FiBook,
@@ -36,11 +36,18 @@ const professorMenuItems = [
 function Sidebar({ type = "admin", activePage, setActivePage }) {
   const { user } = useAuth();
   const { isOpen, close } = useSidebar();
+  const { pathname } = useLocation();
   const [openPessoas, setOpenPessoas] = useState(false);
   const [openEmprestimos, setOpenEmprestimos] = useState(false);
   const [openLivros, setOpenLivros] = useState(false);
 
   const isAdmin = type === "admin" || (!type && user?.tipo === "admin");
+
+  useEffect(() => {
+    if (pathname.startsWith("/admin/emprestimos")) setOpenEmprestimos(true);
+    if (pathname.startsWith("/admin/livros")) setOpenLivros(true);
+    if (/^\/admin\/(alunos|comunidade|admins)/.test(pathname)) setOpenPessoas(true);
+  }, [pathname]);
 
   if (type === "user" || type === "professor") {
     const items = type === "professor" ? professorMenuItems : userMenuItems;
@@ -56,6 +63,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                   <button
                     type="button"
                     className={`sidebar-action ${activePage === key ? "active" : ""}`}
+                    aria-current={activePage === key ? "page" : undefined}
                     onClick={() => { setActivePage && setActivePage(key); close(); }}
                   >
                     <Icon />
@@ -94,6 +102,8 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
               <button
                 type="button"
                 className={`submenu-toggle ${openEmprestimos ? "open" : ""}`}
+                aria-expanded={openEmprestimos}
+                aria-controls="submenu-emprestimos"
                 onClick={() => setOpenEmprestimos((current) => !current)}
               >
                 <div className="submenu-left">
@@ -103,7 +113,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                 <FiChevronDown className="arrow" />
               </button>
 
-              <ul className={`submenu ${openEmprestimos ? "open" : ""}`}>
+              <ul id="submenu-emprestimos" inert={!openEmprestimos} className={`submenu ${openEmprestimos ? "open" : ""}`}>
                 <li>
                   <NavLink
                     to="/admin/emprestimos"
@@ -131,6 +141,8 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                 <button
                   type="button"
                   className={`submenu-toggle ${openLivros ? "open" : ""}`}
+                  aria-expanded={openLivros}
+                  aria-controls="submenu-livros"
                   onClick={() => setOpenLivros((current) => !current)}
                 >
                   <div className="submenu-left">
@@ -140,7 +152,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                   <FiChevronDown className="arrow" />
                 </button>
 
-                <ul className={`submenu ${openLivros ? "open" : ""}`}>
+                <ul id="submenu-livros" inert={!openLivros} className={`submenu ${openLivros ? "open" : ""}`}>
                   <li>
                     <NavLink
                       to="/admin/livros"
@@ -165,6 +177,8 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                 <button
                   type="button"
                   className={`submenu-toggle ${openPessoas ? "open" : ""}`}
+                  aria-expanded={openPessoas}
+                  aria-controls="submenu-pessoas"
                   onClick={() => setOpenPessoas((current) => !current)}
                 >
                   <div className="submenu-left">
@@ -174,7 +188,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                   <FiChevronDown className="arrow" />
                 </button>
 
-                <ul className={`submenu ${openPessoas ? "open" : ""}`}>
+                <ul id="submenu-pessoas" inert={!openPessoas} className={`submenu ${openPessoas ? "open" : ""}`}>
                   <li>
                     <NavLink to="/admin/alunos" onClick={close}>
                       Cadastro de Alunos

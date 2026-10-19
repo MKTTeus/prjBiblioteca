@@ -103,7 +103,7 @@ function App() {
 
       <Route path="/" element={<RoleHomeRedirect />} />
       <Route
-        path="/user"
+        path="/user/*"
         element={
           <ProtectedRoute nonAdminOnly>
             <UserDashboard />
@@ -112,7 +112,7 @@ function App() {
       />
 
       <Route
-        path="/professor"
+        path="/professor/*"
         element={
           <ProtectedRoute professorOnly>
             <PainelProfessor />

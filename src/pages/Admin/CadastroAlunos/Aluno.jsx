@@ -49,6 +49,7 @@ export default function Aluno() {
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
   const [novoAluno, setNovoAluno] = useState(EMPTY_ALUNO);
+  const [errosFormulario, setErrosFormulario] = useState({});
   const [alunos, setAlunos] = useState([]);
   const [pendingDeleteAluno, setPendingDeleteAluno] = useState(null);
   const [modalImportar, setModalImportar] = useState(false);
@@ -108,6 +109,7 @@ useEffect(() => {
 }, []);
 
   const handleChange = (e) => {
+    setErrosFormulario((prev) => ({ ...prev, [e.target.name]: undefined }));
     setNovoAluno((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
@@ -116,6 +118,7 @@ useEffect(() => {
   };
 
   const fecharModal = () => {
+    setErrosFormulario({});
     clearDraft();
     setModalAberto(false);
     setModoEdicao(false);
@@ -128,9 +131,11 @@ const handleSalvar = async () => {
   if (isProcessing) return;
   if (modoEdicao && !isDirty) return;
 
-  const faltando = CAMPOS_OBRIGATORIOS_ALUNO.find(({ chave }) => !novoAluno[chave]);
-  if (faltando) {
-    addToast(`O campo "${faltando.rotulo}" não pode ficar em branco.`, "error");
+  const errors = Object.fromEntries(CAMPOS_OBRIGATORIOS_ALUNO.filter(({ chave }) => !String(novoAluno[chave] || "").trim()).map(({ chave, rotulo }) => [chave, `Informe ${rotulo.toLowerCase()}.`]));
+  if (!modoEdicao && (!novoAluno.senha || novoAluno.senha.length < 8)) errors.senha = "A senha deve ter pelo menos 8 caracteres.";
+  if (Object.keys(errors).length > 0) {
+    setErrosFormulario(errors);
+    document.querySelector(`.aluno-editor-modal [name="${Object.keys(errors)[0]}"]`)?.focus();
     return;
   }
 
@@ -183,11 +188,6 @@ const handleSalvar = async () => {
 
     // ===== CRIAÇÃO =====
     else {
-      if (!novoAluno.senha || novoAluno.senha.length < 8) {
-        addToast("A senha deve ter pelo menos 8 caracteres.", "error");
-        return;
-      }
-
       try {
         const created = await createAluno({
           nome: novoAluno.nome,
@@ -642,6 +642,7 @@ const handleSalvar = async () => {
         onChange={handleChange}
         onClose={fecharModal}
         onSave={handleSalvar}
+        errors={errosFormulario}
       />
 
       <ImportarModal

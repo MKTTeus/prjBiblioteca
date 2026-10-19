@@ -16,6 +16,7 @@ export default function AlunoModal({
   onChange,
   onClose,
   onSave,
+  errors = {},
 }) {
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
@@ -80,6 +81,10 @@ export default function AlunoModal({
           <div className="editor-divider" />
 
           <div className="editor-content aluno-editor-content">
+            {Object.keys(errors).length > 0 && <div className="editor-copies-warning" role="alert">
+              <strong>Revise os campos destacados:</strong>
+              <ul>{Object.entries(errors).filter(([, message]) => message).map(([name, message]) => <li key={name}>{message}</li>)}</ul>
+            </div>}
             <div className="editor-section-grid aluno-editor-grid">
               <div className="editor-form-panel basic-column">
                 <div className="basic-column-header">
@@ -91,6 +96,7 @@ export default function AlunoModal({
                     <span>Nome Completo *</span>
                     <input
                       name="nome"
+                      aria-invalid={Boolean(errors.nome)}
                       value={aluno.nome}
                       onChange={onChange}
                       placeholder="Digite o nome completo do aluno"
@@ -101,6 +107,7 @@ export default function AlunoModal({
                     <span>RA *</span>
                     <input
                       name="ra"
+                      aria-invalid={Boolean(errors.ra)}
                       value={aluno.ra}
                       onChange={onChange}
                       placeholder="Informe o RA do aluno"
@@ -111,6 +118,7 @@ export default function AlunoModal({
                     <span>E-mail *</span>
                     <input
                       name="email"
+                      aria-invalid={Boolean(errors.email)}
                       value={aluno.email}
                       onChange={onChange}
                       placeholder="aluno@escola.com"
@@ -130,6 +138,7 @@ export default function AlunoModal({
                     <IMaskInput
                       mask={MASK_TELEFONE}
                       name="telefone"
+                      aria-invalid={Boolean(errors.telefone)}
                       value={aluno.telefone || ""}
                       onAccept={(value) =>
                         onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })
@@ -157,6 +166,7 @@ export default function AlunoModal({
                       <input
                         type={showSenha ? "text" : "password"}
                         name="senha"
+                        aria-invalid={Boolean(errors.senha)}
                         value={aluno.senha}
                         onChange={onChange}
                         disabled={modoEdicao}
@@ -193,6 +203,7 @@ export default function AlunoModal({
                     <span>Endereço *</span>
                     <input
                       name="endereco"
+                      aria-invalid={Boolean(errors.endereco)}
                       value={aluno.endereco}
                       onChange={onChange}
                       placeholder="Rua, número e complemento"
@@ -201,7 +212,7 @@ export default function AlunoModal({
 
                   <label className="editor-field">
                     <span>Série *</span>
-                    <select name="serie" value={aluno.serie || ""} onChange={onChange}>
+                    <select name="serie" aria-invalid={Boolean(errors.serie)} value={aluno.serie || ""} onChange={onChange}>
                       <option value="">Selecione a série</option>
                       {SERIES.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -221,7 +232,7 @@ export default function AlunoModal({
 
                   <label className="editor-field">
                     <span>Status</span>
-                    <select name="status" value={aluno.status} onChange={onChange}>
+                    <select name="status" aria-invalid={Boolean(errors.status)} value={aluno.status} onChange={onChange}>
                       <option value="Ativo">Ativo</option>
                       <option value="Inativo">Inativo</option>
                     </select>

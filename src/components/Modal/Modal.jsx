@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import "./Modal.css";
+import useDialogFocus from "../../hooks/useDialogFocus";
 
 const EXIT_DURATION_MS = 200;
 
 const Modal = ({ show, onClose, children, className = "" }) => {
   const [mounted, setMounted] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const dialogRef = useDialogFocus(show, onClose);
 
   // Controla montagem/desmontagem do portal com animação de saída.
   useEffect(() => {
@@ -36,18 +38,6 @@ const Modal = ({ show, onClose, children, className = "" }) => {
     };
   }, []);
 
-  // Fecha com Escape apenas enquanto o modal está aberto.
-  useEffect(() => {
-    if (!show) return undefined;
-
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [show, onClose]);
-
   // Fechado e já desmontado: não renderiza nada.
   if (!show && !mounted) return null;
 
@@ -57,8 +47,11 @@ const Modal = ({ show, onClose, children, className = "" }) => {
       onClick={(e) => (e.target === e.currentTarget ? onClose() : null)}
       role="dialog"
       aria-modal="true"
+      aria-label="Janela de diálogo"
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className={`modal-content ${className}`.trim() + (exiting ? " exiting" : "")}
         onClick={(e) => e.stopPropagation()}
       >

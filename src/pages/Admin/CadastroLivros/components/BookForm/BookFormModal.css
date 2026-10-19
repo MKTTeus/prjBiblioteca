@@ -1023,3 +1023,16 @@
   cursor: pointer;
   font: inherit;
 }
+.editor-content [aria-invalid="true"] {
+  border-color: var(--danger, #b91c1c);
+  box-shadow: 0 0 0 1px var(--danger, #b91c1c);
+}
+
+.editor-save-errors {
+  display: block;
+}
+
+.editor-save-errors ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { FiShield } from "react-icons/fi";
 import { useToast } from "../../../../../contexts/ToastContext";
-import { getConfiguracoes, updateConfiguracao } from "../../../../../services/api";
+import { salvarConfiguracoes } from "../../utils/saveSettings";
+import { getConfiguracoes } from "../../../../../services/api";
 import { configToBool, configToNumber } from "../../utils/configUtils";
-import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Seguranca.css";
 
 export default function Seguranca() {
@@ -33,22 +33,19 @@ export default function Seguranca() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await Promise.all([
-        updateConfiguracao({ chave: "timeout_sessao", valor: String(timeout) }),
-        updateConfiguracao({ chave: "tamanho_minimo_senha", valor: String(tamanhoSenha) }),
-        updateConfiguracao({ chave: "exigir_senha_forte", valor: String(senhaForte) }),
-
+      await salvarConfiguracoes([
+        ["Timeout da sessão", "timeout_sessao", timeout],
+        ["Tamanho mínimo da senha", "tamanho_minimo_senha", tamanhoSenha],
+        ["Exigir senha forte", "exigir_senha_forte", senhaForte],
       ]);
       addToast("Configurações de segurança salvas com sucesso", "success");
     } catch (error) {
-      addToast("Erro ao salvar configurações de segurança", "error");
-      throw error;
+      addToast(error.message, "error", 10000);
     } finally {
       setIsSaving(false);
     }
   };
 
-  useRegisterSave("seguranca", handleSave);
 
   const switchStyle = {
     offColor: "#e5e7eb",
@@ -73,8 +70,9 @@ export default function Seguranca() {
 
       <div className="grid-2">
         <div className="form-group">
-          <label>Timeout da Sessão (minutos)</label>
+          <label htmlFor="timeout-sessao">Timeout da Sessão (minutos)</label>
           <input
+            id="timeout-sessao"
             type="number"
             value={timeout}
             min={1}
@@ -84,8 +82,9 @@ export default function Seguranca() {
         </div>
 
         <div className="form-group">
-          <label>Tamanho Mínimo da Senha</label>
+          <label htmlFor="tamanho-minimo-senha">Tamanho Mínimo da Senha</label>
           <input
+            id="tamanho-minimo-senha"
             type="number"
             value={tamanhoSenha}
             min={8}
@@ -100,7 +99,7 @@ export default function Seguranca() {
           <span className="switch-title">Exigir Senha Forte</span>
           <p>Senhas devem conter letras, números e símbolos</p>
         </div>
-        <Switch checked={senhaForte} onChange={() => setSenhaForte(!senhaForte)} {...switchStyle} />
+        <Switch aria-label="Exigir senha forte" checked={senhaForte} onChange={() => setSenhaForte(!senhaForte)} {...switchStyle} />
       </div>
 
       <div className="switch-row">
@@ -108,7 +107,7 @@ export default function Seguranca() {
           <span className="switch-title">Autenticação de Dois Fatores</span>
           <p>Indisponível nesta versão</p>
         </div>
-        <Switch checked={false} disabled {...switchStyle} />
+        <Switch aria-label="Autenticação de dois fatores indisponível" checked={false} disabled {...switchStyle} />
       </div>
 
       <div className="card-actions">

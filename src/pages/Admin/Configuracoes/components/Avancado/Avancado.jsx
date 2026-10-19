@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import Switch from "react-switch";
 import { TbAdjustmentsAlt } from "react-icons/tb";
 import { useToast } from "../../../../../contexts/ToastContext";
+import { getErrorMessage } from "../../../../../utils/apiError";
 import { getConfiguracoes, updateConfiguracao, baixarBackup } from "../../../../../services/api";
 import { configToBool } from "../../utils/configUtils";
-import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Avancado.css";
 
 export default function Avancado() {
@@ -34,14 +34,12 @@ export default function Avancado() {
       ]);
       addToast("Configurações avançadas salvas com sucesso", "success");
     } catch (error) {
-      addToast("Erro ao salvar configurações avançadas", "error");
-      throw error;
+      addToast(getErrorMessage(error, "Não foi possível salvar a configuração avançada. Tente novamente."), "error");
     } finally {
       setIsSaving(false);
     }
   };
 
-  useRegisterSave("avancado", handleSave);
 
   async function handleBackupCompleto() {
     setFazendoBackup(true);
