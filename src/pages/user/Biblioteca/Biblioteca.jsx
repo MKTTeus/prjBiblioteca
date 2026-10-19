@@ -102,7 +102,7 @@ export default function Biblioteca() {
         if (!ativo) return;
         console.error("Erro ao buscar livros:", err);
         setBooks([]);
-        setError("Erro ao carregar livros. Tente novamente.");
+        setError(getErrorMessage(err, "Não foi possível carregar o acervo de livros. Verifique sua conexão e tente novamente."));
       } finally {
         if (ativo) setIsLoading(false);
       }

@@ -22,7 +22,7 @@ def listar_autores():
         return autores
     except Exception as e:
         print("Erro ao listar autores:", 'falha de operação')
-        raise HTTPException(status_code=500, detail="Erro ao listar autores")
+        raise HTTPException(status_code=503, detail="Não foi possível carregar a lista de autores. Verifique sua conexão e tente novamente.") from e
 
 @router.post("/autores")
 def criar_autor(autor: Autor, admin=Depends(get_admin)):
@@ -41,7 +41,7 @@ def criar_autor(autor: Autor, admin=Depends(get_admin)):
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Autor já existe")
         print("Erro ao criar autor:", 'falha de operação')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível cadastrar o autor por uma falha temporária ao salvar os dados. Confira se o autor foi incluído antes de tentar novamente.") from e
 
 @router.put("/autores/{idAutor}")
 def atualizar_autor(idAutor: int, autor: AutorUpdate, admin=Depends(get_admin)):
@@ -59,7 +59,7 @@ def atualizar_autor(idAutor: int, autor: AutorUpdate, admin=Depends(get_admin)):
         raise
     except Exception as e:
         print("Erro ao atualizar autor:", 'falha de operação')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível atualizar o autor por uma falha temporária ao salvar os dados. Confira o cadastro antes de tentar novamente.") from e
 
 
 @router.get("/autores/{idAutor}/uso")
@@ -75,7 +75,7 @@ def contar_uso_autor(idAutor: int, admin=Depends(get_admin)):
         return {"total_livros": res.count or 0}
     except Exception as e:
         print("Erro ao contar uso do autor:", 'falha de operação')
-        raise HTTPException(status_code=500, detail="Erro ao verificar uso do autor")
+        raise HTTPException(status_code=503, detail="Não foi possível verificar os livros vinculados a este autor. Tente novamente.") from e
 
 
 @router.delete("/autores/{idAutor}")
@@ -105,7 +105,7 @@ def excluir_autor(idAutor: int, admin=Depends(get_admin)):
         raise
     except Exception as e:
         print("Erro ao excluir autor:", 'falha de operação')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível excluir o autor por uma falha temporária. Verifique se ele continua na lista antes de repetir a ação.") from e
 
 
 @router.post("/autores/{idAutor}/mesclar")

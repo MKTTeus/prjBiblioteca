@@ -15,6 +15,7 @@ import { useRegisterSave } from "../../contexts/ConfigSaveContext";
 import "./Backups.css";
 import { API_URL } from "../../../../../services/apiConfig";
 import { getToken } from "../../../../../services/api";
+import { getErrorMessage } from "../../../../../utils/apiError";
 
 const backupOptions = [
   { value: "diario", label: "Diário" },
@@ -76,8 +77,8 @@ export default function Backups() {
       const res = await listarBackups();
       setBackups(res.backups || []);
       setRetencaoSegurancaHoras(res.retencao_seguranca_horas || 48);
-    } catch {
-      setErro("Não foi possível carregar a lista de backups.");
+    } catch (error) {
+      setErro(getErrorMessage(error, "Não foi possível carregar a lista de backups. Verifique sua conexão e tente novamente."));
     } finally {
       setLoading(false);
     }

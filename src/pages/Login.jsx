@@ -54,7 +54,7 @@ export default function Login() {
       navigate(destino, { replace: true });
     } catch (error) {
       console.error("Erro login:", error);
-      setError("Erro inesperado ao fazer login.");
+      setError("Não foi possível concluir o login. Verifique sua conexão com a Sala de Leitura e tente novamente.");
     } finally {
       setLoading(false);
       submitRef.current = false;

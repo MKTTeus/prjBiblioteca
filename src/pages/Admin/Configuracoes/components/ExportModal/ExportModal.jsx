@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiX, FiDownload, FiFileText, FiCode, FiLoader } from "react-icons/fi";
 import { getConfiguracoes } from "../../../../../services/api";
 import { exportarPDF } from "../../../../../utils/exportarArquivo";
+import { getErrorMessage } from "../../../../../utils/apiError";
 import "./ExportModal.css";
 
 const LABELS = {
@@ -106,8 +107,8 @@ export default function ExportModal({ onClose }) {
         exportPDF(configs, nomeBiblioteca);
         onClose();
       }
-    } catch {
-      setError("Erro ao carregar configurações. Tente novamente.");
+    } catch (error) {
+      setError(getErrorMessage(error, "Não foi possível carregar as configurações para exportação. Verifique sua conexão e tente novamente."));
     } finally {
       setLoading(false);
     }

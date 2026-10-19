@@ -56,4 +56,4 @@ def dashboard_stats(user=Depends(get_admin)):
             valores = list(executor.map(lambda consultar: consultar(), consultas))
         return dict(zip(chaves, valores))
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503,'Não foi possível carregar os indicadores do painel. Verifique sua conexão e tente novamente.') from e

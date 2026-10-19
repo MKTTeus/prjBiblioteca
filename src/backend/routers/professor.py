@@ -164,7 +164,7 @@ def listar_turmas_professor(professor=Depends(get_professor)):
         turmas.sort(key=lambda t: (t["serie"], t["turma"]))
         return turmas
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503,'Não foi possível carregar as turmas disponíveis. Confira se há alunos com série e turma cadastradas e tente novamente.') from e
 
 
 @router.get("/professor/emprestimos")

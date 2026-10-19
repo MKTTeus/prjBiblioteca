@@ -34,16 +34,25 @@ async function apiFetch(endpoint, options = {}) {
     if (identity) pendingMutations.set(identity, requestKey);
   }
 
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    cache: "no-store",
-    headers: {
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(mutation && { "Idempotency-Key": requestKey }),
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...(options.headers || {})
-    }
-  });
+  let res;
+  try {
+    res = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      cache: "no-store",
+      headers: {
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
+        ...(mutation && { "Idempotency-Key": requestKey }),
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...(options.headers || {})
+      }
+    });
+  } catch (cause) {
+    const err = new Error("Não foi possível conectar à Sala de Leitura. Verifique sua conexão com a internet e tente novamente.");
+    err.status = 0;
+    err.endpoint = endpoint;
+    err.cause = cause;
+    throw err;
+  }
 
   if (!res.ok) {
     if (identity && res.status < 500) pendingMutations.delete(identity);
@@ -58,6 +67,8 @@ async function apiFetch(endpoint, options = {}) {
     const text = await res.text();
     const err = new Error(text || "Erro na requisição");
     err.status = res.status;
+    err.endpoint = endpoint;
+    err.requestId = res.headers.get("X-Request-ID");
     try { err.data = JSON.parse(text); } catch (_) {}
     throw err;
   }

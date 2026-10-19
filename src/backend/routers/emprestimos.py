@@ -199,7 +199,7 @@ def exemplares_disponiveis():
             for ex in exemplares if ex["idLivro"] in mapa_livros
         ]
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503,'Não foi possível carregar a lista de exemplares. Verifique sua conexão e tente novamente.') from e
 
 
 @router.get("/exemplares")
@@ -223,7 +223,7 @@ def listar_exemplares():
             for e in exemplares
         ]
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503,'Não foi possível carregar os dados dos exemplares. Verifique sua conexão e tente novamente.') from e
 
 
 @router.put("/emprestimos/{idEmprestimo}/devolver")

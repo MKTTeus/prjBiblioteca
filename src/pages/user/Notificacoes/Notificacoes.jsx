@@ -6,6 +6,7 @@ import {
 } from "react-icons/fa";
 import { getEmprestimos } from "../../../services/api";
 import { formatarData } from "../../../utils/masks";
+import { getErrorMessage } from "../../../utils/apiError";
 import "../UserArea.css";
 import "./Notificacoes.css";
 
@@ -63,7 +64,7 @@ export default function Notificacoes() {
         setNotifications(mappedNotifications);
       } catch (err) {
         console.error("Erro ao carregar notificações:", err);
-        setError("Erro ao carregar notificações. Tente novamente.");
+        setError(getErrorMessage(err, "Não foi possível carregar os avisos do seu histórico de empréstimos. Verifique sua conexão e tente novamente."));
       } finally {
         setIsLoading(false);
       }

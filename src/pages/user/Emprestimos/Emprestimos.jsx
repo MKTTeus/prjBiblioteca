@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getEmprestimos } from "../../../services/api";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
 import { resolverStatus } from "../../../utils/loanStatus";
+import { getErrorMessage } from "../../../utils/apiError";
 import "./Emprestimos.css";
 
 const statusLabelMap = {
@@ -35,7 +36,7 @@ export default function Emprestimos() {
         console.error("Erro ao carregar empréstimos:", err);
         if (!cancelado && mostrarLoading) {
           setLoans([]);
-          setError("Erro ao carregar seus empréstimos. Tente novamente.");
+          setError(getErrorMessage(err, "Não foi possível carregar seus empréstimos. Verifique sua conexão e tente novamente."));
         }
       } finally {
         if (mostrarLoading && !cancelado) setIsLoading(false);

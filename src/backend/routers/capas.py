@@ -128,7 +128,7 @@ async def upload_capa(file: UploadFile = File(...), admin=Depends(get_admin)):
             file_options={"content-type": content_type},
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível salvar a capa. Verifique sua conexão e tente novamente; se persistir, confira se o arquivo não ultrapassa 5 MB.") from e
 
     return {"url": _montar_public_url(nome_arquivo)}
 

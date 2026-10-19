@@ -23,7 +23,7 @@ def listar_generos():
         return generos
     except Exception as e:
         print("Erro ao listar gêneros:", 'falha de operação')
-        raise HTTPException(status_code=500, detail="Erro ao listar gêneros")
+        raise HTTPException(status_code=503, detail="Não foi possível carregar a lista de gêneros. Verifique sua conexão e tente novamente.") from e
 
 @router.post("/generos")
 def criar_genero(gen: Genero, admin=Depends(get_admin)):
@@ -42,7 +42,7 @@ def criar_genero(gen: Genero, admin=Depends(get_admin)):
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Gênero já existe")
         print("Erro ao criar gênero:", 'falha de operação')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível cadastrar o gênero por uma falha temporária ao salvar os dados. Confira se ele foi incluído antes de tentar novamente.") from e
 
 
 @router.get("/generos/{idGenero}/uso")
@@ -58,7 +58,7 @@ def contar_uso_genero(idGenero: int, admin=Depends(get_admin)):
         return {"total_livros": res.count or 0}
     except Exception as e:
         print("Erro ao contar uso do gênero:", 'falha de operação')
-        raise HTTPException(status_code=500, detail="Erro ao verificar uso do gênero")
+        raise HTTPException(status_code=503, detail="Não foi possível verificar os livros vinculados a este gênero. Tente novamente.") from e
 
 
 @router.put("/generos/{idGenero}")
@@ -84,7 +84,7 @@ def atualizar_genero(idGenero: int, gen: GeneroUpdate, admin=Depends(get_admin))
         if "duplicate key" in error_msg or "23505" in error_msg:
             raise HTTPException(status_code=409, detail="Já existe um gênero com esse nome")
         print("Erro ao atualizar gênero:", 'falha de operação')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível atualizar o gênero por uma falha temporária ao salvar os dados. Confira o cadastro antes de tentar novamente.") from e
 
 
 @router.delete("/generos/{idGenero}")
@@ -114,7 +114,7 @@ def excluir_genero(idGenero: int, admin=Depends(get_admin)):
         raise
     except Exception as e:
         print("Erro ao excluir gênero:", 'falha de operação')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail="Não foi possível excluir o gênero por uma falha temporária. Verifique se ele continua na lista antes de repetir a ação.") from e
 
 
 @router.post("/generos/{idGenero}/mesclar")

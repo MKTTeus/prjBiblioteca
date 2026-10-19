@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "../../../contexts/ToastContext";
+import { getErrorMessage } from "../../../utils/apiError";
 import { motion, AnimatePresence } from "framer-motion";
 import { ConfigSaveProvider, useConfigSave } from "./contexts/ConfigSaveContext";
 import ExportModal from "./components/ExportModal/ExportModal";
@@ -41,7 +42,7 @@ function ConfiguracoesInner() {
         addToast(`${successes.length} aba(s) salvas. Falha em: ${failedLabels}.`, "error");
       }
     } catch (err) {
-      addToast("Erro inesperado ao salvar configurações.", "error");
+      addToast(getErrorMessage(err, "Não foi possível salvar as configurações. Verifique sua conexão e tente novamente."), "error");
       console.error("handleSaveAll error:", err);
     } finally {
       setSavingAll(false);

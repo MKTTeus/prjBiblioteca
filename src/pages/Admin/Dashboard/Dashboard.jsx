@@ -15,6 +15,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { RiUserCommunityFill } from "react-icons/ri";
 import { useEffect, useState, useRef } from "react";
 import { getDashboardStats } from "../../../services/api";
+import { getErrorMessage } from "../../../utils/apiError";
 
 const notificationTypeMap = {
   info: {
@@ -37,6 +38,7 @@ const notificationTypeMap = {
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [statsError, setStatsError] = useState(false);
+  const [statsErrorMessage, setStatsErrorMessage] = useState("");
   const [retryKey, setRetryKey] = useState(0);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [latestNotifications, setLatestNotifications] = useState([]);
@@ -52,6 +54,7 @@ export default function Dashboard() {
     async function fetchStats() {
       try {
         setStatsError(false);
+        setStatsErrorMessage("");
         const data = await getDashboardStats();
         setStats(data);
 
@@ -103,6 +106,7 @@ export default function Dashboard() {
       } catch (err) {
         console.error("Erro ao carregar estatísticas do dashboard:", err);
         setStatsError(true);
+        setStatsErrorMessage(getErrorMessage(err, "O painel não conseguiu carregar os indicadores de acervo e circulação. Verifique sua conexão e tente novamente."));
       }
     }
 
@@ -155,7 +159,7 @@ export default function Dashboard() {
   if (!stats) {
     return statsError ? (
       <div className="dashboard page-shell" role="alert">
-        <p>Não foi possível carregar o painel.</p>
+        <p>{statsErrorMessage || "O painel não conseguiu carregar os indicadores de acervo e circulação."}</p>
         <button type="button" onClick={() => setRetryKey((key) => key + 1)}>Tentar novamente</button>
       </div>
     ) : <p role="status">Carregando painel...</p>;

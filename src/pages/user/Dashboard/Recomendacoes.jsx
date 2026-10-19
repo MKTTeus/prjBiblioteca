@@ -99,10 +99,11 @@ function PainelRecomendacoes() {
       if (sequence.current !== request) return;
       setItens(painel.itens || []);
       setAvaliacoes(painel.avaliacoes || []);
-    } catch {
+    } catch (error) {
       if (sequence.current !== request) return;
-      setErro('Não foi possível carregar as sugestões.');
-      setErroAvaliacoes('Não foi possível carregar suas avaliações.');
+      const mensagem = getErrorMessage(error, 'Não foi possível carregar recomendações e avaliações. Verifique sua conexão e tente novamente.');
+      setErro(`Não foi possível carregar as sugestões: ${mensagem}`);
+      setErroAvaliacoes(`Não foi possível carregar suas avaliações: ${mensagem}`);
     }
     setLoading(false);
   }, []);

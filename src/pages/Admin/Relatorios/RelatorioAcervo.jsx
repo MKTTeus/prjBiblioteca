@@ -5,6 +5,7 @@ import StatsCard from "../../../components/StatsCard/StatsCard";
 import Modal from "../../../components/Modal/Modal";
 import { getRelatorioAcervo, getRelatorioAcervoTitulos } from "../../../services/api";
 import { exportarPDF, exportarExcel } from "../../../utils/exportarArquivo";
+import { getErrorMessage } from "../../../utils/apiError";
 import {
   AGRUPADOR_OPTIONS,
   formatarData,
@@ -44,7 +45,7 @@ export default function RelatorioAcervo() {
     } catch (error) {
       if (id !== requisicao.current) return;
       console.error(error);
-      setErro("Não foi possível carregar o relatório. Tente novamente.");
+      setErro(getErrorMessage(error, "Não foi possível carregar o relatório de acervo. Verifique sua conexão e tente novamente."));
     } finally {
       if (id === requisicao.current) setCarregando(false);
     }
@@ -74,7 +75,7 @@ export default function RelatorioAcervo() {
       setTitulos(resultado.itens || []);
     } catch (error) {
       console.error(error);
-      setErroTitulos("Não foi possível carregar os títulos deste grupo.");
+      setErroTitulos(getErrorMessage(error, "Não foi possível carregar os títulos deste grupo. Verifique sua conexão e tente novamente."));
     } finally {
       setCarregandoTitulos(false);
     }

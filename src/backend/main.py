@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.concurrency import run_in_threadpool
 from database import supabase
+from diagnostics import resumir_excecao
 import os
 
 from fastapi import FastAPI
@@ -136,5 +137,12 @@ async def erro_validacao(request,exc):
 @app.exception_handler(Exception)
 async def erro_interno(request,exc):
     identificador=getattr(request.state,'request_id',uuid.uuid4().hex)
-    logger.error('error id=%s type=%s',identificador,type(exc).__name__)
-    return JSONResponse(status_code=503,content={'detail':'Serviço temporariamente indisponível','request_id':identificador},headers={'X-Request-ID':identificador})
+    logger.error('error id=%s causas=%s', identificador, resumir_excecao(exc))
+    return JSONResponse(
+        status_code=503,
+        content={
+            'detail': 'A tela não conseguiu concluir esta solicitação por uma falha inesperada no servidor. Tente novamente; se continuar, informe o código de atendimento.',
+            'request_id': identificador,
+        },
+        headers={'X-Request-ID': identificador},
+    )

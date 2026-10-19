@@ -4,6 +4,7 @@ import { FiDownload, FiFileText, FiAlertTriangle, FiUsers, FiClock, FiLoader } f
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getRelatorioAtrasos } from "../../../services/api";
 import { exportarPDF, exportarExcel } from "../../../utils/exportarArquivo";
+import { getErrorMessage } from "../../../utils/apiError";
 import { SERIES } from "../../../utils/series";
 import {
   TIPO_USUARIO_OPTIONS,
@@ -45,7 +46,7 @@ export default function RelatorioAtrasos() {
       setResumo(resultado.resumo || { usuariosInadimplentes: 0, itensAtrasados: 0, diasAtrasoMedio: 0 });
     } catch (error) {
       console.error(error);
-      setErro("Não foi possível carregar o relatório. Tente novamente.");
+      setErro(getErrorMessage(error, "Não foi possível carregar o relatório de atrasos. Verifique sua conexão e tente novamente."));
     } finally {
       setCarregando(false);
     }

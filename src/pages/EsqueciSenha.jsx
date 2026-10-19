@@ -36,7 +36,7 @@ export default function EsqueciSenha() {
       setEnviado(true);
     } catch (error) {
       console.error("Erro esqueci-senha:", error);
-      setError("Erro inesperado ao solicitar redefinição de senha.");
+      setError("Não foi possível solicitar o envio do link de redefinição. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
       submitRef.current = false;

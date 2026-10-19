@@ -111,7 +111,7 @@ def relatorio_emprestimos(
             resultado["agrupador"] = agrupador
         return resultado
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503, 'Não foi possível consultar o relatório de empréstimos. Verifique os filtros e sua conexão e tente novamente.') from e
 
 
 @router.get('/relatorios/gestao/{tipo}')
@@ -259,7 +259,7 @@ def relatorio_emprestimos_mensal(
             "resumo": resumo,
         }
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503, 'Não foi possível carregar o resumo mensal de empréstimos. Verifique o ano e os filtros selecionados e tente novamente.') from e
 
 
 @router.get("/relatorios/usuarios/busca")
@@ -287,7 +287,7 @@ def relatorio_usuarios_busca(
         achados, _ = busca.filtrar(itens, termo, lambda i: [i.get("usuNome")])
         return {"itens": sorted(achados, key=lambda i: busca.normalizar(i["usuNome"]))[:20]}
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503, 'Não foi possível buscar leitores para o filtro do relatório. Verifique sua conexão e tente novamente.') from e
 
 
 
@@ -470,7 +470,7 @@ def relatorio_acervo(
 
         return {"itens": itens, "resumo": resumo, "agrupador": agrupador}
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503, 'Não foi possível carregar o agrupamento do relatório de acervo. Tente novamente.') from e
 
 
 @router.get("/relatorios/acervo/exemplares")
@@ -533,7 +533,7 @@ def relatorio_acervo_exemplares(
             "resumo": {"totalExemplares": len(itens), "porStatus": resumo_status},
         }
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503, 'Não foi possível carregar o inventário de exemplares com os filtros selecionados. Tente novamente.') from e
 
 
 @router.get("/relatorios/acervo/titulos")
@@ -589,4 +589,4 @@ def relatorio_acervo_titulos(
 
         return {"itens": itens}
     except Exception as e:
-        raise HTTPException(503,'Serviço temporariamente indisponível') from e
+        raise HTTPException(503, 'Não foi possível carregar os títulos deste grupo do acervo. Volte ao relatório e tente abrir o grupo novamente.') from e

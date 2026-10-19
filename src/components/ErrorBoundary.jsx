@@ -17,7 +17,6 @@ export default class ErrorBoundary extends React.Component {
   }
 
   handleReload = () => {
-    window.location.href = "/#/login";
     window.location.reload();
   };
 
@@ -37,8 +36,8 @@ export default class ErrorBoundary extends React.Component {
             fontFamily: "sans-serif",
           }}
         >
-          <h2>Ops, algo deu errado.</h2>
-          <p>Ocorreu um erro inesperado ao carregar esta tela.</p>
+          <h2>Não foi possível exibir esta tela</h2>
+          <p>A tela foi interrompida por uma falha durante a exibição. Atualize a página. Se o problema continuar, informe à equipe qual tela você estava usando e o horário em que aconteceu.</p>
           <button
             onClick={this.handleReload}
             style={{
@@ -51,7 +50,7 @@ export default class ErrorBoundary extends React.Component {
               fontSize: "14px",
             }}
           >
-            Voltar para o login
+            Atualizar a tela
           </button>
         </div>
       );

@@ -46,7 +46,7 @@ export default function MeusEmprestimos() {
       setEmprestimos(Array.isArray(data) ? data : []);
     } catch (err) {
       if (mostrarLoading) {
-        setError("Erro ao carregar seus empréstimos. Tente novamente.");
+        setError(getErrorMessage(err, "Não foi possível carregar seus empréstimos. Verifique sua conexão e tente novamente."));
         setEmprestimos([]);
       }
     } finally {

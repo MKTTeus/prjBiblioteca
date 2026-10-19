@@ -196,7 +196,7 @@ export function AuthProvider({ children }) {
       };
     } catch (error) {
       console.error("Erro no login:", error);
-      return { ok: false, message: "Erro de conexão com o servidor" };
+      return { ok: false, message: "Não foi possível concluir o login. Verifique sua conexão com a Sala de Leitura e tente novamente." };
     }
   };
 
@@ -222,7 +222,7 @@ export function AuthProvider({ children }) {
 
       return { ok: true, message: data.message };
     } catch (error) {
-      return { ok: false, message: "Erro de conexão com o servidor" };
+      return { ok: false, message: "Não foi possível solicitar a redefinição de senha. Verifique sua conexão e tente novamente." };
     }
   };
 
@@ -240,7 +240,7 @@ export function AuthProvider({ children }) {
 
       return { ok: true };
     } catch (error) {
-      return { ok: false, message: "Erro de conexão com o servidor" };
+      return { ok: false, message: "Não foi possível validar o link de redefinição. Verifique sua conexão e tente novamente." };
     }
   };
 
@@ -260,7 +260,7 @@ export function AuthProvider({ children }) {
 
       return { ok: true, message: data.message };
     } catch (error) {
-      return { ok: false, message: "Erro de conexão com o servidor" };
+      return { ok: false, message: "Não foi possível redefinir a senha. Verifique sua conexão com a Sala de Leitura e tente novamente." };
     }
   };
 

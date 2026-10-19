@@ -7,6 +7,7 @@ import {
   FaChevronUp,
 } from "react-icons/fa";
 import { getAdminNotifications } from "../../../services/api";
+import { getErrorMessage } from "../../../utils/apiError";
 import { formatarCPF, formatarTelefone } from "../../../utils/masks";
 import "../../user/UserArea.css";
 import "./Notificacoes.css";
@@ -76,7 +77,7 @@ export default function AdminNotificacoes() {
         setDevolucoesRecentes(Array.isArray(data.devolucoesRecentes) ? data.devolucoesRecentes : []);
       } catch (err) {
         console.error("Erro ao carregar notificações do admin:", err);
-        setError("Erro ao carregar notificações. Tente novamente.");
+        setError(getErrorMessage(err, "Não foi possível carregar os avisos da equipe. Verifique sua conexão e tente novamente."));
       } finally {
         setIsLoading(false);
       }

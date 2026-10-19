@@ -9,6 +9,7 @@ import BuscaUsuarioInput from "./BuscaUsuarioInput";
 import GraficoEmprestimosMensal from "./GraficoEmprestimosMensal";
 import { getRelatorioEmprestimos, getRelatorioEmprestimosMensal } from "../../../services/api";
 import { exportarPDF, exportarExcel } from "../../../utils/exportarArquivo";
+import { getErrorMessage } from "../../../utils/apiError";
 import { SERIES } from "../../../utils/series";
 import {
   STATUS_OPTIONS,
@@ -87,7 +88,7 @@ export default function RelatorioEmprestimos() {
       setResumo(resultado.resumo || { ativos: 0, atrasados: 0, devolvidos: 0, total: 0 });
     } catch (error) {
       console.error(error);
-      setErro("Não foi possível carregar o relatório. Tente novamente.");
+      setErro(getErrorMessage(error, "Não foi possível carregar o relatório de empréstimos. Verifique sua conexão e tente novamente."));
     } finally {
       setCarregando(false);
     }
@@ -107,7 +108,7 @@ export default function RelatorioEmprestimos() {
       });
     } catch (error) {
       console.error(error);
-      setErroMensal("Não foi possível carregar o relatório mensal. Tente novamente.");
+      setErroMensal(getErrorMessage(error, "Não foi possível carregar o relatório mensal de empréstimos. Verifique sua conexão e tente novamente."));
     } finally {
       setCarregandoMensal(false);
     }

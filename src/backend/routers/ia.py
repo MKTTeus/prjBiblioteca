@@ -190,9 +190,9 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
                 response_json_schema=COMPLETAR_LIVRO_SCHEMA,
             ),
         )
-    except Exception:
-        print("Falha no provedor de IA ao completar cadastro do livro")
-        raise HTTPException(status_code=502, detail='Não foi possível concluir a operação') from None
+    except Exception as exc:
+        print("Falha no provedor de IA ao completar cadastro do livro:", type(exc).__name__)
+        raise HTTPException(status_code=502, detail="A IA não conseguiu completar os dados do livro agora. Confira sua conexão e as informações digitadas; você também pode preencher os campos manualmente.") from exc
 
     if not resposta.text:
         raise HTTPException(status_code=502, detail="A IA não retornou dados estruturados.")

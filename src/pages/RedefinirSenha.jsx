@@ -80,7 +80,7 @@ export default function RedefinirSenha() {
       setSucesso(true);
     } catch (error) {
       console.error("Erro redefinir-senha:", error);
-      setError("Erro inesperado ao redefinir a senha.");
+      setError("Não foi possível salvar a nova senha. Verifique sua conexão e tente novamente; se o link expirou, solicite outro.");
     } finally {
       setLoading(false);
       submitRef.current = false;

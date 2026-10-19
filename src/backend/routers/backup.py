@@ -282,11 +282,11 @@ def cron_backup_diario(_=Depends(verificar_cron)):
         _aplicar_retencao_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
     except BackupIncompletoError as e:
-        print("Backup diário abortado (dados incompletos):", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Backup diário abortado (dados incompletos):", 'dados incompletos')
+        raise HTTPException(status_code=503, detail='O backup automático foi interrompido porque não foi possível confirmar que todos os dados estavam incluídos. Nenhum backup foi publicado.')
     except Exception as e:
-        print("Erro no backup diário:", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Erro no backup diário:", type(e).__name__)
+        raise HTTPException(status_code=503, detail='O backup automático não foi gerado por uma falha temporária ao ler ou salvar os dados.') from e
 
 
 # ── Admin: salvar backup manualmente ─────────────────────────────────────────
@@ -300,11 +300,11 @@ def backup_salvar(admin=Depends(get_admin)):
         _aplicar_retencao_backups()
         return {"ok": True, "arquivo": nome_arquivo, "gerado_em": payload["gerado_em"]}
     except BackupIncompletoError as e:
-        print("Backup manual abortado (dados incompletos):", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Backup manual abortado (dados incompletos):", 'dados incompletos')
+        raise HTTPException(status_code=503, detail='O backup foi cancelado porque não foi possível confirmar que todos os dados estavam incluídos. Nenhum arquivo foi salvo.')
     except Exception as e:
-        print("Erro ao salvar backup:", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Erro ao salvar backup:", type(e).__name__)
+        raise HTTPException(status_code=503, detail='Não foi possível gerar e salvar o backup por uma falha temporária. Confira a lista de backups antes de repetir a operação.') from e
 
 
 # ── Admin: listar backups disponíveis ────────────────────────────────────────
@@ -367,8 +367,8 @@ def backup_listar(admin=Depends(get_admin)):
             "retencao_seguranca_horas": BACKUP_SEGURANCA_RETENCAO_HORAS,
         }
     except Exception as e:
-        print("Erro ao listar backups:", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Erro ao listar backups:", type(e).__name__)
+        raise HTTPException(status_code=503, detail='Não foi possível carregar a lista de backups. Tente novamente.') from e
 
 
 # ── Admin: gerar URL assinada para download ───────────────────────────────────
@@ -388,8 +388,8 @@ def backup_download_url(nome_arquivo: str, admin=Depends(get_admin)):
     except HTTPException:
         raise
     except Exception as e:
-        print("Erro ao gerar URL de download:", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Erro ao preparar download do backup:", type(e).__name__)
+        raise HTTPException(status_code=503, detail='Não foi possível preparar o download deste backup. Confirme se o arquivo ainda aparece na lista e tente novamente.') from e
 
 
 # ── Admin: excluir backup ─────────────────────────────────────────────────────
@@ -402,8 +402,8 @@ def backup_excluir(nome_arquivo: str, admin=Depends(get_admin)):
         supabase.storage.from_(BACKUP_BUCKET).remove([nome_arquivo])
         return {"ok": True, "removido": nome_arquivo}
     except Exception as e:
-        print("Erro ao excluir backup:", 'falha de operacao')
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        print("Erro ao excluir backup:", type(e).__name__)
+        raise HTTPException(status_code=503, detail='Não foi possível excluir este backup. Atualize a lista para confirmar se ele ainda está disponível antes de tentar novamente.') from e
 
 
 # ── Legado: download direto (mantido para compatibilidade) ────────────────────
@@ -413,7 +413,7 @@ def backup_completo(admin=Depends(get_admin)):
     try:
         dados = _gerar_dados_backup()
     except BackupIncompletoError as e:
-        raise HTTPException(status_code=500, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=503, detail='O arquivo de backup não foi gerado porque não foi possível confirmar que todos os dados estavam incluídos.') from e
     return JSONResponse(
         content=dados,
         headers={
@@ -465,12 +465,12 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
         conteudo = _conteudo_backup_descompactado(conteudo, body.nome_arquivo)
         payload = json.loads(conteudo)
     except Exception as e:
-        raise HTTPException(status_code=404, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=404, detail='Não foi possível localizar ou ler o arquivo de backup selecionado. Confirme se ele ainda aparece na lista.') from e
 
     try:
         _validar_backup(payload)
     except ValueError as e:
-        raise HTTPException(status_code=422, detail='Não foi possível concluir a operação')
+        raise HTTPException(status_code=422, detail='O arquivo selecionado não é um backup válido ou usa um formato incompatível. Nenhum dado foi restaurado.') from e
 
     # 3. Backup de segurança do estado atual — obrigatório antes de qualquer
     #    operação destrutiva. Se falhar, a restauração é abortada.
@@ -482,9 +482,7 @@ def backup_restaurar(body: RestaurarRequest, admin=Depends(get_admin)):
         print("Restauração abortada: falha ao criar backup de segurança:", 'falha de operacao')
         raise HTTPException(
             status_code=500,
-            detail=(
-                'Não foi possível concluir a operação'
-            ),
+            detail='A restauração foi cancelada porque não foi possível criar um backup de segurança do estado atual. Os dados atuais não foram alterados.',
         )
 
     # Capas são adicionadas como novos objetos antes da transação, sem sobrescrever objetos atuais.
