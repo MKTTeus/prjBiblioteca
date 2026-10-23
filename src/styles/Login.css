@@ -166,9 +166,15 @@
   border: 1px solid var(--login-border);
   border-radius: 8px;
   background: var(--login-input-bg);
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
 }
-.login-page .login-input-shell:focus-within { border-color: var(--login-accent); box-shadow: 0 0 0 3px rgba(8,117,251,.14); }
+.login-page .login-input-shell:hover:not(:focus-within) { border-color: #afc2dc; }
+.login-page .login-input-shell:focus-within {
+  border-color: var(--login-accent);
+  background: var(--login-input-bg);
+  box-shadow: 0 0 0 3px rgba(9, 110, 255, .12);
+}
+.login-page .login-input-shell:focus-within .login-input-icon { color: var(--login-accent); }
 .login-page .login-input-icon { flex: 0 0 auto; width: 17px; height: 17px; color: var(--login-ink); }
 .login-page .input-group input {
   width: 100%;
@@ -177,10 +183,23 @@
   padding: 0;
   border: none;
   outline: none;
+  box-shadow: none;
   background: transparent;
   color: var(--login-ink);
   font: inherit;
   font-size: 12px;
+}
+/* Apenas o contêiner tem destaque de foco; remove a sombra global do input. */
+.login-page .input-group input:focus,
+.login-page .input-group input:focus-visible {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+/* Edge: oculta o olho nativo, preservando apenas nosso botão Mostrar/Ocultar. */
+.login-page .password-input-wrapper input::-ms-reveal,
+.login-page .password-input-wrapper input::-ms-clear {
+  display: none;
 }
 .login-page .input-group input::placeholder { color: #8a99b0; opacity: 1; }
 .login-page .password-toggle-btn { display: grid; place-items: center; width: 30px; height: 36px; padding: 0; flex: 0 0 auto; background: none; border: 0; color: var(--login-ink); cursor: pointer; }
@@ -220,6 +239,7 @@ html.dark .login-page {
   background: radial-gradient(ellipse at 42% 42%, #142c41 0%, #081c30 65%, #071625 100%);
 }
 html.dark .login-page .logo-circle { background: rgba(255,255,255,.96); }
+html.dark .login-page .login-input-shell:hover:not(:focus-within) { border-color: #496886; }
 html.dark .login-page::before { opacity: .13; }
 
 html.dark .login-page .user-option:hover { background: rgba(131,172,223,.09); }
