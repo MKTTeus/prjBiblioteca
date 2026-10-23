@@ -150,6 +150,7 @@
 .admin-header .admin-header-greeting { border-left: 1px solid var(--surface-border); padding: 0 18px; font-size: 14px; color: #17396f; white-space: nowrap; }
 .admin-header .logout-btn { background: #ef2342; border-radius: 7px; padding: 9px 14px; font-weight: 600; }
 html.dark .admin-header .header-title, html.dark .admin-header .hamburger-btn, html.dark .admin-header .header-bell, html.dark .admin-header .admin-header-greeting { color: var(--text-default); }
+html.dark .admin-header .header-icon { background: #fff; border-radius: 12px; padding: 3px; }
 @media (min-width: 769px) {
   .admin-header { height: 63px; padding: 0 25px; }
   .admin-header .header-icon, .admin-header .header-brand-logo { width: 52px; height: 52px; flex-basis: 52px; }

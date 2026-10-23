@@ -238,6 +238,7 @@ html.dark .admin-shell .sidebar, html.dark .admin-shell .sidebar-section ul li a
   .admin-sidebar-mobile-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 11px 15px; border-bottom: 1px solid var(--surface-border); margin-bottom: 9px; }
   .admin-sidebar-mobile-brand { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 700; color: var(--text-default); }
   .admin-sidebar-mobile-brand img { width: 28px; height: 28px; object-fit: contain; }
+  html.dark .admin-sidebar-mobile-brand img { background: #fff; border-radius: 7px; padding: 2px; }
   .admin-sidebar-mobile-top button { display: flex; align-items: center; gap: 4px; border: 1px solid var(--surface-border); background: var(--surface-bg); color: var(--text-default); border-radius: 20px; font-size: 11px; padding: 5px 9px; cursor: pointer; }
   .admin-sidebar-mobile-logout { display: flex; align-items: center; gap: 9px; margin: 4px 25px 0; border: 0; background: transparent; color: #ed2442; font-size: 12px; cursor: pointer; }
   .admin-shell .sidebar-section:last-of-type { border-top: 1px solid var(--surface-border); margin: 7px 16px 0; padding-top: 5px; }
