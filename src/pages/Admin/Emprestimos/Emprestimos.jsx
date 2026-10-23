@@ -206,7 +206,7 @@ export default function Emprestimos() {
   }
 
   return (
-    <div className="emp-page page-shell">
+    <div className="emp-page emp-page--circulacao page-shell">
       <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
 
       {carregando && <p role="status">Carregando empréstimos e usuários…</p>}
