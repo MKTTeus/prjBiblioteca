@@ -1079,3 +1079,16 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* Capa do exemplar no modal de novo empréstimo; preserva o ícone sem imagem. */
+.emp-modal-novo .emp-new-book.has-cover {
+  overflow: hidden;
+  padding: 0;
+  background: var(--surface-muted);
+}
+.emp-modal-novo .emp-new-book.has-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
