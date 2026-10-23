@@ -1,237 +1,95 @@
-import { useEffect, useRef, useState } from "react";
-import { CiSearch } from "react-icons/ci";
-import { HiOutlineX } from "react-icons/hi";
-import { FiCheck, FiBookOpen, FiRepeat } from "react-icons/fi";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { FiArrowLeft, FiArrowRight, FiBookOpen, FiCheck, FiSearch, FiX, FiUser } from "react-icons/fi";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
 import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
 
-function getIniciais(nome = "") {
-  const partes = nome.trim().split(" ").filter(Boolean);
-  if (partes.length === 0) return "?";
-  if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
-  return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
-}
+const initials = (name = "") => name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
+const studentGroup = (user) => [user?.serie, user?.turma].filter(Boolean).join(" · ");
+const dueDate = (days) => {
+  if (!Number.isFinite(Number(days)) || Number(days) <= 0) return null;
+  const date = new Date();
+  date.setDate(date.getDate() + Number(days));
+  return date.toLocaleDateString("pt-BR");
+};
 
 export default function NovoEmprestimoModal({
-  aberto,
-  onFechar,
-  buscaUsuario,
-  onBuscaUsuarioChange,
-  usuariosFiltrados,
-  selecionado,
-  onSelecionarUsuario,
-  usuarioSelecionado,
-  buscaExemplar,
-  onBuscaExemplarChange,
-  exemplaresFiltrados,
-  onSelecionarExemplar,
-  totalExemplaresDisponiveis = 0,
-  onSalvar,
-  salvando = false,
+  aberto, onFechar, buscaUsuario, onBuscaUsuarioChange, usuariosFiltrados,
+  selecionado, onSelecionarUsuario, usuarioSelecionado, buscaExemplar,
+  onBuscaExemplarChange, exemplaresFiltrados, onSelecionarExemplar,
+  totalExemplaresDisponiveis = 0, onSalvar, salvando = false, diasEmprestimo = null,
 }) {
+  const [step, setStep] = useState(1);
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
-  const buscaUsuarioRef = useRef(null);
-  const buscaExemplarRef = useRef(null);
-
+  const [serie, setSerie] = useState("");
+  const buscaRef = useRef(null);
   const isDirty = Boolean(selecionado.idUsuario || selecionado.idExemplar);
+  const selectedCopy = exemplaresFiltrados.find((copy) => String(copy.id) === String(selecionado.idExemplar));
+  const series = useMemo(() => Array.from(new Set(usuariosFiltrados.filter((u) => u.tipo === "Aluno" && u.serie).map((u) => String(u.serie)))).sort((a,b) => a.localeCompare(b,"pt-BR")), [usuariosFiltrados]);
+  const visibleUsers = useMemo(() => usuariosFiltrados.filter((u) => !serie || String(u.serie) === serie), [usuariosFiltrados, serie]);
+  const validSelection = Boolean(selecionado.idUsuario && selecionado.idExemplar);
 
-  useEffect(() => {
-    if (!aberto) return;
-    if (usuarioSelecionado) {
-      buscaExemplarRef.current?.focus();
-    } else {
-      buscaUsuarioRef.current?.focus();
-    }
-  }, [aberto, usuarioSelecionado]);
-
+  useEffect(() => { if (aberto) { setStep(1); setSerie(""); setConfirmandoSaida(false); } }, [aberto]);
+  useEffect(() => { if (aberto && step !== 3) buscaRef.current?.focus(); }, [aberto, step]);
   useEffect(() => {
     if (!aberto) return undefined;
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        if (isDirty) {
-          setConfirmandoSaida(true);
-        } else {
-          onFechar();
-        }
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [aberto, isDirty, onFechar]);
+    function onKey(event) { if (event.key === "Escape" && !confirmandoSaida && !salvando) { event.preventDefault(); if (isDirty) setConfirmandoSaida(true); else onFechar(); } }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [aberto, confirmandoSaida, salvando, isDirty, onFechar]);
 
   if (!aberto) return null;
-
-  function handleRequestClose() {
-    if (isDirty) {
-      setConfirmandoSaida(true);
-    } else {
-      onFechar();
-    }
-  }
-
-  function confirmarSaida() {
-    setConfirmandoSaida(false);
-    onFechar();
-  }
-
+  const requestClose = () => { if (salvando) return; if (isDirty) setConfirmandoSaida(true); else onFechar(); };
+  const next = () => { if (step === 1 && usuarioSelecionado) setStep(2); if (step === 2 && validSelection) setStep(3); };
+  const changeUser = () => { onSelecionarUsuario(null); setStep(1); };
+  const steps = ["Selecionar usuário", "Escolher exemplar", "Confirmar"];
   return (
-    <div className="emp-modal-overlay" onClick={handleRequestClose}>
-      <div className="emp-modal emp-modal-sequencial emp-modal-novo" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="emp-modal-title">
+    <div className="emp-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) requestClose(); }}>
+      <div className="emp-modal emp-modal-sequencial emp-modal-novo" role="dialog" aria-modal="true" aria-labelledby="emp-modal-title">
         <div className="emp-modal-topbar">
           <div className="emp-modal-title-group">
             <h2 id="emp-modal-title">Novo Empréstimo</h2>
-            <p>Selecione quem receberá o exemplar e escolha o livro.</p>
+            <p>Escolha o usuário, o exemplar e confirme os dados.</p>
           </div>
-          <button className="emp-modal-close" onClick={handleRequestClose} aria-label="Fechar">
-            <HiOutlineX />
-          </button>
+          <button type="button" className="emp-modal-close" onClick={requestClose} disabled={salvando} aria-label="Fechar"><FiX /></button>
         </div>
-
-        <div className="emp-modal-content">
-          {usuarioSelecionado ? (
-            <div className="emp-user-chip">
-              <div className="emp-chip-avatar">{getIniciais(usuarioSelecionado.nome)}</div>
-              <div className="emp-chip-info">
-                <strong title={usuarioSelecionado.nome}>{usuarioSelecionado.nome}</strong>
-                <span className="emp-chip-badge">{usuarioSelecionado.tipo}</span>
-              </div>
-              <button
-                type="button"
-                className="emp-chip-trocar"
-                onClick={() => onSelecionarUsuario(null)}
-              >
-                <FiRepeat /> Trocar
-              </button>
-            </div>
-          ) : (
-            <section className="emp-step-card">
-              <div className="emp-step-header">
-                <div>
-                  <span className="emp-step-number">1.</span>
-                  <h3>Selecionar Usuário</h3>
-                </div>
-                <span className="emp-step-subtitle">{usuariosFiltrados.length} {usuariosFiltrados.length === 1 ? "usuário" : "usuários"}</span>
-              </div>
-
-              <div className="emp-step-search">
-                <CiSearch />
-                <input
-                  ref={buscaUsuarioRef}
-                  placeholder="Buscar usuário..."
-                  value={buscaUsuario}
-                  onChange={(event) => onBuscaUsuarioChange(event.target.value)}
-                />
-              </div>
-
-              <div className="emp-list-box">
-                {usuariosFiltrados.length === 0 ? (
-                  <div className="emp-empty-state">Nenhum usuário encontrado.</div>
-                ) : (
-                  usuariosFiltrados.map((usuario) => (
-                    <button
-                      type="button"
-                      key={usuario.id}
-                      className="emp-list-item"
-                      onClick={() => onSelecionarUsuario(usuario.id)}
-                    >
-                      <div className="emp-list-main">
-                        <strong>{usuario.nome}</strong>
-                        <span className="emp-list-badge">{usuario.tipo}</span>
-                        {usuario.tipo === "Aluno" && usuario.documento && (
-                          <span className="emp-list-identifier">RA {usuario.documento}</span>
-                        )}
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            </section>
-          )}
-
-          <section className={`emp-step-card ${!usuarioSelecionado ? "is-disabled" : ""}`}>
-            <div className="emp-step-header">
-              <div>
-                <span className="emp-step-number">2.</span>
-                <h3>Selecionar Exemplar</h3>
-              </div>
-              {usuarioSelecionado && (
-                <span className="emp-step-subtitle">
-                  {totalExemplaresDisponiveis}{" "}
-                  {totalExemplaresDisponiveis === 1 ? "disponível" : "disponíveis"}
-                </span>
-              )}
-            </div>
-
-            {usuarioSelecionado ? (
-              <>
-                <div className="emp-step-search">
-                  <CiSearch />
-                  <input
-                    ref={buscaExemplarRef}
-                    placeholder="Buscar exemplar..."
-                    value={buscaExemplar}
-                    onChange={(event) => onBuscaExemplarChange(event.target.value)}
-                  />
-                </div>
-
-                <div className="emp-list-box">
-                  {exemplaresFiltrados.length === 0 ? (
-                    <div className="emp-empty-state">Nenhum exemplar encontrado.</div>
-                  ) : (
-                    exemplaresFiltrados.map((exemplar) => {
-                      const isSelecionado = selecionado.idExemplar === exemplar.id;
-                      return (
-                        <button
-                          type="button"
-                          key={exemplar.id}
-                          className={`emp-list-item emp-list-item-exemplar ${
-                            isSelecionado ? "selected" : ""
-                          }`}
-                          onClick={() => onSelecionarExemplar(exemplar.id)}
-                        >
-                          <FiBookOpen className="emp-list-icon" />
-                          <div className="emp-list-main emp-list-main-column">
-                            <strong>{exemplar.nome}</strong>
-                            <small>Tombo: {exemplar.tombo || "-"}</small>
-                            <small>ISBN: {exemplar.isbn || "-"}</small>
-                          </div>
-                          {isSelecionado && <FiCheck className="emp-list-check" />}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="emp-list-box emp-list-box-placeholder">
-                <div className="emp-empty-state">Selecione um usuário primeiro</div>
-              </div>
-            )}
-          </section>
+        <div className="emp-new-steps" aria-label="Etapas do empréstimo">
+          {steps.map((name, index) => <div key={name} className={`emp-new-step ${step === index + 1 ? "is-current" : ""} ${step > index + 1 ? "is-complete" : ""}`} aria-current={step === index + 1 ? "step" : undefined}><span>{step > index + 1 ? <FiCheck /> : index + 1}</span><strong>{name}</strong></div>)}
         </div>
-
-        <div className="emp-modal-actions">
-          <button onClick={handleRequestClose}>Cancelar</button>
-          <LoadingButton
-            isLoading={salvando}
-            loadingText="Salvando..."
-            className="emp-confirmar"
-            onClick={onSalvar}
-            disabled={!selecionado.idUsuario || !selecionado.idExemplar || salvando}
-          >
-            Confirmar Empréstimo
-          </LoadingButton>
+        <div className="emp-modal-content emp-new-content">
+          {step === 1 && <section className="emp-new-section">
+            <div className="emp-new-section-title"><h3>Selecionar usuário</h3><span>{visibleUsers.length} resultado(s)</span></div>
+            <p className="emp-new-help">Identifique o aluno pelo nome completo, série, turma e RA. Usuários da comunidade também estão disponíveis.</p>
+            <div className="emp-step-search"><FiSearch /><input ref={buscaRef} aria-label="Buscar usuário" placeholder="Nome, RA, CPF, série ou turma..." value={buscaUsuario} onChange={(e) => onBuscaUsuarioChange(e.target.value)} /></div>
+            {series.length > 0 && <div className="emp-new-series"><label htmlFor="emp-serie">Série</label><select id="emp-serie" value={serie} onChange={(e) => setSerie(e.target.value)}><option value="">Todas as séries</option>{series.map((item) => <option key={item} value={item}>{item}</option>)}</select></div>}
+            <div className="emp-list-box emp-new-results" role="listbox" aria-label="Usuários encontrados">
+              {visibleUsers.length ? visibleUsers.map((u) => <button type="button" role="option" aria-selected={String(u.id) === String(selecionado.idUsuario)} key={u.id} className={`emp-list-item emp-new-result ${String(u.id) === String(selecionado.idUsuario) ? "selected" : ""}`} onClick={() => { onSelecionarUsuario(u.id); setStep(2); }}>
+                <span className="emp-new-avatar">{initials(u.nome)}</span><span className="emp-new-result-text"><strong>{u.nome}</strong><small>{u.tipo === "Aluno" ? [studentGroup(u), u.documento ? `RA: ${u.documento}` : "RA não informado"].filter(Boolean).join(" · ") : `Comunidade · CPF: ${u.documento || "Não informado"}`}</small></span><span className="emp-new-result-check"><FiCheck /></span>
+              </button>) : <div className="emp-empty-state">Nenhum usuário encontrado. Tente outro nome, documento ou série.</div>}
+            </div>
+          </section>}
+          {step === 2 && <section className="emp-new-section">
+            <div className="emp-new-section-title"><h3>Selecionar exemplar</h3><span>{totalExemplaresDisponiveis} disponíveis</span></div>
+            <div className="emp-user-chip"><span className="emp-new-avatar">{initials(usuarioSelecionado?.nome)}</span><span className="emp-chip-info"><strong>{usuarioSelecionado?.nome}</strong><small>{usuarioSelecionado?.tipo === "Aluno" ? [studentGroup(usuarioSelecionado), `RA: ${usuarioSelecionado?.documento || "Não informado"}`].filter(Boolean).join(" · ") : "Comunidade"}</small></span><button type="button" className="emp-chip-trocar" onClick={changeUser}>Trocar</button></div>
+            <div className="emp-step-search"><FiSearch /><input ref={buscaRef} aria-label="Buscar exemplar" placeholder="Título, autor, ISBN ou tombo..." value={buscaExemplar} onChange={(e) => onBuscaExemplarChange(e.target.value)} /></div>
+            <div className="emp-list-box emp-new-results" role="listbox" aria-label="Exemplares disponíveis">
+              {exemplaresFiltrados.length ? exemplaresFiltrados.map((copy) => <button key={copy.id} type="button" role="option" aria-selected={String(copy.id) === String(selecionado.idExemplar)} className={`emp-list-item emp-new-result ${String(copy.id) === String(selecionado.idExemplar) ? "selected" : ""}`} onClick={() => { onSelecionarExemplar(copy.id); setStep(3); }}>
+                <span className="emp-new-book"><FiBookOpen /></span><span className="emp-new-result-text"><strong>{copy.nome}</strong><small>Tombo: {copy.tombo || "—"} · ISBN: {copy.isbn || "—"}</small><small className="emp-new-available">Disponível para empréstimo</small></span><span className="emp-new-result-check"><FiCheck /></span>
+              </button>) : <div className="emp-empty-state">Nenhum exemplar disponível corresponde à pesquisa.</div>}
+            </div>
+          </section>}
+          {step === 3 && <section className="emp-new-section">
+            <div className="emp-new-section-title"><h3>Revisar e confirmar</h3><span>Etapa final</span></div>
+            <p className="emp-new-help">Confira os dados antes de realizar o empréstimo.</p>
+            <div className="emp-new-summary"><div><span><FiUser /> Usuário</span><strong>{usuarioSelecionado?.nome || "—"}</strong><small>{usuarioSelecionado?.tipo === "Aluno" ? [studentGroup(usuarioSelecionado), `RA: ${usuarioSelecionado?.documento || "Não informado"}`].filter(Boolean).join(" · ") : "Comunidade"}</small></div><div><span><FiBookOpen /> Exemplar</span><strong>{selectedCopy?.nome || "—"}</strong><small>Tombo: {selectedCopy?.tombo || "—"} · ISBN: {selectedCopy?.isbn || "—"}</small></div><div><span>Previsão de devolução</span><strong>{dueDate(diasEmprestimo) || "Conforme prazo configurado na biblioteca"}</strong><small>O prazo final é determinado pelo sistema no registro.</small></div></div>
+            {!validSelection && <p role="alert" className="emp-renovar-erro">Selecione um usuário e um exemplar disponível.</p>}
+          </section>}
+        </div>
+        <div className="emp-modal-actions emp-new-actions">
+          <button type="button" onClick={step === 1 ? requestClose : () => setStep(step - 1)} disabled={salvando}>{step === 1 ? "Cancelar" : <><FiArrowLeft /> Voltar</>}</button>
+          {step < 3 ? <button type="button" className="emp-confirmar" disabled={step === 1 ? !usuarioSelecionado : !validSelection} onClick={next}>Continuar <FiArrowRight /></button> : <LoadingButton isLoading={salvando} loadingText="Registrando..." className="emp-confirmar" onClick={onSalvar} disabled={!validSelection || salvando}>Confirmar Empréstimo</LoadingButton>}
         </div>
       </div>
-
-      <ConfirmExitModal
-        show={confirmandoSaida}
-        onConfirm={confirmarSaida}
-        onCancel={() => setConfirmandoSaida(false)}
-        message="Você já selecionou usuário e/ou exemplar para este empréstimo. Se sair agora, a seleção será perdida."
-      />
+      <ConfirmExitModal show={confirmandoSaida} onConfirm={() => { setConfirmandoSaida(false); onFechar(); }} onCancel={() => setConfirmandoSaida(false)} message="Sua seleção será perdida se sair agora." />
     </div>
   );
 }
