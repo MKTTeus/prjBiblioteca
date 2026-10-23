@@ -42,41 +42,41 @@
 }
 .login-page .login-wrapper {
   display: grid;
-  grid-template-columns: minmax(0, 330px) minmax(0, 440px);
+  grid-template-columns: minmax(0, 365px) minmax(0, 440px);
   align-items: center;
   justify-content: space-between;
-  width: min(100%, 1010px);
+  width: min(100%, 1040px);
   gap: clamp(65px, 7vw, 130px);
   position: relative;
   z-index: 1;
 }
 .login-page .login-header {
   text-align: left;
-  max-width: 330px;
+  max-width: 365px;
 }
 .login-page .logo-circle {
   display: grid;
   place-items: center;
-  width: 76px;
-  height: 76px;
-  margin-bottom: 17px;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 19px;
   border-radius: 15px;
   background: rgba(255,255,255,.94);
   box-shadow: 0 10px 35px rgba(26,53,93,.08);
 }
-.login-page .login-logo { width: 59px; height: 59px; object-fit: contain; }
+.login-page .login-logo { width: 68px; height: 68px; object-fit: contain; }
 .login-page .login-school-name {
   margin: 0 0 10px;
   color: var(--login-muted);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: .075em;
   font-weight: 650;
   text-transform: uppercase;
 }
 .login-page .login-header h1 {
   margin: 0;
-  max-width: 305px;
-  font-size: clamp(32px, 2.9vw, 39px);
+  max-width: 350px;
+  font-size: clamp(36px, 3.15vw, 43px);
   line-height: 1.1;
   letter-spacing: -.047em;
   font-weight: 760;
@@ -89,10 +89,10 @@
   margin: 19px 0 17px;
 }
 .login-page .login-tagline {
-  max-width: 295px;
+  max-width: 330px;
   margin: 0;
   color: var(--login-muted);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.45;
 }
 .login-page .login-card {
@@ -257,9 +257,17 @@ html.dark .login-page .error { color: #fda4af; background: rgba(220,38,38,.16); 
   .login-page .user-option-text > span { font-size: 12px; }
   .login-page .login-tagline { font-size: 15px; }
 }
+/* Em notebooks e janelas menos altas, mantém o formulário inteiro visível
+   em 100% de zoom sem reduzir o tamanho horizontal das colunas. */
 @media (max-height: 740px) and (min-width: 1051px) {
-  .login-page { padding-block: 20px; }
-  .login-page .login-card { padding-block: 23px; }
-  .login-page .user-option { min-height: 58px; }
-  .login-page .user-types { gap: 8px; margin-bottom: 15px; }
+  .login-page { padding-block: 12px; }
+  .login-page .login-card { padding-block: 17px; }
+  .login-page .login-subtitle { margin-bottom: 12px; }
+  .login-page .user-option { min-height: 54px; padding-block: 8px; }
+  .login-page .user-types { gap: 7px; margin-bottom: 12px; }
+  .login-page .input-group { margin-bottom: 9px; }
+  .login-page .login-input-shell { min-height: 42px; }
+  .login-page .input-group input { height: 40px; }
+  .login-page .forgot-password-link { margin-bottom: 10px; }
+  .login-page .login-btn.loading-button { min-height: 44px; }
 }
