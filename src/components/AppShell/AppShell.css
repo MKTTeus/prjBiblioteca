@@ -31,6 +31,13 @@
 
 /* A navegação recolhível pertence apenas à área administrativa. */
 @media (min-width: 769px) {
+  .admin-shell .content {
+    margin-left: 225px;
+    margin-top: 63px;
+    padding: 22px 25px;
+    width: calc(100% - 225px);
+    min-height: calc(100vh - 63px);
+  }
   .admin-shell.admin-shell--collapsed .content { margin-left: 72px; width: calc(100% - 72px); }
 }
 @media (max-width: 768px) {

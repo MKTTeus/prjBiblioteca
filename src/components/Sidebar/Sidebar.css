@@ -214,6 +214,9 @@
 .admin-shell .submenu li a { font-size: 13px; min-height: 36px !important; padding: 8px 12px !important; }
 html.dark .admin-shell .sidebar, html.dark .admin-shell .sidebar-section ul li a, html.dark .admin-shell .submenu-toggle { color: var(--text-default); }
 @media (min-width: 769px) {
+  .admin-shell .sidebar { top: 63px; width: 225px; height: calc(100vh - 63px); padding-top: 18px; }
+  .admin-shell .sidebar-section ul li a, .admin-shell .submenu-toggle { min-height: 42px; font-size: 14px; }
+  .admin-shell .sidebar-title { font-size: 11px; }
   .admin-shell--collapsed .sidebar { width: 72px; }
   .admin-shell--collapsed .sidebar-title, .admin-shell--collapsed .sidebar-section ul li a span, .admin-shell--collapsed .submenu-toggle span, .admin-shell--collapsed .submenu-toggle .arrow, .admin-shell--collapsed .submenu { display: none; }
   .admin-shell--collapsed .sidebar-section ul li a, .admin-shell--collapsed .submenu-toggle { justify-content: center; padding: 12px; }
