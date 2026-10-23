@@ -68,10 +68,10 @@ export default function EsqueciSenha() {
                 redefinir sua senha em instantes. Verifique também a caixa de spam.
               </p>
               <p className="signup-link">
-                <span onClick={() => navigate("/login")}>
-                  <FiArrowLeft style={{ verticalAlign: "middle", marginRight: 4 }} />
+                <button type="button" className="return-login-btn" onClick={() => navigate("/login")}>
+                  <FiArrowLeft aria-hidden="true" />
                   Voltar para o login
-                </span>
+                </button>
               </p>
             </>
           ) : (
@@ -105,7 +105,10 @@ export default function EsqueciSenha() {
                 </LoadingButton>
 
                 <p className="signup-link">
-                  <span onClick={() => navigate("/login")}>Voltar para o login</span>
+                  <button type="button" className="return-login-btn" onClick={() => navigate("/login")}>
+                    <FiArrowLeft aria-hidden="true" />
+                    Voltar para o login
+                  </button>
                 </p>
               </form>
             </>
