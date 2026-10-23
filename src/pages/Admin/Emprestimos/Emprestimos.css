@@ -1030,3 +1030,52 @@
  .emp-modal-novo .emp-modal-actions.emp-new-actions {padding:12px 14px max(12px,env(safe-area-inset-bottom));gap:9px}
  .emp-modal-novo .emp-new-actions button {flex:1;min-width:0;font-size:13px;min-height:44px}
 }
+
+/* Circulação administrativa: seleção de filtro e estado vazio.
+   Escopo exclusivo para não modificar solicitações, alunos ou comunidade. */
+.admin-shell .emp-page--circulacao .emp-filter-tab.is-active {
+  background: #0863f4;
+  border-color: #0863f4;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(8, 99, 244, 0.18);
+}
+.admin-shell .emp-page--circulacao .emp-filter-tab.is-active:hover {
+  background: #0755d0;
+  border-color: #0755d0;
+  color: #fff;
+}
+.admin-shell .emp-page--circulacao .emp-filter-tab:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table {
+  padding: 40px 18px;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-muted);
+  color: var(--primary);
+  font-size: 27px;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-content strong {
+  color: var(--text-default);
+  font-size: 15px;
+  font-weight: 700;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-content > span:last-child {
+  font-size: 13px;
+  color: var(--text-muted);
+}
