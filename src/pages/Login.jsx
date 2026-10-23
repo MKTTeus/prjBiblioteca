@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { FiShield, FiUser, FiUsers, FiEye, FiEyeOff } from "react-icons/fi";
+import { FiShield, FiUser, FiUsers, FiEye, FiEyeOff, FiLock, FiArrowRight } from "react-icons/fi";
 import LoadingButton from "../components/LoadingButton/LoadingButton";
 import "../styles/Login.css";
 
@@ -64,85 +64,104 @@ export default function Login() {
     }
   };
 
+
   return (
-    <div className="login-page">
+    <div className={`login-page login-page--${userType}`}>
       <div className="login-wrapper">
-        <div className="login-header">
+        <header className="login-header">
           <div className="logo-circle">
             <img
-              src="/logo-novedejulho-fundo.png"
-              alt="Logo Nove de Julho"
+              src="/logo-novedejulho-semfundo.png"
+              alt="Logo da Escola 9 de Julho"
               className="login-logo"
             />
           </div>
+          <p className="login-school-name">Escola 9 de Julho de Taquaritinga</p>
           <h1>Sistema de Biblioteca</h1>
-          <p>Escola 9 de Julho de Taquaritinga</p>
-        </div>
+          <span className="login-title-divider" aria-hidden="true" />
+          <p className="login-tagline">Conhecimento que conecta pessoas, histórias e futuros.</p>
+        </header>
 
         <main className="login-card">
-          <h2>Fazer Login</h2>
-          <p className="login-subtitle">Selecione seu tipo de usuário</p>
+          <div className="login-card-heading">
+            <h2>Fazer Login</h2>
+            <p className="login-subtitle">Selecione seu tipo de usuário</p>
+          </div>
 
           <div className="user-types" role="group" aria-label="Tipo de usuário">
-            <button type="button"
+            <button
+              type="button"
               className={`user-option admin ${userType === "admin" ? "selected" : ""}`}
               onClick={() => setUserType("admin")}
               aria-pressed={userType === "admin"}
             >
-              <FiShield className="user-icon" />
-              <div>
+              <FiShield className="user-icon" aria-hidden="true" />
+              <span className="user-option-text">
                 <strong>Equipe Escolar</strong>
                 <span>Equipe gestora e professores</span>
-              </div>
+              </span>
+              <span className="user-option-indicator" aria-hidden="true" />
             </button>
 
-            <button type="button"
+            <button
+              type="button"
               className={`user-option aluno ${userType === "aluno" ? "selected" : ""}`}
               onClick={() => setUserType("aluno")}
               aria-pressed={userType === "aluno"}
             >
-              <FiUser className="user-icon" />
-              <div>
+              <FiUser className="user-icon" aria-hidden="true" />
+              <span className="user-option-text">
                 <strong>Aluno</strong>
                 <span>Consultar e alugar livros</span>
-              </div>
+              </span>
+              <span className="user-option-indicator" aria-hidden="true" />
             </button>
 
-            <button type="button"
+            <button
+              type="button"
               className={`user-option comunidade ${userType === "comunidade" ? "selected" : ""}`}
               onClick={() => setUserType("comunidade")}
               aria-pressed={userType === "comunidade"}
             >
-              <FiUsers className="user-icon" />
-              <div>
+              <FiUsers className="user-icon" aria-hidden="true" />
+              <span className="user-option-text">
                 <strong>Comunidade</strong>
                 <span>Acesso para visitantes</span>
-              </div>
+              </span>
+              <span className="user-option-indicator" aria-hidden="true" />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form className="login-form" onSubmit={handleSubmit}>
             <div className="input-group">
-              <label htmlFor="login-identificador">{userType === "aluno" ? "RA ou E-mail" : userType === "comunidade" ? "CPF ou E-mail" : "E-mail"}</label>
-              <input
-                id="login-identificador"
-                type="text"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={userType === "aluno" ? "2024001 ou email@email.com" : userType === "comunidade" ? "000.000.000-00 ou email@email.com" : "email@email.com"}
-                required
-              />
+              <label htmlFor="login-identificador">
+                {userType === "aluno" ? "RA ou E-mail" : userType === "comunidade" ? "CPF ou E-mail" : "E-mail"}
+              </label>
+              <div className="login-input-shell">
+                <FiUser className="login-input-icon" aria-hidden="true" />
+                <input
+                  id="login-identificador"
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={userType === "aluno" ? "2024001 ou email@email.com" : userType === "comunidade" ? "000.000.000-00 ou email@email.com" : "email@email.com"}
+                  autoComplete="username"
+                  required
+                />
+              </div>
             </div>
 
             <div className="input-group">
               <label htmlFor="login-senha">Senha</label>
-              <div className="password-input-wrapper">
+              <div className="login-input-shell password-input-wrapper">
+                <FiLock className="login-input-icon" aria-hidden="true" />
                 <input
                   id="login-senha"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Digite sua senha"
+                  autoComplete="current-password"
                   required
                 />
                 <button
@@ -168,7 +187,8 @@ export default function Login() {
               loadingText="Entrando..."
               className={`login-btn ${userType}`}
             >
-              Entrar
+              <span>Entrar</span>
+              <FiArrowRight className="login-submit-arrow" aria-hidden="true" />
             </LoadingButton>
           </form>
         </main>
