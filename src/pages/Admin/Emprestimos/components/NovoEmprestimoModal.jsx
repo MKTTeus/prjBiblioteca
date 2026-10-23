@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowLeft, FiArrowRight, FiBookOpen, FiCheck, FiSearch, FiX, FiUser } from "react-icons/fi";
 import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import { getBooks } from "../../../../services/api";
 import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
 
 const initials = (name = "") => name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "?";
@@ -12,6 +13,22 @@ const dueDate = (days) => {
   return date.toLocaleDateString("pt-BR");
 };
 
+// Mantém o ícone atual como fallback para livros sem capa ou imagens indisponíveis.
+function ExemplarCapa({ url }) {
+  const [falha, setFalha] = useState(false);
+  useEffect(() => setFalha(false), [url]);
+
+  return (
+    <span className={`emp-new-book ${url && !falha ? "has-cover" : ""}`}>
+      {url && !falha ? (
+        <img src={url} alt="" loading="lazy" onError={() => setFalha(true)} />
+      ) : (
+        <FiBookOpen />
+      )}
+    </span>
+  );
+}
+
 export default function NovoEmprestimoModal({
   aberto, onFechar, buscaUsuario, onBuscaUsuarioChange, usuariosFiltrados,
   selecionado, onSelecionarUsuario, usuarioSelecionado, buscaExemplar,
@@ -21,6 +38,8 @@ export default function NovoEmprestimoModal({
   const [step, setStep] = useState(1);
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [serie, setSerie] = useState("");
+  const [capasPorLivro, setCapasPorLivro] = useState({});
+  const [capasConsultadas, setCapasConsultadas] = useState(false);
   const buscaRef = useRef(null);
   const isDirty = Boolean(selecionado.idUsuario || selecionado.idExemplar);
   const selectedCopy = exemplaresFiltrados.find((copy) => String(copy.id) === String(selecionado.idExemplar));
@@ -29,6 +48,28 @@ export default function NovoEmprestimoModal({
   const validSelection = Boolean(selecionado.idUsuario && selecionado.idExemplar);
 
   useEffect(() => { if (aberto) { setStep(1); setSerie(""); setConfirmandoSaida(false); } }, [aberto]);
+  // A lista de exemplares traz idLivro; as capas já estão disponíveis no catálogo existente.
+  // Esta consulta é opcional e não interfere na seleção ou no registro do empréstimo.
+  useEffect(() => {
+    if (!aberto || step !== 2 || capasConsultadas) return undefined;
+    let ativo = true;
+    getBooks()
+      .then((livros) => {
+        if (!ativo) return;
+        const capas = {};
+        for (const livro of Array.isArray(livros) ? livros : []) {
+          if (livro?.idLivro != null && livro?.livCapaURL) {
+            capas[String(livro.idLivro)] = livro.livCapaURL;
+          }
+        }
+        setCapasPorLivro(capas);
+        setCapasConsultadas(true);
+      })
+      .catch(() => {
+        if (ativo) setCapasConsultadas(true);
+      });
+    return () => { ativo = false; };
+  }, [aberto, step, capasConsultadas]);
   useEffect(() => { if (aberto && step !== 3) buscaRef.current?.focus(); }, [aberto, step]);
   useEffect(() => {
     if (!aberto) return undefined;
@@ -73,7 +114,7 @@ export default function NovoEmprestimoModal({
             <div className="emp-step-search"><FiSearch /><input ref={buscaRef} aria-label="Buscar exemplar" placeholder="Título, autor, ISBN ou tombo..." value={buscaExemplar} onChange={(e) => onBuscaExemplarChange(e.target.value)} /></div>
             <div className="emp-list-box emp-new-results" role="listbox" aria-label="Exemplares disponíveis">
               {exemplaresFiltrados.length ? exemplaresFiltrados.map((copy) => <button key={copy.id} type="button" role="option" aria-selected={String(copy.id) === String(selecionado.idExemplar)} className={`emp-list-item emp-new-result ${String(copy.id) === String(selecionado.idExemplar) ? "selected" : ""}`} onClick={() => { onSelecionarExemplar(copy.id); setStep(3); }}>
-                <span className="emp-new-book"><FiBookOpen /></span><span className="emp-new-result-text"><strong>{copy.nome}</strong><small>Tombo: {copy.tombo || "—"} · ISBN: {copy.isbn || "—"}</small><small className="emp-new-available">Disponível para empréstimo</small></span><span className="emp-new-result-check"><FiCheck /></span>
+                <ExemplarCapa url={capasPorLivro[String(copy.idLivro)]} /><span className="emp-new-result-text"><strong>{copy.nome}</strong><small>Tombo: {copy.tombo || "—"} · ISBN: {copy.isbn || "—"}</small><small className="emp-new-available">Disponível para empréstimo</small></span><span className="emp-new-result-check"><FiCheck /></span>
               </button>) : <div className="emp-empty-state">Nenhum exemplar disponível corresponde à pesquisa.</div>}
             </div>
           </section>}
