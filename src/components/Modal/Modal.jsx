@@ -5,7 +5,7 @@ import useDialogFocus from "../../hooks/useDialogFocus";
 
 const EXIT_DURATION_MS = 200;
 
-const Modal = ({ show, onClose, children, className = "" }) => {
+const Modal = ({ show, onClose, children, className = "", ariaLabel = "Janela de diálogo" }) => {
   const [mounted, setMounted] = useState(false);
   const [exiting, setExiting] = useState(false);
   const dialogRef = useDialogFocus(show, onClose);
@@ -47,7 +47,7 @@ const Modal = ({ show, onClose, children, className = "" }) => {
       onClick={(e) => (e.target === e.currentTarget ? onClose() : null)}
       role="dialog"
       aria-modal="true"
-      aria-label="Janela de diálogo"
+      aria-label={ariaLabel}
     >
       <div
         ref={dialogRef}

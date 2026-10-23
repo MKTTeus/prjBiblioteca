@@ -47,6 +47,14 @@ export default function Login() {
         return;
       }
 
+      // O aviso é consumido pela área gestora após cada login real, inclusive
+      // quando o retorno leva diretamente a uma tela interna.
+      if (result.tipo === "admin" && !result.professor) {
+        sessionStorage.setItem("novi-welcome-pending", "1");
+      } else {
+        sessionStorage.removeItem("novi-welcome-pending");
+      }
+
       const destino =
         result.tipo === "admin"
           ? (result.professor ? "/professor" : "/admin")
