@@ -4,9 +4,11 @@ const SidebarContext = createContext();
 
 export function SidebarProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggle = () => setIsOpen((v) => !v);
   const close = () => setIsOpen(false);
+  const toggleCollapse = () => setIsCollapsed((value) => !value);
 
   useEffect(() => {
     const handler = () => { if (window.innerWidth > 768) setIsOpen(false); };
@@ -15,7 +17,7 @@ export function SidebarProvider({ children }) {
   }, []);
 
   return (
-    <SidebarContext.Provider value={{ isOpen, toggle, close }}>
+    <SidebarContext.Provider value={{ isOpen, isCollapsed, toggle, close, toggleCollapse }}>
       {children}
     </SidebarContext.Provider>
   );

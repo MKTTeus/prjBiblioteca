@@ -28,3 +28,11 @@
     padding: 16px;
   }
 }
+
+/* A navegação recolhível pertence apenas à área administrativa. */
+@media (min-width: 769px) {
+  .admin-shell.admin-shell--collapsed .content { margin-left: 72px; width: calc(100% - 72px); }
+}
+@media (max-width: 768px) {
+  .admin-shell .content { padding: 14px 8px; }
+}

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { LogOut, Menu } from "lucide-react";
+import { Bell, LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Header.css";
 
-function Header() {
+function Header({ sidebarType = "admin" }) {
   const { user, logout } = useAuth();
-  const { toggle } = useSidebar();
+  const { toggle, toggleCollapse } = useSidebar();
+  const { pathname } = useLocation();
+  const isAdmin = sidebarType === "admin";
 
   const [nomeBiblioteca, setNomeBiblioteca] = useState(
     localStorage.getItem("nomeBiblioteca") || "Sala de Leitura"
@@ -40,15 +42,18 @@ function Header() {
   const handleLogout = () => logout();
 
   return (
-    <header className="header">
+    <header className={`header${isAdmin ? " admin-header" : ""}`}>
       <div className="header-left">
-        <button className="hamburger-btn" onClick={toggle} aria-label="Abrir menu">
+        <button type="button" className="hamburger-btn" onClick={() => {
+          if (isAdmin && window.innerWidth > 768) toggleCollapse();
+          else toggle();
+        }} aria-label="Alternar menu">
           <Menu size={22} />
         </button>
-        <Link to="/dashboard" className="header-logo">
+        <Link to={isAdmin ? "/admin" : "/dashboard"} className="header-logo">
           <div className="header-icon">
             <img
-              src="/logo-novedejulho-fundo.png"
+              src={isAdmin ? "/logo-novedejulho-semfundo.png" : "/logo-novedejulho-fundo.png"}
               alt="Logo Nove de Julho"
               className="header-brand-logo"
               width="48"
@@ -59,7 +64,7 @@ function Header() {
         </Link>
       </div>
 
-      <div className="header-center">
+      {!isAdmin && <div className="header-center">
         {user && (
           <p className="welcome-text">
             Bem-vindo,{" "}
@@ -68,9 +73,15 @@ function Header() {
             </span>
           </p>
         )}
-      </div>
+      </div>}
 
       <div className="header-right">
+        {isAdmin && <>
+          <div id="admin-header-notifications" className="header-notification-slot">
+            {pathname !== "/admin" && <Link to="/admin/notificacoes" className="header-bell" aria-label="Ver notificações"><Bell size={21} /></Link>}
+          </div>
+          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Administrador"}</span>
+        </>}
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair
         </button>

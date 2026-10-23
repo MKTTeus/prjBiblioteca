@@ -14,6 +14,8 @@ import { PiStudentFill } from "react-icons/pi";
 import { NavLink, useNavigate } from "react-router-dom";
 import { RiUserCommunityFill } from "react-icons/ri";
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
+import { CalendarDays } from "lucide-react";
 import { getDashboardStats } from "../../../services/api";
 import { getErrorMessage } from "../../../utils/apiError";
 
@@ -49,6 +51,8 @@ export default function Dashboard() {
   });
   const notificationsRef = useRef(null);
   const navigate = useNavigate();
+  const notificationSlot = document.getElementById("admin-header-notifications");
+  const today = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
 
   useEffect(() => {
     async function fetchStats() {
@@ -176,7 +180,13 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div
+        <div className="admin-dashboard-date">
+          <span className="admin-dashboard-date__icon"><CalendarDays size={27} /></span>
+          <span><small>Hoje é</small><strong>{today}</strong><small>Bom trabalho!</small></span>
+        </div>
+      </div>
+
+      {notificationSlot && createPortal(<div
           className={`admin-dashboard-notifications ${
             isNotificationsOpen ? "is-open" : ""
           }`}
@@ -264,8 +274,7 @@ export default function Dashboard() {
               </button>
             </div>
           ) : null}
-        </div>
-      </div>
+        </div>, notificationSlot)}
 
       <div className="cards">
         <NavLink to="/admin/livros" className="card card-link">
@@ -290,8 +299,7 @@ export default function Dashboard() {
           <small className="positive">Clique para ver os alunos</small>
         </NavLink>
 
-        <NavLink to="/admin/emprestimos" className="card-link">
-          <div className="card">
+        <NavLink to="/admin/emprestimos" className="card card-link">
             <div className="card-header">
               <span>Empréstimos Ativos</span>
               <div className="icon orange">
@@ -300,11 +308,9 @@ export default function Dashboard() {
             </div>
             <h2>{stats.emprestimosAtivos}</h2>
             <small>Em andamento</small>
-          </div>
         </NavLink>
 
-        <NavLink to="/admin/emprestimos" className="card-link">
-          <div className="card">
+        <NavLink to="/admin/emprestimos" className="card card-link">
             <div className="card-header">
               <span>Devoluções Pendentes</span>
               <div className="icon red">
@@ -313,7 +319,6 @@ export default function Dashboard() {
             </div>
             <h2>{stats.atrasados}</h2>
             <small className="danger">Acompanhe os atrasos</small>
-          </div>
         </NavLink>
       </div>
 
@@ -321,59 +326,29 @@ export default function Dashboard() {
         <p>Ações Rápidas</p>
 
         <div className="actions-container">
-          <NavLink
-            to="/admin/emprestimos"
-            className={({ isActive }) => (isActive ? "active" : undefined)}
-          >
-            <button className="action-btn red">
+          <NavLink to="/admin/emprestimos" className="action-btn action-btn--primary">
               <FaPlus />
-              Novo <br />
-              Empréstimo
-            </button>
+              <span>Novo Empréstimo</span>
           </NavLink>
 
-          <NavLink
-            to="/admin/livros"
-            className={({ isActive }) => (isActive ? "active" : undefined)}
-          >
-            <button className="action-btn blue">
+          <NavLink to="/admin/livros" className="action-btn action-btn--book">
               <FaBook />
-              Cadastrar <br />
-              Livro
-            </button>
+              <span>Cadastrar Livro</span>
           </NavLink>
 
-          <NavLink
-            to="/admin/alunos"
-            className={({ isActive }) => (isActive ? "active" : undefined)}
-          >
-            <button className="action-btn green">
+          <NavLink to="/admin/alunos" className="action-btn action-btn--student">
               <PiStudentFill />
-              Cadastrar <br />
-              Aluno
-            </button>
+              <span>Cadastrar Aluno</span>
           </NavLink>
 
-          <NavLink
-            to="/admin/comunidade"
-            className={({ isActive }) => (isActive ? "active" : undefined)}
-          >
-            <button className="action-btn orange">
+          <NavLink to="/admin/comunidade" className="action-btn action-btn--community">
               <RiUserCommunityFill />
-              Cadastrar <br />
-              Comunidade
-            </button>
+              <span>Cadastrar Comunidade</span>
           </NavLink>
 
-          <NavLink
-            to="/admin/admins"
-            className={({ isActive }) => (isActive ? "active" : undefined)}
-          >
-            <button className="action-btn yellow">
+          <NavLink to="/admin/admins" className="action-btn action-btn--admin">
               <FaUserShield />
-              Cadastrar <br />
-              Admin
-            </button>
+              <span>Cadastrar Admin</span>
           </NavLink>
         </div>
       </div>

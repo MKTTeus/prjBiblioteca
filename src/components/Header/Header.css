@@ -138,3 +138,31 @@
     align-self: center;
   }
 }
+
+.admin-header { padding: 0 28px; color: #091b4b; }
+.admin-header .hamburger-btn { display: flex; margin-right: 6px; color: #0a235a; }
+.admin-header .header-icon, .admin-header .header-brand-logo { width: 58px; height: 58px; flex-basis: 58px; }
+.admin-header .header-title { font-size: 19px; font-weight: 700; color: #091b4b; max-width: 340px; }
+.admin-header .header-right { gap: 18px; }
+.admin-header .header-notification-slot { min-width: 40px; display: flex; align-items: center; justify-content: center; }
+.admin-header .header-bell { width: 42px; height: 42px; display: grid; place-items: center; color: #0c255c; border-radius: 10px; }
+.admin-header .header-bell:hover { background: var(--surface-hover); }
+.admin-header .admin-header-greeting { border-left: 1px solid var(--surface-border); padding: 0 18px; font-size: 14px; color: #17396f; white-space: nowrap; }
+.admin-header .logout-btn { background: #ef2342; border-radius: 7px; padding: 9px 14px; font-weight: 600; }
+html.dark .admin-header .header-title, html.dark .admin-header .hamburger-btn, html.dark .admin-header .header-bell, html.dark .admin-header .admin-header-greeting { color: var(--text-default); }
+@media (max-width: 768px) {
+  .admin-header { padding: 0 10px; }
+  .admin-header .header-left { gap: 1px; }
+  .admin-header .hamburger-btn { margin: 0; padding: 5px; }
+  .admin-header .header-icon, .admin-header .header-brand-logo { width: 35px; height: 35px; flex-basis: 35px; margin-right: 2px; }
+  .admin-header .header-title { font-size: 13px; max-width: 138px; }
+  .admin-header .header-right { gap: 3px; }
+  .admin-header .admin-header-greeting { font-size: 10px; padding: 0 3px; border: 0; max-width: 78px; overflow: hidden; text-overflow: ellipsis; }
+  .admin-header .logout-btn { display: none; }
+  .admin-header .header-notification-slot { min-width: 32px; }
+  .admin-header .header-bell { width: 32px; height: 34px; }
+}
+@media (max-width: 380px) {
+  .admin-header .header-title { max-width: 102px; font-size: 11px; }
+  .admin-header .admin-header-greeting { max-width: 66px; }
+}

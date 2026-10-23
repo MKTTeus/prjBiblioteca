@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   FiHome,
@@ -11,6 +11,8 @@ import {
   FiBell,
   FiPieChart,
   FiPlusCircle,
+  FiX,
+  FiLogOut,
 } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
@@ -34,20 +36,56 @@ const professorMenuItems = [
 ];
 
 function Sidebar({ type = "admin", activePage, setActivePage }) {
-  const { user } = useAuth();
-  const { isOpen, close } = useSidebar();
+  const { user, logout } = useAuth();
+  const { isOpen, isCollapsed, close } = useSidebar();
   const { pathname } = useLocation();
-  const [openPessoas, setOpenPessoas] = useState(false);
-  const [openEmprestimos, setOpenEmprestimos] = useState(false);
-  const [openLivros, setOpenLivros] = useState(false);
+  const [openGroup, setOpenGroup] = useState(null);
+  const [libraryName, setLibraryName] = useState(() => localStorage.getItem("nomeBiblioteca") || "Sala de Leitura");
+  const closeButtonRef = useRef(null);
+  const adminSidebarRef = useRef(null);
+  const openPessoas = openGroup === "pessoas";
+  const openEmprestimos = openGroup === "emprestimos";
+  const openLivros = openGroup === "livros";
+  const toggleGroup = (group) => setOpenGroup((current) => current === group ? null : group);
 
   const isAdmin = type === "admin" || (!type && user?.tipo === "admin");
 
   useEffect(() => {
-    if (pathname.startsWith("/admin/emprestimos")) setOpenEmprestimos(true);
-    if (pathname.startsWith("/admin/livros")) setOpenLivros(true);
-    if (/^\/admin\/(alunos|comunidade|admins)/.test(pathname)) setOpenPessoas(true);
+    const updateName = () => setLibraryName(localStorage.getItem("nomeBiblioteca") || "Sala de Leitura");
+    window.addEventListener("nomeBibliotecaAtualizado", updateName);
+    window.addEventListener("storage", updateName);
+    return () => {
+      window.removeEventListener("nomeBibliotecaAtualizado", updateName);
+      window.removeEventListener("storage", updateName);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pathname.startsWith("/admin/emprestimos")) setOpenGroup("emprestimos");
+    else if (pathname.startsWith("/admin/livros")) setOpenGroup("livros");
+    else if (/^\/admin\/(alunos|comunidade|admins)/.test(pathname)) setOpenGroup("pessoas");
   }, [pathname]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    if (type === "admin" && window.innerWidth <= 768) closeButtonRef.current?.focus();
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        close();
+        document.querySelector(".admin-header .hamburger-btn")?.focus();
+      }
+      if (event.key !== "Tab" || type !== "admin" || window.innerWidth > 768) return;
+      const focusable = [...adminSidebarRef.current.querySelectorAll('a[href], button:not([disabled])')]
+        .filter((element) => element.getClientRects().length > 0);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, close]);
 
   if (type === "user" || type === "professor") {
     const items = type === "professor" ? professorMenuItems : userMenuItems;
@@ -81,7 +119,14 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
   return (
     <>
       <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
-      <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+      <aside ref={adminSidebarRef} className={`sidebar ${isOpen ? "open" : ""}${isCollapsed ? " collapsed" : ""}`} aria-label="Navegação administrativa">
+        <div className="admin-sidebar-mobile-top">
+          <span className="admin-sidebar-mobile-brand"><img src="/logo-novedejulho-semfundo.png" alt="" />{libraryName}</span>
+          <button ref={closeButtonRef} type="button" onClick={() => {
+            close();
+            document.querySelector(".admin-header .hamburger-btn")?.focus();
+          }} aria-label="Fechar menu">Fechar <FiX /></button>
+        </div>
         <div className="sidebar-section">
           <p className="sidebar-title">Principal</p>
 
@@ -104,7 +149,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                 className={`submenu-toggle ${openEmprestimos ? "open" : ""}`}
                 aria-expanded={openEmprestimos}
                 aria-controls="submenu-emprestimos"
-                onClick={() => setOpenEmprestimos((current) => !current)}
+                onClick={() => toggleGroup("emprestimos")}
               >
                 <div className="submenu-left">
                   <FiRepeat />
@@ -143,7 +188,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                   className={`submenu-toggle ${openLivros ? "open" : ""}`}
                   aria-expanded={openLivros}
                   aria-controls="submenu-livros"
-                  onClick={() => setOpenLivros((current) => !current)}
+                  onClick={() => toggleGroup("livros")}
                 >
                   <div className="submenu-left">
                     <FiBook />
@@ -179,7 +224,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
                   className={`submenu-toggle ${openPessoas ? "open" : ""}`}
                   aria-expanded={openPessoas}
                   aria-controls="submenu-pessoas"
-                  onClick={() => setOpenPessoas((current) => !current)}
+                  onClick={() => toggleGroup("pessoas")}
                 >
                   <div className="submenu-left">
                     <FiUsers />
@@ -251,6 +296,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             </ul>
           </div>
         )}
+        <button className="admin-sidebar-mobile-logout" type="button" onClick={logout}><FiLogOut /> Sair</button>
       </aside>
     </>
   );
