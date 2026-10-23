@@ -291,3 +291,37 @@ html.dark .login-page .error { color: #fda4af; background: rgba(220,38,38,.16); 
   .login-page .forgot-password-link { margin-bottom: 10px; }
   .login-page .login-btn.loading-button { min-height: 44px; }
 }
+
+
+/* Ação secundária na recuperação de senha: contraste e estados interativos. */
+.login-page .signup-link { margin: 14px 0 0; }
+.login-page .return-login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #c7d8f1;
+  border-radius: 8px;
+  background: #eef5ff;
+  color: #0755bb;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.login-page .return-login-btn svg { width: 16px; height: 16px; flex: 0 0 auto; }
+.login-page .return-login-btn:hover { background: #e0eeff; border-color: #82b3f7; }
+.login-page .return-login-btn:focus-visible {
+  outline: 3px solid rgba(9,110,255,.30);
+  outline-offset: 2px;
+}
+html.dark .login-page .return-login-btn {
+  background: #183651;
+  border-color: #365b82;
+  color: #a6d0ff;
+}
+html.dark .login-page .return-login-btn:hover { background: #214663; border-color: #6293c2; }
