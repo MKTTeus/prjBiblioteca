@@ -7,6 +7,7 @@
   --login-card-bg: rgba(255,255,255,.94);
   --login-input-bg: rgba(255,255,255,.82);
   --login-accent: #096eff;
+  --login-accent-soft: rgba(9, 110, 255, .12);
   --login-active-bg: #e9f2ff;
   position: relative;
   isolation: isolate;
@@ -21,6 +22,19 @@
   background: radial-gradient(ellipse at 42% 42%, #ffffff 0%, #f6f9fd 49%, #edf3f9 100%);
   color: var(--login-ink);
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
+}
+/* O destaque dos campos acompanha o perfil selecionado. */
+.login-page.login-page--admin {
+  --login-accent: #f01940;
+  --login-accent-soft: rgba(240, 25, 64, .12);
+}
+.login-page.login-page--aluno {
+  --login-accent: #096eff;
+  --login-accent-soft: rgba(9, 110, 255, .12);
+}
+.login-page.login-page--comunidade {
+  --login-accent: #00bb69;
+  --login-accent-soft: rgba(0, 187, 105, .12);
 }
 .login-page::before, .login-page::after {
   content: "";
@@ -172,10 +186,10 @@
 .login-page .login-input-shell:focus-within {
   border-color: var(--login-accent);
   background: var(--login-input-bg);
-  box-shadow: 0 0 0 3px rgba(9, 110, 255, .12);
+  box-shadow: 0 0 0 3px var(--login-accent-soft);
 }
 .login-page .login-input-shell:focus-within .login-input-icon { color: var(--login-accent); }
-.login-page .login-input-icon { flex: 0 0 auto; width: 17px; height: 17px; color: var(--login-ink); }
+.login-page .login-input-icon { flex: 0 0 auto; width: 17px; height: 17px; color: var(--login-accent); transition: color .18s ease; }
 .login-page .input-group input {
   width: 100%;
   min-width: 0;
@@ -188,6 +202,7 @@
   color: var(--login-ink);
   font: inherit;
   font-size: 12px;
+  caret-color: var(--login-accent);
 }
 /* Apenas o contêiner tem destaque de foco; remove a sombra global do input. */
 .login-page .input-group input:focus,
