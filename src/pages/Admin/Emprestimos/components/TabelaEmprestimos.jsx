@@ -1,3 +1,4 @@
+import { FiBookOpen } from "react-icons/fi";
 import EmprestimoRow from "./EmprestimoRow";
 import Pagination from "../../../../components/Pagination/Pagination";
 import usePagination from "../../../../hooks/usePagination";
@@ -34,7 +35,11 @@ export default function TabelaEmprestimos({
           {emprestimos.length === 0 ? (
             <tr>
               <td colSpan="7" className="emp-empty-table">
-                Nenhum empréstimo encontrado para os filtros informados.
+                <div className="emp-empty-table-content">
+                  <span className="emp-empty-table-icon" aria-hidden="true"><FiBookOpen /></span>
+                  <strong>Nenhum empréstimo encontrado</strong>
+                  <span>Não há registros para os filtros informados.</span>
+                </div>
               </td>
             </tr>
           ) : (

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Emprestimos.css";
 
+import { FiPlus } from "react-icons/fi";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
 import { useToast } from "../../../contexts/ToastContext";
@@ -13,6 +14,7 @@ import {
   getComunidade,
   getEmprestimos,
   getExemplaresDisponiveis,
+  getConfiguracoes,
 } from "../../../services/api";
 import FiltrosEmprestimos from "./components/FiltrosEmprestimos";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
@@ -48,6 +50,7 @@ export default function Emprestimos() {
     idExemplar: null,
   });
   const [salvando, setSalvando] = useState(false);
+  const [diasEmprestimo, setDiasEmprestimo] = useState(null);
   const { addToast } = useToast();
 
   const [emprestimoRenovar, setEmprestimoRenovar] = useState(null);
@@ -61,6 +64,10 @@ export default function Emprestimos() {
 
   useEffect(() => {
     carregarDados();
+    getConfiguracoes().then((config) => {
+      const dias = Number(config?.dias_emprestimo);
+      if (Number.isFinite(dias) && dias > 0) setDiasEmprestimo(dias);
+    }).catch(() => {});
   }, []);
 
   async function carregarDados() {
@@ -199,7 +206,7 @@ export default function Emprestimos() {
   }
 
   return (
-    <div className="emp-page page-shell">
+    <div className="emp-page emp-page--circulacao page-shell">
       <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
 
       {carregando && <p role="status">Carregando empréstimos e usuários…</p>}
@@ -210,7 +217,7 @@ export default function Emprestimos() {
 
       {dadosCarregados && <>
 
-      <section className="stats-cards-grid" aria-label="Resumo de empréstimos">
+      <section className="stats-cards-grid emp-metricas" aria-label="Resumo de empréstimos">
         {cardsResumo.map((card) => (
           <StatsCard
             key={card.chave}
@@ -222,6 +229,8 @@ export default function Emprestimos() {
           />
         ))}
       </section>
+
+      <button type="button" className="emp-mobile-new" onClick={() => setModalAberto(true)}><FiPlus /> Novo Empréstimo</button>
 
       <FiltrosEmprestimos
         busca={busca}
@@ -256,6 +265,7 @@ export default function Emprestimos() {
         totalExemplaresDisponiveis={exemplares.length}
         onSalvar={registrarEmprestimo}
         salvando={salvando}
+        diasEmprestimo={diasEmprestimo}
       />
 
       <RenovarEmprestimoModal

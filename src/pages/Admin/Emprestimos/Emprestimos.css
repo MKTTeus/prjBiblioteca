@@ -927,3 +927,155 @@
   }
   .emp-modal-novo .emp-modal-actions button { min-width: 0; min-height: 44px; font-size: .9rem; }
 }
+
+
+/* Redesign isolado: somente a página de circulação administrativa. */
+.admin-shell .emp-page.page-shell { max-width: none; padding: 16px 11px 36px; background: transparent; min-width: 0; }
+.admin-shell .emp-page > .emp-header { min-height:151px; margin:0 0 29px; padding:27px 29px; border-radius:16px; background:linear-gradient(125deg,#1463dc,#0641ae 72%,#073c9c); box-shadow:0 14px 30px rgba(9,50,116,.11); position:relative; overflow:hidden; }
+.admin-shell .emp-page > .emp-header::after { content:""; position:absolute; right:23%; bottom:-42px; width:150px; height:140px; opacity:.14; background:linear-gradient(90deg,transparent 10%,#b0d4ff 10% 24%,transparent 24% 33%,#b0d4ff 33% 58%,transparent 58% 67%,#b0d4ff 67% 88%,transparent 88%); clip-path:polygon(0 36%,30% 36%,30% 15%,59% 15%,59% 45%,100% 45%,100% 100%,0 100%); pointer-events:none; }
+.admin-shell .emp-page > .emp-header .emp-header-copy,.admin-shell .emp-page > .emp-header .emp-header-actions {position:relative;z-index:1}
+.admin-shell .emp-page > .emp-header h1 { font-size:clamp(22px,1.9vw,29px);font-weight:700;color:#fff; }
+.admin-shell .emp-page > .emp-header p {font-size:14px;margin-top:10px;line-height:1.5;color:#fff}
+.admin-shell .emp-page > .emp-header .emp-btn-primary {background:#fff;color:#0a4ac0;font-weight:700;min-height:44px;border-radius:10px}
+.admin-shell .emp-page .emp-metricas {grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px;margin-bottom:26px}
+.admin-shell .emp-page .emp-metricas .stats-card {min-width:0;min-height:153px;padding:20px 22px;display:flex;flex-direction:column;justify-content:center;gap:11px;border-radius:15px}
+.admin-shell .emp-page .emp-metricas .stats-card-header {font-size:13px;font-weight:600;margin:0}
+.admin-shell .emp-page .emp-metricas .stats-card h2 {font-size:31px;font-weight:750;line-height:1}
+.admin-shell .emp-page .emp-metricas .stats-card small {font-size:12px;margin:0}
+.admin-shell .emp-page .emp-metricas .stats-card-icon {width:43px;height:43px;border-radius:11px;flex-basis:43px;font-size:21px;color:#fff}
+.admin-shell .emp-page .emp-metricas .stats-card-icon.blue {background:#0863f4}
+.admin-shell .emp-page .emp-metricas .stats-card-icon.red {background:#f12244}
+.admin-shell .emp-page .emp-metricas .stats-card-icon.green {background:#08ac62}
+.admin-shell .emp-page .emp-metricas .stats-card-icon.orange {background:#ff7517}
+.admin-shell .emp-page .emp-filtros {box-shadow:var(--shadow-soft);border-radius:15px;padding:18px 20px;margin-bottom:24px;gap:16px}
+.admin-shell .emp-page .emp-table-box {border-radius:15px;box-shadow:var(--shadow-soft)}
+.admin-shell .emp-page .emp-table-header {padding:22px 22px 14px}
+.admin-shell .emp-page .emp-table-header h2 {font-size:18px}
+.admin-shell .emp-page .emp-mobile-new {display:none}
+.admin-shell .emp-page .emp-actions {gap:8px}
+.admin-shell .emp-page .emp-actions .emp-btn-light {min-height:34px}
+.emp-modal-novo {width:min(880px,100%);height:min(790px,calc(100dvh - 48px));max-height:calc(100dvh - 48px);min-height:0}
+.emp-modal-novo .emp-modal-topbar {flex:none;padding:20px 28px 15px}
+.emp-modal-novo .emp-new-steps {flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px 28px;border-bottom:1px solid var(--surface-border)}
+.emp-modal-novo .emp-new-step {display:flex;gap:9px;align-items:center;min-width:0;color:var(--text-muted);font-size:13px}
+.emp-modal-novo .emp-new-step span {flex:none;width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:var(--surface-muted);border:1px solid var(--surface-border);font-weight:700}
+.emp-modal-novo .emp-new-step strong {overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.emp-modal-novo .emp-new-step.is-current,.emp-modal-novo .emp-new-step.is-complete {color:var(--primary)}
+.emp-modal-novo .emp-new-step.is-current span,.emp-modal-novo .emp-new-step.is-complete span {background:var(--primary);border-color:var(--primary);color:#fff}
+.emp-modal-novo .emp-modal-content.emp-new-content {min-height:0;flex:1;padding:20px 28px;overflow-y:auto;display:flex;flex-direction:column}
+.emp-modal-novo .emp-new-section {display:flex;flex-direction:column;flex:1;min-height:0}
+.emp-modal-novo .emp-new-section-title {display:flex;align-items:center;justify-content:space-between;gap:12px}
+.emp-modal-novo .emp-new-section-title h3 {margin:0;font-size:19px;color:var(--text-default)}
+.emp-modal-novo .emp-new-section-title > span,.emp-modal-novo .emp-new-help {font-size:13px;color:var(--text-muted)}
+.emp-modal-novo .emp-new-help {margin:8px 0 14px}
+.emp-modal-novo .emp-step-search {margin:13px 0;padding:12px 14px;border-radius:11px;flex:none}
+.emp-modal-novo .emp-new-series {display:flex;gap:12px;align-items:center;margin-bottom:12px;font-size:13px;color:var(--text-muted)}
+.emp-modal-novo .emp-new-series select {padding:9px 13px;min-width:180px;border:1px solid var(--surface-border);border-radius:9px;color:var(--text-default);background:var(--surface-bg)}
+.emp-modal-novo .emp-list-box.emp-new-results {height:auto;min-height:140px;flex:1;overflow-y:auto;border:1px solid var(--surface-border);border-radius:12px;overscroll-behavior:contain}
+.emp-modal-novo .emp-list-item.emp-new-result {display:flex;flex-direction:row;align-items:center;gap:14px;padding:13px 16px;min-height:70px}
+.emp-modal-novo .emp-new-avatar,.emp-modal-novo .emp-new-book {display:grid;place-items:center;flex:none;width:43px;height:43px;border-radius:11px;background:var(--primary-muted);color:var(--primary);font-weight:700}
+.emp-modal-novo .emp-new-book {font-size:21px}
+.emp-modal-novo .emp-new-result-text {flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.emp-modal-novo .emp-new-result-text strong {font-size:14px}
+.emp-modal-novo .emp-new-result-text small {color:var(--text-muted);font-size:12px;line-height:1.4}
+.emp-modal-novo .emp-new-result-text .emp-new-available {color:var(--success)}
+.emp-modal-novo .emp-new-result-check {color:var(--primary);opacity:0}
+.emp-modal-novo .emp-new-result.selected .emp-new-result-check {opacity:1}
+.emp-modal-novo .emp-user-chip {flex:none;margin:15px 0 4px}
+.emp-modal-novo .emp-chip-info small {font-size:12px;color:var(--text-muted)}
+.emp-modal-novo .emp-new-summary {display:grid;gap:14px;margin-top:14px}
+.emp-modal-novo .emp-new-summary > div {display:grid;gap:7px;background:var(--surface-muted);border:1px solid var(--surface-border);border-radius:12px;padding:17px}
+.emp-modal-novo .emp-new-summary span {display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:12px}
+.emp-modal-novo .emp-new-summary strong {color:var(--text-default);font-size:16px}
+.emp-modal-novo .emp-new-summary small {color:var(--text-muted);font-size:12px}
+.emp-modal-novo .emp-modal-actions.emp-new-actions {flex:none;display:flex;flex-direction:row;justify-content:space-between;padding:16px 28px}
+.emp-modal-novo .emp-new-actions button {display:inline-flex;align-items:center;justify-content:center;gap:9px}
+@media(max-width:1150px) {
+ .admin-shell .emp-page .emp-metricas {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:768px) {
+ .admin-shell .emp-page.page-shell {padding:12px 10px 28px}
+ .admin-shell .emp-page > .emp-header {min-height:0;padding:20px;margin-bottom:14px;border-radius:12px}
+ .admin-shell .emp-page > .emp-header h1 {font-size:21px;line-height:1.2}
+ .admin-shell .emp-page > .emp-header p {font-size:12px;margin-top:8px}
+ .admin-shell .emp-page > .emp-header .emp-header-actions {display:none}
+ .admin-shell .emp-page .emp-metricas {gap:8px;margin-bottom:16px}
+ .admin-shell .emp-page .emp-metricas .stats-card {min-height:118px;padding:11px;gap:8px;border-radius:10px}
+ .admin-shell .emp-page .emp-metricas .stats-card-header {align-items:flex-start;font-size:11px;line-height:1.25}
+ .admin-shell .emp-page .emp-metricas .stats-card-icon {width:29px;height:29px;flex-basis:29px;font-size:15px;border-radius:7px}
+ .admin-shell .emp-page .emp-metricas .stats-card h2 {font-size:24px}
+ .admin-shell .emp-page .emp-metricas .stats-card small {font-size:10px}
+ .admin-shell .emp-page .emp-mobile-new {display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:46px;margin:0 0 18px;background:#0863f4;border:0;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+ .admin-shell .emp-page .emp-filtros {padding:13px;gap:12px}
+ .admin-shell .emp-page .emp-filter-tabs {display:flex;flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px}
+ .admin-shell .emp-page .emp-filter-tab {flex:none;white-space:nowrap;padding:0 12px;font-size:12px}
+ .admin-shell .emp-page .emp-table-box {overflow-x:auto}
+ .admin-shell .emp-page .emp-table-box table {min-width:760px}
+ .emp-modal-overlay:has(.emp-modal-novo) {padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom));align-items:center;overflow:hidden}
+ .emp-modal-novo {height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));border-radius:14px}
+ .emp-modal-novo .emp-modal-topbar {padding:15px 16px 12px}
+ .emp-modal-novo .emp-modal-title-group h2 {font-size:20px}
+ .emp-modal-novo .emp-modal-title-group p {font-size:12px}
+ .emp-modal-novo .emp-new-steps {padding:12px 14px;gap:5px}
+ .emp-modal-novo .emp-new-step {justify-content:center}
+ .emp-modal-novo .emp-new-step strong {display:none}
+ .emp-modal-novo .emp-modal-content.emp-new-content {padding:15px 14px}
+ .emp-modal-novo .emp-new-section-title h3 {font-size:16px}
+ .emp-modal-novo .emp-new-section-title > span {font-size:11px}
+ .emp-modal-novo .emp-new-series select {min-width:0;flex:1}
+ .emp-modal-novo .emp-list-item.emp-new-result {padding:11px;gap:10px}
+ .emp-modal-novo .emp-new-avatar,.emp-modal-novo .emp-new-book {width:36px;height:36px}
+ .emp-modal-novo .emp-user-chip {flex-wrap:nowrap;padding:10px}
+ .emp-modal-novo .emp-chip-trocar {width:auto}
+ .emp-modal-novo .emp-modal-actions.emp-new-actions {padding:12px 14px max(12px,env(safe-area-inset-bottom));gap:9px}
+ .emp-modal-novo .emp-new-actions button {flex:1;min-width:0;font-size:13px;min-height:44px}
+}
+
+/* Circulação administrativa: seleção de filtro e estado vazio.
+   Escopo exclusivo para não modificar solicitações, alunos ou comunidade. */
+.admin-shell .emp-page--circulacao .emp-filter-tab.is-active {
+  background: #0863f4;
+  border-color: #0863f4;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 10px rgba(8, 99, 244, 0.18);
+}
+.admin-shell .emp-page--circulacao .emp-filter-tab.is-active:hover {
+  background: #0755d0;
+  border-color: #0755d0;
+  color: #fff;
+}
+.admin-shell .emp-page--circulacao .emp-filter-tab:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table {
+  padding: 40px 18px;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-muted);
+  color: var(--primary);
+  font-size: 27px;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-content strong {
+  color: var(--text-default);
+  font-size: 15px;
+  font-weight: 700;
+}
+.admin-shell .emp-page--circulacao .emp-empty-table-content > span:last-child {
+  font-size: 13px;
+  color: var(--text-muted);
+}

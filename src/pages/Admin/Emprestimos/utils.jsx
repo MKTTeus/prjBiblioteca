@@ -1,5 +1,6 @@
 import { resolverStatus, dataBiblioteca } from "../../../utils/loanStatus";
 import { filtrarPorBusca } from "../../../utils/busca";
+import { FaExchangeAlt, FaExclamationTriangle, FaCheckCircle, FaSyncAlt } from "react-icons/fa";
 import {
   FiAlertCircle,
   FiAlertTriangle,
@@ -22,12 +23,16 @@ export function formatarUsuarios(alunos = [], comunidade = []) {
       nome: usuario.usuNome,
       tipo: "Aluno",
       documento: usuario.usuRA,
+      serie: usuario.usuSerie || "",
+      turma: usuario.usuTurma || "",
     })),
     ...comunidade.map((usuario) => ({
       id: usuario.idUsuario,
       nome: usuario.usuNome,
       tipo: "Comunidade",
       documento: usuario.usuCPF,
+      serie: "",
+      turma: "",
     })),
   ];
 }
@@ -83,28 +88,28 @@ export function criarCardsResumo(metricas) {
       chave: "ativos",
       titulo: "Empréstimos Ativos",
       valor: metricas.ativos,
-      icone: <FiBookOpen />,
+      icone: <FaExchangeAlt />,
       cor: "blue",
     },
     {
       chave: "atrasados",
       titulo: "Em Atraso",
       valor: metricas.atrasados,
-      icone: <FiAlertTriangle />,
+      icone: <FaExclamationTriangle />,
       cor: "red",
     },
     {
       chave: "devolvidos-hoje",
       titulo: "Devolvidos Hoje",
       valor: metricas.devolvidosHoje,
-      icone: <FiCheckCircle />,
+      icone: <FaCheckCircle />,
       cor: "green",
     },
     {
       chave: "renovacoes",
       titulo: "Renovações Totais",
       valor: metricas.renovacoes,
-      icone: <FiCalendar />,
+      icone: <FaSyncAlt />,
       cor: "orange",
     },
   ];
@@ -137,11 +142,11 @@ export function filtrarEmprestimos(emprestimos, busca, filtroStatus, mapUsuarios
 }
 
 export function filtrarUsuarios(usuarios, buscaUsuario) {
-  return filtrarPorBusca(usuarios, buscaUsuario, (usuario) => [usuario.nome, usuario.documento, usuario.tipo]);
+  return filtrarPorBusca(usuarios, buscaUsuario, (usuario) => [usuario.nome, usuario.documento, usuario.tipo, usuario.serie, usuario.turma]);
 }
 
 export function filtrarExemplares(exemplares, buscaExemplar) {
-  return filtrarPorBusca(exemplares, buscaExemplar, (exemplar) => [exemplar.nome, exemplar.tombo, exemplar.isbn]);
+  return filtrarPorBusca(exemplares, buscaExemplar, (exemplar) => [exemplar.nome, exemplar.tombo, exemplar.isbn, exemplar.autor, exemplar.autores, exemplar.nomeAutor]);
 }
 
 export function formatarData(data) {
