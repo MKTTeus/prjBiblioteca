@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   HiOutlineBookOpen,
   HiOutlineCalendar,
@@ -95,6 +95,45 @@ export default function BookCard({
   const locationText = getLocationText(book);
   const tags = [genreName || book?.genero].filter(Boolean);
   const [mostrarDescricao, setMostrarDescricao] = useState(false);
+  const adminMenuRef = useRef(null);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin || !adminMenuOpen) return;
+    const positionMenu = () => {
+      const menu = adminMenuRef.current;
+      if (!menu?.open) return;
+      const trigger = menu.querySelector("summary").getBoundingClientRect();
+      const items = menu.querySelector(".shared-book-card__admin-menu-items");
+      const below = window.innerHeight - trigger.bottom - 12;
+      const above = trigger.top - 12;
+      const openAbove = below < items.scrollHeight && above > below;
+      menu.dataset.placement = openAbove ? "above" : "below";
+      items.style.maxHeight = `${Math.min(280, Math.max(44, (openAbove ? above : below) - 6))}px`;
+    };
+    positionMenu();
+    window.addEventListener("resize", positionMenu);
+    document.addEventListener("scroll", positionMenu, true);
+    const closeOutside = (event) => {
+      const menu = adminMenuRef.current;
+      if (menu?.open && !menu.contains(event.target)) menu.open = false;
+    };
+    const closeOnEscape = (event) => {
+      const menu = adminMenuRef.current;
+      if (event.key === "Escape" && menu?.open) {
+        menu.open = false;
+        menu.querySelector("summary")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("resize", positionMenu);
+      document.removeEventListener("scroll", positionMenu, true);
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isAdmin, adminMenuOpen]);
 
   const REQUEST_STATUS_LABEL = {
     pendente: "Solicitado — Aguardando aprovação",
@@ -247,9 +286,11 @@ export default function BookCard({
             )}
 
             {isAdmin && (
-              <details className="shared-book-card__admin-menu">
+              <details ref={adminMenuRef} onToggle={(event) => setAdminMenuOpen(event.currentTarget.open)} className="shared-book-card__admin-menu">
                 <summary aria-label={`Opções de ${titulo}`} title="Opções do livro"><HiOutlineDotsVertical /></summary>
-                <div className="shared-book-card__admin-menu-items">
+                <div className="shared-book-card__admin-menu-items" onClick={(event) => {
+                  if (event.target.closest("button")) adminMenuRef.current.open = false;
+                }}>
                 <button
                   type="button"
                   className="shared-book-card__button shared-book-card__button--edit"

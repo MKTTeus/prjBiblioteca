@@ -1,10 +1,32 @@
-import React from "react";
-import { FiFilter, FiSearch, FiX, FiChevronDown } from "react-icons/fi";
+import React, { useEffect, useRef, useState } from "react";
+import { FiFilter, FiSearch, FiX, FiChevronDown, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import "./FiltroBusca.css";
 import SelectGenero from "../SelectGenero/SelectGenero";
 import SelectStatus from "../SelectStatus/SelectStatus";
 
 function FiltroBusca({ filters, onFilter, quickFilter = "todos", onQuickFilter = () => {} }) {
+  const quickFiltersRef = useRef(null);
+  const [scrollEdges, setScrollEdges] = useState({ left: false, right: false });
+
+  useEffect(() => {
+    const node = quickFiltersRef.current;
+    const update = () => setScrollEdges({
+      left: node.scrollLeft > 1,
+      right: node.scrollLeft + node.clientWidth < node.scrollWidth - 1,
+    });
+    update();
+    node.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver !== "undefined" ? new ResizeObserver(update) : null;
+    observer?.observe(node);
+    window.addEventListener("resize", update);
+    return () => { node.removeEventListener("scroll", update); observer?.disconnect(); window.removeEventListener("resize", update); };
+  }, []);
+
+  function scrollFilters(direction) {
+    const node = quickFiltersRef.current;
+    node.scrollBy({ left: direction * node.clientWidth * 0.75, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+  }
+
   function updateField(field, value) {
     onFilter({
       ...filters,
@@ -33,7 +55,8 @@ function FiltroBusca({ filters, onFilter, quickFilter = "todos", onQuickFilter =
       </div>
 
       <div className="acervo-quick-filters-wrap">
-      <div className="acervo-quick-filters" role="group" aria-label="Filtros rápidos do acervo, deslize para ver mais">
+      {scrollEdges.left && <button type="button" className="acervo-quick-arrow" aria-label="Ver filtros anteriores" onClick={() => scrollFilters(-1)}><FiChevronLeft /></button>}
+      <div ref={quickFiltersRef} className="acervo-quick-filters" role="group" aria-label="Filtros rápidos do acervo, deslize para ver mais">
         {[
           ["todos", "Todos"],
           ["disponiveis", "Disponíveis"],
@@ -43,7 +66,7 @@ function FiltroBusca({ filters, onFilter, quickFilter = "todos", onQuickFilter =
           <button key={value} type="button" className={quickFilter === value ? "is-active" : ""} aria-pressed={quickFilter === value} onClick={() => onQuickFilter(value)}>{label}</button>
         ))}
       </div>
-      <span className="acervo-quick-hint" aria-hidden="true">Deslize →</span>
+      {scrollEdges.right && <button type="button" className="acervo-quick-arrow" aria-label="Ver mais filtros" onClick={() => scrollFilters(1)}><FiChevronRight /></button>}
       </div>
 
       <details className="acervo-advanced-filters">
