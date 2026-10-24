@@ -442,7 +442,7 @@ const handleSalvar = async () => {
         </div>
       </div>
 
-      <div className="topo-lista">
+      <div className="user-management-list-heading">
         <h2>Lista de Membros</h2>
         <span className="user-management-count">{membrosFiltrados.length} {membrosFiltrados.length === 1 ? "membro" : "membros"}</span>
       </div>
