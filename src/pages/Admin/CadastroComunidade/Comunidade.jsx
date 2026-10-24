@@ -18,6 +18,7 @@ import usePagination from "../../../hooks/usePagination";
 import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import MobileUserCard from "../../../components/MobileUserCard/MobileUserCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
 import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
@@ -477,6 +478,27 @@ const handleSalvar = async () => {
       )}
 
       <div className="table-container">
+        <div className="mobile-user-card-list">
+          {membrosFiltrados.length > 0 && <label className="mobile-user-card-list__select-all">
+            <input type="checkbox" checked={selecionados.length === membrosFiltrados.length} onChange={toggleSelecionarTodos} />
+            Selecionar todos ({membrosFiltrados.length})
+          </label>}
+          {paginaItens.map((membro) => (
+            <MobileUserCard
+              key={membro.idUsuario}
+              name={membro.nome}
+              identifier={`ID ${membro.idUsuario}`}
+              status={membro.status}
+              fields={[{ label: "CPF/CIN", value: formatarCPF(membro.cpf) }, { label: "Telefone", value: formatarTelefone(membro.telefone) }, { label: "E-mail", value: membro.email, wide: true }]}
+              books={membro.livros}
+              selected={selecionados.includes(membro.idUsuario)}
+              onSelect={() => toggleSelecionado(membro.idUsuario)}
+              onEdit={() => abrirEdicao(membro.idUsuario)}
+              onToggleStatus={() => handleToggleStatus(membro.idUsuario)}
+              onDelete={() => handleExcluir(membro.idUsuario)}
+            />
+          ))}
+        </div>
         <table>
           <colgroup>
             <col style={{ width: "40px" }} />
