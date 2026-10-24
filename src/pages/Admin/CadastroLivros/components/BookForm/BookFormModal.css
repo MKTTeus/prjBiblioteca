@@ -209,6 +209,108 @@
   font-size: 1rem;
 }
 
+/* O cabeçalho e as ações ficam à vista enquanto somente os campos rolam. */
+.book-editor-modal {
+  height: min(900px, 94dvh);
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  background: var(--surface-bg);
+}
+
+.book-editor-modal > .editor-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  max-height: none;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.book-editor-modal .editor-topbar {
+  flex: none;
+  margin: 0;
+  padding: 20px 24px 12px;
+  border-bottom: 0;
+}
+
+.book-editor-modal .editor-topbar h2 {
+  font-size: clamp(1.5rem, 2vw, 2rem);
+}
+
+.book-editor-modal .editor-topbar p {
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.book-editor-modal .editor-tabs-bar {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--surface-border);
+  overflow-x: auto;
+}
+
+.book-editor-modal .editor-tab {
+  flex: 1 0 auto;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  min-height: 48px;
+  color: var(--text-label);
+  font-weight: 700;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.book-editor-modal .editor-tab.is-active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+.book-editor-modal .editor-content {
+  flex: 1;
+  min-height: 0;
+  padding: 22px 24px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--input-border) transparent;
+}
+
+.book-editor-modal .editor-page-section-title {
+  position: static;
+}
+
+.book-editor-modal .editor-bottom-save-bar {
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+}
+
+.book-editor-modal .editor-cancel-button {
+  border: 1px solid var(--input-border);
+  background: var(--surface-bg);
+  color: var(--text-default);
+}
+
+.book-editor-modal .bottom-save-button {
+  min-height: 44px;
+  padding: 0 20px;
+  background: var(--primary);
+  box-shadow: none;
+}
+
 .editor-loading-state {
   min-height: 320px;
   display: flex;
@@ -724,6 +826,33 @@
   .editor-tabs-bar {
     flex-direction: column;
   }
+
+  .book-editor-modal {
+    height: calc(100dvh - 20px);
+    max-height: none;
+    padding: 0;
+    border-radius: 18px;
+  }
+
+  .book-editor-modal > .editor-shell {
+    border-radius: 18px;
+  }
+
+  .book-editor-modal .editor-topbar {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 16px 16px 10px;
+  }
+
+  .book-editor-modal .editor-topbar h2 { font-size: 1.4rem; }
+  .book-editor-modal .editor-topbar p { font-size: 0.82rem; }
+  .book-editor-modal .editor-top-actions { width: auto; }
+  .book-editor-modal .editor-close-button { flex: none; }
+  .book-editor-modal .editor-tabs-bar { flex-direction: row; padding: 0 16px; }
+  .book-editor-modal .editor-tab { width: auto; flex: 0 0 auto; padding: 0 12px; }
+  .book-editor-modal .editor-content { padding: 18px 16px 24px; }
+  .book-editor-modal .editor-bottom-save-bar { padding: 12px 16px; }
+  .book-editor-modal .editor-bottom-save-bar .top-action { flex: 1 1 0; min-width: 0; padding: 0 10px; }
 }
 
 /* ── ISBN field with scanner/search actions ── */

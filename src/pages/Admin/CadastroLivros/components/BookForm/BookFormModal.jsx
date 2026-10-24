@@ -293,17 +293,40 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   const basicSectionRef = useRef(null);
   const publicationSectionRef = useRef(null);
   const copiesSectionRef = useRef(null);
+  const editorContentRef = useRef(null);
+  const [activeSection, setActiveSection] = useState("basic");
   const sectionRefs = {
     basic: basicSectionRef,
     publication: publicationSectionRef,
     copies: copiesSectionRef,
   };
 
+  function scrollToSection(id) {
+    const content = editorContentRef.current;
+    const section = sectionRefs[id]?.current;
+    if (!content || !section) return;
+    setActiveSection(id);
+    content.scrollTo({
+      top: content.scrollTop + section.getBoundingClientRect().top - content.getBoundingClientRect().top - 16,
+      behavior: "smooth",
+    });
+  }
+
+  function updateActiveSection() {
+    const content = editorContentRef.current;
+    if (!content) return;
+    const current = [...SECTIONS].reverse().find(({ id }) => {
+      const section = sectionRefs[id]?.current;
+      return section && section.getBoundingClientRect().top <= content.getBoundingClientRect().top + 90;
+    });
+    setActiveSection(current?.id || "basic");
+  }
+
   const semExemplares = !loadingDetails && Number(addConfig.quantidade || 0) === 0 &&
     (bookToEdit ? loadedBookId === bookToEdit.idLivro && exemplares.every((ex) => String(ex.exeLivStatus || "").toLowerCase().includes("desativado")) : true);
 
   function irParaExemplares() {
-    copiesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToSection("copies");
     copiesSectionRef.current?.querySelector('input[type="number"]')?.focus({ preventScroll: true });
   }
 
@@ -333,7 +356,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     const tocaPublicacao = nomesCampos.some((campo) => PUBLICATION_FIELD_KEYS.has(campo));
     if (tocaPublicacao && publicationSectionRef.current) {
       setTimeout(() => {
-        publicationSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToSection("publication");
       }, 120);
     }
   }
@@ -888,12 +911,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
 
   return (
     <div className="modal-overlay">
-      <div className="editor-modal-container">
+      <div className="editor-modal-container book-editor-modal" role="dialog" aria-modal="true" aria-labelledby="book-editor-title">
         <div className="editor-shell">
           <div className="editor-topbar">
             <div className="editor-topbar-copy">
-              <h2>{bookToEdit ? "Editar Livro" : "Novo Livro"}</h2>
-              <p>Edite as informações do livro selecionado.</p>
+              <h2 id="book-editor-title">{bookToEdit ? "Editar Livro" : "Novo Livro"}</h2>
+              <p>{bookToEdit ? "Edite as informações do livro selecionado." : "Cadastre os dados do título e dos exemplares."}</p>
             </div>
             <div className="editor-top-actions">
               <button
@@ -912,22 +935,15 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
               <button
                 key={section.id}
                 type="button"
-                className="editor-tab"
-                onClick={() =>
-                  sectionRefs[section.id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                className={`editor-tab${activeSection === section.id ? " is-active" : ""}`}
+                aria-current={activeSection === section.id ? "location" : undefined}
+                onClick={() => scrollToSection(section.id)}
               >
                 {section.label}
               </button>
             ))}
           </div>
-          <p className="editor-tabs-hint">
-            <strong>Use os atalhos acima para pular direto até uma seção.</strong>
-          </p>
-
-          <div className="editor-divider" />
-
-          <div className="editor-content">
+          <div className="editor-content" ref={editorContentRef} onScroll={updateActiveSection}>
             {saveErrors.length > 0 && <div className="editor-copies-warning editor-save-errors" role="alert">
               <p><strong>Não foi possível salvar todas as alterações.</strong> {savedParts > 0 ? `${savedParts} parte(s) já foram salvas; ao tentar novamente, somente as pendências serão enviadas.` : "Revise os erros e tente novamente."}</p>
               <ul>{saveErrors.map((message, index) => <li key={`${index}-${message}`}>{message}</li>)}</ul>
@@ -991,20 +1007,23 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                   />
                 </section>
 
-                <div className="editor-bottom-save-bar">
-                  <LoadingButton
-                    type="button"
-                    className="top-action primary bottom-save-button"
-                    onClick={handleSave}
-                    isLoading={loading || loadingDetails}
-                    loadingText="Salvando..."
-                  >
-                    <HiOutlineSave />
-                    <span>Salvar Atualizações</span>
-                  </LoadingButton>
-                </div>
               </>
             )}
+          </div>
+          <div className="editor-bottom-save-bar">
+            <button type="button" className="top-action editor-cancel-button" onClick={handleRequestClose} disabled={loading}>
+              Cancelar
+            </button>
+            <LoadingButton
+              type="button"
+              className="top-action primary bottom-save-button"
+              onClick={handleSave}
+              isLoading={loading || loadingDetails}
+              loadingText="Salvando..."
+            >
+              <HiOutlineSave />
+              <span>{bookToEdit ? "Salvar alterações" : "Salvar livro"}</span>
+            </LoadingButton>
           </div>
         </div>
       </div>
