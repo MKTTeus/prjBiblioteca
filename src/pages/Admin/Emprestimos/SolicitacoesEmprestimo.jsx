@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiList, FiClock, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
+import { FiList, FiClock, FiCheckCircle, FiAlertTriangle, FiUser, FiBookOpen, FiCalendar, FiXCircle, FiPackage } from "react-icons/fi";
 import "./SolicitacoesEmprestimo.css";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -426,23 +426,29 @@ export default function SolicitacoesEmprestimo() {
                   </span>
                 </div>
                 <div className="solicitacao-mobile-main">
-                  <div>
-                    <span className="solicitacao-mobile-label">Usuário</span>
-                    <strong>{item.usuario || item.nome || item.usuNome || "Usuário não informado"}</strong>
-                    <small>{tipo}{item.professor && item.finalidade ? ` · ${item.finalidade === "TURMA" ? `Turma ${[item.serie, item.turma].filter(Boolean).join(" - ")}` : "Pessoal"}` : ""}</small>
+                  <div className="solicitacao-mobile-entity">
+                    <span className="solicitacao-mobile-icon" aria-hidden="true"><FiUser /></span>
+                    <div>
+                      <strong>{item.usuario || item.nome || item.usuNome || "Usuário não informado"}</strong>
+                      <small>{tipo}{item.professor && item.finalidade ? ` · ${item.finalidade === "TURMA" ? `Turma ${[item.serie, item.turma].filter(Boolean).join(" - ")}` : "Pessoal"}` : ""}</small>
+                    </div>
                   </div>
-                  <div>
-                    <span className="solicitacao-mobile-label">Livro</span>
-                    <strong>{item.titulo || item.empLiv_Titulo || "Livro não informado"}</strong>
-                    <small>Tombo: {item.codigo || item.empLiv_Tombo || item.exemplar?.exeLivTombo || "-"}</small>
+                  <div className="solicitacao-mobile-entity">
+                    <span className="solicitacao-mobile-icon" aria-hidden="true"><FiBookOpen /></span>
+                    <div>
+                      <strong>{item.titulo || item.empLiv_Titulo || "Livro não informado"}</strong>
+                      <small>Tombo: {item.codigo || item.empLiv_Tombo || item.exemplar?.exeLivTombo || "-"}</small>
+                    </div>
                   </div>
                 </div>
                 <div className="solicitacao-mobile-details">
                   <div>
+                    <FiCalendar aria-hidden="true" />
                     <span>Solicitada</span>
                     <strong>{formatDataLimite(item.data_solicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</strong>
                   </div>
                   <div>
+                    <FiClock aria-hidden="true" />
                     <span>{isConfirmada ? "Prazo para retirada" : "Confirmação"}</span>
                     <strong>
                       {isConfirmada && item.dataLimite ? <>{formatDataLimite(item.dataLimite)} <BadgePrazo dataLimite={item.dataLimite} /></>
@@ -456,11 +462,11 @@ export default function SolicitacoesEmprestimo() {
                 {(isPendente || isConfirmada) && (
                   <div className="solicitacao-mobile-actions">
                     {isPendente && <>
-                      <LoadingButton className="emp-btn-light solicitacao-action-primary" onClick={() => handleAprovarSolicitacao(item)} disabled={processando[id]}>Aprovar</LoadingButton>
-                      <LoadingButton className="emp-btn-light solicitacao-action-danger" onClick={() => handleNegarSolicitacao(item)} disabled={processando[id]}>Negar</LoadingButton>
+                      <LoadingButton className="emp-btn-light solicitacao-action-primary" onClick={() => handleAprovarSolicitacao(item)} disabled={processando[id]}><FiCheckCircle /> Aprovar</LoadingButton>
+                      <LoadingButton className="emp-btn-light solicitacao-action-danger" onClick={() => handleNegarSolicitacao(item)} disabled={processando[id]}><FiXCircle /> Negar</LoadingButton>
                     </>}
                     {isConfirmada && <>
-                      <LoadingButton className="emp-btn-retirar" onClick={() => handleRegistrarRetirada(item)} disabled={processando[id] || horasRestantes === null || horasRestantes <= 0}>Registrar retirada</LoadingButton>
+                      <LoadingButton className="emp-btn-retirar" onClick={() => handleRegistrarRetirada(item)} disabled={processando[id] || horasRestantes === null || horasRestantes <= 0}><FiPackage /> Registrar retirada</LoadingButton>
                       {horasRestantes !== null && horasRestantes <= 0 && (
                         <LoadingButton className="emp-btn-expirar" onClick={() => setSolicitacaoParaExpirar(item)} disabled={processando[id]}>Expirar solicitação</LoadingButton>
                       )}
