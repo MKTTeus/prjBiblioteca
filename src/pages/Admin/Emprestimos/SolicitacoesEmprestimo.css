@@ -384,3 +384,175 @@
     gap: 8px;
   }
 }
+
+.solicitacoes-page .emp-table-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.solicitacoes-count {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.solicitacoes-mobile-list {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .admin-shell .emp-page.solicitacoes-page .solicitacoes-lista table {
+    display: none;
+  }
+
+  .solicitacoes-page .solicitacoes-lista {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .solicitacoes-page .emp-table-header {
+    padding: 6px 2px 14px;
+    flex-wrap: wrap;
+  }
+
+  .solicitacoes-mobile-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .solicitacoes-mobile-card {
+    min-width: 0;
+    padding: 17px;
+    border: 1px solid var(--surface-border);
+    border-radius: 16px;
+    background: var(--surface-bg);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .solicitacao-mobile-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--table-row-border);
+  }
+
+  .solicitacao-mobile-heading h3 {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    color: var(--text-default);
+  }
+
+  .solicitacao-mobile-heading .emp-status {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .solicitacao-mobile-main {
+    display: grid;
+    gap: 13px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--table-row-border);
+  }
+
+  .solicitacao-mobile-main > div {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  .solicitacao-mobile-label,
+  .solicitacao-mobile-details span {
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .solicitacao-mobile-main strong {
+    color: var(--text-default);
+    font-size: 0.98rem;
+    overflow-wrap: anywhere;
+  }
+
+  .solicitacao-mobile-main small {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+
+  .solicitacao-mobile-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    padding: 14px 0 2px;
+  }
+
+  .solicitacao-mobile-details > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .solicitacao-mobile-details > div + div {
+    padding-left: 12px;
+    border-left: 1px solid var(--table-row-border);
+  }
+
+  .solicitacao-mobile-details strong {
+    color: var(--text-default);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .solicitacao-mobile-details .badge-prazo {
+    margin-top: 4px;
+  }
+
+  .solicitacao-mobile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-top: 16px;
+  }
+
+  .solicitacao-mobile-actions button {
+    flex: 1 1 120px;
+    min-height: 44px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  .solicitacao-mobile-actions .solicitacao-action-primary,
+  .solicitacao-mobile-actions .emp-btn-retirar {
+    color: #fff !important;
+    background: var(--primary) !important;
+    border: 1px solid var(--primary) !important;
+  }
+
+  .solicitacao-mobile-actions .solicitacao-action-danger {
+    color: var(--danger) !important;
+    background: var(--surface-bg) !important;
+    border: 1px solid var(--danger) !important;
+  }
+
+  .solicitacao-mobile-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .solicitacoes-mobile-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    background: var(--surface-bg);
+    border-radius: 14px;
+  }
+}
