@@ -51,6 +51,7 @@ export default function Emprestimos() {
   });
   const [salvando, setSalvando] = useState(false);
   const [diasEmprestimo, setDiasEmprestimo] = useState(null);
+  const [carregandoPrazoEmprestimo, setCarregandoPrazoEmprestimo] = useState(true);
   const { addToast } = useToast();
 
   const [emprestimoRenovar, setEmprestimoRenovar] = useState(null);
@@ -65,9 +66,13 @@ export default function Emprestimos() {
   useEffect(() => {
     carregarDados();
     getConfiguracoes().then((config) => {
-      const dias = Number(config?.dias_emprestimo);
+      const configuracaoPrazo = Array.isArray(config)
+        ? config.find((item) => item?.chave === "dias_emprestimo")?.valor
+        : config?.dias_emprestimo;
+      const valorDias = configuracaoPrazo ?? 14;
+      const dias = Number(valorDias);
       if (Number.isFinite(dias) && dias > 0) setDiasEmprestimo(dias);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setCarregandoPrazoEmprestimo(false));
   }, []);
 
   async function carregarDados() {
@@ -266,6 +271,7 @@ export default function Emprestimos() {
         onSalvar={registrarEmprestimo}
         salvando={salvando}
         diasEmprestimo={diasEmprestimo}
+        carregandoPrazoEmprestimo={carregandoPrazoEmprestimo}
       />
 
       <RenovarEmprestimoModal
