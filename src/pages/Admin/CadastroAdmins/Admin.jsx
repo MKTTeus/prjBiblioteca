@@ -10,6 +10,7 @@ import usePagination from "../../../hooks/usePagination";
 import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import MobileUserCard from "../../../components/MobileUserCard/MobileUserCard";
 import { getErrorMessage } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -403,6 +404,26 @@ export default function Admin() {
       )}
 
       <div className="table-container">
+        <div className="mobile-user-card-list">
+          {adminsFiltrados.length > 0 && <label className="mobile-user-card-list__select-all">
+            <input type="checkbox" checked={selecionados.length === adminsFiltrados.length} onChange={toggleSelecionarTodos} />
+            Selecionar todos ({adminsFiltrados.length})
+          </label>}
+          {paginaItens.map((admin) => (
+            <MobileUserCard
+              key={admin.idAdmin}
+              name={admin.nome}
+              identifier={`ID ${admin.idAdmin}`}
+              status={admin.status}
+              fields={[{ label: "Perfil", value: admin.perfil, wide: true }, { label: "E-mail", value: admin.email, wide: true }]}
+              selected={selecionados.includes(admin.idAdmin)}
+              onSelect={() => toggleSelecionado(admin.idAdmin)}
+              onEdit={() => abrirEdicao(admin.idAdmin)}
+              onToggleStatus={() => handleToggleStatus(admin.idAdmin)}
+              onDelete={() => handleExcluir(admin.idAdmin)}
+            />
+          ))}
+        </div>
         <table>
           <thead>
             <tr>
