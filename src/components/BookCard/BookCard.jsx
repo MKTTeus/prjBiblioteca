@@ -13,6 +13,7 @@ import {
   HiOutlineShoppingCart,
   HiOutlineMinus,
   HiOutlinePlus,
+  HiOutlineDotsVertical,
 } from "react-icons/hi";
 import Modal from "../Modal/Modal";
 import "./BookCard.css";
@@ -246,7 +247,9 @@ export default function BookCard({
             )}
 
             {isAdmin && (
-              <>
+              <details className="shared-book-card__admin-menu">
+                <summary aria-label={`Opções de ${titulo}`} title="Opções do livro"><HiOutlineDotsVertical /></summary>
+                <div className="shared-book-card__admin-menu-items">
                 <button
                   type="button"
                   className="shared-book-card__button shared-book-card__button--edit"
@@ -287,7 +290,8 @@ export default function BookCard({
                   <HiOutlineTrash />
                   <span>Excluir</span>
                 </button>
-              </>
+                </div>
+              </details>
             )}
           </div>
         )}
