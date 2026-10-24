@@ -247,3 +247,140 @@
 .emp-btn-expirar:hover:not(:disabled) {
   background: #fef2f2 !important;
 }
+
+/* Keep the requests page aligned with the circulation screen without
+   changing the shared table and card styles used elsewhere. */
+.solicitacoes-page {
+  min-width: 0;
+}
+
+.solicitacoes-page .solicitacoes-metricas .stats-card {
+  min-width: 0;
+}
+
+.solicitacoes-page .solicitacoes-metricas .stats-card-header {
+  align-items: flex-start;
+}
+
+.solicitacoes-page .solicitacoes-metricas .stats-card-header span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.solicitacoes-page .solicitacoes-lista {
+  min-width: 0;
+}
+
+@media (max-width: 700px) {
+  .solicitacoes-page .stats-cards-grid.solicitacoes-metricas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .solicitacoes-page .solicitacoes-metricas .stats-card {
+    padding: 14px;
+  }
+
+  .solicitacoes-page .solicitacoes-metricas .stats-card-header {
+    min-height: 42px;
+    font-size: 12px;
+  }
+
+  .solicitacoes-page .solicitacoes-metricas .stats-card-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .solicitacoes-page .solicitacoes-metricas .stats-card small {
+    line-height: 1.35;
+  }
+
+  .solicitacoes-page .emp-filter-tabs {
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+  }
+
+  .solicitacoes-page .emp-filter-tab {
+    flex: 0 0 auto;
+  }
+
+  .admin-shell .emp-page.solicitacoes-page .solicitacoes-lista {
+    overflow: visible;
+  }
+
+  .admin-shell .emp-page.solicitacoes-page .solicitacoes-lista table,
+  .solicitacoes-page .solicitacoes-lista tbody,
+  .solicitacoes-page .solicitacoes-lista .solicitacao-row {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .solicitacoes-page .solicitacoes-lista thead {
+    display: none;
+  }
+
+  .solicitacoes-page .solicitacao-row {
+    margin: 0 16px 16px;
+    width: calc(100% - 32px) !important;
+    padding: 14px;
+    border: 1px solid var(--surface-border);
+    border-radius: 14px;
+    background: var(--surface-bg);
+  }
+
+  .solicitacoes-page .solicitacao-row td {
+    display: grid;
+    grid-template-columns: minmax(90px, 36%) minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--table-row-border);
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .solicitacoes-page .solicitacao-row td::before {
+    content: attr(data-label);
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .solicitacoes-page .solicitacao-row td:last-child {
+    border-bottom: none;
+  }
+
+  .solicitacoes-page .solicitacao-row .emp-actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .solicitacoes-page .solicitacao-row .emp-actions button {
+    min-height: 38px;
+  }
+
+  .solicitacoes-page .solicitacoes-lista .emp-empty-table {
+    white-space: normal;
+    padding: 28px 16px;
+  }
+}
+
+@media (max-width: 370px) {
+  .solicitacoes-page .stats-cards-grid.solicitacoes-metricas {
+    grid-template-columns: 1fr;
+  }
+
+  .solicitacoes-page .solicitacoes-metricas .stats-card-header {
+    min-height: 0;
+  }
+
+  .solicitacoes-page .solicitacao-row td {
+    grid-template-columns: minmax(75px, 34%) minmax(0, 1fr);
+    gap: 8px;
+  }
+}
