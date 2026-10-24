@@ -88,9 +88,9 @@
   cursor: pointer;
 }
 .user-management-filters button.is-active { border-color: var(--primary, #0967ef); background: var(--primary, #0967ef); color: #fff; }
-:is(.admin-page, .aluno-page, .comunidade-page) .topo-lista { align-items: baseline; gap: 10px; margin-bottom: 14px; }
-:is(.admin-page, .aluno-page, .comunidade-page) .topo-lista h2 { margin: 0; }
-.user-management-count { color: var(--text-muted, #64748b); font-size: 14px; white-space: nowrap; }
+.user-management-list-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 4px 0 14px; }
+.user-management-list-heading h2 { min-width: 0; margin: 0; color: var(--text-default, #151d30); }
+.user-management-count { display: inline-flex; align-items: center; min-height: 28px; padding: 4px 10px; border-radius: 999px; background: var(--primary-muted, #eaf3ff); color: var(--primary, #0967ef); font-size: 12px; font-weight: 600; white-space: nowrap; }
 
 @media (max-width: 700px) {
   :is(.admin-page, .aluno-page, .comunidade-page) .titulo {
@@ -118,12 +118,11 @@
   :is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls .input-pesquisa { font-size: 14px; }
   .user-management-filters { flex-wrap: nowrap; overflow-x: auto; gap: 7px; padding: 12px 0 2px; scrollbar-width: thin; }
   .user-management-filters button { flex: 0 0 auto; min-height: 36px; padding: 6px 13px; font-size: 12px; }
-  :is(.admin-page, .aluno-page, .comunidade-page) .topo-lista { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 8px; }
-  :is(.admin-page, .aluno-page, .comunidade-page) .topo-lista h2 { font-size: 19px; line-height: 1.25; }
-  .user-management-count { font-size: 12px; text-align: right; }
+  .user-management-list-heading { justify-content: flex-start; gap: 7px 10px; margin: 2px 0 12px; }
+  .user-management-list-heading h2 { font-size: 19px; line-height: 1.25; }
 }
 
 @media (max-width: 350px) {
-  :is(.admin-page, .aluno-page, .comunidade-page) .topo-lista h2 { font-size: 17px; }
+  .user-management-list-heading h2 { font-size: 17px; }
   :is(.admin-page, .aluno-page, .comunidade-page) .stats-card { padding: 10px; }
 }
