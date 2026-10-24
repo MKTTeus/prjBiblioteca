@@ -1,0 +1,63 @@
+.mobile-user-card-list { display: none; }
+
+@media (max-width: 700px) {
+  .admin-page .table-container,
+  .aluno-page .table-container,
+  .comunidade-page .table-container {
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .admin-page .table-container > table,
+  .aluno-page .table-container > table,
+  .comunidade-page .table-container > table { display: none; }
+
+  .mobile-user-card-list { display: grid; gap: 14px; min-width: 0; }
+  .mobile-user-card-list__select-all { display: inline-flex; align-items: center; gap: 9px; width: fit-content; color: var(--text-muted, #64748b); font-size: 13px; cursor: pointer; }
+  .mobile-user-card-list__select-all input { width: 17px; height: 17px; margin: 0; accent-color: var(--primary, #0865ef); }
+  .mobile-user-card {
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--surface-border, #e2e8f0);
+    border-radius: 16px;
+    background: var(--surface-bg, #fff);
+    box-shadow: 0 5px 18px rgba(22, 42, 80, .06);
+    color: var(--text-default, #101b36);
+  }
+  .mobile-user-card--selected { border-color: var(--primary, #0865ef); }
+  .mobile-user-card__header { display: flex; align-items: center; gap: 10px; min-width: 0; padding-bottom: 14px; border-bottom: 1px solid var(--surface-border, #e2e8f0); }
+  .mobile-user-card__checkbox { flex: 0 0 18px; width: 18px; height: 18px; margin: 0; accent-color: var(--primary, #0865ef); cursor: pointer; }
+  .mobile-user-card__avatar { display: grid; place-items: center; flex: 0 0 38px; height: 38px; border-radius: 50%; background: #e7f3ff; color: var(--primary, #0865ef); }
+  .mobile-user-card__identity { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+  .mobile-user-card__identity strong { font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
+  .mobile-user-card__identity span { color: var(--text-muted, #64748b); font-size: 12px; overflow-wrap: anywhere; }
+  .mobile-user-card__status { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 6px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .mobile-user-card__status--active { background: #dff7e9; color: #087b3b; }
+  .mobile-user-card__status--inactive { background: #ffebed; color: #bd2231; }
+  .mobile-user-card__status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .mobile-user-card__details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px 0; }
+  .mobile-user-card__field { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 11px 3px; }
+  .mobile-user-card__field:nth-child(2):not(.mobile-user-card__field--wide) { padding-left: 14px; border-left: 1px solid var(--surface-border, #e2e8f0); }
+  .mobile-user-card__field--wide { grid-column: 1 / -1; border-top: 1px solid var(--surface-border, #e2e8f0); }
+  .mobile-user-card__field:first-child.mobile-user-card__field--wide { border-top: 0; }
+  .mobile-user-card__field span { color: var(--text-muted, #64748b); font-size: 12px; }
+  .mobile-user-card__field strong { font-size: 14px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+  .mobile-user-card__books { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin-bottom: 13px; border-radius: 10px; background: #edf5ff; color: #173665; font-size: 13px; }
+  .mobile-user-card__books svg { flex: none; color: var(--primary, #0865ef); }
+  .mobile-user-card__actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .mobile-user-card__action { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 40px; padding: 7px 4px; border: 1px solid; border-radius: 8px; background: transparent; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .mobile-user-card__action--edit { border-color: var(--primary, #0865ef); color: var(--primary, #0865ef); }
+  .mobile-user-card__action--toggle { border-color: #98a5ba; color: #53617b; }
+  .mobile-user-card__action--delete { border-color: #ed3545; color: #cf1429; }
+  .mobile-user-card__action:focus-visible, .mobile-user-card__checkbox:focus-visible { outline: 3px solid #8ebfff; outline-offset: 2px; }
+}
+
+@media (max-width: 350px) {
+  .mobile-user-card { padding: 12px; }
+  .mobile-user-card__header { gap: 7px; }
+  .mobile-user-card__avatar { flex-basis: 32px; height: 32px; }
+  .mobile-user-card__action { gap: 3px; font-size: 11px; }
+  .mobile-user-card__action svg { width: 15px; }
+}
