@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
+import "../../../components/MobileUserCard/UserManagementLayout.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
 import { getAdmins, createAdmin, updateAdmin, deleteAdmin, excluirAdminsLote, atualizarStatusAdminsLote } from "../../../services/api";
@@ -33,6 +34,7 @@ export default function Admin() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [novoAdmin, setNovoAdmin] = useState(EMPTY_ADMIN);
   const [errosFormulario, setErrosFormulario] = useState({});
   const [admins, setAdmins] = useState([]);
@@ -334,7 +336,8 @@ export default function Admin() {
   const totalAdmins = admins.length;
   const adminsAtivos = admins.filter((a) => a.status === "Ativo").length;
   const adminsInativos = admins.filter((a) => a.status === "Inativo").length;
-  const adminsFiltrados = filtrarPorBusca(admins, pesquisa, (admin) => [admin.nome, admin.email]);
+  const adminsFiltrados = filtrarPorBusca(admins, pesquisa, (admin) => [admin.nome, admin.email])
+    .filter((admin) => filtroStatus === "Todos" || admin.status === filtroStatus);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(adminsFiltrados);
 
@@ -346,44 +349,58 @@ export default function Admin() {
           <p>Cadastre e acompanhe os administradores do sistema.</p>
         </div>
 
-        <button className="btn-novo-admin" onClick={abrirCriacao}>
-          + Novo Administrador
-        </button>
       </div>
 
       <div className="stats-cards-grid stats-cards-grid-admin">
         <StatsCard
-          title="Total de Administradores"
+          title="Administradores Total"
           value={totalAdmins}
-          subtitle="Perfis com acesso total"
+          subtitle="Atualizado com os dados da tela"
           icon={<Shield size={18} />}
           color="blue"
         />
 
         <StatsCard
-          title="Administradores Ativos"
+          title="Ativos"
           value={adminsAtivos}
-          subtitle="Com acesso liberado"
+          subtitle="Atualizado com os dados da tela"
           icon={<UserCheck size={18} />}
           color="green"
         />
 
         <StatsCard
-          title="Administradores Inativos"
+          title="Inativos"
           value={adminsInativos}
-          subtitle="Com acesso suspenso"
+          subtitle="Atualizado com os dados da tela"
           icon={<UserX size={18} />}
           color="red"
         />
       </div>
 
-      <div className="topo-lista">
-        <h2>Lista de Administradores</h2>
+      <div className="user-management-actions">
+        <button className="btn-novo-admin" onClick={abrirCriacao}>+ Novo Administrador</button>
+      </div>
+
+      <div className="user-management-controls">
         <SearchBar
           value={pesquisa}
           onChange={setPesquisa}
           placeholder="Buscar por nome ou e-mail..."
+          label="Buscar administradores"
         />
+        <div className="user-management-filters" role="group" aria-label="Filtrar administradores por status">
+          {["Todos", "Ativo", "Inativo"].map((status) => (
+            <button key={status} type="button" className={filtroStatus === status ? "is-active" : ""}
+              aria-pressed={filtroStatus === status} onClick={() => { setFiltroStatus(status); setSelecionados([]); irParaPagina(1); }}>
+              {{ Todos: "Todos", Ativo: "Ativos", Inativo: "Inativos" }[status]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="topo-lista">
+        <h2>Lista de Administradores</h2>
+        <span className="user-management-count">{adminsFiltrados.length} {adminsFiltrados.length === 1 ? "administrador" : "administradores"}</span>
       </div>
 
       {selecionados.length > 0 && (
