@@ -399,7 +399,77 @@ export default function SolicitacoesEmprestimo() {
       />
       <section className="emp-table-box solicitacoes-lista">
         <div className="emp-table-header">
-          <h2>Lista de Solicitações</h2>
+          <h2>Solicitações recentes</h2>
+          <span className="solicitacoes-count">{solicitacoesFiltradas.length} {solicitacoesFiltradas.length === 1 ? "solicitação" : "solicitações"}</span>
+        </div>
+        <div className="solicitacoes-mobile-list" aria-label="Solicitações de empréstimo">
+          {carregando ? (
+            <p className="solicitacoes-mobile-empty" role="status">Carregando solicitações...</p>
+          ) : solicitacoesFiltradas.length === 0 ? (
+            <p className="solicitacoes-mobile-empty">Nenhuma solicitação encontrada para os filtros informados.</p>
+          ) : paginaItens.map((item) => {
+            const id = item.idEmprestimo || item.idMovimentacao;
+            const status = String(item.status || item.movStatus || "").toLowerCase();
+            const statusConf = item.statusConfirmacao || "PENDENTE";
+            const isExpirada = statusConf === "EXPIRADA" || status === "expirado";
+            const isNegada = ["negado", "rejeitado", "cancelado"].includes(status);
+            const isPendente = status === "pendente" && statusConf === "PENDENTE";
+            const isConfirmada = statusConf === "CONFIRMADA" && !isExpirada;
+            const horasRestantes = calcHorasRestantes(item.dataLimite);
+            const tipo = item.usuarioTipo || item.tipo || "Tipo não informado";
+            return (
+              <article className="solicitacao-mobile-card" key={id || `${item.id}-${item.dataEmprestimo}`}>
+                <div className="solicitacao-mobile-heading">
+                  <h3>Solicitação #{id || "-"}</h3>
+                  <span className={`emp-status ${isExpirada ? "expirado" : isConfirmada ? "confirmada" : status}`}>
+                    {isExpirada ? "Expirada" : isConfirmada ? "Aguardando retirada" : statusLabel[status] || status || "Não informado"}
+                  </span>
+                </div>
+                <div className="solicitacao-mobile-main">
+                  <div>
+                    <span className="solicitacao-mobile-label">Usuário</span>
+                    <strong>{item.usuario || item.nome || item.usuNome || "Usuário não informado"}</strong>
+                    <small>{tipo}{item.professor && item.finalidade ? ` · ${item.finalidade === "TURMA" ? `Turma ${[item.serie, item.turma].filter(Boolean).join(" - ")}` : "Pessoal"}` : ""}</small>
+                  </div>
+                  <div>
+                    <span className="solicitacao-mobile-label">Livro</span>
+                    <strong>{item.titulo || item.empLiv_Titulo || "Livro não informado"}</strong>
+                    <small>Tombo: {item.codigo || item.empLiv_Tombo || item.exemplar?.exeLivTombo || "-"}</small>
+                  </div>
+                </div>
+                <div className="solicitacao-mobile-details">
+                  <div>
+                    <span>Solicitada</span>
+                    <strong>{formatDataLimite(item.data_solicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</strong>
+                  </div>
+                  <div>
+                    <span>{isConfirmada ? "Prazo para retirada" : "Confirmação"}</span>
+                    <strong>
+                      {isConfirmada && item.dataLimite ? <>{formatDataLimite(item.dataLimite)} <BadgePrazo dataLimite={item.dataLimite} /></>
+                        : statusConf === "RETIRADA" ? "Retirada registrada"
+                        : isExpirada ? "Prazo expirado"
+                        : isNegada ? "Não se aplica"
+                        : "Aguardando aprovação"}
+                    </strong>
+                  </div>
+                </div>
+                {(isPendente || isConfirmada) && (
+                  <div className="solicitacao-mobile-actions">
+                    {isPendente && <>
+                      <LoadingButton className="emp-btn-light solicitacao-action-primary" onClick={() => handleAprovarSolicitacao(item)} disabled={processando[id]}>Aprovar</LoadingButton>
+                      <LoadingButton className="emp-btn-light solicitacao-action-danger" onClick={() => handleNegarSolicitacao(item)} disabled={processando[id]}>Negar</LoadingButton>
+                    </>}
+                    {isConfirmada && <>
+                      <LoadingButton className="emp-btn-retirar" onClick={() => handleRegistrarRetirada(item)} disabled={processando[id] || horasRestantes === null || horasRestantes <= 0}>Registrar retirada</LoadingButton>
+                      {horasRestantes !== null && horasRestantes <= 0 && (
+                        <LoadingButton className="emp-btn-expirar" onClick={() => setSolicitacaoParaExpirar(item)} disabled={processando[id]}>Expirar solicitação</LoadingButton>
+                      )}
+                    </>}
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </div>
         <table>
           <thead>
