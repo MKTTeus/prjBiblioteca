@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Aluno.css";
+import "../../../components/MobileUserCard/UserManagementLayout.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Users, UserCheck, UserX, GraduationCap, Pencil, Trash2, Upload } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno, excluirAlunosLote, atualizarStatusLote } from "../../../services/api";
@@ -49,6 +50,7 @@ export default function Aluno() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [novoAluno, setNovoAluno] = useState(EMPTY_ALUNO);
   const [errosFormulario, setErrosFormulario] = useState({});
   const [alunos, setAlunos] = useState([]);
@@ -458,14 +460,16 @@ const handleSalvar = async () => {
     verFormados ? alunosFormados : alunosNaoFormados,
     pesquisa,
     (aluno) => [aluno.nome, aluno.email, aluno.ra, aluno.serie, aluno.turma]
-  );
+  ).filter((aluno) => filtroStatus === "Todos" || aluno.status === filtroStatus);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(alunosFiltrados);
 
   function alternarVisualizacao() {
     setVerFormados((atual) => !atual);
+    setFiltroStatus("Todos");
     setSelecionados([]);
     setPesquisa("");
+    irParaPagina(1);
   }
 
   return (
@@ -476,14 +480,6 @@ const handleSalvar = async () => {
           <p>Cadastre e acompanhe os alunos da biblioteca.</p>
         </div>
 
-        <div className="titulo-acoes">
-          <button className="btn-novo-aluno" onClick={abrirCriacao}>
-            + Novo Aluno
-          </button>
-          <button className="btn-importar" onClick={() => setModalImportar(true)}>
-            <Upload size={16} /> Importar
-          </button>
-        </div>
       </div>
 
 
@@ -491,7 +487,7 @@ const handleSalvar = async () => {
         <StatsCard
           title="Total de Alunos"
           value={totalAlunos}
-          subtitle="Cadastros registrados"
+          subtitle="Atualizado com os dados da tela"
           icon={<Users size={18} />}
           color="blue"
         />
@@ -499,7 +495,7 @@ const handleSalvar = async () => {
         <StatsCard
           title="Alunos Ativos"
           value={alunosAtivos}
-          subtitle="Com acesso liberado"
+          subtitle="Atualizado com os dados da tela"
           icon={<UserCheck size={18} />}
           color="green"
         />
@@ -507,7 +503,7 @@ const handleSalvar = async () => {
         <StatsCard
           title="Alunos Inativos"
           value={alunosInativos}
-          subtitle="Com acesso suspenso"
+          subtitle="Atualizado com os dados da tela"
           icon={<UserX size={18} />}
           color="red"
         />
@@ -516,27 +512,39 @@ const handleSalvar = async () => {
         <StatsCard
           title="Formados"
           value={totalFormados}
-          subtitle={verFormados ? "Ver alunos ativos" : "Ver alunos formados"}
+          subtitle="Atualizado com os dados da tela"
           icon={<GraduationCap size={18} />}
           color="purple"
           onClick={alternarVisualizacao}
         />
       </div>
 
-      <div className="topo-lista">
-        <div className="topo-lista-titulo">
-          <h2>{verFormados ? "Alunos Formados" : "Lista de Alunos"}</h2>
-          {verFormados && (
-            <button type="button" className="btn-voltar-lista" onClick={alternarVisualizacao}>
-              ← Voltar para alunos
-            </button>
-          )}
-        </div>
+      <div className="user-management-actions titulo-acoes">
+        <button className="btn-novo-aluno" onClick={abrirCriacao}>+ Novo Aluno</button>
+        <button className="btn-importar" onClick={() => setModalImportar(true)}><Upload size={16} /> Importar</button>
+      </div>
+
+      <div className="user-management-controls">
         <SearchBar
           value={pesquisa}
           onChange={setPesquisa}
           placeholder="Buscar por nome, e-mail, RA, série ou turma..."
+          label="Buscar alunos"
         />
+        <div className="user-management-filters" role="group" aria-label="Filtrar alunos">
+          {["Todos", "Ativo", "Inativo", "Formados"].map((status) => (
+            <button key={status} type="button" className={(status === "Formados" ? verFormados : !verFormados && filtroStatus === status) ? "is-active" : ""}
+              aria-pressed={status === "Formados" ? verFormados : !verFormados && filtroStatus === status}
+              onClick={() => { setVerFormados(status === "Formados"); setFiltroStatus(status === "Formados" ? "Todos" : status); setSelecionados([]); irParaPagina(1); }}>
+              {{ Todos: "Todos", Ativo: "Ativos", Inativo: "Inativos", Formados: "Formados" }[status]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="topo-lista">
+        <h2>{verFormados ? "Alunos Formados" : "Lista de Alunos"}</h2>
+        <span className="user-management-count">{alunosFiltrados.length} {alunosFiltrados.length === 1 ? "aluno" : "alunos"}</span>
       </div>
 
       {selecionados.length > 0 && (
