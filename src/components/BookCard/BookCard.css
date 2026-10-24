@@ -357,7 +357,10 @@
 .cadastro .shared-book-card:has(.shared-book-card__admin-menu[open]) { z-index: 20; }
 .cadastro .shared-book-card__media { border-radius: 16px 16px 0 0; overflow: hidden; }
 .cadastro .shared-book-card__admin-menu { position: absolute; top: 10px; right: 10px; z-index: 5; }
-.cadastro .shared-book-card__actions { padding-top: 0; }
+.cadastro .shared-book-card__actions { padding-top: 12px; }
+@media (max-width: 640px) {
+  .cadastro .shared-book-card__actions { padding-top: 0; }
+}
 .cadastro .shared-book-card__admin-menu summary { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--surface-border); border-radius: 9px; background: var(--surface-bg); color: var(--text-default); cursor: pointer; list-style: none; box-shadow: 0 2px 8px rgba(15,23,42,.08); }
 .cadastro .shared-book-card__admin-menu summary::-webkit-details-marker { display: none; }
 .cadastro .shared-book-card__admin-menu summary:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }

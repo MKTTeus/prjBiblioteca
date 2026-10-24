@@ -97,9 +97,24 @@ export default function BookCard({
   const [mostrarDescricao, setMostrarDescricao] = useState(false);
   const adminMenuRef = useRef(null);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" && Boolean(window.matchMedia?.("(max-width: 640px)").matches)
+  );
 
   useEffect(() => {
-    if (!isAdmin || !adminMenuOpen) return;
+    if (!isAdmin || !window.matchMedia) return;
+    const query = window.matchMedia("(max-width: 640px)");
+    const update = () => {
+      setIsMobile(query.matches);
+      setAdminMenuOpen(false);
+    };
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    if (!isAdmin || !isMobile || !adminMenuOpen) return;
     const positionMenu = () => {
       const menu = adminMenuRef.current;
       if (!menu?.open) return;
@@ -133,7 +148,7 @@ export default function BookCard({
       document.removeEventListener("pointerdown", closeOutside);
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [isAdmin, adminMenuOpen]);
+  }, [isAdmin, isMobile, adminMenuOpen]);
 
   const REQUEST_STATUS_LABEL = {
     pendente: "Solicitado — Aguardando aprovação",
@@ -146,6 +161,51 @@ export default function BookCard({
     : statusSolicitacao
     ? REQUEST_STATUS_LABEL[statusSolicitacao] || "Já Solicitado"
     : "Solicitar Empréstimo";
+
+  const adminActions = isAdmin ? (
+    <>
+      <button
+        type="button"
+        className="shared-book-card__button shared-book-card__button--edit"
+        onClick={() => onEdit && onEdit(book)}
+      >
+        <HiOutlinePencil />
+        <span>{totalExemplares === 0 ? "Corrigir exemplares" : "Editar"}</span>
+      </button>
+      {onViewFicha && (
+        <button
+          type="button"
+          className="shared-book-card__button shared-book-card__button--ficha"
+          onClick={() => onViewFicha(book)}
+          title="Ver ficha catalográfica"
+        >
+          <HiOutlineDocumentText />
+          <span>Ficha</span>
+        </button>
+      )}
+      <button
+        type="button"
+        className={`shared-book-card__button ${
+          book?.livAtivo === false
+            ? "shared-book-card__button--reactivate"
+            : "shared-book-card__button--deactivate"
+        }`}
+        onClick={() => onToggleStatus && onToggleStatus(book)}
+      >
+        {book?.livAtivo === false ? <HiOutlineRefresh /> : <HiOutlineXCircle />}
+        <span>{book?.livAtivo === false ? "Reativar" : "Desativar"}</span>
+      </button>
+      <button
+        type="button"
+        className="shared-book-card__button shared-book-card__button--delete"
+        onClick={() => onDelete && onDelete(book)}
+        title="Excluir permanentemente (só é possível sem histórico de empréstimos)"
+      >
+        <HiOutlineTrash />
+        <span>Excluir</span>
+      </button>
+    </>
+  ) : null;
 
   return (
     <div className="shared-book-card">
@@ -285,55 +345,16 @@ export default function BookCard({
               </p>
             )}
 
-            {isAdmin && (
+            {isAdmin && (isMobile ? (
               <details ref={adminMenuRef} onToggle={(event) => setAdminMenuOpen(event.currentTarget.open)} className="shared-book-card__admin-menu">
                 <summary aria-label={`Opções de ${titulo}`} title="Opções do livro"><HiOutlineDotsVertical /></summary>
                 <div className="shared-book-card__admin-menu-items" onClick={(event) => {
                   if (event.target.closest("button")) adminMenuRef.current.open = false;
                 }}>
-                <button
-                  type="button"
-                  className="shared-book-card__button shared-book-card__button--edit"
-                  onClick={() => onEdit && onEdit(book)}
-                >
-                  <HiOutlinePencil />
-                  <span>{totalExemplares === 0 ? "Corrigir exemplares" : "Editar"}</span>
-                </button>
-                {onViewFicha && (
-                  <button
-                    type="button"
-                    className="shared-book-card__button shared-book-card__button--ficha"
-                    onClick={() => onViewFicha(book)}
-                    title="Ver ficha catalográfica"
-                  >
-                    <HiOutlineDocumentText />
-                    <span>Ficha</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className={`shared-book-card__button ${
-                    book?.livAtivo === false
-                      ? "shared-book-card__button--reactivate"
-                      : "shared-book-card__button--deactivate"
-                  }`}
-                  onClick={() => onToggleStatus && onToggleStatus(book)}
-                >
-                  {book?.livAtivo === false ? <HiOutlineRefresh /> : <HiOutlineXCircle />}
-                  <span>{book?.livAtivo === false ? "Reativar" : "Desativar"}</span>
-                </button>
-                <button
-                  type="button"
-                  className="shared-book-card__button shared-book-card__button--delete"
-                  onClick={() => onDelete && onDelete(book)}
-                  title="Excluir permanentemente (só é possível sem histórico de empréstimos)"
-                >
-                  <HiOutlineTrash />
-                  <span>Excluir</span>
-                </button>
+                  {adminActions}
                 </div>
               </details>
-            )}
+            ) : adminActions)}
           </div>
         )}
       </div>
