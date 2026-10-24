@@ -398,7 +398,7 @@ export default function Admin() {
         </div>
       </div>
 
-      <div className="topo-lista">
+      <div className="user-management-list-heading">
         <h2>Lista de Administradores</h2>
         <span className="user-management-count">{adminsFiltrados.length} {adminsFiltrados.length === 1 ? "administrador" : "administradores"}</span>
       </div>
