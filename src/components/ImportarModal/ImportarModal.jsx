@@ -56,8 +56,8 @@ export default function ImportarModal({ aberto, titulo, onClose, onImportar }) {
           </p>
 
           <div className="importar-senha-aviso">
-            <Info size={15} />
-            Cada conta recebe uma senha temporária única. O usuário deve usar <strong>&nbsp;Esqueci minha senha</strong> para definir o acesso.
+            <Info size={17} aria-hidden="true" />
+            <p>Cada conta recebe uma senha temporária única. Para criar a própria senha, o usuário deve clicar em <strong>“Esqueci minha senha”</strong> na tela de login.</p>
           </div>
 
           <div
