@@ -556,3 +556,159 @@
     border-radius: 14px;
   }
 }
+
+/* Mobile request cards: one surface per request, following the circulation UI. */
+@media (max-width: 700px) {
+  .admin-shell .emp-page.solicitacoes-page .solicitacoes-lista {
+    overflow: visible;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .admin-shell .emp-page.solicitacoes-page .emp-table-header {
+    padding: 4px 2px 14px;
+  }
+
+  .admin-shell .emp-page.solicitacoes-page .emp-filtros {
+    border-radius: 16px;
+  }
+
+  .solicitacoes-page .emp-filter-tab.is-active {
+    color: #fff;
+    border-color: var(--primary);
+    background: var(--primary);
+    box-shadow: 0 4px 12px rgba(8, 99, 244, .18);
+  }
+
+  .solicitacoes-page .solicitacao-mobile-card {
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--surface-border);
+    background: var(--surface-bg);
+  }
+
+  .solicitacoes-page .solicitacao-mobile-heading {
+    align-items: center;
+    padding-bottom: 12px;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-heading h3 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-heading .emp-status {
+    font-size: .74rem;
+    padding: 7px 10px;
+    line-height: 1.2;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-heading .emp-status.cancelado,
+  .solicitacoes-page .solicitacao-mobile-heading .emp-status.rejeitado {
+    background: var(--status-danger-bg);
+    color: var(--danger);
+  }
+
+  .solicitacoes-page .solicitacao-mobile-main {
+    gap: 12px;
+    padding: 14px 0;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-main .solicitacao-mobile-entity {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-entity > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: var(--primary);
+    background: var(--primary-muted);
+    font-size: 18px;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-entity:nth-child(2) .solicitacao-mobile-icon {
+    background: var(--surface-muted);
+  }
+
+  .solicitacoes-page .solicitacao-mobile-main strong {
+    font-size: .96rem;
+    line-height: 1.3;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-details {
+    padding: 13px 0 0;
+    gap: 0;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-details > div {
+    display: grid;
+    grid-template-columns: 19px minmax(0, 1fr);
+    column-gap: 7px;
+    row-gap: 3px;
+    align-content: start;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-details > div + div {
+    padding-left: 10px;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-details svg {
+    grid-row: 1 / span 2;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-details strong,
+  .solicitacoes-page .solicitacao-mobile-details span {
+    min-width: 0;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-actions {
+    margin-top: 16px;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 9px;
+    font-size: .88rem;
+    line-height: 1.2;
+  }
+
+  .solicitacoes-page .solicitacao-mobile-actions .emp-btn-retirar,
+  .solicitacoes-page .solicitacao-mobile-actions .emp-btn-expirar {
+    flex-basis: 100%;
+  }
+}
+
+@media (max-width: 370px) {
+  .solicitacoes-page .solicitacao-mobile-heading {
+    align-items: flex-start;
+  }
+  .solicitacoes-page .solicitacao-mobile-details {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .solicitacoes-page .solicitacao-mobile-details > div + div {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
