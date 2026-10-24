@@ -43,6 +43,7 @@ export default function CadastroLivros() {
     status: "todas",
     exemplares: "todos",
   });
+  const [quickFilter, setQuickFilter] = useState("todos");
 
   const livrosPorFiltro = books.filter((b) => {
     const cadastrados = Number(b.exemplares_cadastrados ?? b.total_exemplares ?? 0);
@@ -66,12 +67,22 @@ export default function CadastroLivros() {
   });
 
   // Texto digitado: ignora acentos, caixa e pontuação e tolera erros de digitação.
-  const filteredBooks = filtrarPorBusca(livrosPorFiltro, filters.q, (b) => [
+  const searchedBooks = filtrarPorBusca(livrosPorFiltro, filters.q, (b) => [
     b.livTitulo,
     b.livAutor,
     b.livISBN || b.exeLivISBN || b.exemplarISBN,
     b.tombo || b.idLivro,
   ]);
+
+  const filteredBooks = searchedBooks.filter((book) => {
+    const disponiveis = Number(book.disponiveis ?? book.livrosDisponiveis ?? 0);
+    const emprestados = Number(book.emprestados ?? book.livrosEmprestados ?? 0);
+    const cadastrados = Number(book.exemplares_cadastrados ?? book.total_exemplares ?? 0);
+    if (quickFilter === "disponiveis") return disponiveis > 0;
+    if (quickFilter === "emprestados") return emprestados > 0;
+    if (quickFilter === "sem") return cadastrados === 0;
+    return true;
+  });
 
   const pendentes = books.filter((b) => b.livAtivo !== false && Number(b.total_exemplares ?? 0) === 0);
 
@@ -188,25 +199,14 @@ export default function CadastroLivros() {
     <div className="cadastro page-shell">
       <div className="cadastro-header">
         <div>
-          <h1>Acervo e gestão de livros</h1>
-          <p>Consulte títulos, gerencie exemplares e mantenha os dados bibliográficos atualizados.</p>
+          <h1>Acervo</h1>
+          <p>Consulte e gerencie os livros da biblioteca.</p>
         </div>
 
-        {isAdmin && (
-          <button onClick={handleAdd} className="btn-add">
-            <IoMdAdd /> Novo Livro
-          </button>
-        )}
       </div>
 
       {booksLoaded && <div className="stats-cards-grid">
-        <StatsCard
-          title="Títulos cadastrados"
-          value={books.length}
-          subtitle="Ativos e inativos, com ou sem exemplares"
-          icon={<HiOutlineBookOpen />}
-          color="blue"
-        />
+        <StatsCard title="Títulos" value={books.length} subtitle="Cadastrados no acervo" icon={<HiOutlineBookOpen />} color="blue" />
 
         <StatsCard
           title="Disponíveis"
@@ -222,7 +222,7 @@ export default function CadastroLivros() {
               ),
             0
           )}
-          subtitle="Prontos para empréstimo"
+          subtitle="Para empréstimo"
           icon={<HiOutlineCheckCircle />}
           color="green"
         />
@@ -236,13 +236,15 @@ export default function CadastroLivros() {
         />
 
         <StatsCard
-          title="Reservados"
-          value={books.reduce((acc, b) => acc + Number(b.reservados || 0), 0)}
-          subtitle="Aguardando retirada"
+          title="Sem exemplares"
+          value={books.filter((book) => Number(book.exemplares_cadastrados ?? book.total_exemplares ?? 0) === 0).length}
+          subtitle="Precisam de exemplares"
           icon={<HiOutlineCalendar />}
           color="red"
         />
       </div>}
+
+      {isAdmin && <div className="acervo-primary-action"><button onClick={handleAdd} className="btn-add"><IoMdAdd /> Cadastrar Livro</button></div>}
 
       {!loading && pendentes.length > 0 && (
         <div className="acervo-pendencia" role="status">
@@ -251,16 +253,13 @@ export default function CadastroLivros() {
         </div>
       )}
 
-      {booksLoaded && <FiltroBusca filters={filters} onFilter={setFilters} />}
+      {booksLoaded && <FiltroBusca filters={filters} onFilter={setFilters} quickFilter={quickFilter} onQuickFilter={setQuickFilter} />}
 
       {booksLoaded && <div className="catalog-header">
         <h2>
-          Catálogo de Livros{" "}
-          <span className="catalog-count">
-            ({filteredBooks.length}{" "}
-            {filteredBooks.length === 1 ? "livro encontrado" : "livros encontrados"})
-          </span>
+          Livros do Acervo
         </h2>
+        <span className="catalog-count">{filteredBooks.length} {filteredBooks.length === 1 ? "título" : "títulos"}</span>
       </div>}
 
       {loading ? (
