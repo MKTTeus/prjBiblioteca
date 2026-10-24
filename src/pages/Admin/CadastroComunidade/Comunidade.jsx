@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./Comunidade.css";
+import "../../../components/MobileUserCard/UserManagementLayout.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
 import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
 import {
@@ -52,6 +53,7 @@ export default function Comunidade() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [novoMembro, setNovoMembro] = useState(EMPTY_MEMBRO);
   const [errosFormulario, setErrosFormulario] = useState({});
   const [membros, setMembros] = useState([]);
@@ -392,7 +394,8 @@ const handleSalvar = async () => {
   const membrosAtivos = membros.filter((m) => m.status === "Ativo").length;
   const membrosInativos = membros.filter((m) => m.status === "Inativo").length;
   const totalLivros = membros.reduce((acc, membro) => acc + membro.livros, 0);
-  const membrosFiltrados = filtrarPorBusca(membros, pesquisa, (membro) => [membro.nome, membro.email, membro.cpf]);
+  const membrosFiltrados = filtrarPorBusca(membros, pesquisa, (membro) => [membro.nome, membro.email, membro.cpf])
+    .filter((membro) => filtroStatus === "Todos" || membro.status === filtroStatus);
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(membrosFiltrados);
 
@@ -404,57 +407,44 @@ const handleSalvar = async () => {
           <p>Cadastre e acompanhe os membros da biblioteca.</p>
         </div>
 
-        <div className="titulo-acoes">
+      </div>
+
+      <div className="stats-cards-grid">
+        <StatsCard title="Total de Membros" value={totalMembros} subtitle="Atualizado com os dados da tela" icon={<Users size={18} />} color="blue" />
+        <StatsCard title="Membros Ativos" value={membrosAtivos} subtitle="Atualizado com os dados da tela" icon={<UserCheck size={18} />} color="green" />
+        <StatsCard title="Membros Inativos" value={membrosInativos} subtitle="Atualizado com os dados da tela" icon={<UserX size={18} />} color="red" />
+        <StatsCard title="Livros Emprestados" value={totalLivros} subtitle="Atualizado com os dados da tela" icon={<BookOpen size={18} />} color="orange" />
+      </div>
+
+      <div className="user-management-actions titulo-acoes">
           <button className="btn-novo-comunidade" onClick={abrirCriacao}>
             + Novo Membro
           </button>
           <button className="btn-importar" onClick={() => setModalImportar(true)}>
             <Upload size={16} /> Importar
           </button>
-        </div>
       </div>
 
-      <div className="stats-cards-grid">
-        <StatsCard
-          title="Total de Membros"
-          value={totalMembros}
-          subtitle="Cadastros da comunidade"
-          icon={<Users size={18} />}
-          color="blue"
-        />
-
-        <StatsCard
-          title="Membros Ativos"
-          value={membrosAtivos}
-          subtitle="Aptos para empréstimo"
-          icon={<UserCheck size={18} />}
-          color="green"
-        />
-
-        <StatsCard
-          title="Membros Inativos"
-          value={membrosInativos}
-          subtitle="Com acesso indisponível"
-          icon={<UserX size={18} />}
-          color="red"
-        />
-
-        <StatsCard
-          title="Livros Emprestados"
-          value={totalLivros}
-          subtitle="Em posse da comunidade"
-          icon={<BookOpen size={18} />}
-          color="orange"
-        />
-      </div>
-
-      <div className="topo-lista">
-        <h2>Lista de Membros</h2>
+      <div className="user-management-controls">
         <SearchBar
           value={pesquisa}
           onChange={setPesquisa}
           placeholder="Buscar por nome, e-mail ou CPF..."
+          label="Buscar membros da comunidade"
         />
+        <div className="user-management-filters" role="group" aria-label="Filtrar membros por status">
+          {["Todos", "Ativo", "Inativo"].map((status) => (
+            <button key={status} type="button" className={filtroStatus === status ? "is-active" : ""}
+              aria-pressed={filtroStatus === status} onClick={() => { setFiltroStatus(status); setSelecionados([]); irParaPagina(1); }}>
+              {{ Todos: "Todos", Ativo: "Ativos", Inativo: "Inativos" }[status]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="topo-lista">
+        <h2>Lista de Membros</h2>
+        <span className="user-management-count">{membrosFiltrados.length} {membrosFiltrados.length === 1 ? "membro" : "membros"}</span>
       </div>
 
       {selecionados.length > 0 && (
