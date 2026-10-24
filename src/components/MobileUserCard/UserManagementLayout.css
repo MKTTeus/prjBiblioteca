@@ -1,0 +1,129 @@
+/* Shared presentation for the three user directories. */
+:is(.admin-page, .aluno-page, .comunidade-page) .titulo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-bottom: 18px;
+  background: linear-gradient(110deg, #0968f3 0%, #0752cd 58%, #083eaa 100%);
+}
+:is(.admin-page, .aluno-page, .comunidade-page) .titulo::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 10%;
+  bottom: 0;
+  width: 27%;
+  height: 72%;
+  opacity: .08;
+  background: linear-gradient(90deg, transparent 12%, white 12% 36%, transparent 36% 52%, white 52% 76%, transparent 76%);
+}
+
+:is(.admin-page, .aluno-page, .comunidade-page) .stats-cards-grid { margin-bottom: 18px; }
+:is(.admin-page, .aluno-page, .comunidade-page) .stats-card { min-width: 0; }
+:is(.admin-page, .aluno-page, .comunidade-page) .stats-card-header { align-items: flex-start; }
+:is(.admin-page, .aluno-page, .comunidade-page) .stats-card-icon { width: 40px; height: 40px; }
+
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 10px 18px;
+  border: 1px solid var(--primary, #0967ef);
+  border-radius: 10px;
+  background: var(--primary, #0967ef);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-actions button:hover { filter: brightness(.94); }
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-actions button:focus-visible,
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-filters button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid var(--surface-border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--surface-bg, #fff);
+  box-shadow: var(--shadow-soft);
+}
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls .search-wrapper {
+  flex: 1 1 250px;
+  min-width: 0;
+  max-width: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface-muted, #f5f7fa);
+  box-shadow: none;
+}
+:is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls .input-pesquisa {
+  min-width: 0;
+  padding: 9px 0;
+  background: transparent;
+}
+.user-management-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.user-management-filters button {
+  min-height: 38px;
+  padding: 7px 15px;
+  border: 1px solid var(--surface-border, #dbe3ed);
+  border-radius: 999px;
+  background: var(--surface-muted, #f8fafc);
+  color: var(--text-label, #4d5a72);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.user-management-filters button.is-active { border-color: var(--primary, #0967ef); background: var(--primary, #0967ef); color: #fff; }
+:is(.admin-page, .aluno-page, .comunidade-page) .topo-lista { align-items: baseline; gap: 10px; margin-bottom: 14px; }
+:is(.admin-page, .aluno-page, .comunidade-page) .topo-lista h2 { margin: 0; }
+.user-management-count { color: var(--text-muted, #64748b); font-size: 14px; white-space: nowrap; }
+
+@media (max-width: 700px) {
+  :is(.admin-page, .aluno-page, .comunidade-page) .titulo {
+    display: block;
+    padding: 22px 20px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+  :is(.admin-page, .aluno-page, .comunidade-page) .titulo h1 { font-size: clamp(21px, 5.5vw, 27px); line-height: 1.2; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .titulo p { font-size: 13px; line-height: 1.4; margin: 7px 0 0; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-cards-grid,
+  .admin-page .stats-cards-grid.stats-cards-grid-admin { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .admin-page .stats-cards-grid.stats-cards-grid-admin .stats-card:last-child { grid-column: 1 / -1; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card { padding: 13px; border-radius: 12px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card-header { gap: 6px; margin-bottom: 8px; font-size: 12px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card-icon { width: 32px; height: 32px; border-radius: 8px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card-icon svg { width: 17px; height: 17px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card h2 { font-size: 23px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card small { font-size: 11px; line-height: 1.3; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .user-management-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; gap: 10px; margin-bottom: 14px; }
+  .admin-page .user-management-actions { grid-template-columns: 1fr; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .user-management-actions button { width: 100%; min-height: 44px; padding: 9px 6px; font-size: 13px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls { display: block; padding: 12px; margin-bottom: 22px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls .search-wrapper { width: 100%; min-height: 46px; padding: 5px 12px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .user-management-controls .input-pesquisa { font-size: 14px; }
+  .user-management-filters { flex-wrap: nowrap; overflow-x: auto; gap: 7px; padding: 12px 0 2px; scrollbar-width: thin; }
+  .user-management-filters button { flex: 0 0 auto; min-height: 36px; padding: 6px 13px; font-size: 12px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .topo-lista { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 8px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .topo-lista h2 { font-size: 19px; line-height: 1.25; }
+  .user-management-count { font-size: 12px; text-align: right; }
+}
+
+@media (max-width: 350px) {
+  :is(.admin-page, .aluno-page, .comunidade-page) .topo-lista h2 { font-size: 17px; }
+  :is(.admin-page, .aluno-page, .comunidade-page) .stats-card { padding: 10px; }
+}
