@@ -10,7 +10,7 @@ const dueDate = (days) => {
   if (!Number.isFinite(Number(days)) || Number(days) <= 0) return null;
   const date = new Date();
   date.setDate(date.getDate() + Number(days));
-  return date.toLocaleDateString("pt-BR");
+  return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
 // Mantém o ícone atual como fallback para livros sem capa ou imagens indisponíveis.
@@ -33,7 +33,7 @@ export default function NovoEmprestimoModal({
   aberto, onFechar, buscaUsuario, onBuscaUsuarioChange, usuariosFiltrados,
   selecionado, onSelecionarUsuario, usuarioSelecionado, buscaExemplar,
   onBuscaExemplarChange, exemplaresFiltrados, onSelecionarExemplar,
-  totalExemplaresDisponiveis = 0, onSalvar, salvando = false, diasEmprestimo = null,
+  totalExemplaresDisponiveis = 0, onSalvar, salvando = false, diasEmprestimo = null, carregandoPrazoEmprestimo = false,
 }) {
   const [step, setStep] = useState(1);
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
@@ -121,7 +121,7 @@ export default function NovoEmprestimoModal({
           {step === 3 && <section className="emp-new-section">
             <div className="emp-new-section-title"><h3>Revisar e confirmar</h3><span>Etapa final</span></div>
             <p className="emp-new-help">Confira os dados antes de realizar o empréstimo.</p>
-            <div className="emp-new-summary"><div><span><FiUser /> Usuário</span><strong>{usuarioSelecionado?.nome || "—"}</strong><small>{usuarioSelecionado?.tipo === "Aluno" ? [studentGroup(usuarioSelecionado), `RA: ${usuarioSelecionado?.documento || "Não informado"}`].filter(Boolean).join(" · ") : "Comunidade"}</small></div><div><span><FiBookOpen /> Exemplar</span><strong>{selectedCopy?.nome || "—"}</strong><small>Tombo: {selectedCopy?.tombo || "—"} · ISBN: {selectedCopy?.isbn || "—"}</small></div><div><span>Previsão de devolução</span><strong>{dueDate(diasEmprestimo) || "Conforme prazo configurado na biblioteca"}</strong><small>O prazo final é determinado pelo sistema no registro.</small></div></div>
+            <div className="emp-new-summary"><div><span><FiUser /> Usuário</span><strong>{usuarioSelecionado?.nome || "—"}</strong><small>{usuarioSelecionado?.tipo === "Aluno" ? [studentGroup(usuarioSelecionado), `RA: ${usuarioSelecionado?.documento || "Não informado"}`].filter(Boolean).join(" · ") : "Comunidade"}</small></div><div><span><FiBookOpen /> Exemplar</span><strong>{selectedCopy?.nome || "—"}</strong><small>Tombo: {selectedCopy?.tombo || "—"} · ISBN: {selectedCopy?.isbn || "—"}</small></div><div><span>Previsão de devolução</span><strong>{carregandoPrazoEmprestimo ? "Carregando prazo…" : dueDate(diasEmprestimo) || "Prazo indisponível"}</strong><small>{diasEmprestimo ? `Prazo padrão de ${diasEmprestimo} ${diasEmprestimo === 1 ? "dia" : "dias"}, definido nas Configurações da biblioteca.` : carregandoPrazoEmprestimo ? "Consultando as configurações da biblioteca." : "Não foi possível consultar o prazo. O sistema aplicará a configuração vigente ao registrar."}</small></div></div>
             {!validSelection && <p role="alert" className="emp-renovar-erro">Selecione um usuário e um exemplar disponível.</p>}
           </section>}
         </div>
