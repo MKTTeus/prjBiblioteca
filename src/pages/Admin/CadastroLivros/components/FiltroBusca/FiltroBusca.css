@@ -9,6 +9,18 @@
   overflow: visible;
 }
 
+.campo-busca { margin-bottom: 14px; }
+.acervo-quick-filters { display: flex; gap: 8px; overflow-x: auto; padding: 0 0 4px; scrollbar-width: thin; }
+.acervo-quick-filters button { flex: 0 0 auto; min-height: 38px; padding: 7px 15px; border: 1px solid var(--surface-border); border-radius: 999px; background: var(--surface-muted); color: var(--text-label); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.acervo-quick-filters button.is-active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.acervo-advanced-filters { margin-top: 14px; border-top: 1px solid var(--surface-border); padding-top: 12px; }
+.acervo-advanced-filters summary { display: flex; align-items: center; gap: 9px; min-height: 34px; color: var(--text-label); font-weight: 600; cursor: pointer; list-style: none; }
+.acervo-advanced-filters summary::-webkit-details-marker { display: none; }
+.acervo-advanced-filters .advanced-chevron { margin-left: auto; transition: transform .18s ease; }
+.acervo-advanced-filters[open] .advanced-chevron { transform: rotate(180deg); }
+.acervo-advanced-filters .filtros { margin: 14px 0; }
+.acervo-advanced-filters .limpar-btn { min-height: 38px; padding: 0 12px; }
+
 .filtro-header {
   display: flex;
   justify-content: space-between;
@@ -177,11 +189,8 @@
     align-items: stretch;
   }
 
-  .filtros {
-    grid-template-columns: 1fr;
-  }
+  .filtros { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .filtros .campo:last-child { grid-column: 1 / -1; }
 
-  .limpar-btn {
-    width: 100%;
-  }
+  .limpar-btn { width: auto; }
 }
