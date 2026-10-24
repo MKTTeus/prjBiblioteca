@@ -358,6 +358,41 @@
 .cadastro .shared-book-card__media { border-radius: 16px 16px 0 0; overflow: hidden; }
 .cadastro .shared-book-card__admin-menu { position: absolute; top: 10px; right: 10px; z-index: 5; }
 .cadastro .shared-book-card__actions { padding-top: 12px; }
+@media (min-width: 641px) {
+  .cadastro .shared-book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cadastro .shared-book-card__actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .cadastro .shared-book-card__actions > .shared-book-card__button {
+    min-width: 0;
+    min-height: 42px;
+    padding: 7px 3px;
+    border: 1px solid var(--surface-border);
+    border-radius: 9px;
+    background: var(--surface-bg);
+    color: var(--text-default);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .cadastro .shared-book-card__actions > .shared-book-card__button svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+  }
+  .cadastro .shared-book-card__actions > .shared-book-card__button--ficha { color: var(--primary); }
+  .cadastro .shared-book-card__actions > .shared-book-card__button--deactivate { color: #c95600; }
+  .cadastro .shared-book-card__actions > .shared-book-card__button--reactivate { color: var(--success-text); }
+  .cadastro .shared-book-card__actions > .shared-book-card__button--delete { color: var(--danger); }
+  .cadastro .shared-book-card__actions > .shared-book-card__button:hover {
+    background: var(--surface-muted);
+    filter: none;
+  }
+}
+@media (min-width: 641px) and (max-width: 1000px) {
+  .cadastro .shared-book-grid { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 640px) {
   .cadastro .shared-book-card__actions { padding-top: 0; }
 }
