@@ -333,6 +333,25 @@
     height: 280px;
   }
 }
+
+@media (max-width: 640px) {
+  .cadastro .shared-book-grid { grid-template-columns: 1fr; gap: 12px; }
+  .cadastro .shared-book-card { min-height: 0; display: grid; grid-template-columns: 92px minmax(0, 1fr); align-items: stretch; border-radius: 14px; }
+  .cadastro .shared-book-card__media { height: 132px; min-height: 132px; }
+  .cadastro .shared-book-card__badges { top: 5px; left: 5px; right: 5px; }
+  .cadastro .shared-book-card__status { padding: 4px 6px; font-size: 9px; }
+  .cadastro .shared-book-card__content { padding: 12px; min-width: 0; }
+  .cadastro .shared-book-card__body { gap: 7px; }
+  .cadastro .shared-book-card__header h3 { min-height: 0; font-size: 14px; }
+  .cadastro .shared-book-card__author { min-height: 0; font-size: 12px; }
+  .cadastro .shared-book-card__meta, .cadastro .shared-book-card__description-wrap { display: none; }
+  .cadastro .shared-book-card__tags { gap: 5px; }
+  .cadastro .shared-book-card__tags span { padding: 4px 7px; font-size: 10px; }
+  .cadastro .shared-book-card__details { min-height: 0; gap: 4px; }
+  .cadastro .shared-book-card__detail-line { font-size: 11px; }
+  .cadastro .shared-book-card .card-actions { padding-top: 7px; gap: 6px; }
+  .cadastro .shared-book-card .card-actions button { min-height: 34px; font-size: 11px; }
+}
 .shared-book-card__cart {
   display: flex;
   flex-direction: column;
