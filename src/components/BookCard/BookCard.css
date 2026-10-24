@@ -352,6 +352,28 @@
   .cadastro .shared-book-card .card-actions { padding-top: 7px; gap: 6px; }
   .cadastro .shared-book-card .card-actions button { min-height: 34px; font-size: 11px; }
 }
+
+.cadastro .shared-book-card { position: relative; overflow: visible; }
+.cadastro .shared-book-card__media { border-radius: 16px 16px 0 0; overflow: hidden; }
+.cadastro .shared-book-card__admin-menu { position: absolute; top: 10px; right: 10px; z-index: 5; }
+.cadastro .shared-book-card__actions { padding-top: 0; }
+.cadastro .shared-book-card__admin-menu summary { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--surface-border); border-radius: 9px; background: var(--surface-bg); color: var(--text-default); cursor: pointer; list-style: none; box-shadow: 0 2px 8px rgba(15,23,42,.08); }
+.cadastro .shared-book-card__admin-menu summary::-webkit-details-marker { display: none; }
+.cadastro .shared-book-card__admin-menu summary:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.cadastro .shared-book-card__admin-menu-items { position: absolute; top: 42px; right: 0; width: min(230px, calc(100vw - 48px)); display: grid; gap: 5px; padding: 8px; border: 1px solid var(--surface-border); border-radius: 12px; background: var(--surface-bg); box-shadow: 0 16px 34px rgba(15,23,42,.18); }
+.cadastro .shared-book-card__admin-menu-items .shared-book-card__button { min-height: 38px; justify-content: flex-start; text-align: left; padding: 7px 10px; font-size: 13px; }
+.cadastro .shared-book-card__details { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px; min-height: 0; }
+.cadastro .shared-book-card__detail { display: inline-flex; align-items: center; width: auto; max-width: 100%; min-height: 26px; margin: 0; padding: 4px 7px; border: 1px solid var(--surface-border); border-radius: 999px; background: var(--surface-muted); font-size: 11px; overflow-wrap: anywhere; }
+.cadastro .shared-book-card__detail.status-line.disponivel { background: var(--status-success-bg); }
+.cadastro .shared-book-card__detail.loan-line { border-radius: 10px; }
+.cadastro .shared-book-card__catalog-warning { flex-basis: 100%; }
+@media (max-width: 640px) {
+  .cadastro .shared-book-card__media { border-radius: 14px 0 0 14px; }
+  .cadastro .shared-book-card__badges { display: none; }
+  .cadastro .shared-book-card__content { padding-right: 44px; }
+  .cadastro .shared-book-card__admin-menu { top: 8px; right: 8px; }
+  .cadastro .shared-book-card__admin-menu summary { width: 30px; height: 30px; }
+}
 .shared-book-card__cart {
   display: flex;
   flex-direction: column;
