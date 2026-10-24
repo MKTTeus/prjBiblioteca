@@ -10,6 +10,7 @@ import usePagination from "../../../hooks/usePagination";
 import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
+import MobileUserCard from "../../../components/MobileUserCard/MobileUserCard";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
 import { reativarAluno } from "../../../services/api";
@@ -559,6 +560,27 @@ const handleSalvar = async () => {
       )}
 
       <div className="table-container">
+        <div className="mobile-user-card-list">
+          {alunosFiltrados.length > 0 && <label className="mobile-user-card-list__select-all">
+            <input type="checkbox" checked={selecionados.length === alunosFiltrados.length} onChange={toggleSelecionarTodos} />
+            Selecionar todos ({alunosFiltrados.length})
+          </label>}
+          {paginaItens.map((aluno) => (
+            <MobileUserCard
+              key={aluno.idUsuario}
+              name={aluno.nome}
+              identifier={`RA ${aluno.ra || "—"}`}
+              status={aluno.status}
+              fields={[{ label: "Série", value: aluno.serie }, { label: "Turma", value: aluno.turma }, { label: "E-mail", value: aluno.email, wide: true }]}
+              books={aluno.livros}
+              selected={selecionados.includes(aluno.idUsuario)}
+              onSelect={() => toggleSelecionado(aluno.idUsuario)}
+              onEdit={() => abrirEdicao(aluno.idUsuario)}
+              onToggleStatus={() => handleToggleStatus(aluno.idUsuario)}
+              onDelete={() => handleExcluir(aluno.idUsuario)}
+            />
+          ))}
+        </div>
         <table>
           <thead>
             <tr>
