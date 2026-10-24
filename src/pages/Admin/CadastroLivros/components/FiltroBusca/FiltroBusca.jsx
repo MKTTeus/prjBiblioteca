@@ -1,5 +1,5 @@
 import React from "react";
-import { FiFilter, FiSearch, FiTag, FiX, FiChevronDown } from "react-icons/fi";
+import { FiFilter, FiSearch, FiX, FiChevronDown } from "react-icons/fi";
 import "./FiltroBusca.css";
 import SelectGenero from "../SelectGenero/SelectGenero";
 import SelectStatus from "../SelectStatus/SelectStatus";
@@ -32,7 +32,8 @@ function FiltroBusca({ filters, onFilter, quickFilter = "todos", onQuickFilter =
         </div>
       </div>
 
-      <div className="acervo-quick-filters" role="group" aria-label="Filtros rápidos do acervo">
+      <div className="acervo-quick-filters-wrap">
+      <div className="acervo-quick-filters" role="group" aria-label="Filtros rápidos do acervo, deslize para ver mais">
         {[
           ["todos", "Todos"],
           ["disponiveis", "Disponíveis"],
@@ -42,23 +43,19 @@ function FiltroBusca({ filters, onFilter, quickFilter = "todos", onQuickFilter =
           <button key={value} type="button" className={quickFilter === value ? "is-active" : ""} aria-pressed={quickFilter === value} onClick={() => onQuickFilter(value)}>{label}</button>
         ))}
       </div>
+      <span className="acervo-quick-hint" aria-hidden="true">Deslize →</span>
+      </div>
 
       <details className="acervo-advanced-filters">
         <summary><FiFilter aria-hidden="true" /> Filtros avançados <FiChevronDown className="advanced-chevron" aria-hidden="true" /></summary>
         <div className="filtros">
           <div className="campo">
             <label>Gênero</label>
-            <div className="select-icon">
-              <FiTag className="campo-icone" />
-              <SelectGenero value={filters.genero} onChange={(v) => updateField("genero", v)} />
-            </div>
+            <SelectGenero value={filters.genero} onChange={(v) => updateField("genero", v)} />
           </div>
           <div className="campo">
             <label>Status</label>
-            <div className="select-icon">
-              <FiTag className="campo-icone" />
-              <SelectStatus value={filters.status} onChange={(v) => updateField("status", v)} />
-            </div>
+            <SelectStatus value={filters.status} onChange={(v) => updateField("status", v)} />
           </div>
           <div className="campo">
             <label htmlFor="filtro-exemplares">Exemplares</label>
