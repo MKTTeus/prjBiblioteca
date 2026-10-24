@@ -74,8 +74,8 @@
 
 .importar-senha-aviso {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
   background: var(--primary-muted);
   border: 1px solid var(--border-light);
   border-radius: 8px;
@@ -83,6 +83,9 @@
   font-size: 0.8rem;
   color: var(--text-label);
 }
+
+.importar-senha-aviso svg { flex: none; margin-top: 2px; }
+.importar-senha-aviso p { min-width: 0; margin: 0; line-height: 1.5; text-align: left; overflow-wrap: break-word; }
 
 .importar-dropzone {
   border: 2px dashed var(--surface-border);
