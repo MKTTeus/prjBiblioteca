@@ -378,7 +378,7 @@ export default function SolicitacoesEmprestimo() {
         title="Solicitações de Empréstimo"
         subtitle="Visualize o volume de pedidos e encontre rapidamente solicitações de empréstimo."
       />
-      <section className="stats-cards-grid stats-cards-grid-admin" aria-label="Resumo de solicitações">
+      <section className="stats-cards-grid stats-cards-grid-admin solicitacoes-metricas" aria-label="Resumo de solicitações">
         {cardsResumo.map((card) => (
           <StatsCard
             key={card.chave}
@@ -397,7 +397,7 @@ export default function SolicitacoesEmprestimo() {
         opcoesFiltro={OPCOES_FILTRO}
         onFiltroStatusChange={setFiltroStatus}
       />
-      <section className="emp-table-box">
+      <section className="emp-table-box solicitacoes-lista">
         <div className="emp-table-header">
           <h2>Lista de Solicitações</h2>
         </div>
@@ -439,9 +439,9 @@ export default function SolicitacoesEmprestimo() {
                 const isExpirada = statusConf === "EXPIRADA" || status === "expirado";
                 const horasRestantes = calcHorasRestantes(item.dataLimite);
                 return (
-                  <tr key={id || `${item.id}-${item.dataEmprestimo}`} className={isExpirada ? "row-expirada" : ""}>
-                    <td className="emp-id-cell">{id || "-"}</td>
-                    <td className="emp-main-cell">
+                  <tr key={id || `${item.id}-${item.dataEmprestimo}`} className={`solicitacao-row ${isExpirada ? "row-expirada" : ""}`}>
+                    <td className="emp-id-cell" data-label="ID">{id || "-"}</td>
+                    <td className="emp-main-cell" data-label="Usuário">
                       <strong>{usuario}</strong>
                       <small>
                         {item.usuarioTipo || item.tipo || "-"}
@@ -450,13 +450,13 @@ export default function SolicitacoesEmprestimo() {
                           : ""}
                       </small>
                     </td>
-                    <td className="emp-main-cell">
+                    <td className="emp-main-cell" data-label="Livro">
                       <strong>{titulo}</strong>
                       <small>Tombo: {tombo}</small>
                     </td>
-                    <td>{item.usuarioTipo || item.tipo || "-"}</td>
-                    <td>{formatDataLimite(item.data_solicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</td>
-                    <td className="emp-confirmacao-cell">
+                    <td data-label="Tipo de solicitante">{item.usuarioTipo || item.tipo || "-"}</td>
+                    <td data-label="Solicitação">{formatDataLimite(item.data_solicitacao || item.dataEmprestimo || item.empLiv_DataEmprestimo)}</td>
+                    <td className="emp-confirmacao-cell" data-label="Confirmação / prazo">
                       {statusConf === "CONFIRMADA" && item.dataLimite ? (
                         <div className="confirmacao-info">
                           <small className="confirmacao-prazo">
@@ -483,7 +483,7 @@ export default function SolicitacoesEmprestimo() {
                         </span>
                       )}
                     </td>
-                    <td>
+                    <td data-label="Status">
                       <span className={`emp-status ${isExpirada ? "expirado" : status}`}>
                         {isExpirada
                           ? "Expirada"
@@ -492,7 +492,7 @@ export default function SolicitacoesEmprestimo() {
                           : statusLabel[status] || status || "Não informado"}
                       </span>
                     </td>
-                    <td className="emp-actions-cell">
+                    <td className="emp-actions-cell" data-label="Ações">
                       <div className="emp-actions">
                         {status === "pendente" && statusConf === "PENDENTE" && (
                           <>
