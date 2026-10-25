@@ -1,3 +1,4 @@
+import Skeleton from "./Skeleton/Skeleton";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -16,7 +17,7 @@ export default function ProtectedRoute({
   const homePath = isProfessor ? "/professor" : isAdminTipo ? "/admin" : "/user";
 
   if (loadingUser) {
-    return <div>Carregando...</div>;
+    return <Skeleton variant="page" />;
   }
 
   if (!user) {

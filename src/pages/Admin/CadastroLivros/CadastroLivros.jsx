@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { useToast } from "../../../contexts/ToastContext";
@@ -263,7 +264,7 @@ export default function CadastroLivros() {
       </div>}
 
       {loading ? (
-        <p role="status">Carregando livros...</p>
+        <Skeleton variant="cards" />
       ) : loadError && !booksLoaded ? (
         <div role="alert" className="acervo-pendencia">
           <p>Não foi possível carregar os livros. Tente novamente.</p>
@@ -286,7 +287,7 @@ export default function CadastroLivros() {
         </>
       )}
 
-      {modalOpen && <Suspense fallback={<p>Carregando formulário...</p>}>
+      {modalOpen && <Suspense fallback={<Skeleton variant="form" />}>
         <BookFormModal
           bookToEdit={currentBook}
           initialSection={currentBook && Number(currentBook.total_exemplares ?? 0) === 0 ? "copies" : "basic"}
@@ -295,7 +296,7 @@ export default function CadastroLivros() {
         />
       </Suspense>}
 
-      {fichaBook && <Suspense fallback={<p>Carregando ficha...</p>}>
+      {fichaBook && <Suspense fallback={<Skeleton variant="form" />}>
         <BookInfoModal
           book={fichaBook}
           onClose={() => setFichaBook(null)}

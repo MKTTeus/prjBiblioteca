@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import { useEffect, useMemo, useState } from "react";
 import {
   FiDownload, FiFileText, FiBookOpen, FiAlertTriangle, FiCheckCircle, FiLoader,
@@ -339,7 +340,7 @@ export default function RelatorioEmprestimos() {
           {erroMensal && <div className="rel-erro">{erroMensal}</div>}
 
           {carregandoMensal ? (
-            <div className="rel-table-box"><p className="rel-empty">Carregando...</p></div>
+            <div className="rel-table-box"><Skeleton variant="table" /></div>
           ) : (
             <>
               <GraficoEmprestimosMensal meses={dadosMensal.meses} mesPico={dadosMensal.resumo.mesPico} />
@@ -525,7 +526,7 @@ export default function RelatorioEmprestimos() {
             </thead>
             <tbody>
               {carregando ? (
-                <tr><td colSpan="5" className="rel-empty">Carregando...</td></tr>
+                <tr><td colSpan="5" className="rel-empty"><Skeleton variant="table" /></td></tr>
               ) : ranking.length === 0 ? (
                 <tr><td colSpan="5" className="rel-empty">Nenhum resultado para os filtros informados.</td></tr>
               ) : (
@@ -562,7 +563,7 @@ export default function RelatorioEmprestimos() {
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan="10" className="rel-empty">Carregando...</td>
+                  <td colSpan="10" className="rel-empty"><Skeleton variant="table" /></td>
                 </tr>
               ) : itens.length === 0 ? (
                 <tr>

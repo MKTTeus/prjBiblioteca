@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import {
   FaBell,
@@ -115,7 +116,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openAlunos ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <div className="user-empty-state">Carregando notificações...</div>
+            <Skeleton variant="cards" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : atrasadosAlunos.length > 0 ? (
@@ -148,7 +149,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openComunidade ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <div className="user-empty-state">Carregando notificações...</div>
+            <Skeleton variant="cards" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : atrasadosComunidade.length > 0 ? (
@@ -181,7 +182,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openRecentes ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <div className="user-empty-state">Carregando notificações...</div>
+            <Skeleton variant="cards" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : recentes.length > 0 ? (
@@ -214,7 +215,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openDevolucoes ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <div className="user-empty-state">Carregando notificações...</div>
+            <Skeleton variant="cards" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : devolucoesRecentes.length > 0 ? (

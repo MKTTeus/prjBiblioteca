@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import "./Dashboard.css";
 import {
   FaBook,
@@ -166,7 +167,7 @@ export default function Dashboard() {
         <p>{statsErrorMessage || "O painel não conseguiu carregar os indicadores de acervo e circulação."}</p>
         <button type="button" onClick={() => setRetryKey((key) => key + 1)}>Tentar novamente</button>
       </div>
-    ) : <p role="status">Carregando painel...</p>;
+    ) : <Skeleton variant="cards" />;
   }
 
   return (

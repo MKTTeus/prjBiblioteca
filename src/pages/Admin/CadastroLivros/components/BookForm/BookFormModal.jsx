@@ -1,3 +1,4 @@
+import Skeleton from "../../../../../components/Skeleton/Skeleton";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   addExemplares,
@@ -955,7 +956,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
               </div>
             )}
             {loadingDetails ? (
-              <div className="editor-loading-state">Carregando dados do livro...</div>
+              <Skeleton variant="form" />
             ) : (
               <>
                 <section ref={basicSectionRef} className="editor-page-section">

@@ -1,3 +1,4 @@
+import Skeleton from "../../../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState, useCallback } from "react";
 import Select from "react-select";
 import {
@@ -262,10 +263,7 @@ export default function Backups() {
       {!erro && (
         <div className="bk-table-wrapper">
           {loading ? (
-            <div className="bk-empty">
-              <FiRefreshCw className="bk-spin" size={22} />
-              <span>Carregando backups…</span>
-            </div>
+            <Skeleton variant="table" />
           ) : backups.length === 0 ? (
             <div className="bk-empty">
               <FiFileText size={36} />

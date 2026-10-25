@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   FiUser,
@@ -415,7 +416,7 @@ export default function NovoEmprestimo({ onNavigate }) {
           </section>
 
           {isLoadingBooks ? (
-            <div className="user-empty-state">Carregando livros...</div>
+            <Skeleton variant="cards" />
           ) : erroLivros ? (
             <div className="user-empty-state" role="alert">
               <p>{erroLivros}</p>

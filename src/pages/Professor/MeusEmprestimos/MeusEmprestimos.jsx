@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import { FiClock, FiCheckCircle, FiAlertCircle, FiUser, FiUsers } from "react-icons/fi";
 import Modal from "../../../components/Modal/Modal";
@@ -96,7 +97,7 @@ export default function MeusEmprestimos() {
   };
 
   const renderLista = (items, mensagemVazia) => {
-    if (isLoading) return <div className="user-empty-state">Carregando empréstimos...</div>;
+    if (isLoading) return <Skeleton variant="cards" />;
     if (error) return <div className="user-empty-state">{error}</div>;
     if (items.length === 0) return <div className="user-empty-state">{mensagemVazia}</div>;
 

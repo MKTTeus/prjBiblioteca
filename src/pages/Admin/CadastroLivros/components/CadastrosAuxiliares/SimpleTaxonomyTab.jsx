@@ -1,3 +1,4 @@
+import Skeleton from "../../../../../components/Skeleton/Skeleton";
 import React, { useCallback, useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { Pencil, Trash2, Check, X } from "lucide-react";
@@ -263,7 +264,7 @@ export default function SimpleTaxonomyTab({
             {loading ? (
               <tr>
                 <td colSpan={3} className="taxonomia-empty">
-                  Carregando...
+                  <Skeleton variant="table" />
                 </td>
               </tr>
             ) : itensFiltrados.length === 0 ? (

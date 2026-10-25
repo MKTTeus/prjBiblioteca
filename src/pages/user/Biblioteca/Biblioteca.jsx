@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState, useRef } from "react";
 import BookCard from "../../../components/BookCard/BookCard";
 import Pagination from "../../../components/Pagination/Pagination";
@@ -137,7 +138,7 @@ export default function Biblioteca() {
       </section>
 
       {isLoading ? (
-        <div className="user-empty-state">Carregando livros...</div>
+        <Skeleton variant="cards" />
       ) : error ? (
         <div className="user-empty-state" role="alert">
           <p>{error}</p>

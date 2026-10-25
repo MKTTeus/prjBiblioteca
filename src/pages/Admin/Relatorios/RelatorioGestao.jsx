@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import { useEffect, useId, useRef, useState } from 'react';
 import { FiBookOpen, FiUsers, FiRepeat, FiSliders, FiChevronDown, FiDownload, FiFileText, FiLoader, FiSearch } from 'react-icons/fi';
 import { getRelatorioGestao } from '../../../services/api';
@@ -205,6 +206,7 @@ export function Consulta({ config }) {
         <button type="button" className="rel-btn-export" disabled={indisponivel} onClick={() => exportar('pdf')}><FiFileText aria-hidden="true" /> PDF completo</button>
       </div>
     </div>
+    {carregando && <Skeleton variant="table" rows={5} />}
     {!carregando && dados && <>
       <dl className="rel-resumo" aria-label="Resumo dos resultados">
         {Object.entries(totais).map(([k,v]) => <div key={k}><dt>{{registros:'Registros',emprestimos:'Exemplares emprestados',exemplares:'Exemplares no cadastro',ativos:'Em posse',atrasados:'Em atraso',renovacoes:'Renovações acumuladas'}[k] || k}</dt><dd>{v.toLocaleString('pt-BR')}</dd></div>)}
@@ -217,7 +219,7 @@ export function Consulta({ config }) {
     </>}
     <div className="rel-table-box" role="region" aria-label="Tabela de resultados" tabIndex={0}>
       <table><caption className="rel-sr-only">{config.titulo}</caption><thead><tr>{config.colunas.map(c => <th key={c.chave} scope="col">{c.label}</th>)}</tr></thead>
-        <tbody>{carregando ? <tr><td colSpan={config.colunas.length} className="rel-empty">Carregando…</td></tr>
+        <tbody>{carregando ? <tr><td colSpan={config.colunas.length} className="rel-empty"><Skeleton variant="table" /></td></tr>
           : !dados?.itens.length ? <tr><td colSpan={config.colunas.length} className="rel-empty">Nenhum registro para os filtros informados.</td></tr>
             : dados.itens.map((item,index) => <tr key={`${item.idExemplar || item.chave || item.idLivro || item.idAutor || ''}-${index}`}>{config.colunas.map(c => <td key={c.chave}>{valorCelula(item,c)}</td>)}</tr>)}</tbody>
       </table>

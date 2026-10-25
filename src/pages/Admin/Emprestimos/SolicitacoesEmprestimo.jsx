@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { FiList, FiClock, FiCheckCircle, FiAlertTriangle, FiUser, FiBookOpen, FiCalendar, FiXCircle, FiPackage } from "react-icons/fi";
 import "./SolicitacoesEmprestimo.css";
@@ -404,7 +405,7 @@ export default function SolicitacoesEmprestimo() {
         </div>
         <div className="solicitacoes-mobile-list" aria-label="Solicitações de empréstimo">
           {carregando ? (
-            <p className="solicitacoes-mobile-empty" role="status">Carregando solicitações...</p>
+            <Skeleton variant="cards" />
           ) : solicitacoesFiltradas.length === 0 ? (
             <p className="solicitacoes-mobile-empty">Nenhuma solicitação encontrada para os filtros informados.</p>
           ) : paginaItens.map((item) => {
@@ -494,7 +495,7 @@ export default function SolicitacoesEmprestimo() {
             {carregando ? (
               <tr>
                 <td colSpan="8" className="emp-empty-table">
-                  Carregando solicitações...
+                  <Skeleton variant="table" />
                 </td>
               </tr>
             ) : solicitacoesFiltradas.length === 0 ? (

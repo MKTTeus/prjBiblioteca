@@ -1,0 +1,29 @@
+.ui-skeleton { width: 100%; min-width: 0; }
+.ui-skeleton-inline { display: inline-block; vertical-align: middle; width: 110px; height: 18px; border-radius: 6px; background: var(--surface-border); animation: ui-skeleton-fade 1.7s ease-in-out infinite; }
+@keyframes ui-skeleton-fade { 50% { opacity: .45; } }
+.ui-skeleton__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ui-skeleton__body { display: grid; gap: 12px; }
+.ui-skeleton__hero, .ui-skeleton__heading, .ui-skeleton__bar, .ui-skeleton__thumb, .ui-skeleton__end {
+  background: linear-gradient(100deg, var(--surface-border) 8%, var(--surface-muted) 35%, var(--surface-border) 62%);
+  background-size: 250% 100%;
+  animation: ui-skeleton-pulse 1.7s ease-in-out infinite;
+  border-radius: 8px;
+}
+.ui-skeleton__hero { height: 108px; border-radius: var(--radius); }
+.ui-skeleton__heading { width: 42%; height: 24px; margin-bottom: 8px; }
+.ui-skeleton__row { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.ui-skeleton__copy { flex: 1; min-width: 0; display: grid; gap: 10px; }
+.ui-skeleton__bar { height: 14px; width: 82%; }
+.ui-skeleton__bar--short { width: 48%; height: 11px; }
+.ui-skeleton__thumb { width: 56px; height: 56px; flex: 0 0 auto; border-radius: 10px; }
+.ui-skeleton__end { width: 50px; height: 22px; flex: 0 0 auto; border-radius: 999px; }
+.ui-skeleton--table .ui-skeleton__row { padding: 12px 16px; border-bottom: 1px solid var(--surface-border); }
+.ui-skeleton--table .ui-skeleton__row:last-child { border-bottom: 0; }
+.ui-skeleton--cards .ui-skeleton__row { padding: 14px; border: 1px solid var(--surface-border); border-radius: var(--radius-md); background: var(--surface-bg); }
+.ui-skeleton--form .ui-skeleton__row { margin: 10px 0; }
+.ui-skeleton--form .ui-skeleton__bar { height: 38px; width: 100%; }
+.ui-skeleton--form .ui-skeleton__bar--short { height: 10px; width: 30%; order: -1; }
+.ui-skeleton--page { max-width: 1100px; padding: 24px; margin: 0 auto; }
+.ui-skeleton--page .ui-skeleton__row { padding: 12px; background: var(--surface-bg); border-radius: var(--radius-md); }
+@keyframes ui-skeleton-pulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .ui-skeleton__hero, .ui-skeleton__heading, .ui-skeleton__bar, .ui-skeleton__thumb, .ui-skeleton__end, .ui-skeleton-inline { animation: none; } }
