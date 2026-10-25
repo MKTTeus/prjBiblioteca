@@ -167,7 +167,7 @@ export default function Dashboard() {
         <p>{statsErrorMessage || "O painel não conseguiu carregar os indicadores de acervo e circulação."}</p>
         <button type="button" onClick={() => setRetryKey((key) => key + 1)}>Tentar novamente</button>
       </div>
-    ) : <Skeleton variant="cards" />;
+    ) : <Skeleton variant="dashboard" />;
   }
 
   return (

@@ -111,7 +111,7 @@ export default function ConfiguracoesUser() {
   if (loading) {
     return (
       <div className="user-page page-shell">
-        <Skeleton variant="form" />
+        <Skeleton variant="profile" />
       </div>
     );
   }

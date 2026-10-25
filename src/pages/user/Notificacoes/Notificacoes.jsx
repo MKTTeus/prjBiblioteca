@@ -86,7 +86,7 @@ export default function Notificacoes() {
       <section className="user-section-card">
         <div className="user-notifications-list">
           {isLoading ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="notifications" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : notifications.length > 0 ? (

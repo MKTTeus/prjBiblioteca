@@ -73,7 +73,7 @@ export default function Emprestimos() {
   const atrasados = loansComStatus.filter((l) => l._statusResolvido === "atrasado");
 
   const renderLoanList = (items, emptyMessage) => {
-    if (isLoading) return <Skeleton variant="cards" />;
+    if (isLoading) return <Skeleton variant="loans" />;
     if (error)     return <div className="user-empty-state">{error}</div>;
     if (items.length === 0) return <div className="user-empty-state">{emptyMessage}</div>;
 

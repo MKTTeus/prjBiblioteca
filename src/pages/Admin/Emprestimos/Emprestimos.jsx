@@ -215,7 +215,7 @@ export default function Emprestimos() {
     <div className="emp-page emp-page--circulacao page-shell">
       <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
 
-      {carregando && <Skeleton variant="cards" />}
+      {carregando && <Skeleton variant="loans" />}
       {erroCarga && <div role="alert" className="acervo-pendencia">
         <p>{erroCarga} {dadosCarregados && "Os números abaixo são da última atualização concluída."}</p>
         <button type="button" onClick={carregarDados}>Tentar novamente</button>

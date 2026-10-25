@@ -185,7 +185,7 @@ export default function AutoresTab() {
             {loading ? (
               <tr>
                 <td colSpan={5} className="taxonomia-empty">
-                  <Skeleton variant="table" />
+                  <Skeleton variant="taxonomy" />
                 </td>
               </tr>
             ) : autoresFiltrados.length === 0 ? (

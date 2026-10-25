@@ -138,7 +138,7 @@ export default function Biblioteca() {
       </section>
 
       {isLoading ? (
-        <Skeleton variant="cards" />
+        <Skeleton variant="books" />
       ) : error ? (
         <div className="user-empty-state" role="alert">
           <p>{error}</p>

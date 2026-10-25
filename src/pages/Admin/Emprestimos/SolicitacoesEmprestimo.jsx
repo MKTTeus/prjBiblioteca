@@ -405,7 +405,7 @@ export default function SolicitacoesEmprestimo() {
         </div>
         <div className="solicitacoes-mobile-list" aria-label="Solicitações de empréstimo">
           {carregando ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="loans" />
           ) : solicitacoesFiltradas.length === 0 ? (
             <p className="solicitacoes-mobile-empty">Nenhuma solicitação encontrada para os filtros informados.</p>
           ) : paginaItens.map((item) => {

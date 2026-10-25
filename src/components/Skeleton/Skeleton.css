@@ -25,5 +25,37 @@
 .ui-skeleton--form .ui-skeleton__bar--short { height: 10px; width: 30%; order: -1; }
 .ui-skeleton--page { max-width: 1100px; padding: 24px; margin: 0 auto; }
 .ui-skeleton--page .ui-skeleton__row { padding: 12px; background: var(--surface-bg); border-radius: var(--radius-md); }
+.ui-skeleton__items { display: grid; gap: 12px; }
+.ui-skeleton__stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.ui-skeleton--dashboard { max-width: 1200px; padding: 32px; margin: 0 auto; }
+.ui-skeleton__stat { display: flex; gap: 12px; align-items: center; padding: 16px; background: var(--surface-bg); border: 1px solid var(--surface-border); border-radius: var(--radius-md); min-width: 0; }
+.ui-skeleton__stat .ui-skeleton__thumb { width: 38px; height: 38px; }
+.ui-skeleton__filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding: 18px; background: var(--surface-bg); border: 1px solid var(--surface-border); border-radius: var(--radius-md); }
+.ui-skeleton__field { width: 100%; min-width: 0; display: grid; gap: 8px; }
+.ui-skeleton__input, .ui-skeleton__avatar, .ui-skeleton__cover { background: linear-gradient(100deg, var(--surface-border) 8%, var(--surface-muted) 35%, var(--surface-border) 62%); background-size: 250% 100%; animation: ui-skeleton-pulse 1.7s ease-in-out infinite; }
+.ui-skeleton__input { width: 100%; height: 42px; border-radius: 8px; }
+.ui-skeleton--form .ui-skeleton__row, .ui-skeleton--profile .ui-skeleton__row { padding: 0; }
+.ui-skeleton--form .ui-skeleton__items, .ui-skeleton--profile .ui-skeleton__items { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+.ui-skeleton__profile-head { display: flex; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--surface-border); }
+.ui-skeleton__avatar { width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto; }
+.ui-skeleton__cover { width: min(100%, 240px); aspect-ratio: 2 / 3; border-radius: 10px; }
+.ui-skeleton--books .ui-skeleton__items { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
+.ui-skeleton--books .ui-skeleton__row { display: flex; flex-direction: column; align-items: stretch; padding: 12px; border: 1px solid var(--surface-border); border-radius: var(--radius-md); background: var(--surface-bg); }
+.ui-skeleton--books .ui-skeleton__thumb { width: 100%; height: auto; aspect-ratio: 2 / 3; border-radius: 8px; }
+.ui-skeleton--loans .ui-skeleton__row, .ui-skeleton--notifications .ui-skeleton__row, .ui-skeleton--dashboard .ui-skeleton__row { padding: 14px; border: 1px solid var(--surface-border); border-radius: var(--radius-md); background: var(--surface-bg); }
+.ui-skeleton--loans .ui-skeleton__thumb { width: 42px; height: 60px; }
+.ui-skeleton--notifications .ui-skeleton__thumb { width: 36px; height: 36px; border-radius: 50%; }
+.ui-skeleton--reports .ui-skeleton__items, .ui-skeleton--taxonomy .ui-skeleton__items, .ui-skeleton--table .ui-skeleton__items { border: 1px solid var(--surface-border); border-radius: var(--radius-md); overflow: hidden; gap: 0; }
+.ui-skeleton--reports .ui-skeleton__row, .ui-skeleton--taxonomy .ui-skeleton__row { padding: 14px 16px; border-bottom: 1px solid var(--surface-border); }
+.ui-skeleton--reports .ui-skeleton__row:last-child, .ui-skeleton--taxonomy .ui-skeleton__row:last-child { border: 0; }
+.ui-skeleton--taxonomy .ui-skeleton__copy { max-width: 55%; }
+.ui-skeleton--taxonomy .ui-skeleton__end { margin-left: auto; }
+@media (max-width: 720px) {
+  .ui-skeleton--dashboard { padding: 16px 8px; }
+  .ui-skeleton__stats, .ui-skeleton__filters, .ui-skeleton--form .ui-skeleton__items, .ui-skeleton--profile .ui-skeleton__items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ui-skeleton--books .ui-skeleton__items { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ui-skeleton--books .ui-skeleton__row { padding: 8px; }
+  .ui-skeleton__stat { padding: 10px; }
+}
 @keyframes ui-skeleton-pulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-@media (prefers-reduced-motion: reduce) { .ui-skeleton__hero, .ui-skeleton__heading, .ui-skeleton__bar, .ui-skeleton__thumb, .ui-skeleton__end, .ui-skeleton-inline { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ui-skeleton__hero, .ui-skeleton__heading, .ui-skeleton__bar, .ui-skeleton__thumb, .ui-skeleton__end, .ui-skeleton-inline, .ui-skeleton__input, .ui-skeleton__avatar, .ui-skeleton__cover { animation: none; } }
