@@ -1,6 +1,6 @@
 .rel-page {
   color: var(--text-default);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-sans);
   box-sizing: border-box;
 }
 
@@ -347,11 +347,13 @@
 /* ── Abas de relatório ── */
 .rel-tabs {
   display: flex;
-  gap: 8px;
+  gap: 0;
   margin-bottom: 20px;
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--border-default, #e2e8f0);
-  padding-bottom: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
 }
 
 .rel-tab-btn {
@@ -359,13 +361,18 @@
   align-items: center;
   gap: 8px;
   border: none;
+  border-right: 1px solid var(--surface-border);
   background: none;
   padding: 12px 16px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  justify-content: center;
+  flex: 1 0 auto;
+  min-height: 48px;
   transition: 0.15s;
 }
 
@@ -376,6 +383,49 @@
 .rel-tab-btn-active {
   color: var(--primary);
   border-bottom-color: var(--primary);
+}
+
+.rel-tab-btn:last-child { border-right: 0; }
+.rel-header { margin-bottom: 18px; }
+.rel-subheader { padding: 18px 20px; background: var(--surface-bg); border: 1px solid var(--surface-border); border-radius: var(--radius-md); }
+.rel-subheader p { margin: 0 0 12px; }
+.rel-subheader .rel-btn-export { border: 1px solid var(--surface-border); }
+.rel-emprestimos-filtros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: 16px; margin: 18px 0; }
+.rel-emprestimos-filtros .rel-filtro-campo { min-width: 0; }
+.rel-emprestimos-filtros [hidden] { display: none; }
+.rel-emprestimos-acoes { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--surface-border); padding-top: 12px; }
+.rel-emprestimos-acoes .rel-avancados-toggle { margin: 0 auto 0 0; }
+.rel-emprestimos-resumo { margin-bottom: 18px; }
+.rel-emprestimos-resumo .stat-card { text-align: left; padding: 16px; background: var(--surface-bg); }
+.rel-modo-toggle button.rel-modo-toggle-ativo { background: var(--primary); color: var(--btn-primary-text); }
+
+@media (max-width: 720px) {
+  .rel-page.page-shell { padding: 14px 8px; }
+  .rel-header { padding: 20px; }
+  .rel-header h1 { font-size: 24px; }
+  .rel-header p { font-size: 14px; }
+  .rel-tabs { position: relative; }
+  .rel-tab-btn { flex: 0 0 auto; padding: 11px 14px; }
+  .rel-subheader { padding: 16px; }
+  .rel-subheader .rel-modo-toggle { display: flex; width: 100%; }
+  .rel-subheader .rel-modo-toggle button { flex: 1; }
+  .rel-emprestimos-filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding: 16px; }
+  .rel-emprestimos-acoes { flex-wrap: wrap; }
+  .rel-emprestimos-acoes .rel-avancados-toggle { flex: 1 0 100%; }
+  .rel-emprestimos-acoes .rel-btn-filtrar { width: auto; flex: 1; min-height: 44px; }
+  .rel-emprestimos-acoes .rel-btn-limpar { flex: 1; min-height: 44px; border: 1px solid var(--surface-border); border-radius: 8px; }
+  .rel-emprestimos-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .rel-emprestimos-resumo .stat-card { min-width: 0; padding: 12px; }
+  .rel-emprestimos-tabela { overflow: visible; }
+  .rel-emprestimos-tabela table, .rel-emprestimos-tabela tbody { display: block; width: 100%; }
+  .rel-emprestimos-tabela thead { display: none; }
+  .rel-emprestimos-tabela tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; border-top: 1px solid var(--surface-border); gap: 6px 12px; }
+  .rel-emprestimos-tabela tbody tr:first-child { border-top: 0; }
+  .rel-emprestimos-tabela td { display: block; padding: 0; border: 0; min-width: 0; white-space: normal; overflow-wrap: anywhere; font-size: 13px; }
+  .rel-emprestimos-tabela td[data-label]::before { content: attr(data-label) ": "; display: block; color: var(--text-muted); font-size: 11px; }
+  .rel-emprestimos-tabela td[data-label="Leitor"], .rel-emprestimos-tabela td[data-label="Livro"] { grid-column: 1 / -1; font-weight: 600; font-size: 15px; }
+  .rel-emprestimos-tabela td[data-label="Status"] { grid-column: 1 / -1; }
+  .rel-emprestimos-tabela td[colspan] { grid-column: 1 / -1; }
 }
 
 .rel-subheader {
