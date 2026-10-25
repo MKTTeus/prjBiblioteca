@@ -116,7 +116,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openAlunos ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="notifications" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : atrasadosAlunos.length > 0 ? (
@@ -149,7 +149,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openComunidade ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="notifications" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : atrasadosComunidade.length > 0 ? (
@@ -182,7 +182,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openRecentes ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="notifications" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : recentes.length > 0 ? (
@@ -215,7 +215,7 @@ export default function AdminNotificacoes() {
 
         <div className={`admin-section-content ${openDevolucoes ? "open" : "collapsed"}`}>
           {isLoading ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="notifications" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : devolucoesRecentes.length > 0 ? (

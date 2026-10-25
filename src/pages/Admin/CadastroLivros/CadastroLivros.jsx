@@ -264,7 +264,7 @@ export default function CadastroLivros() {
       </div>}
 
       {loading ? (
-        <Skeleton variant="cards" />
+        <Skeleton variant="books" />
       ) : loadError && !booksLoaded ? (
         <div role="alert" className="acervo-pendencia">
           <p>Não foi possível carregar os livros. Tente novamente.</p>

@@ -97,7 +97,7 @@ export default function MeusEmprestimos() {
   };
 
   const renderLista = (items, mensagemVazia) => {
-    if (isLoading) return <Skeleton variant="cards" />;
+    if (isLoading) return <Skeleton variant="loans" />;
     if (error) return <div className="user-empty-state">{error}</div>;
     if (items.length === 0) return <div className="user-empty-state">{mensagemVazia}</div>;
 

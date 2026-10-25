@@ -206,7 +206,7 @@ export function Consulta({ config }) {
         <button type="button" className="rel-btn-export" disabled={indisponivel} onClick={() => exportar('pdf')}><FiFileText aria-hidden="true" /> PDF completo</button>
       </div>
     </div>
-    {carregando && <Skeleton variant="table" rows={5} />}
+    {carregando && <Skeleton variant="reports" rows={5} />}
     {!carregando && dados && <>
       <dl className="rel-resumo" aria-label="Resumo dos resultados">
         {Object.entries(totais).map(([k,v]) => <div key={k}><dt>{{registros:'Registros',emprestimos:'Exemplares emprestados',exemplares:'Exemplares no cadastro',ativos:'Em posse',atrasados:'Em atraso',renovacoes:'Renovações acumuladas'}[k] || k}</dt><dd>{v.toLocaleString('pt-BR')}</dd></div>)}

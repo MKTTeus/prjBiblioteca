@@ -416,7 +416,7 @@ export default function NovoEmprestimo({ onNavigate }) {
           </section>
 
           {isLoadingBooks ? (
-            <Skeleton variant="cards" />
+            <Skeleton variant="books" />
           ) : erroLivros ? (
             <div className="user-empty-state" role="alert">
               <p>{erroLivros}</p>

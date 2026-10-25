@@ -257,7 +257,7 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
           <div className="cover-editor-error">{erro}</div>
         ) : carregando ? (
           <div className="cover-editor-loading">
-            <Skeleton variant="cards" rows={1} />
+            <Skeleton variant="image" rows={1} />
           </div>
         ) : (
           <>

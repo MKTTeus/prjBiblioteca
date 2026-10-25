@@ -264,7 +264,7 @@ export default function SimpleTaxonomyTab({
             {loading ? (
               <tr>
                 <td colSpan={3} className="taxonomia-empty">
-                  <Skeleton variant="table" />
+                  <Skeleton variant="taxonomy" />
                 </td>
               </tr>
             ) : itensFiltrados.length === 0 ? (
