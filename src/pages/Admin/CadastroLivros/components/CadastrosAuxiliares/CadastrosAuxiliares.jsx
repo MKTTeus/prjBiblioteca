@@ -16,10 +16,7 @@ export default function CadastrosAuxiliares() {
       <div className="cadastro-header">
         <div>
           <h1>Cadastros Auxiliares</h1>
-          <p>
-            Gerencie os autores e gêneros usados no cadastro de livros — corrija
-            nomes duplicados ou remova itens que não são mais usados.
-          </p>
+          <p>Gerencie os autores e gêneros usados no cadastro de livros — corrija nomes duplicados ou remova itens que não são mais usados.</p>
         </div>
       </div>
 

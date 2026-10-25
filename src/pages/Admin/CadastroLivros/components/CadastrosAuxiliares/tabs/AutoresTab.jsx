@@ -154,11 +154,11 @@ export default function AutoresTab() {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="taxonomia-toolbar">
           <input
             type="search"
             className="input-pesquisa"
-            style={{ minWidth: 220 }}
+            aria-label="Buscar autor"
             placeholder="Buscar autor..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -196,23 +196,24 @@ export default function AutoresTab() {
             ) : (
               paginaItens.map((autor) => (
                 <tr key={autor.idAutor}>
-                  <td>{autor.autNome}</td>
-                  <td>{autor.autAnoNascimento || "—"}</td>
-                  <td>{autor.autAnoFalecimento || "—"}</td>
-                  <td className="taxonomia-col-livros">
+                  <td className="taxonomia-nome">{autor.autNome}</td>
+                  <td data-label="Nascimento">{autor.autAnoNascimento || "—"}</td>
+                  <td data-label="Falecimento">{autor.autAnoFalecimento || "—"}</td>
+                  <td className="taxonomia-col-livros" data-label="Livros">
                     <span className={`taxonomia-badge-livros ${!autor.total_livros ? "zero" : ""}`}>
                       {autor.total_livros || 0}
                     </span>
                   </td>
                   <td className="taxonomia-acoes-cell">
                     <div className="acoes">
-                      <button className="btn-edit" onClick={() => abrirEdicao(autor)} title="Editar">
+                      <button className="btn-edit" onClick={() => abrirEdicao(autor)} title="Editar" aria-label={`Editar ${autor.autNome}`}>
                         <Pencil size={16} />
                       </button>
                       <button
                         className="btn-delete"
                         onClick={() => handleExcluirClick(autor)}
                         title="Excluir"
+                        aria-label={`Excluir ${autor.autNome}`}
                         disabled={verificandoId === autor.idAutor}
                       >
                         <Trash2 size={16} />

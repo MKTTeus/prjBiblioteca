@@ -1,10 +1,11 @@
 .tab-aux-tabs.tabs {
   display: flex;
-  justify-content: space-between;
-  background: var(--btn-muted-bg);
-  padding: 6px;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  padding: 0;
   border-radius: 14px;
   margin-bottom: 25px;
+  overflow: hidden;
 }
 
 .tab-aux-tabs .tab-btn {
@@ -12,34 +13,36 @@
   text-align: center;
   text-decoration: none;
   color: var(--tabs-text);
-  padding: 10px 0;
-  border-radius: 10px;
-  font-weight: 500;
+  padding: 13px 10px;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
   transition: all 0.25s ease;
 }
 
 .tab-aux-tabs .tab-btn:hover {
-  background: var(--btn-muted-hover);
+  background: var(--surface-hover);
 }
 
 .tab-aux-tabs .tab-btn.active {
   background: var(--surface-bg);
   color: var(--primary);
-  box-shadow: var(--shadow-soft);
+  border-bottom-color: var(--primary);
 }
 
-@media (max-width: 720px) {
-  .tab-aux-tabs.tabs {
-    overflow-x: auto;
-    justify-content: flex-start;
-    gap: 8px;
-    white-space: nowrap;
-  }
+.tab-aux .cadastro-header {
+  margin-bottom: 22px;
+}
 
-  .tab-aux-tabs .tab-btn {
-    flex: 0 0 auto;
-    min-width: 110px;
-  }
+.tab-aux .cadastro-header p {
+  max-width: none;
+}
+
+.taxonomia-tab {
+  padding: 24px;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
 }
 
 /* ==== Tabela de taxonomias (gêneros / autores) ==== */
@@ -55,7 +58,7 @@
 
 .taxonomia-tab-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 24px;
   color: var(--text-default);
 }
 
@@ -64,6 +67,31 @@
   color: var(--text-muted);
   font-size: 14px;
 }
+
+.taxonomia-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.taxonomia-toolbar .input-pesquisa { width: 240px; }
+.taxonomia-toolbar .btn-add {
+  background: var(--primary);
+  color: var(--btn-primary-text);
+  white-space: nowrap;
+}
+
+.taxonomia-tab .table-container {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  margin-bottom: 12px;
+}
+
+.taxonomia-tab .table-container table { min-width: 600px; }
+.taxonomia-tab .table-container tr:last-child td { border-bottom: 0; }
+.taxonomia-tab .table-container th { color: var(--text-soft); }
+.taxonomia-tab .taxonomia-nome { font-weight: 600; }
 
 .taxonomia-col-livros {
   white-space: nowrap;
@@ -128,24 +156,26 @@
 .taxonomia-tab .btn-edit,
 .taxonomia-tab .btn-delete,
 .taxonomia-tab .btn-status {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   border: none;
   padding: 6px 8px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
 .taxonomia-tab .btn-edit {
   background: var(--primary-muted);
+  color: var(--primary);
 }
 
 .taxonomia-tab .btn-delete {
   background: var(--status-danger-bg);
+  color: var(--danger-text);
 }
 
 .taxonomia-tab .btn-status {
@@ -157,4 +187,77 @@
 .taxonomia-tab .btn-status:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.taxonomia-tab button:focus-visible,
+.tab-aux-tabs .tab-btn:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .tab-aux.page-shell { padding: 14px 8px; }
+  .tab-aux .cadastro-header { margin-bottom: 18px; padding: 20px; }
+  .tab-aux .cadastro-header p { font-size: 14px; }
+  .tab-aux-tabs.tabs { margin-bottom: 18px; }
+  .tab-aux-tabs .tab-btn { min-width: 0; }
+  .taxonomia-tab { padding: 16px; }
+  .taxonomia-tab-header { display: block; }
+  .taxonomia-tab-header h2 { font-size: 22px; }
+  .taxonomia-toolbar { display: grid; grid-template-columns: 1fr; margin-top: 20px; }
+  .taxonomia-toolbar .input-pesquisa,
+  .taxonomia-toolbar .btn-add { width: 100%; min-width: 0; }
+  .taxonomia-toolbar .btn-add { justify-content: center; }
+  .taxonomia-tab .table-container { overflow: visible; }
+  .taxonomia-tab .table-container table { min-width: 0; display: block; }
+  .taxonomia-tab .table-container thead { display: none; }
+  .taxonomia-tab .table-container tbody { display: block; }
+  .taxonomia-tab .table-container tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--table-row-border);
+  }
+  .taxonomia-tab .table-container td {
+    display: block;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  .taxonomia-tab .table-container .taxonomia-nome {
+    grid-column: 1 / -1;
+    font-size: 16px;
+    margin-bottom: 7px;
+    overflow-wrap: anywhere;
+  }
+  .taxonomia-tab .table-container td[data-label]:not(.taxonomia-col-livros) {
+    grid-column: 1;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .taxonomia-tab .table-container td[data-label]::before {
+    content: attr(data-label) ": ";
+  }
+  .taxonomia-tab .taxonomia-col-livros {
+    grid-column: 1;
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .taxonomia-tab .taxonomia-acoes-cell {
+    grid-column: 2;
+    grid-row: 2 / span 3;
+    width: auto;
+    min-width: 0;
+    align-self: start;
+  }
+  .taxonomia-tab .btn-edit,
+  .taxonomia-tab .btn-delete,
+  .taxonomia-tab .btn-status { width: 44px; height: 44px; }
+  .taxonomia-tab .table-container .taxonomia-form-row { display: block; }
+  .taxonomia-tab .taxonomia-form-row td { display: block; }
+  .taxonomia-inline-edit { flex-wrap: wrap; }
+  .taxonomia-inline-edit input { flex: 1 1 160px; min-width: 0; }
+  .taxonomia-tab .taxonomia-empty { grid-column: 1 / -1; padding: 20px; }
 }
