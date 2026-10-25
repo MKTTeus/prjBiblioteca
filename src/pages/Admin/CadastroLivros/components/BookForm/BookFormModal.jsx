@@ -22,6 +22,7 @@ import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
 import ConfirmExitModal from "../../../../../components/ConfirmExitModal/ConfirmExitModal";
 import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
+import FieldOriginIcon from "./FieldOriginIcon";
 import "./BookFormModal.css";
 
 function normalizeText(value = "") {
@@ -285,6 +286,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   // temporariamente para receber destaque visual na tela — some sozinho
   // depois de um tempo ou assim que o usuário edita o campo manualmente.
   const [highlightedFields, setHighlightedFields] = useState(() => new Set());
+  // Apenas memória do modal: a origem nunca entra no form enviado ao backend.
+  const [fieldOrigins, setFieldOrigins] = useState({});
   // Diferente do highlightedFields acima (que é só o "brilho" visual e some
   // sozinho depois de alguns segundos), este aqui não expira — serve para o
   // painel de sugestões da IA saber, a qualquer momento, quais campos já
@@ -366,6 +369,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     setLoadedBookId(null);
     setHighlightedFields(new Set());
     setIsbnFilledFields(new Set());
+    setFieldOrigins({});
 
     if (!bookToEdit) {
       const draft = readRegistrationDraft("livros", user);
@@ -483,6 +487,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       next.delete(name);
       return next;
     });
+    setFieldOrigins((prev) => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   }
 
   function handleExemplarChange(id, field, value) {
@@ -553,11 +563,22 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     }
 
     setForm(next);
+    setFieldOrigins((prev) => {
+      const origins = { ...prev };
+      for (const campo of [...ISBN_FILLABLE_FIELDS, "idGenero"]) {
+        if (origins[campo] === "isbn" && !next[campo]) delete origins[campo];
+      }
+      camposAlterados.forEach((campo) => { origins[campo] = "isbn"; });
+      return origins;
+    });
     marcarCamposPreenchidosAutomaticamente(camposAlterados);
     // Substitui (em vez de somar) o conjunto anterior: os campos "vindos do
     // ISBN" precisam refletir apenas a busca atual, não a de um livro
     // anterior que o usuário tenha consultado antes neste mesmo formulário.
-    setIsbnFilledFields(new Set(camposAlterados));
+    setIsbnFilledFields((prev) => new Set([
+      ...[...prev].filter((campo) => Boolean(next[campo])),
+      ...camposAlterados,
+    ]));
     addToast("Dados preenchidos a partir do ISBN! Campos alterados foram destacados.", "success");
   }
 
@@ -569,6 +590,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     if (entradas.length === 0) return;
 
     setForm((prev) => ({ ...prev, ...atualizacoes }));
+    setFieldOrigins((prev) => ({
+      ...prev,
+      ...Object.fromEntries(entradas.map(([campo]) => [campo, "ia"])),
+    }));
+    setIsbnFilledFields((prev) => new Set([...prev].filter((campo) => !Object.hasOwn(atualizacoes, campo))));
     marcarCamposPreenchidosAutomaticamente(entradas.map(([campo]) => campo));
   }
 
@@ -581,6 +607,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       setLoading(true);
       const res = await uploadCover(file);
       setForm((prev) => ({ ...prev, livCapaURL: res.url }));
+      setFieldOrigins((prev) => {
+        const next = { ...prev };
+        delete next.livCapaURL;
+        return next;
+      });
+      setIsbnFilledFields((prev) => new Set([...prev].filter((campo) => campo !== "livCapaURL")));
     } catch (err) {
       console.error(err);
       addToast(err?.message || "Falha ao enviar a capa", "error");
@@ -817,6 +849,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       }
 
       addToast(bookToEdit ? "Livro atualizado com sucesso" : "Livro cadastrado com sucesso", "success");
+      setFieldOrigins({});
       clearDraft();
       if (onBookSaved) onBookSaved();
     } catch (err) {
@@ -944,6 +977,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
               </button>
             ))}
           </div>
+          <div className="editor-origin-legend" aria-label="Origem dos campos preenchidos automaticamente">
+            <span><FieldOriginIcon name="isbn" fieldOrigins={{ isbn: "isbn" }} /> ISBN</span>
+            <span><FieldOriginIcon name="ia" fieldOrigins={{ ia: "ia" }} /> IA</span>
+            <span>Sem ícone: preenchimento manual</span>
+          </div>
           <div className="editor-content" ref={editorContentRef} onScroll={updateActiveSection}>
             {saveErrors.length > 0 && <div className="editor-copies-warning editor-save-errors" role="alert">
               <p><strong>Não foi possível salvar todas as alterações.</strong> {savedParts > 0 ? `${savedParts} parte(s) já foram salvas; ao tentar novamente, somente as pendências serão enviadas.` : "Revise os erros e tente novamente."}</p>
@@ -968,6 +1006,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                     generos={generos}
                     autores={autores}
                     highlightedFields={highlightedFields}
+                    fieldOrigins={fieldOrigins}
                     isbnFilledFields={isbnFilledFields}
                     onFieldChange={handleFieldChange}
                     onUpload={handleUpload}
@@ -989,6 +1028,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                     onFieldChange={handleFieldChange}
                     editoras={editoras}
                     highlightedFields={highlightedFields}
+                    fieldOrigins={fieldOrigins}
                   />
                 </section>
 

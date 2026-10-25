@@ -420,23 +420,37 @@
   border-color: #a78bfa;
 }
 
-.field-autofilled-tag {
+.field-origin-icon {
   display: inline-flex;
   align-items: center;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #a78bfa;
-  background: rgba(167, 139, 250, 0.14);
-  padding: 2px 8px;
-  border-radius: 999px;
-  margin-left: 4px;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  margin-left: 6px;
   vertical-align: middle;
-  animation: field-autofilled-pop 0.25s ease;
+  flex: none;
 }
 
-@keyframes field-autofilled-pop {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
+.field-origin-icon svg { width: 16px; height: 16px; }
+.field-origin-icon--isbn { background: #dbeafe; color: #1d4ed8; }
+.field-origin-icon--ia { background: #f3e8ff; color: #7e22ce; }
+
+.editor-origin-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  padding: 8px 2px 12px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.editor-origin-legend > span { display: inline-flex; align-items: center; gap: 4px; }
+.editor-origin-legend .field-origin-icon { margin-left: 0; }
+
+@media (max-width: 640px) {
+  .editor-origin-legend { font-size: 0.72rem; gap: 6px 12px; }
 }
 
 @keyframes field-autofilled-flash {
