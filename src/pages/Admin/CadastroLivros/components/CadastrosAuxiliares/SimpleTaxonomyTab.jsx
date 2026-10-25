@@ -199,11 +199,11 @@ export default function SimpleTaxonomyTab({
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="taxonomia-toolbar">
           <input
             type="search"
             className="input-pesquisa"
-            style={{ minWidth: 220 }}
+            aria-label={`Buscar ${singular}`}
             placeholder={`Buscar ${singular}...`}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -225,7 +225,7 @@ export default function SimpleTaxonomyTab({
           </thead>
           <tbody>
             {criando && (
-              <tr>
+              <tr className="taxonomia-form-row">
                 <td colSpan={3}>
                   <div className="taxonomia-inline-edit">
                     <input
@@ -277,7 +277,7 @@ export default function SimpleTaxonomyTab({
                 const isEditing = editandoId === item[idField];
                 return (
                   <tr key={item[idField]}>
-                    <td>
+                    <td className="taxonomia-nome">
                       {isEditing ? (
                         <div className="taxonomia-inline-edit">
                           <input
@@ -311,7 +311,7 @@ export default function SimpleTaxonomyTab({
                         item[nomeField]
                       )}
                     </td>
-                    <td className="taxonomia-col-livros">
+                    <td className="taxonomia-col-livros" data-label="Livros">
                       <span
                         className={`taxonomia-badge-livros ${
                           !item.total_livros ? "zero" : ""
@@ -326,6 +326,7 @@ export default function SimpleTaxonomyTab({
                           className="btn-edit"
                           onClick={() => iniciarEdicao(item)}
                           title="Renomear"
+                          aria-label={`Renomear ${item[nomeField]}`}
                           disabled={isEditing}
                         >
                           <Pencil size={16} />
@@ -334,6 +335,7 @@ export default function SimpleTaxonomyTab({
                           className="btn-delete"
                           onClick={() => handleExcluirClick(item)}
                           title="Excluir"
+                          aria-label={`Excluir ${item[nomeField]}`}
                           disabled={verificandoId === item[idField]}
                         >
                           <Trash2 size={16} />
