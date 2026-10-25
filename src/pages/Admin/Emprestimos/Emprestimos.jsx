@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import { useEffect, useMemo, useState } from "react";
 import "./Emprestimos.css";
 
@@ -214,7 +215,7 @@ export default function Emprestimos() {
     <div className="emp-page emp-page--circulacao page-shell">
       <HeaderEmprestimos onNovoEmprestimo={() => setModalAberto(true)} />
 
-      {carregando && <p role="status">Carregando empréstimos e usuários…</p>}
+      {carregando && <Skeleton variant="cards" />}
       {erroCarga && <div role="alert" className="acervo-pendencia">
         <p>{erroCarga} {dadosCarregados && "Os números abaixo são da última atualização concluída."}</p>
         <button type="button" onClick={carregarDados}>Tentar novamente</button>

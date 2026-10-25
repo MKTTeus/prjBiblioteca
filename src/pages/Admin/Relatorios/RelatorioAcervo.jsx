@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import { useEffect, useRef, useState } from "react";
 import { FiDownload, FiFileText, FiBook, FiLayers, FiLoader } from "react-icons/fi";
 
@@ -182,7 +183,7 @@ export default function RelatorioAcervo() {
           <tbody>
             {carregando ? (
               <tr>
-                <td colSpan="8" className="rel-empty">Carregando...</td>
+                <td colSpan="8" className="rel-empty"><Skeleton variant="table" /></td>
               </tr>
             ) : itens.length === 0 ? (
               <tr>
@@ -239,7 +240,7 @@ export default function RelatorioAcervo() {
             <tbody>
               {carregandoTitulos ? (
                 <tr>
-                  <td colSpan="5" className="rel-empty">Carregando...</td>
+                  <td colSpan="5" className="rel-empty"><Skeleton variant="table" /></td>
                 </tr>
               ) : titulos.length === 0 ? (
                 <tr>

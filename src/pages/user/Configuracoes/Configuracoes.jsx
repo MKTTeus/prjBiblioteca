@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import { FiLock, FiUser, FiPhone, FiInfo, FiEye, FiEyeOff } from "react-icons/fi";
 import { IMaskInput } from "react-imask";
@@ -110,7 +111,7 @@ export default function ConfiguracoesUser() {
   if (loading) {
     return (
       <div className="user-page page-shell">
-        <div className="user-config-loading">Carregando perfil...</div>
+        <Skeleton variant="form" />
       </div>
     );
   }

@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from "react";
+import Skeleton from "../../components/Skeleton/Skeleton";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppShell from "../../components/AppShell/AppShell";
 const Biblioteca = lazy(() => import("./Biblioteca/Biblioteca"));
@@ -29,7 +30,7 @@ export default function UserDashboard() {
       activePage={activePage}
       setActivePage={setActivePage}
     >
-      <Suspense fallback={<div className="route-loading" role="status" aria-label="Carregando conteúdo" />}>
+      <Suspense fallback={<Skeleton variant="page" />}>
         <CurrentPage
           onViewAllNotifications={() => setActivePage("notificacoes")}
           onNavigate={setActivePage}

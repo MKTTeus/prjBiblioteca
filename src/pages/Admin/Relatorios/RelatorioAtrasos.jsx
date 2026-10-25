@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { FiDownload, FiFileText, FiAlertTriangle, FiUsers, FiClock, FiLoader } from "react-icons/fi";
 
@@ -229,7 +230,7 @@ export default function RelatorioAtrasos() {
             </thead>
             <tbody>
               {carregando ? (
-                <tr><td colSpan="3" className="rel-empty">Carregando...</td></tr>
+                <tr><td colSpan="3" className="rel-empty"><Skeleton variant="table" /></td></tr>
               ) : ranking.length === 0 ? (
                 <tr><td colSpan="3" className="rel-empty">Nenhum resultado para os filtros informados.</td></tr>
               ) : (
@@ -262,7 +263,7 @@ export default function RelatorioAtrasos() {
             <tbody>
               {carregando ? (
                 <tr>
-                  <td colSpan="8" className="rel-empty">Carregando...</td>
+                  <td colSpan="8" className="rel-empty"><Skeleton variant="table" /></td>
                 </tr>
               ) : itens.length === 0 ? (
                 <tr>

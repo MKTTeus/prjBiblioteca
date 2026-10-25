@@ -1,3 +1,4 @@
+import Skeleton from "../../../../../components/Skeleton/Skeleton";
 import { escapeHtml } from "../../../../../utils/escapeHtml";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -221,8 +222,7 @@ export default function BookInfoModal({ book, onClose }) {
         {/* ── Estados ── */}
         {fichaStatus === "loading" && (
           <div className="ficha-state ficha-state--loading">
-            <span className="ficha-spinner" />
-            Carregando ficha catalográfica...
+            <Skeleton variant="form" />
           </div>
         )}
         {fichaStatus === "generating" && (

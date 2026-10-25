@@ -1,3 +1,4 @@
+import Skeleton from "../../../../../../components/Skeleton/Skeleton";
 import React, { useCallback, useEffect, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
 import { Pencil, Trash2 } from "lucide-react";
@@ -184,7 +185,7 @@ export default function AutoresTab() {
             {loading ? (
               <tr>
                 <td colSpan={5} className="taxonomia-empty">
-                  Carregando...
+                  <Skeleton variant="table" />
                 </td>
               </tr>
             ) : autoresFiltrados.length === 0 ? (

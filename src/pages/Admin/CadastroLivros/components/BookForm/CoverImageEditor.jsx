@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Skeleton from "../../../../../components/Skeleton/Skeleton";
 import { HiOutlineCheck, HiOutlineXMark, HiOutlineArrowsPointingOut } from "react-icons/hi2";
 import "./CoverImageEditor.css";
 
@@ -256,8 +257,7 @@ export default function CoverImageEditor({ file, onCancel, onConfirm }) {
           <div className="cover-editor-error">{erro}</div>
         ) : carregando ? (
           <div className="cover-editor-loading">
-            <span className="isbn-spinner" />
-            <span>Carregando imagem...</span>
+            <Skeleton variant="cards" rows={1} />
           </div>
         ) : (
           <>

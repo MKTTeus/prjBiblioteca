@@ -1,3 +1,4 @@
+import Skeleton from "./components/Skeleton/Skeleton";
 import React, { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./contexts/AuthContext";
@@ -35,7 +36,7 @@ function RoleHomeRedirect() {
   const { user, loadingUser } = useAuth();
 
   if (loadingUser) {
-    return <div>Carregando...</div>;
+    return <Skeleton variant="page" />;
   }
 
   if (!user) {
@@ -57,7 +58,7 @@ function LegacyBibliotecaRedirect() {
   const { user, loadingUser } = useAuth();
 
   if (loadingUser) {
-    return <div>Carregando...</div>;
+    return <Skeleton variant="page" />;
   }
 
   if (!user) {
@@ -73,7 +74,7 @@ function LegacyBibliotecaRedirect() {
 function AdminLayout() {
   return (
     <AppShell sidebarType="admin">
-      <Suspense fallback={<div className="route-loading" role="status" aria-label="Carregando conteúdo" />}>
+      <Suspense fallback={<Skeleton variant="page" />}>
         <Outlet />
       </Suspense>
     </AppShell>
@@ -87,7 +88,7 @@ function App() {
     });
   }, []);
   return (
-    <Suspense fallback={<div className="route-loading" role="status" aria-label="Carregando conteúdo" />}>
+    <Suspense fallback={<Skeleton variant="page" />}>
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/esqueci-senha" element={<EsqueciSenha />} />

@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import {
   FaCheckCircle,
@@ -85,7 +86,7 @@ export default function Notificacoes() {
       <section className="user-section-card">
         <div className="user-notifications-list">
           {isLoading ? (
-            <div className="user-empty-state">Carregando notificações...</div>
+            <Skeleton variant="cards" />
           ) : error ? (
             <div className="user-empty-state">{error}</div>
           ) : notifications.length > 0 ? (

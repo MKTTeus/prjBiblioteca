@@ -1,3 +1,4 @@
+import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import { getEmprestimos } from "../../../services/api";
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
@@ -72,7 +73,7 @@ export default function Emprestimos() {
   const atrasados = loansComStatus.filter((l) => l._statusResolvido === "atrasado");
 
   const renderLoanList = (items, emptyMessage) => {
-    if (isLoading) return <div className="user-empty-state">Carregando empréstimos...</div>;
+    if (isLoading) return <Skeleton variant="cards" />;
     if (error)     return <div className="user-empty-state">{error}</div>;
     if (items.length === 0) return <div className="user-empty-state">{emptyMessage}</div>;
 

@@ -1,3 +1,4 @@
+import Skeleton from "../../../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import { getBooks, deleteBook } from "../../../../../services/api";
 import { useToast } from "../../../../../contexts/ToastContext";
@@ -87,7 +88,7 @@ const BookList = () => {
         cancelText="Cancelar"
       />
       {loading ? (
-        <p>Carregando livros...</p>
+        <Skeleton variant="form" />
       ) : (
         <div className="book-grid">
           {books.map((book) => (
