@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FiDownload, FiFileText, FiBookOpen, FiAlertTriangle, FiCheckCircle, FiLoader,
   FiList, FiBarChart2, FiTrendingUp, FiCalendar,
+  FiChevronDown,
 } from "react-icons/fi";
 
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -37,6 +38,7 @@ function hojeISO() {
 
 export default function RelatorioEmprestimos() {
   const [modoVisualizacao, setModoVisualizacao] = useState("padrao"); // padrao | mensal
+  const [mostrarFiltrosAdicionais, setMostrarFiltrosAdicionais] = useState(false);
 
   const [filtros, setFiltros] = useState({
     dataInicio: primeiroDiaDoMes(),
@@ -371,16 +373,9 @@ export default function RelatorioEmprestimos() {
         </>
       ) : (
       <>
-      <section className="stats-cards-grid" aria-label="Resumo do relatório">
-        <StatsCard title="Total no Período" value={resumo.total} icon={<FiBookOpen />} color="blue" />
-        <StatsCard title="Ativos" value={resumo.ativos} icon={<FiBookOpen />} color="blue" />
-        <StatsCard title="Em Atraso" value={resumo.atrasados} icon={<FiAlertTriangle />} color="red" />
-        <StatsCard title="Devolvidos" value={resumo.devolvidos} icon={<FiCheckCircle />} color="green" />
-      </section>
-
-      <div className="rel-filtros">
+      <div className="rel-filtros rel-emprestimos-filtros">
         <div className="rel-filtro-campo">
-          <label htmlFor="rel-data-inicio">De</label>
+          <label htmlFor="rel-data-inicio">Data inicial</label>
           <input
             id="rel-data-inicio"
             type="date"
@@ -390,7 +385,7 @@ export default function RelatorioEmprestimos() {
         </div>
 
         <div className="rel-filtro-campo">
-          <label htmlFor="rel-data-fim">Até</label>
+          <label htmlFor="rel-data-fim">Data final</label>
           <input
             id="rel-data-fim"
             type="date"
@@ -399,7 +394,7 @@ export default function RelatorioEmprestimos() {
           />
         </div>
 
-        <div className="rel-filtro-campo">
+        <div className="rel-filtro-campo" hidden={!mostrarFiltrosAdicionais}>
           <label htmlFor="rel-ano-letivo">Ano Letivo</label>
           <select
             id="rel-ano-letivo"
@@ -427,7 +422,7 @@ export default function RelatorioEmprestimos() {
         </div>
 
         <div className="rel-filtro-campo">
-          <label htmlFor="rel-tipo-usuario">Usuário</label>
+          <label htmlFor="rel-tipo-usuario">Tipo de usuário</label>
           <select
             id="rel-tipo-usuario"
             value={filtros.tipoUsuario}
@@ -439,7 +434,7 @@ export default function RelatorioEmprestimos() {
           </select>
         </div>
 
-        <div className="rel-filtro-campo">
+        <div className="rel-filtro-campo" hidden={!mostrarFiltrosAdicionais}>
           <label htmlFor="rel-serie">Série</label>
           <select
             id="rel-serie"
@@ -453,7 +448,7 @@ export default function RelatorioEmprestimos() {
           </select>
         </div>
 
-        <div className="rel-filtro-campo">
+        <div className="rel-filtro-campo" hidden={!mostrarFiltrosAdicionais}>
           <label htmlFor="rel-turma">Turma</label>
           <input
             id="rel-turma"
@@ -464,7 +459,7 @@ export default function RelatorioEmprestimos() {
           />
         </div>
 
-        <div className="rel-filtro-campo">
+        <div className="rel-filtro-campo" hidden={!mostrarFiltrosAdicionais}>
           <label>Histórico de leitor</label>
           <BuscaUsuarioInput
             usuarioSelecionado={usuarioSelecionado}
@@ -473,12 +468,12 @@ export default function RelatorioEmprestimos() {
           />
         </div>
 
-        <div className="rel-filtro-campo">
+        <div className="rel-filtro-campo" hidden={!mostrarFiltrosAdicionais}>
           <label htmlFor="rel-busca-livro">Livro ou tombo</label>
           <input id="rel-busca-livro" type="search" value={filtros.q} placeholder="Título, tombo ou ISBN" onChange={e => setFiltros(f => ({...f,q:e.target.value}))} />
         </div>
 
-        <div className="rel-filtro-campo">
+        <div className="rel-filtro-campo" hidden={!mostrarFiltrosAdicionais}>
           <label htmlFor="rel-agrupador">Agrupar por</label>
           <select
             id="rel-agrupador"
@@ -493,10 +488,26 @@ export default function RelatorioEmprestimos() {
           </select>
         </div>
 
+        <div className="rel-emprestimos-acoes">
+        <button type="button" className="rel-avancados-toggle" aria-expanded={mostrarFiltrosAdicionais} onClick={() => setMostrarFiltrosAdicionais((aberto) => !aberto)}>
+          Filtros adicionais <FiChevronDown className={mostrarFiltrosAdicionais ? "rel-chevron-aberto" : ""} />
+        </button>
         <button type="button" className="rel-btn-filtrar" onClick={buscar} disabled={carregando}>
           {carregando ? <FiLoader className="rel-spinner" /> : "Filtrar"}
         </button>
+        <button type="button" className="rel-btn-limpar" onClick={() => {
+          setUsuarioSelecionado(null);
+          setFiltros({ dataInicio: primeiroDiaDoMes(), dataFim: hojeISO(), status: "todos", tipoUsuario: "todos", turma: "", serie: "", anoLetivo: "", idUsuario: "", idAdminProfessor: "", q: "", agrupador: "" });
+        }}>Limpar</button>
+        </div>
       </div>
+
+      <section className="stats-cards-grid rel-emprestimos-resumo" aria-label="Resumo do relatório">
+        <StatsCard title="Total no Período" value={resumo.total} icon={<FiBookOpen />} color="blue" />
+        <StatsCard title="Ativos" value={resumo.ativos} icon={<FiBookOpen />} color="blue" />
+        <StatsCard title="Em Atraso" value={resumo.atrasados} icon={<FiAlertTriangle />} color="red" />
+        <StatsCard title="Devolvidos" value={resumo.devolvidos} icon={<FiCheckCircle />} color="green" />
+      </section>
 
       {erro && <div className="rel-erro">{erro}</div>}
 
@@ -532,7 +543,7 @@ export default function RelatorioEmprestimos() {
           </table>
         </div>
       ) : (
-        <div className="rel-table-box">
+        <div className="rel-table-box rel-emprestimos-tabela">
           <table>
             <thead>
               <tr>
@@ -560,16 +571,16 @@ export default function RelatorioEmprestimos() {
               ) : (
                 itens.map((item) => (
                   <tr key={item.idMovimentacao}>
-                    <td>{item.usuario}</td>
-                    <td>{item.usuarioTipo}</td>
-                    <td>{item.turma || "-"}</td>
-                    <td>{item.titulo}</td>
-                    <td>{item.isbn || "-"}</td>
-                    <td>{item.tombo || "-"}</td>
-                    <td>{formatarData(item.dataEmprestimo)}</td>
-                    <td>{formatarData(item.dataPrevistaDevolucao)}</td>
-                    <td>{formatarData(item.dataDevolucao)}</td>
-                    <td>
+                    <td data-label="Leitor">{item.usuario}</td>
+                    <td data-label="Tipo">{item.usuarioTipo}</td>
+                    <td data-label="Turma">{item.turma || "-"}</td>
+                    <td data-label="Livro">{item.titulo}</td>
+                    <td data-label="ISBN">{item.isbn || "-"}</td>
+                    <td data-label="Tombo">{item.tombo || "-"}</td>
+                    <td data-label="Empréstimo">{formatarData(item.dataEmprestimo)}</td>
+                    <td data-label="Prev. devolução">{formatarData(item.dataPrevistaDevolucao)}</td>
+                    <td data-label="Devolução">{formatarData(item.dataDevolucao)}</td>
+                    <td data-label="Status">
                       <span className={`rel-status rel-status-${item.status}`}>
                         {STATUS_LABEL[item.status] || item.status}
                       </span>
