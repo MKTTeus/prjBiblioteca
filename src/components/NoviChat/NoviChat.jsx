@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { FiBookOpen, FiChevronRight, FiSend, FiTrash2, FiX } from "react-icons/fi";
+import { FiSend, FiX } from "react-icons/fi";
 import { perguntarNovi } from "../../services/api";
 import { useAuth } from "../../contexts/AuthContext";
 import NoviMessage from "./NoviMessage";
@@ -161,19 +161,11 @@ export default function NoviChat() {
               setMensagens([BOAS_VINDAS]);
               setTexto("");
               inputRef.current?.focus();
-            }}><FiTrash2 aria-hidden="true" /> Limpar</button>}
+            }}>Limpar</button>}
           </header>
+          <div className="novi-intro">Vamos encontrar o caminho certo juntos.</div>
           <div className="novi-scroll" aria-live="polite" aria-relevant="additions text">
-            {mensagens.length === 1 ? (
-              <div className="novi-welcome">
-                <span className="novi-welcome-icon" aria-hidden="true"><FiBookOpen /></span>
-                <h2>Oi! Eu sou a Novi 👋</h2>
-                <p>Posso explicar os fluxos da Sala de Leitura e indicar a tela certa.</p>
-                <div className="novi-suggestions" aria-label="Sugestões de perguntas">
-                  {SUGESTOES.map((sugestao) => <button key={sugestao} type="button" onClick={() => enviar(sugestao)}>{sugestao}<FiChevronRight aria-hidden="true" /></button>)}
-                </div>
-              </div>
-            ) : mensagens.map((item, index) => (
+            {mensagens.map((item, index) => (
               <div key={index} className={`novi-message novi-message--${item.papel}`}>
                 <div className="novi-bubble"><NoviMessage texto={item.texto} /></div>
                 {item.destino && (
@@ -186,6 +178,11 @@ export default function NoviChat() {
             {enviando && <div className="novi-message novi-message--novi"><div className="novi-bubble" role="status">Novi está pensando…</div></div>}
             <div ref={fimRef} />
           </div>
+          {mensagens.length === 1 && (
+            <div className="novi-suggestions" aria-label="Sugestões de perguntas">
+              {SUGESTOES.map((sugestao) => <button key={sugestao} type="button" onClick={() => enviar(sugestao)}>{sugestao}</button>)}
+            </div>
+          )}
           <form className="novi-composer" onSubmit={(event) => { event.preventDefault(); enviar(); }}>
             <label htmlFor="novi-input" className="novi-sr-only">Digite sua pergunta para a Novi</label>
             <textarea
@@ -193,7 +190,7 @@ export default function NoviChat() {
               ref={inputRef}
               rows={1}
               maxLength={800}
-              placeholder="Escreva sua pergunta..."
+              placeholder="Digite sua pergunta..."
               value={texto}
               onChange={(event) => setTexto(event.target.value)}
               onKeyDown={(event) => {
@@ -204,7 +201,7 @@ export default function NoviChat() {
             />
             <button type="submit" className="novi-send" aria-label="Enviar pergunta" disabled={!texto.trim() || enviando}><FiSend /></button>
           </form>
-          <p className="novi-privacy">Respostas sobre a Sala de Leitura. Não envie senhas nem dados pessoais.</p>
+          <p className="novi-privacy">Não envie senhas nem dados pessoais. A Novi não executa ações.</p>
         </section>
       )}
       <button
@@ -214,7 +211,7 @@ export default function NoviChat() {
         aria-label={aberto ? "Fechar Novi" : "Abrir chat da Novi"}
         aria-expanded={aberto}
         onClick={() => setAberto((value) => !value)}
-      ><img src="/novi-logo.png" alt="" width="48" height="48" /><span className="novi-sr-only">Novi</span></button>
+      >{aberto ? <FiX /> : <img src="/novi-logo.png" alt="" width="48" height="48" />}<span className="novi-sr-only">Novi</span></button>
     </div>,
     document.body,
   );
