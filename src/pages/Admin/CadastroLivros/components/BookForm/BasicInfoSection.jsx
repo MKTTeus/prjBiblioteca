@@ -11,6 +11,7 @@ import {
 import ISBNScanner from "./ISBNScanner";
 import CoverImageEditor from "./CoverImageEditor";
 import SearchableSelect from "./SearchableSelect";
+import FieldOriginIcon from "./FieldOriginIcon";
 import { completarLivroComIA, fetchCoverFromUrl } from "../../../../../services/api";
 
 function normalizeText(value = "") {
@@ -63,9 +64,8 @@ function fieldClass(name, highlightedFields, base = "editor-field") {
 }
 
 // Selinho "✨ auto" ao lado do rótulo, mesmo critério do fieldClass acima.
-function AutoTag({ name, highlightedFields }) {
-  if (!highlightedFields?.has(name)) return null;
-  return <span className="field-autofilled-tag">✨ auto</span>;
+function AutoTag({ name, fieldOrigins }) {
+  return <FieldOriginIcon name={name} fieldOrigins={fieldOrigins} />;
 }
 
 // O campo de autor guarda uma única string, mas um livro pode ter vários
@@ -297,6 +297,7 @@ export default function BasicInfoSection({
   onCriarGenero,
   onCriarAutor,
   highlightedFields,
+  fieldOrigins,
   isbnFilledFields,
 }) {
   const [novoGenero, setNovoGenero] = useState("");
@@ -853,7 +854,7 @@ export default function BasicInfoSection({
 
           <div className="editor-field-grid basic-column-grid">
             <label className={fieldClass("livTitulo", highlightedFields)}>
-              <span>Título <AutoTag name="livTitulo" highlightedFields={highlightedFields} /></span>
+              <span>Título <AutoTag name="livTitulo" fieldOrigins={fieldOrigins} /></span>
               <input
                 name="livTitulo"
                 value={form.livTitulo}
@@ -865,7 +866,7 @@ export default function BasicInfoSection({
 
              {/* ISBN com scanner e busca */}
             <div className={fieldClass("exemplarISBN", highlightedFields)}>
-              <span>ISBN <AutoTag name="exemplarISBN" highlightedFields={highlightedFields} /></span>
+              <span>ISBN <AutoTag name="exemplarISBN" fieldOrigins={fieldOrigins} /></span>
               <div className="isbn-input-row">
                 <input
                   ref={isbnInputRef}
@@ -942,7 +943,7 @@ export default function BasicInfoSection({
 
             {/* AUTOR */}
             <div className={fieldClass("livAutor", highlightedFields)}>
-              <span>Autor <AutoTag name="livAutor" highlightedFields={highlightedFields} /></span>
+              <span>Autor <AutoTag name="livAutor" fieldOrigins={fieldOrigins} /></span>
               {criandoAutor ? (
                 <div className="inline-create-row">
                   <input
@@ -987,7 +988,7 @@ export default function BasicInfoSection({
                   Quando há mais de um autor, referem-se só ao primeiro da lista. */}
               <div className="editor-field-grid" style={{ marginTop: "8px", gridTemplateColumns: "1fr 1fr" }}>
                 <label className={fieldClass("autorAnoNascimento", highlightedFields)}>
-                  <span>Ano de nascimento <AutoTag name="autorAnoNascimento" highlightedFields={highlightedFields} /></span>
+                  <span>Ano de nascimento <AutoTag name="autorAnoNascimento" fieldOrigins={fieldOrigins} /></span>
                   <input
                     type="number"
                     name="autorAnoNascimento"
@@ -998,7 +999,7 @@ export default function BasicInfoSection({
                 </label>
                 {mostrarFalecimento ? (
                   <label className={fieldClass("autorAnoFalecimento", highlightedFields)}>
-                    <span>Ano de falecimento <AutoTag name="autorAnoFalecimento" highlightedFields={highlightedFields} /></span>
+                    <span>Ano de falecimento <AutoTag name="autorAnoFalecimento" fieldOrigins={fieldOrigins} /></span>
                     <div className="inline-select-row">
                       <input
                         type="number"
@@ -1050,7 +1051,7 @@ export default function BasicInfoSection({
 
           {/* GÊNERO */}
           <div className={fieldClass("idGenero", highlightedFields)}>
-            <span>Gênero <AutoTag name="idGenero" highlightedFields={highlightedFields} /></span>
+            <span>Gênero <AutoTag name="idGenero" fieldOrigins={fieldOrigins} /></span>
             {criandoGenero ? (
               <div className="inline-create-row">
                 <input
@@ -1089,7 +1090,7 @@ export default function BasicInfoSection({
           </div>
 
           <label className={fieldClass("livDescricao", highlightedFields)} style={{ marginTop: "12px" }}>
-            <span>Descrição <AutoTag name="livDescricao" highlightedFields={highlightedFields} /></span>
+            <span>Descrição <AutoTag name="livDescricao" fieldOrigins={fieldOrigins} /></span>
             <textarea
               name="livDescricao"
               value={form.livDescricao}
@@ -1144,7 +1145,7 @@ export default function BasicInfoSection({
             </div>
 
             <label className={fieldClass("livCapaURL", highlightedFields)}>
-              <span>URL da capa <AutoTag name="livCapaURL" highlightedFields={highlightedFields} /></span>
+              <span>URL da capa <AutoTag name="livCapaURL" fieldOrigins={fieldOrigins} /></span>
               <div className="cover-url-row">
                 <input
                   name="livCapaURL"
