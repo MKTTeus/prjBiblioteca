@@ -23,7 +23,7 @@ function FiltroBusca({ filters, onFilter }) {
   }
 
   return (
-    <div className="filtro-container">
+    <div className="filtro-container acervo-filtro-panel">
       <div className="filtro-header">
         <div className="filtro-titulo">
           <FiFilter className="icone-filtro" />
@@ -39,13 +39,14 @@ function FiltroBusca({ filters, onFilter }) {
         </button>
       </div>
 
-      <div className="filtros">
+      <div className="filtros acervo-filtros-grid">
         <div className={`campo ${filters.q ? "is-active" : ""}`}>
-          <label>Buscar</label>
+          <label htmlFor="acervo-busca">Buscar</label>
 
           <div className="input-icon">
             <FiSearch className="campo-icone" />
             <input
+              id="acervo-busca"
               value={filters.q}
               onChange={(e) => updateField("q", e.target.value)}
               type="text"
