@@ -313,7 +313,7 @@ export default function BookCard({
           <div className="book-description-modal__admin-layout">
             <div className="book-description-modal__cover">
               <img src={capa} alt={`Capa de ${titulo}`} onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.png"; }} />
-              <button type="button" onClick={() => setMostrarCapa(true)}>
+              <button type="button" onClick={() => { setMostrarDescricao(false); setMostrarCapa(true); }}>
                 <HiOutlineArrowsExpand aria-hidden="true" /> Abrir capa
               </button>
             </div>
