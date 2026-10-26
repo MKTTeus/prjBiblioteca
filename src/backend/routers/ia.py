@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -129,6 +130,40 @@ EXTRA_PROPERTIES = {
     "isbn_sugerido": {"type": "string", "description": "ISBN desta edição exata; omita se não souber com segurança."},
 }
 
+# Nomes próprios e títulos oficiais podem permanecer no idioma original da obra.
+# Os demais textos criados pela IA devem ser apresentados em português.
+CAMPOS_TEXTO_PT = {"subtitulo", "descricao", "genero_sugerido", "palavras_chave", "faixa_etaria", "idioma", "editora_pais"}
+PALAVRAS_INGLESAS = {
+    "the", "and", "with", "from", "this", "that", "these", "those", "their",
+    "which", "while", "when", "where", "who", "whose", "about", "through",
+    "between", "after", "before", "becomes", "finds", "discovers", "must",
+    "her", "his", "she", "they", "them", "are", "was", "were", "has", "have",
+}
+TERMOS_INGLES_ISOLADOS = {
+    "fantasy", "thriller", "adventure", "fiction", "romance novel", "young adult",
+    "children", "english", "spanish", "french", "science fiction", "mystery",
+    "historical fiction", "coming of age", "self help", "nonfiction",
+    "love", "friendship", "family", "magic", "history", "science", "travel",
+    "education", "nature", "childhood", "biography", "poetry",
+}
+
+
+def _texto_em_ingles(valor):
+    if isinstance(valor, list):
+        return any(_texto_em_ingles(item) for item in valor)
+    if not isinstance(valor, str):
+        return False
+    texto = valor.casefold().strip()
+    if texto in TERMOS_INGLES_ISOLADOS:
+        return True
+    palavras = re.findall(r"[a-z]+", texto)
+    indicadores = sum(palavra in PALAVRAS_INGLESAS for palavra in palavras)
+    return indicadores >= 2 or (len(palavras) >= 8 and indicadores >= 1)
+
+
+def _campos_em_ingles(resultado):
+    return [campo for campo in CAMPOS_TEXTO_PT if campo in resultado and _texto_em_ingles(resultado[campo])]
+
 
 def _get_client():
     if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
@@ -179,6 +214,12 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
         "Com base nos dados conhecidos abaixo, preencha os campos que faltam para o cadastro do livro.\n\n"
         f"Dados conhecidos:\n{bloco_conhecidos}{bloco_opcoes}\n{instrucao_alvo}\n"
         "Regras importantes:\n"
+        "- Escreva TODOS os textos gerados em português brasileiro, mesmo que a obra, os dados de entrada "
+        "ou a fonte consultada estejam em inglês. Traduza sinopse, subtítulo sugerido, gênero, palavras-chave, "
+        "faixa etária, nome do idioma e país. Nunca devolva uma sinopse ou palavras-chave em inglês. "
+        "Preserve apenas títulos oficiais, nomes de pessoas, editoras, URLs, ISBNs e outros identificadores "
+        "próprios no idioma original. O campo idioma indica o idioma da obra, mas seu valor deve ser escrito "
+        "em português (por exemplo, 'Inglês').\n"
         "- Se você reconhece esta obra com segurança, preencha os dados factuais (autor, editora, ano, páginas) "
         "com os valores reais.\n"
         "- Se você NÃO tem certeza de um dado factual específico (ano exato, número de páginas, editora exata), "
@@ -221,6 +262,15 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
             },
         }
 
+    config = types.GenerateContentConfig(
+        response_mime_type="application/json",
+        response_json_schema=schema,
+        system_instruction=(
+            "Responda em português brasileiro em todos os textos que você gerar. "
+            "Preserve nomes próprios, títulos oficiais e identificadores no idioma original."
+        ),
+    )
+
     try:
         resposta = generate_content_with_fallback(
             client,
@@ -228,10 +278,7 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
             fallback_model=FALLBACK_MODEL,
             primary_provider=PRIMARY_PROVIDER,
             contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_json_schema=schema,
-            ),
+            config=config,
         )
     except Exception as exc:
         print("Falha no provedor de IA ao completar cadastro do livro:", type(exc).__name__)
@@ -242,7 +289,38 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
 
     try:
         resultado = json.loads(resposta.text)
-        return {alvo: resultado[alvo]} if alvo and alvo in resultado else ({} if alvo else resultado)
     except json.JSONDecodeError:
         print("Resposta da IA não é JSON válido:", resposta.text)
         raise HTTPException(status_code=502, detail="A IA retornou um formato inesperado.")
+
+    if not isinstance(resultado, dict):
+        raise HTTPException(status_code=502, detail="A IA retornou um formato inesperado.")
+
+    campos_ingles = _campos_em_ingles(resultado)
+    if campos_ingles:
+        try:
+            correcao = generate_content_with_fallback(
+                client,
+                model=MODEL,
+                fallback_model=FALLBACK_MODEL,
+                primary_provider=PRIMARY_PROVIDER,
+                contents=(
+                    "Corrija somente os campos textuais abaixo para português brasileiro. "
+                    "Mantenha todos os dados factuais, títulos oficiais e nomes próprios iguais. "
+                    "Devolva JSON conforme o mesmo schema, sem explicações.\n"
+                    f"Campos a corrigir: {', '.join(campos_ingles)}\n"
+                    f"Resposta anterior: {json.dumps(resultado, ensure_ascii=False)}"
+                ),
+                config=config,
+            )
+            corrigido = json.loads(correcao.text or "")
+            if isinstance(corrigido, dict):
+                for campo in campos_ingles:
+                    if campo in corrigido and not _texto_em_ingles(corrigido[campo]):
+                        resultado[campo] = corrigido[campo]
+        except Exception as exc:
+            print("Não foi possível corrigir o idioma da sugestão:", type(exc).__name__)
+        for campo in _campos_em_ingles(resultado):
+            resultado.pop(campo, None)
+
+    return {alvo: resultado[alvo]} if alvo and alvo in resultado else ({} if alvo else resultado)
