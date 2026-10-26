@@ -23,7 +23,8 @@ import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
 import ConfirmExitModal from "../../../../../components/ConfirmExitModal/ConfirmExitModal";
 import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
-import FieldOriginIcon from "./FieldOriginIcon";
+import FieldOriginIcon, { FIELD_LABELS } from "./FieldOriginIcon";
+import FieldSuggestionModal from "./FieldSuggestionModal";
 import "./BookFormModal.css";
 
 function normalizeText(value = "") {
@@ -1147,20 +1148,14 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
         onCancel={() => setConfirmandoSaida(false)}
       />
 
-      <ConfirmModal
-        show={Boolean(fieldSuggestion)}
-        title="Nova sugestão para este campo"
-        message={fieldSuggestion && (
-          <div className="field-suggestion-preview">
-            <p>Valor atual: <strong>{String(form[fieldSuggestion.campo] ?? "") || "Em branco"}</strong></p>
-            <p>Sugestão: <strong>{Array.isArray(fieldSuggestion.value) ? fieldSuggestion.value.join(", ") : String(fieldSuggestion.value)}</strong></p>
-            <small>Apenas este campo será alterado. Revise o dado antes de aplicar.</small>
-          </div>
-        )}
-        onConfirm={applyFieldSuggestion}
-        onCancel={() => setFieldSuggestion(null)}
-        confirmText="Aplicar sugestão"
-        cancelText="Manter atual"
+      <FieldSuggestionModal
+        suggestion={fieldSuggestion}
+        fieldLabel={fieldSuggestion && FIELD_LABELS[fieldSuggestion.campo]}
+        currentValue={fieldSuggestion?.campo === "idGenero"
+          ? generos.find((item) => String(item.idGenero) === String(form.idGenero))?.genNome
+          : fieldSuggestion && form[fieldSuggestion.campo]}
+        onApply={applyFieldSuggestion}
+        onClose={() => setFieldSuggestion(null)}
       />
 
       <ConfirmModal

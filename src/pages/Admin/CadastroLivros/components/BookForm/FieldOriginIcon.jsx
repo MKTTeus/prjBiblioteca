@@ -3,7 +3,7 @@ import { LuBarcode } from "react-icons/lu";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 
-const FIELD_LABELS = {
+export const FIELD_LABELS = {
   livTitulo: "título", exemplarISBN: "ISBN", livAutor: "autor", autorAnoNascimento: "ano de nascimento",
   autorAnoFalecimento: "ano de falecimento", idGenero: "gênero", livDescricao: "descrição",
   livCapaURL: "URL da capa", livEditora: "editora", ediCidade: "cidade da editora",
