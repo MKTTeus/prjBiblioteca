@@ -558,3 +558,63 @@
   font-size: 12px;
   line-height: 1.5;
 }
+
+/* Prévia de capa utilizada apenas nos cartões administrativos. */
+.book-cover-modal.modal-content {
+  width:min(570px,calc(100vw - 36px));max-height:92dvh;
+  border-radius:18px;padding:22px;display:flex;align-items:center;justify-content:center;
+  background:var(--surface-bg);overflow:hidden;
+}
+.modal-overlay:has(.book-cover-modal) {z-index:10070;padding:16px;box-sizing:border-box;}
+.book-cover-modal .close-btn {
+  top:10px;right:12px;z-index:3;color:var(--text-default);
+  background:var(--surface-muted);border:1px solid var(--surface-border);
+  width:34px;height:34px;border-radius:50%;
+}
+.book-cover-modal__figure {margin:0;display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;}
+.book-cover-modal__figure img {
+  display:block;width:auto;max-width:100%;height:auto;max-height:calc(92dvh - 105px);
+  object-fit:contain;border-radius:7px;
+}
+.book-cover-modal__figure figcaption {text-align:center;color:var(--text-soft);font-size:13px;}
+/* Descrição ampliada somente no catálogo administrativo; demais perfis mantêm o modal original. */
+.book-description-modal--admin.modal-content {
+  width:min(850px,calc(100vw - 32px));max-height:90dvh;
+  padding:30px;border-radius:20px;border:1px solid var(--surface-border);
+  background:var(--surface-bg);box-shadow:0 28px 70px rgba(15,23,42,.24);
+}
+.book-description-modal--admin .close-btn {
+  top:14px;right:15px;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--surface-border);background:var(--surface-muted);color:var(--text-default);
+}
+.book-description-modal__admin-layout {
+  display:grid;grid-template-columns:minmax(160px,260px) minmax(0,1fr);
+  gap:28px;min-height:0;overflow:auto;
+}
+.book-description-modal__cover {position:relative;align-self:start;}
+.book-description-modal__cover img {
+  width:100%;max-height:540px;object-fit:contain;display:block;
+  background:var(--surface-muted);border:1px solid var(--surface-border);border-radius:12px;
+}
+.book-description-modal__cover button {
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 13px;white-space:nowrap;border:1px solid rgba(255,255,255,.35);
+  border-radius:10px;background:rgba(15,23,42,.83);color:white;cursor:pointer;
+}
+.book-description-modal__admin-info {min-width:0;overflow:auto;padding:10px 6px 10px 0;}
+.book-description-modal__admin-info h3 {margin:0 40px 8px 0;font-size:clamp(22px,2.6vw,30px);color:var(--text-default);}
+.book-description-modal__admin-info .book-description-modal__author {font-size:17px;}
+.book-description-modal__admin-info .book-description-modal__meta {font-size:14px;margin:14px 0 10px;}
+.book-description-modal__admin-info .book-description-modal__tags span {font-size:12px;}
+.book-description-modal__admin-info h4 {margin:0 0 12px;font-size:17px;color:var(--text-default);}
+.book-description-modal__admin-info .book-description-modal__divider {margin:22px 0;}
+.book-description-modal__admin-info .book-description-modal__body {overflow:visible;}
+.book-description-modal__admin-info .book-description-modal__text {font-size:15px;line-height:1.8;}
+@media (max-width:600px) {
+  .book-description-modal--admin.modal-content {padding:48px 16px 18px;}
+  .book-description-modal__admin-layout {grid-template-columns:minmax(0,1fr);gap:16px;}
+  .book-description-modal__cover {width:min(210px,70%);justify-self:center;}
+  .book-description-modal__cover img {max-height:270px;}
+  .book-description-modal__admin-info {padding:0;}
+}
