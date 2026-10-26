@@ -247,3 +247,76 @@
 .emp-btn-expirar:hover:not(:disabled) {
   background: #fef2f2 !important;
 }
+
+/* Padrão visual de Empréstimos e Devoluções, aplicado somente a Solicitações. */
+.solicitacoes-page .emp-filter-tab.is-active,
+.solicitacoes-page .emp-filter-tab.is-active:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(15, 85, 220, 0.16);
+}
+
+.solicitacoes-page .emp-filter-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.solicitacoes-page .stats-card-icon.blue {
+  background: var(--accent-blue, #0866ff);
+}
+
+.solicitacoes-page .stats-card-icon.orange {
+  background: var(--accent-orange, #ff7714);
+}
+
+.solicitacoes-page .stats-card-icon.purple {
+  background: #8b5cf6;
+}
+
+.solicitacoes-page .stats-card-icon.green {
+  background: var(--accent-green, #0bb26c);
+}
+
+.solicitacoes-page .stats-card-icon.red {
+  background: var(--accent-red, #fa2548);
+}
+
+.solicitacoes-page .stats-card-icon.gray {
+  background: #8792a5;
+}
+
+.solicitacoes-page .stats-card-icon {
+  color: #fff;
+}
+
+@media (max-width: 700px) {
+  .solicitacoes-page .stats-cards-grid.stats-cards-grid-admin {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .solicitacoes-page .stats-card {
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .solicitacoes-page .stats-card-header {
+    align-items: flex-start;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .solicitacoes-page .stats-card-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .solicitacoes-page .stats-card h2 {
+    font-size: 23px;
+  }
+
+  .solicitacoes-page .stats-card small {
+    font-size: 11px;
+  }
+}
