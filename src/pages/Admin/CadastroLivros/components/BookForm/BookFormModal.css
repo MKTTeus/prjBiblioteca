@@ -439,6 +439,7 @@
 .editor-origin-legend {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 8px 18px;
   padding: 3px 2px 7px;
@@ -474,12 +475,59 @@
 .field-regenerate-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .field-regenerate-button.is-loading svg { animation: field-origin-spin 1s linear infinite; }
 @keyframes field-origin-spin { to { transform: rotate(360deg); } }
-.field-suggestion-preview strong { overflow-wrap: anywhere; }
-.field-suggestion-preview small { color: var(--text-muted); }
+.field-suggestion-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(4px);
+}
+.field-suggestion-card {
+  width: min(680px, 100%);
+  max-height: min(780px, calc(100dvh - 32px));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--surface-bg);
+  color: var(--text-default);
+  box-shadow: var(--shadow-card);
+}
+.field-suggestion-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 28px 18px;
+  border-bottom: 1px solid var(--surface-border);
+}
+.field-suggestion-eyebrow { color: var(--primary); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.field-suggestion-header h2 { margin: 5px 0 7px; font-size: 1.35rem; line-height: 1.25; }
+.field-suggestion-header p { margin: 0; color: var(--text-muted); font-size: .88rem; line-height: 1.45; }
+.field-suggestion-close { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--surface-border); background: var(--surface-muted); color: var(--text-default); font-size: 1.3rem; cursor: pointer; }
+.field-suggestion-content { min-height: 0; overflow-y: auto; padding: 20px 28px; display: grid; gap: 14px; }
+.field-suggestion-panel { min-height: 0; padding: 16px; border: 1px solid var(--surface-border); border-radius: 14px; background: var(--surface-muted); }
+.field-suggestion-new { background: var(--surface-bg); border-color: var(--primary); }
+.field-suggestion-panel h3 { margin: 0 0 10px; font-size: .85rem; color: var(--text-muted); }
+.field-suggestion-new h3 { color: var(--primary); }
+.field-suggestion-value { max-height: min(30dvh, 240px); overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .94rem; font-weight: 500; line-height: 1.55; }
+.field-suggestion-current .field-suggestion-value { max-height: min(18dvh, 130px); }
+.field-suggestion-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 16px 28px 22px; border-top: 1px solid var(--surface-border); }
+.field-suggestion-actions button { min-height: 42px; padding: 0 18px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+.field-suggestion-cancel { border: 1px solid var(--input-border); background: var(--surface-bg); color: var(--text-default); }
+.field-suggestion-apply { border: 1px solid var(--primary); background: var(--primary); color: #fff; }
+.field-suggestion-actions button:focus-visible, .field-suggestion-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 @media (max-width: 640px) {
   .editor-origin-legend { font-size: 0.72rem; gap: 6px 12px; }
   .field-regenerate-button { opacity: .75; }
+  .field-suggestion-header { padding: 18px 18px 14px; }
+  .field-suggestion-content { padding: 16px 18px; }
+  .field-suggestion-actions { padding: 14px 18px 18px; }
+  .field-suggestion-actions button { flex: 1; }
 }
 
 @keyframes field-autofilled-flash {
