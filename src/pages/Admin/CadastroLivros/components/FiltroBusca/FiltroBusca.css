@@ -214,3 +214,42 @@
  .cadastro .filtros {grid-template-columns:1fr;gap:12px;}
  .cadastro .filtros .campo:first-child {grid-column:auto;}
 }
+
+/* Escopo exclusivo: evita conflitos com estilos globais de .filtros e .campo. */
+.admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 16px;
+  width: 100%;
+  align-items: end;
+}
+.admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid > .campo {
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid > .campo:first-child {
+  grid-column: 1 / -1;
+}
+.admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid input,
+.admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid select,
+.admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid .SelectTrigger {
+  max-width: 100%;
+}
+@media (max-width: 1000px) {
+  .admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-shell .cadastro .acervo-filtro-panel .acervo-filtros-grid > .campo:first-child {
+    grid-column: 1;
+  }
+  .admin-shell .cadastro .acervo-filtro-panel .filtro-header {
+    flex-wrap: wrap;
+  }
+}
