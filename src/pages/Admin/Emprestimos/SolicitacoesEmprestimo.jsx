@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiList, FiClock, FiCheckCircle, FiAlertTriangle } from "react-icons/fi";
+import { FiAlertTriangle } from "react-icons/fi";
+import { FaClipboardList, FaClock, FaBoxOpen, FaCheckCircle, FaTimesCircle, FaCalendarTimes } from "react-icons/fa";
 import "./SolicitacoesEmprestimo.css";
 import HeaderEmprestimos from "./components/HeaderEmprestimos";
 import StatsCard from "../../../components/StatsCard/StatsCard";
@@ -187,28 +188,28 @@ export default function SolicitacoesEmprestimo() {
         titulo: "Solicitações",
         valor: metricas.total,
         cor: "blue",
-        icone: <FiList size={18} />,
+        icone: <FaClipboardList />,
       },
       {
         chave: "pendentes",
         titulo: "Aguardando Resposta",
         valor: metricas.pendentes,
         cor: "orange",
-        icone: <FiClock size={18} />,
+        icone: <FaClock />,
       },
       {
         chave: "confirmadas",
         titulo: "Aguardando Retirada",
         valor: metricas.confirmadas,
         cor: "purple",
-        icone: <FiAlertTriangle size={18} />,
+        icone: <FaBoxOpen />,
       },
       {
         chave: "aceitas",
         titulo: "Aprovadas",
         valor: metricas.aceitas,
         cor: "green",
-        icone: <FiCheckCircle size={18} />,
+        icone: <FaCheckCircle />,
       },
       {
         chave: "negados",
@@ -222,7 +223,7 @@ export default function SolicitacoesEmprestimo() {
         titulo: "Expiradas",
         valor: metricas.expirados,
         cor: "gray",
-        icone: <FiAlertTriangle size={18} />,
+        icone: <FaCalendarTimes />,
       },
     ],
     [metricas]
