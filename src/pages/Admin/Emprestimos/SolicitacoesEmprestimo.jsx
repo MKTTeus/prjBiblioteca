@@ -216,7 +216,7 @@ export default function SolicitacoesEmprestimo() {
         titulo: "Negadas",
         valor: metricas.negados,
         cor: "red",
-        icone: <FiClock size={18} />,
+        icone: <FaTimesCircle />,
       },
       {
         chave: "expirados",
