@@ -1079,3 +1079,16 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+
+/* Indicadores padronizados nas telas de empréstimos e solicitações.
+   Mantém dimensões e tipografia do componente StatsCard compartilhado. */
+.emp-page .stats-card-icon {
+  color: #fff;
+}
+.emp-page .stats-card-icon.blue { background: #0866ff; }
+.emp-page .stats-card-icon.red { background: #fa2548; }
+.emp-page .stats-card-icon.green { background: #0bb26c; }
+.emp-page .stats-card-icon.orange { background: #ff7714; }
+.emp-page .stats-card-icon.purple { background: #8b5cf6; }
+.emp-page .stats-card-icon.gray { background: #8792a5; }
