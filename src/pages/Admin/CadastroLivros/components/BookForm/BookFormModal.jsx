@@ -11,6 +11,7 @@ import {
   updateExemplar,
   uploadCover,
   createGenero,
+  completarLivroComIA,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX, HiOutlineBookOpen, HiOutlineOfficeBuilding, HiOutlineClipboardList } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
@@ -136,6 +137,18 @@ const PUBLICATION_FIELD_KEYS = new Set([
   "ediEstado",
   "ediPais",
 ]);
+
+const AI_FIELD_KEYS = {
+  livTitulo: "titulo", livSubtitulo: "subtitulo", livAutor: "autor_principal",
+  autorAnoNascimento: "autor_ano_nascimento", autorAnoFalecimento: "autor_ano_falecimento",
+  livEditora: "editora", livAnoPublicacao: "ano_publicacao", livPaginas: "paginas",
+  livDescricao: "descricao", idGenero: "genero_sugerido", livIdioma: "idioma",
+  livFaixaEtaria: "faixa_etaria", livPalavrasChave: "palavras_chave",
+  livEdicao: "edicao", livIlustrado: "ilustrado", ediCidade: "editora_cidade",
+  ediEstado: "editora_estado", ediPais: "editora_pais", livCDD: "cdd",
+  livAlturaCm: "altura_cm", livLarguraCm: "largura_cm", livCapaURL: "url_capa",
+  exemplarISBN: "isbn_sugerido",
+};
 
 const DEFAULT_FORM = {
   livTitulo: "",
@@ -288,6 +301,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   const [highlightedFields, setHighlightedFields] = useState(() => new Set());
   // Apenas memória do modal: a origem nunca entra no form enviado ao backend.
   const [fieldOrigins, setFieldOrigins] = useState({});
+  const [regeneratingField, setRegeneratingField] = useState(null);
+  const [fieldSuggestion, setFieldSuggestion] = useState(null);
   // Diferente do highlightedFields acima (que é só o "brilho" visual e some
   // sozinho depois de alguns segundos), este aqui não expira — serve para o
   // painel de sugestões da IA saber, a qualquer momento, quais campos já
@@ -596,6 +611,60 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     }));
     setIsbnFilledFields((prev) => new Set([...prev].filter((campo) => !Object.hasOwn(atualizacoes, campo))));
     marcarCamposPreenchidosAutomaticamente(entradas.map(([campo]) => campo));
+  }
+
+  async function regenerateField(campo) {
+    if (regeneratingField || !AI_FIELD_KEYS[campo]) return;
+    if (!form.exemplarISBN && !form.livTitulo && !form.livAutor) {
+      addToast("Informe ISBN, título ou autor para gerar uma sugestão.", "error");
+      return;
+    }
+    setRegeneratingField(campo);
+    setFieldSuggestion(null);
+    try {
+      const genero = generos.find((item) => String(item.idGenero) === String(form.idGenero));
+      const result = await completarLivroComIA({
+        campo_alvo: campo,
+        valor_atual: String(form[campo] ?? ""),
+        isbn: form.exemplarISBN || undefined,
+        livTitulo: form.livTitulo || undefined,
+        livAutor: form.livAutor || undefined,
+        livEditora: form.livEditora || undefined,
+        livAnoPublicacao: Number(form.livAnoPublicacao) || undefined,
+        livPaginas: Number(form.livPaginas) || undefined,
+        livDescricao: form.livDescricao || undefined,
+        generoNome: genero?.genNome,
+        generos_existentes: generos.map((item) => item.genNome),
+      });
+      const value = result?.[AI_FIELD_KEYS[campo]];
+      if (value === undefined || value === null || value === "" || (Array.isArray(value) && !value.length)) {
+        addToast("A IA não encontrou uma sugestão segura para este campo.", "info");
+        return;
+      }
+      setFieldSuggestion({ campo, value });
+    } catch (err) {
+      addToast(err?.data?.detail || "Não foi possível gerar uma sugestão agora.", "error");
+    } finally {
+      setRegeneratingField(null);
+    }
+  }
+
+  async function applyFieldSuggestion() {
+    if (!fieldSuggestion) return;
+    const { campo, value } = fieldSuggestion;
+    let normalized = Array.isArray(value) ? value.join(", ") : value;
+    if (campo === "idGenero") {
+      const existing = generos.find((item) => normalizeText(item.genNome) === normalizeText(value));
+      const item = existing || await handleCriarGenero(String(value));
+      if (!item) return;
+      normalized = item.idGenero;
+    }
+    if (campo === "livFaixaEtaria" && !["Infantil", "Juvenil", "Adulto", "Livre"].includes(normalized)) {
+      addToast("A sugestão de faixa etária não corresponde às opções do cadastro.", "error");
+      return;
+    }
+    handleCamposAutoFillIA({ [campo]: normalized });
+    setFieldSuggestion(null);
   }
 
   // Recebe o arquivo já ajustado (giro/redimensionamento) pelo
@@ -980,7 +1049,6 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
           <div className="editor-origin-legend" aria-label="Origem dos campos preenchidos automaticamente">
             <span><FieldOriginIcon name="isbn" fieldOrigins={{ isbn: "isbn" }} /> ISBN</span>
             <span><FieldOriginIcon name="ia" fieldOrigins={{ ia: "ia" }} /> IA</span>
-            <span>Sem ícone: preenchimento manual</span>
           </div>
           <div className="editor-content" ref={editorContentRef} onScroll={updateActiveSection}>
             {saveErrors.length > 0 && <div className="editor-copies-warning editor-save-errors" role="alert">
@@ -1007,6 +1075,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                     autores={autores}
                     highlightedFields={highlightedFields}
                     fieldOrigins={fieldOrigins}
+                    onRegenerate={regenerateField}
+                    regeneratingField={regeneratingField}
                     isbnFilledFields={isbnFilledFields}
                     onFieldChange={handleFieldChange}
                     onUpload={handleUpload}
@@ -1029,6 +1099,8 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                     editoras={editoras}
                     highlightedFields={highlightedFields}
                     fieldOrigins={fieldOrigins}
+                    onRegenerate={regenerateField}
+                    regeneratingField={regeneratingField}
                   />
                 </section>
 
@@ -1073,6 +1145,22 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
         show={confirmandoSaida}
         onConfirm={confirmarSaida}
         onCancel={() => setConfirmandoSaida(false)}
+      />
+
+      <ConfirmModal
+        show={Boolean(fieldSuggestion)}
+        title="Nova sugestão para este campo"
+        message={fieldSuggestion && (
+          <div className="field-suggestion-preview">
+            <p>Valor atual: <strong>{String(form[fieldSuggestion.campo] ?? "") || "Em branco"}</strong></p>
+            <p>Sugestão: <strong>{Array.isArray(fieldSuggestion.value) ? fieldSuggestion.value.join(", ") : String(fieldSuggestion.value)}</strong></p>
+            <small>Apenas este campo será alterado. Revise o dado antes de aplicar.</small>
+          </div>
+        )}
+        onConfirm={applyFieldSuggestion}
+        onCancel={() => setFieldSuggestion(null)}
+        confirmText="Aplicar sugestão"
+        cancelText="Manter atual"
       />
 
       <ConfirmModal

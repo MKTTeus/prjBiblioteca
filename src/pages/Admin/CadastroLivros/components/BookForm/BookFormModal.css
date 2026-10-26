@@ -433,24 +433,53 @@
 }
 
 .field-origin-icon svg { width: 16px; height: 16px; }
-.field-origin-icon--isbn { background: #dbeafe; color: #1d4ed8; }
-.field-origin-icon--ia { background: #f3e8ff; color: #7e22ce; }
+.editor-field .field-origin-icon--isbn, .field-origin-icon--isbn { background: #dbeafe; color: #1d4ed8; }
+.editor-field .field-origin-icon--ia, .field-origin-icon--ia { background: #f3e8ff; color: #7e22ce; }
 
 .editor-origin-legend {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px 18px;
-  padding: 8px 2px 12px;
+  padding: 3px 2px 7px;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  opacity: .78;
 }
 
 .editor-origin-legend > span { display: inline-flex; align-items: center; gap: 4px; }
 .editor-origin-legend .field-origin-icon { margin-left: 0; }
 
+.field-regenerate-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  margin-left: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  opacity: .32;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.field-regenerate-button svg { width: 16px; height: 16px; }
+.editor-field:hover .field-regenerate-button,
+.editor-field:focus-within .field-regenerate-button,
+.field-regenerate-button:hover,
+.field-regenerate-button:focus-visible { opacity: 1; background: var(--main-bg); color: var(--primary); }
+.field-regenerate-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.field-regenerate-button.is-loading svg { animation: field-origin-spin 1s linear infinite; }
+@keyframes field-origin-spin { to { transform: rotate(360deg); } }
+.field-suggestion-preview strong { overflow-wrap: anywhere; }
+.field-suggestion-preview small { color: var(--text-muted); }
+
 @media (max-width: 640px) {
   .editor-origin-legend { font-size: 0.72rem; gap: 6px 12px; }
+  .field-regenerate-button { opacity: .75; }
 }
 
 @keyframes field-autofilled-flash {
