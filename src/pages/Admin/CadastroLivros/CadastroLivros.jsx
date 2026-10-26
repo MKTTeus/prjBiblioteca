@@ -253,16 +253,6 @@ export default function CadastroLivros() {
 
       {booksLoaded && <FiltroBusca filters={filters} onFilter={setFilters} />}
 
-      {booksLoaded && <div className="catalog-header">
-        <h2>
-          Catálogo de Livros{" "}
-          <span className="catalog-count">
-            ({filteredBooks.length}{" "}
-            {filteredBooks.length === 1 ? "livro encontrado" : "livros encontrados"})
-          </span>
-        </h2>
-      </div>}
-
       {loading ? (
         <p role="status">Carregando livros...</p>
       ) : loadError && !booksLoaded ? (
