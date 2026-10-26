@@ -1,297 +1,179 @@
-.booklist-container {
-  padding: 8px 0 28px;
-  max-width: 1120px;
-  margin: 0 auto;
+/* Catálogo administrativo: estilos isolados dos cards compartilhados por alunos e professores. */
+.admin-shell .cadastro .booklist-container {
+  width: 100%; max-width: none; margin: 0; padding: 0 0 28px; min-width: 0;
 }
-
-.booklist-container .book-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 24px;
-  align-items: stretch;
-  grid-auto-rows: 1fr;
-  width: 100%;
+.admin-shell .cadastro .booklist-toolbar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 12px 24px; margin: 0 0 16px;
 }
-
-.booklist-container .book-card {
-  background: var(--surface-bg);
-  border: 1px solid var(--surface-border);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 550px;
-  height: 100%;
-  width: 100%;
-  max-width: 100%;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+.admin-shell .cadastro .booklist-heading {
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; min-width: 0;
 }
-
-.booklist-container .book-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-strong);
-  box-shadow: 0 22px 46px rgba(15, 23, 42, 0.12);
+.admin-shell .cadastro .booklist-heading h2 {
+  margin: 0; font-size: 20px; font-weight: 750; color: var(--text-default);
 }
-
-.booklist-container .book-card-media {
-  position: relative;
-  height: 302px;
-  background: linear-gradient(180deg, var(--surface-muted) 0%, var(--surface-hover) 100%);
-  overflow: hidden;
+.admin-shell .cadastro .booklist-heading span {
+  font-size: 13px; color: var(--text-muted);
 }
-
-.booklist-container .book-card-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.admin-shell .cadastro .booklist-controls {display:flex;align-items:center;flex-wrap:wrap;gap:14px;}
+.admin-shell .cadastro .booklist-view-switch {
+  display:flex;gap:3px;padding:4px;border:1px solid var(--surface-border);
+  border-radius:11px;background:var(--surface-bg);
 }
-
-.booklist-container .book-card-badges {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  z-index: 2;
+.admin-shell .cadastro .booklist-view-switch button {
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-height:36px;padding:0 12px;border:0;border-radius:8px;
+  background:transparent;color:var(--text-label);font-size:13px;font-weight:650;cursor:pointer;
 }
-
-.booklist-container .book-card-code,
-.booklist-container .book-card-status {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 5px 10px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+.admin-shell .cadastro .booklist-view-switch button.is-selected {
+  background:var(--primary);color:#fff;box-shadow:0 3px 12px rgba(37,99,235,.18);
 }
-
-.booklist-container .book-card-code {
-  color: var(--text-default);
-  background: var(--surface-bg);
-  border: 1px solid var(--surface-border);
+.admin-shell .cadastro .booklist-view-switch button:focus-visible,
+.admin-shell .cadastro .booklist-order select:focus-visible {
+  outline:2px solid var(--primary);outline-offset:2px;
 }
-
-.booklist-container .book-card-status.disponivel {
-  color: var(--success-text);
-  background: rgba(236, 253, 245, 0.96);
+.admin-shell .cadastro .booklist-order {
+  display:flex;gap:9px;align-items:center;font-size:12px;color:var(--text-soft);
 }
-
-.booklist-container .book-card-status.emprestado {
-  color: var(--status-warning-text);
-  background: rgba(255, 247, 237, 0.96);
+.admin-shell .cadastro .booklist-order select {
+  min-height:42px;max-width:215px;padding:0 14px;border-radius:11px;
+  border:1px solid var(--surface-border);background:var(--surface-bg);
+  font:inherit;font-size:13px;color:var(--text-default);
 }
-
-.booklist-container .book-card-status.reservado {
-  color: var(--status-info-text);
-  background: rgba(239, 246, 255, 0.96);
+.admin-shell .cadastro .booklist-empty {grid-column:1/-1;color:var(--text-muted);padding:30px;text-align:center;}
+.admin-shell .cadastro .booklist-container--grade .shared-book-grid {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;align-items:stretch;width:100%;
 }
-
-.booklist-container .book-card-status.indisponivel {
-  color: var(--confirm-danger-text);
-  background: rgba(254, 242, 242, 0.96);
+.admin-shell .cadastro .booklist-container .shared-book-card {
+  min-width:0;box-shadow:var(--shadow-soft);border-radius:14px;
+  border:1px solid var(--surface-border);transition:transform .18s ease,box-shadow .18s ease;
 }
-
-.booklist-container .book-card-content {
-  padding: 16px 16px 18px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+.admin-shell .cadastro .booklist-container .shared-book-card:hover {
+  transform:translateY(-2px);box-shadow:var(--shadow-card);
 }
-
-.booklist-container .book-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  min-height: 0;
+.admin-shell .cadastro .booklist-container--grade .shared-book-card {min-height:0;}
+.admin-shell .cadastro .booklist-container--grade .shared-book-card__media {height:188px;}
+.admin-shell .cadastro .booklist-container .shared-book-card__media img {object-fit:cover;}
+.admin-shell .cadastro .booklist-container .shared-book-card__content {padding:12px 13px 14px;min-width:0;}
+.admin-shell .cadastro .booklist-container .shared-book-card__body {gap:8px;min-height:0;}
+.admin-shell .cadastro .booklist-container .shared-book-card__header h3 {
+  min-height:0;font-size:14px;line-height:1.35;
 }
-
-.booklist-container .book-card-header h3 {
-  margin: 0;
-  font-size: 1.02rem;
-  font-weight: 700;
-  color: var(--text-default);
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 2.8em;
+.admin-shell .cadastro .booklist-container .shared-book-card__author {
+  min-height:0;font-size:12px;margin-top:4px;
 }
-
-.booklist-container .book-card-author {
-  margin: 6px 0 0;
-  color: var(--text-soft);
-  font-size: 0.86rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 2.3em;
+.admin-shell .cadastro .booklist-container .shared-book-card__meta {font-size:11px;margin-top:6px;}
+.admin-shell .cadastro .booklist-container .shared-book-card__description {min-height:0;line-clamp:2;-webkit-line-clamp:2;}
+.admin-shell .cadastro .booklist-container .shared-book-card__details {
+  gap:4px;min-height:0;margin:4px 0;
 }
-
-.booklist-container .book-card-meta {
-  margin: 6px 0 0;
-  color: var(--text-soft);
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.admin-shell .cadastro .booklist-container .shared-book-card__tags {gap:4px;}
+.admin-shell .cadastro .booklist-container .shared-book-card__tags span {
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:4px 8px;font-size:10px;font-weight:500;
 }
-
-.booklist-container .book-card-description {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 3.5em;
+.admin-shell .cadastro .booklist-container .shared-book-card__actions {
+  padding-top:12px;gap:7px;margin-top:auto;
 }
-
-.booklist-container .book-card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.admin-shell .cadastro .booklist-container .shared-book-card__action-row {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
 }
-
-.booklist-container .book-card-tags span {
-  border-radius: 999px;
-  background: var(--surface-muted);
-  color: var(--text-soft);
-  border: 1px solid var(--surface-border);
-  padding: 5px 10px;
-  font-size: 0.7rem;
-  font-weight: 600;
+.admin-shell .cadastro .booklist-container .shared-book-card__button {
+  min-width:0;min-height:36px;padding:5px 7px;
+  font-size:12px;font-weight:650;border-radius:9px;
 }
-
-.booklist-container .book-card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 116px;
+.admin-shell .cadastro .booklist-container .shared-book-card__button--edit {
+  color:var(--primary);background:var(--surface-bg);border:1px solid var(--primary);
 }
-
-.booklist-container .detail-line {
-  margin: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  color: var(--text-soft);
-  font-size: 0.76rem;
-  line-height: 1.35;
+.admin-shell .cadastro .booklist-container .shared-book-card__button--ficha {
+  color:#fff;background:var(--primary);border:1px solid var(--primary);
 }
-
-.booklist-container .detail-line svg {
-  flex: 0 0 auto;
-  margin-top: 1px;
+.admin-shell .cadastro .booklist-container .shared-book-card__button--deactivate {
+  color:var(--status-warning-text);background:transparent;
+  border:1px solid var(--status-warning-bg);
 }
-
-.booklist-container .status-line.disponivel {
-  color: var(--success);
+.admin-shell .cadastro .booklist-container .shared-book-card__button--delete {
+  color:var(--danger);background:transparent;border:1px solid var(--danger);
+  opacity:.78;
 }
-
-.booklist-container .status-line.emprestado {
-  color: var(--warning);
+.admin-shell .cadastro .booklist-container .shared-book-card__button--reactivate {
+  color:var(--success);background:transparent;border:1px solid var(--success);
 }
-
-.booklist-container .status-line.reservado {
-  color: var(--primary);
+.admin-shell .cadastro .booklist-container .shared-book-card__button--delete:hover,
+.admin-shell .cadastro .booklist-container .shared-book-card__button--deactivate:hover {opacity:1;background:var(--surface-muted);}
+.admin-shell .cadastro .booklist-container .shared-book-card__media .shared-book-card__cover-open {
+  position:absolute;bottom:9px;right:9px;z-index:3;
+  min-height:30px;padding:5px 9px;border:1px solid rgba(255,255,255,.3);
+  border-radius:8px;background:rgba(15,23,42,.78);color:white;
+  display:inline-flex;gap:5px;align-items:center;justify-content:center;
+  font-weight:600;font-size:11px;cursor:pointer;
 }
-
-.booklist-container .status-line.indisponivel {
-  color: var(--danger);
+.admin-shell .cadastro .booklist-container .shared-book-card__cover-open:focus-visible {
+  outline:2px solid #fff;outline-offset:2px;
 }
-
-.booklist-container .availability-line {
-  color: var(--text-muted);
+/* Lista horizontal: capa, dados bibliográficos, disponibilidade e ações. */
+.admin-shell .cadastro .booklist-container--lista .shared-book-grid {
+  display:grid;grid-template-columns:minmax(0,1fr);gap:10px;
 }
-
-.booklist-container .loan-line {
-  color: var(--warning);
-  background: var(--status-warning-surface);
-  border: 1px solid var(--status-warning-bg);
-  border-radius: 10px;
-  padding: 7px 9px;
+.admin-shell .cadastro .booklist-container--lista .shared-book-card {
+  display:grid;grid-template-columns:160px minmax(0,1fr);
+  gap:14px;min-height:0;padding:10px;
 }
-
-.booklist-container .card-actions {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 12px;
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__media {
+  height:132px;border-radius:10px;
 }
-
-.booklist-container .btn-edit,
-.booklist-container .btn-delete {
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  min-height: 40px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__media .shared-book-card__status {
+  font-size:10px;padding:3px 7px;
 }
-
-.booklist-container .btn-edit {
-  background: var(--surface-bg);
-  color: var(--text-default);
-  border: 1px solid var(--input-border);
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__content {
+  display:grid;grid-template-columns:minmax(0,1fr) 232px;gap:16px;
+  padding:0;align-items:stretch;
 }
-
-.booklist-container .btn-edit.secondary {
-  background: var(--surface-muted);
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__body {
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,.55fr);
+  grid-template-rows:auto auto 1fr;gap:5px 16px;
+  align-content:start;
 }
-
-.booklist-container .btn-edit:hover,
-.booklist-container .btn-delete:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.1);
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__header {grid-column:1;grid-row:1;}
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__description-wrap {grid-column:1;grid-row:2;}
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__tags {grid-column:1;grid-row:3;align-content:start;}
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__details {
+  grid-column:2;grid-row:1/4;margin:0;padding:10px 4px 0 14px;
+  border-left:1px solid var(--surface-border);align-self:stretch;
 }
-
-.booklist-container .btn-delete {
-  background: var(--danger);
-  color: var(--btn-primary-text);
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__actions {
+  margin:0;padding:6px 0 6px 12px;
+  border-left:1px solid var(--surface-border);
+  align-self:center;
 }
-
-@media (max-width: 1180px) {
-  .booklist-container .book-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+.admin-shell .cadastro .booklist-container--lista .shared-book-card__description {line-clamp:2;-webkit-line-clamp:2;}
+@media(max-width:1300px){
+ .admin-shell .cadastro .booklist-container--grade .shared-book-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__content {grid-template-columns:minmax(0,1fr) 190px;gap:10px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__body {grid-template-columns:minmax(0,1fr) minmax(125px,.4fr);}
 }
-
-@media (max-width: 900px) {
-  .booklist-container .book-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+@media(max-width:1000px){
+ .admin-shell .cadastro .booklist-container--grade .shared-book-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__content {grid-template-columns:minmax(0,1fr);}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__actions {border:0;padding:0;}
 }
-
-@media (max-width: 640px) {
-  .booklist-container .book-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .booklist-container .book-card-media {
-    height: 280px;
-  }
+@media(max-width:700px){
+ .admin-shell .cadastro .booklist-controls {width:100%;justify-content:space-between;}
+ .admin-shell .cadastro .booklist-order span {display:none;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card {grid-template-columns:95px minmax(0,1fr);gap:10px;padding:8px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__media {height:145px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__content {display:flex;flex-direction:column;gap:9px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__body {display:flex;flex-direction:column;gap:6px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__details {border:0;padding:0;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__tags,
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__description-wrap {display:none;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__actions {gap:6px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__button {min-height:34px;font-size:11px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__cover-open {font-size:0;padding:6px;bottom:6px;right:6px;}
+ .admin-shell .cadastro .booklist-container--lista .shared-book-card__cover-open svg {font-size:15px;}
+}
+@media(max-width:460px){
+ .admin-shell .cadastro .booklist-container--grade .shared-book-grid {grid-template-columns:minmax(0,1fr);}
+ .admin-shell .cadastro .booklist-order select {max-width:145px;}
 }
