@@ -307,7 +307,7 @@ export default function BookCard({
       <Modal
         show={mostrarDescricao}
         onClose={() => setMostrarDescricao(false)}
-        className="book-description-modal"
+        className={isAdmin ? "book-description-modal book-description-modal--admin" : "book-description-modal"}
       >
         {isAdmin ? (
           <div className="book-description-modal__admin-layout">
