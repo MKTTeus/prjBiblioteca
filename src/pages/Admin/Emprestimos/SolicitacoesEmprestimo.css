@@ -262,61 +262,9 @@
   outline-offset: 2px;
 }
 
-.solicitacoes-page .stats-card-icon.blue {
-  background: var(--accent-blue, #0866ff);
-}
-
-.solicitacoes-page .stats-card-icon.orange {
-  background: var(--accent-orange, #ff7714);
-}
-
-.solicitacoes-page .stats-card-icon.purple {
-  background: #8b5cf6;
-}
-
-.solicitacoes-page .stats-card-icon.green {
-  background: var(--accent-green, #0bb26c);
-}
-
-.solicitacoes-page .stats-card-icon.red {
-  background: var(--accent-red, #fa2548);
-}
-
-.solicitacoes-page .stats-card-icon.gray {
-  background: #8792a5;
-}
-
-.solicitacoes-page .stats-card-icon {
-  color: #fff;
-}
-
+/* Compartilha as regras do StatsCard com Empréstimos e Devoluções. */
 @media (max-width: 700px) {
   .solicitacoes-page .stats-cards-grid.stats-cards-grid-admin {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
-
-  .solicitacoes-page .stats-card {
-    padding: 12px;
-    min-width: 0;
-  }
-
-  .solicitacoes-page .stats-card-header {
-    align-items: flex-start;
-    font-size: 12px;
-    gap: 6px;
-  }
-
-  .solicitacoes-page .stats-card-icon {
-    width: 34px;
-    height: 34px;
-  }
-
-  .solicitacoes-page .stats-card h2 {
-    font-size: 23px;
-  }
-
-  .solicitacoes-page .stats-card small {
-    font-size: 11px;
   }
 }
