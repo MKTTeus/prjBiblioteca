@@ -91,6 +91,8 @@ class LivroStatusUpdate(BaseModel):
 
 
 class CompletarIARequest(BaseModel):
+    campo_alvo: Optional[str] = None
+    valor_atual: Optional[str] = None
     isbn: Optional[str] = None
     livTitulo: Optional[str] = None
     livAutor: Optional[str] = None

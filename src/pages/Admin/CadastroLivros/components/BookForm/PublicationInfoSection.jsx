@@ -8,18 +8,18 @@ function fieldClass(name, highlightedFields, base = "editor-field") {
   return highlightedFields?.has(name) ? `${base} field-autofilled` : base;
 }
 
-function AutoTag({ name, fieldOrigins }) {
-  return <FieldOriginIcon name={name} fieldOrigins={fieldOrigins} />;
+function AutoTag({ name, fieldOrigins, onRegenerate, regeneratingField }) {
+  return <FieldOriginIcon name={name} fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} />;
 }
 
-export default function PublicationInfoSection({ form, onFieldChange, editoras = [], highlightedFields, fieldOrigins }) {
+export default function PublicationInfoSection({ form, onFieldChange, editoras = [], highlightedFields, fieldOrigins, onRegenerate, regeneratingField }) {
   return (
     <div className="editor-section-grid publication-grid">
       <div className="editor-form-panel publication-panel">
         <div className="editor-field-grid three-columns">
           {/* ── Editora ── */}
           <label className={fieldClass("livEditora", highlightedFields)}>
-            <span>Editora <AutoTag name="livEditora" fieldOrigins={fieldOrigins} /></span>
+            <span>Editora <AutoTag name="livEditora" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livEditora"
               value={form.livEditora}
@@ -35,7 +35,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             </datalist>
           </label>
           <label className={fieldClass("ediCidade", highlightedFields)}>
-            <span>Cidade da Editora <AutoTag name="ediCidade" fieldOrigins={fieldOrigins} /></span>
+            <span>Cidade da Editora <AutoTag name="ediCidade" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="ediCidade"
               value={form.ediCidade || ""}
@@ -44,7 +44,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className={fieldClass("ediEstado", highlightedFields)}>
-            <span>Estado da Editora <AutoTag name="ediEstado" fieldOrigins={fieldOrigins} /></span>
+            <span>Estado da Editora <AutoTag name="ediEstado" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="ediEstado"
               value={form.ediEstado || ""}
@@ -53,7 +53,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className={fieldClass("ediPais", highlightedFields)}>
-            <span>País da Editora <AutoTag name="ediPais" fieldOrigins={fieldOrigins} /></span>
+            <span>País da Editora <AutoTag name="ediPais" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="ediPais"
               value={form.ediPais || ""}
@@ -63,7 +63,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
           </label>
           {/* ── Publicação ── */}
           <label className={fieldClass("livAnoPublicacao", highlightedFields)}>
-            <span>Ano de publicação <AutoTag name="livAnoPublicacao" fieldOrigins={fieldOrigins} /></span>
+            <span>Ano de publicação <AutoTag name="livAnoPublicacao" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livAnoPublicacao"
               value={form.livAnoPublicacao}
@@ -73,7 +73,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
           </label>
           
           <label className={fieldClass("livPaginas", highlightedFields)}>
-            <span>Páginas * <AutoTag name="livPaginas" fieldOrigins={fieldOrigins} /></span>
+            <span>Páginas * <AutoTag name="livPaginas" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livPaginas"
               value={form.livPaginas}
@@ -85,7 +85,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className={fieldClass("livEdicao", highlightedFields)}>
-            <span>Edição <AutoTag name="livEdicao" fieldOrigins={fieldOrigins} /></span>
+            <span>Edição <AutoTag name="livEdicao" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livEdicao"
               value={form.livEdicao || ""}
@@ -97,7 +97,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
           </label>
           {/* ── Subtítulo / Idioma ── */}
           <label className={fieldClass("livSubtitulo", highlightedFields)}>
-            <span>Subtítulo <AutoTag name="livSubtitulo" fieldOrigins={fieldOrigins} /></span>
+            <span>Subtítulo <AutoTag name="livSubtitulo" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livSubtitulo"
               value={form.livSubtitulo || ""}
@@ -106,7 +106,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className={fieldClass("livIdioma", highlightedFields)}>
-            <span>Idioma <AutoTag name="livIdioma" fieldOrigins={fieldOrigins} /></span>
+            <span>Idioma <AutoTag name="livIdioma" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livIdioma"
               value={form.livIdioma || ""}
@@ -122,7 +122,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             </datalist>
           </label>
           <label className={fieldClass("livFaixaEtaria", highlightedFields)}>
-            <span>Faixa etária <AutoTag name="livFaixaEtaria" fieldOrigins={fieldOrigins} /></span>
+            <span>Faixa etária <AutoTag name="livFaixaEtaria" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <select
               name="livFaixaEtaria"
               value={form.livFaixaEtaria || ""}
@@ -136,7 +136,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
           </label>
           {/* ── Catalogação ── */}
           <label className="editor-field">
-            <span>CDD {form.livCDDSugerida && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>(sugerida por IA)</span>}</span>
+            <span>CDD <AutoTag name="livCDD" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /> {form.livCDDSugerida && <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>(sugerida por IA)</span>}</span>
             <input
               name="livCDD"
               value={form.livCDD || ""}
@@ -145,7 +145,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className="editor-field">
-            <span>Altura (cm)</span>
+            <span>Altura (cm) <AutoTag name="livAlturaCm" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livAlturaCm"
               value={form.livAlturaCm || ""}
@@ -157,7 +157,7 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
             />
           </label>
           <label className="editor-field">
-            <span>Largura (cm)</span>
+            <span>Largura (cm) <AutoTag name="livLarguraCm" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livLarguraCm"
               value={form.livLarguraCm || ""}
@@ -177,10 +177,10 @@ export default function PublicationInfoSection({ form, onFieldChange, editoras =
               onChange={(e) => onFieldChange("livIlustrado", e.target.checked)}
               style={{ width: "auto" }}
             />
-            <span htmlFor="livIlustrado" style={{ margin: 0 }}>Livro ilustrado <AutoTag name="livIlustrado" fieldOrigins={fieldOrigins} /></span>
+            <span htmlFor="livIlustrado" style={{ margin: 0 }}>Livro ilustrado <AutoTag name="livIlustrado" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
           </label>
           <label className={fieldClass("livPalavrasChave", highlightedFields)} style={{ gridColumn: "1 / -1" }}>
-            <span>Palavras-chave <AutoTag name="livPalavrasChave" fieldOrigins={fieldOrigins} /></span>
+            <span>Palavras-chave <AutoTag name="livPalavrasChave" fieldOrigins={fieldOrigins} onRegenerate={onRegenerate} regeneratingField={regeneratingField} /></span>
             <input
               name="livPalavrasChave"
               value={form.livPalavrasChave || ""}

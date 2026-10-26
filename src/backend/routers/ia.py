@@ -107,6 +107,28 @@ COMPLETAR_LIVRO_SCHEMA = {
     "required": ["titulo", "confianca_geral"],
 }
 
+# A consulta individual recebe somente uma propriedade de saída. Nenhum outro
+# campo do formulário é alterado, mesmo se o modelo tentar sugerir mais dados.
+CAMPOS_INDIVIDUAIS = {
+    "livTitulo": "titulo", "livSubtitulo": "subtitulo", "livAutor": "autor_principal",
+    "autorAnoNascimento": "autor_ano_nascimento", "autorAnoFalecimento": "autor_ano_falecimento",
+    "livEditora": "editora", "livAnoPublicacao": "ano_publicacao", "livPaginas": "paginas",
+    "livDescricao": "descricao", "idGenero": "genero_sugerido", "livIdioma": "idioma",
+    "livFaixaEtaria": "faixa_etaria", "livPalavrasChave": "palavras_chave",
+    "livEdicao": "edicao", "livIlustrado": "ilustrado", "ediCidade": "editora_cidade",
+    "ediEstado": "editora_estado", "ediPais": "editora_pais",
+    "livCDD": "cdd", "livAlturaCm": "altura_cm", "livLarguraCm": "largura_cm",
+    "livCapaURL": "url_capa", "exemplarISBN": "isbn_sugerido",
+}
+
+EXTRA_PROPERTIES = {
+    "cdd": {"type": "string", "description": "Classificação Decimal de Dewey verificada; omita se incerta."},
+    "altura_cm": {"type": "string", "description": "Altura desta edição em centímetros; omita se incerta."},
+    "largura_cm": {"type": "string", "description": "Largura desta edição em centímetros; omita se incerta."},
+    "url_capa": {"type": "string", "description": "URL real e verificável da capa; jamais invente um endereço."},
+    "isbn_sugerido": {"type": "string", "description": "ISBN desta edição exata; omita se não souber com segurança."},
+}
+
 
 def _get_client():
     if not os.getenv("GEMINI_API_KEY") and not os.getenv("GROQ_API_KEY"):
@@ -142,10 +164,20 @@ def _montar_prompt(dados: CompletarIARequest) -> str:
             "em vez de inventar um novo): " + ", ".join(dados.generos_existentes)
         )
 
+    alvo = CAMPOS_INDIVIDUAIS.get(dados.campo_alvo)
+    instrucao_alvo = (
+        f"\nSolicitação individual: sugira APENAS o campo {alvo}. "
+        f"Valor atual desse campo: {dados.valor_atual or '(em branco)'}. "
+        "Você pode reformular um texto, mas não invente ISBN, URL, medidas, CDD ou fatos editoriais. "
+        "Se não houver base suficiente para uma sugestão segura, omita o campo. "
+        "Não copie automaticamente o valor atual. Os outros dados servem só de contexto.\n"
+        if alvo else ""
+    )
+
     return (
         "Você é um assistente de catalogação de uma biblioteca escolar. "
         "Com base nos dados conhecidos abaixo, preencha os campos que faltam para o cadastro do livro.\n\n"
-        f"Dados conhecidos:\n{bloco_conhecidos}{bloco_opcoes}\n\n"
+        f"Dados conhecidos:\n{bloco_conhecidos}{bloco_opcoes}\n{instrucao_alvo}\n"
         "Regras importantes:\n"
         "- Se você reconhece esta obra com segurança, preencha os dados factuais (autor, editora, ano, páginas) "
         "com os valores reais.\n"
@@ -177,6 +209,17 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
 
     client = _get_client()
     prompt = _montar_prompt(dados)
+    if dados.campo_alvo and dados.campo_alvo not in CAMPOS_INDIVIDUAIS:
+        raise HTTPException(status_code=400, detail="Campo não disponível para sugestão individual.")
+    alvo = CAMPOS_INDIVIDUAIS.get(dados.campo_alvo)
+    schema = COMPLETAR_LIVRO_SCHEMA
+    if alvo:
+        schema = {
+            "type": "object",
+            "properties": {
+                alvo: COMPLETAR_LIVRO_SCHEMA["properties"].get(alvo, EXTRA_PROPERTIES.get(alvo)),
+            },
+        }
 
     try:
         resposta = generate_content_with_fallback(
@@ -187,7 +230,7 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_json_schema=COMPLETAR_LIVRO_SCHEMA,
+                response_json_schema=schema,
             ),
         )
     except Exception as exc:
@@ -198,7 +241,8 @@ def completar_com_ia(dados: CompletarIARequest, admin=Depends(get_admin)):
         raise HTTPException(status_code=502, detail="A IA não retornou dados estruturados.")
 
     try:
-        return json.loads(resposta.text)
+        resultado = json.loads(resposta.text)
+        return {alvo: resultado[alvo]} if alvo and alvo in resultado else ({} if alvo else resultado)
     except json.JSONDecodeError:
         print("Resposta da IA não é JSON válido:", resposta.text)
         raise HTTPException(status_code=502, detail="A IA retornou um formato inesperado.")
