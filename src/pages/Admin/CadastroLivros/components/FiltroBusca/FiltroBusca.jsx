@@ -5,6 +5,7 @@ import SelectGenero from "../SelectGenero/SelectGenero";
 import SelectStatus from "../SelectStatus/SelectStatus";
 
 function FiltroBusca({ filters, onFilter }) {
+  const hasFilters = Boolean(filters.q || filters.genero !== "todos" || filters.status !== "todas" || filters.exemplares !== "todos");
   function updateField(field, value) {
     onFilter({
       ...filters,
@@ -32,14 +33,14 @@ function FiltroBusca({ filters, onFilter }) {
           </div>
         </div>
 
-        <button type="button" className="limpar-btn" onClick={clearAll}>
+        <button type="button" className="limpar-btn" onClick={clearAll} disabled={!hasFilters}>
           <FiX />
           Limpar filtros
         </button>
       </div>
 
       <div className="filtros">
-        <div className="campo">
+        <div className={`campo ${filters.q ? "is-active" : ""}`}>
           <label>Buscar</label>
 
           <div className="input-icon">
@@ -53,7 +54,7 @@ function FiltroBusca({ filters, onFilter }) {
           </div>
         </div>
 
-        <div className="campo">
+        <div className={`campo ${filters.genero !== "todos" ? "is-active" : ""}`}>
           <label>Gênero</label>
 
           <div className="select-icon">
@@ -62,7 +63,7 @@ function FiltroBusca({ filters, onFilter }) {
           </div>
         </div>
 
-        <div className="campo">
+        <div className={`campo ${filters.status !== "todas" ? "is-active" : ""}`}>
           <label>Status</label>
 
           <div className="select-icon">
@@ -70,7 +71,7 @@ function FiltroBusca({ filters, onFilter }) {
             <SelectStatus value={filters.status} onChange={(v) => updateField("status", v)} />
           </div>
         </div>
-        <div className="campo">
+        <div className={`campo ${filters.exemplares !== "todos" ? "is-active" : ""}`}>
           <label htmlFor="filtro-exemplares">Exemplares</label>
           <select id="filtro-exemplares" className="filtro-exemplares" value={filters.exemplares} onChange={(e) => updateField("exemplares", e.target.value)}>
             <option value="todos">Todos os títulos</option>
