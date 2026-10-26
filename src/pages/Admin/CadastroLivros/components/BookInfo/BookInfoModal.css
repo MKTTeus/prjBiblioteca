@@ -382,3 +382,128 @@
     justify-content: center;
   }
 }
+/* Redesign exclusivo do modal de ficha: preserva rotinas de IA, PDF e tombos. */
+.book-info-overlay.modal-overlay {z-index:10055;padding:16px;}
+.book-info-container.modal-container {
+  width:min(845px,100%);max-height:calc(100dvh - 32px);
+  border-radius:20px;padding:22px;overflow-y:auto;
+  background:var(--surface-bg);border:1px solid var(--surface-border);
+  box-shadow:0 30px 75px rgba(15,23,42,.25);
+}
+.book-info-container .book-info-header {
+  display:flex;align-items:center;justify-content:flex-start;
+  gap:12px;margin-bottom:16px;padding-bottom:14px;
+}
+.book-info-container .book-info-header__icon {
+  width:44px;height:44px;display:grid;place-items:center;
+  border-radius:12px;background:var(--primary-muted);color:var(--primary);
+  font-size:24px;flex-shrink:0;
+}
+.book-info-container .book-info-header h2 {font-size:22px;font-weight:750;flex:1;}
+.book-info-container .book-info-header button {flex-shrink:0;}
+.book-info-container .book-info-summary.modal-content {
+  display:grid;grid-template-columns:minmax(150px,210px) minmax(0,1fr);
+  gap:22px;width:100%;box-sizing:border-box;box-shadow:none;
+  position:static;border:1px solid var(--surface-border);border-radius:15px;
+  background:var(--surface-bg);padding:16px;margin-bottom:16px;
+  color:var(--text-default);
+}
+.book-info-container .book-info-summary .info-capa {position:relative;min-width:0;align-self:start;}
+.book-info-container .book-info-summary .info-capa img {
+  width:100%;height:auto;max-height:330px;object-fit:contain;display:block;
+  border:1px solid var(--surface-border);border-radius:10px;
+}
+.book-info-container .book-info-open-cover {
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  border:1px solid rgba(255,255,255,.35);border-radius:9px;
+  color:#fff;background:rgba(15,23,42,.84);font-weight:600;
+  font-size:11px;padding:8px 10px;white-space:nowrap;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+}
+.book-info-container .book-info-open-cover:focus-visible {outline:2px solid var(--primary);outline-offset:2px;}
+.book-info-container .info-dados {min-width:0;align-self:center;}
+.book-info-container .info-dados h3 {
+  margin:0 0 14px;font-size:22px;font-weight:750;
+  color:var(--text-default);line-height:1.25;
+}
+.book-info-container .book-info-metadata {margin:0;display:grid;gap:9px;}
+.book-info-container .book-info-metadata div {
+  display:grid;grid-template-columns:minmax(100px,.44fr) minmax(0,1fr);
+  gap:10px;line-height:1.4;
+}
+.book-info-container .book-info-metadata dt {font-size:13px;color:var(--text-muted);}
+.book-info-container .book-info-metadata dd {margin:0;font-size:13px;font-weight:600;color:var(--text-default);overflow-wrap:anywhere;}
+.book-info-container .info-descricao {
+  padding-top:14px;border-top:1px solid var(--surface-border);margin-top:16px;
+}
+.book-info-container .info-descricao h4 {
+  display:flex;align-items:center;gap:8px;margin:0 0 8px;
+  color:var(--text-default);font-size:14px;font-weight:700;
+}
+.book-info-container .info-descricao p {
+  margin:0;font-size:13px;line-height:1.65;
+  color:var(--text-muted);white-space:pre-wrap;
+}
+.book-info-container .ficha-section,
+.book-info-container .tombos-section {
+  margin:0 0 16px;padding:18px;
+  background:var(--surface-bg);border:1px solid var(--surface-border);
+  border-radius:15px;
+}
+.book-info-container .ficha-section-header h3,
+.book-info-container .tombos-section > h3 {
+  display:flex;align-items:center;gap:8px;
+  color:var(--text-default);font-size:17px;font-weight:750;margin:0;
+}
+.book-info-container .ficha-section-header h3 svg,
+.book-info-container .tombos-section > h3 svg {color:var(--primary);font-size:20px;}
+.book-info-container .ficha-btn {min-height:36px;padding:7px 11px;font-weight:600;border-radius:9px;}
+.book-info-container .ficha-btn--primary {background:var(--primary);color:#fff;}
+.book-info-container .ficha-state--empty {
+  justify-content:center;align-items:center;text-align:center;flex-direction:column;
+  padding:28px 18px;gap:8px;border-style:dashed;border-color:var(--input-border);
+  background:var(--surface-muted);
+}
+.book-info-container .ficha-state--empty .ficha-state-icon {
+  color:var(--primary);font-size:28px;margin:0;
+}
+.book-info-container .ficha-state--empty p {margin:4px 0 0;font-size:13px;}
+.book-info-container .ficha-card {padding:16px;overflow-wrap:anywhere;}
+.book-info-container .tombos-summary {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.book-info-container .tombos-summary-item {padding:13px;border-radius:11px;text-align:left;}
+.book-info-container .tombos-summary-item strong {
+  display:flex;align-items:center;gap:8px;font-size:23px;
+}
+.book-info-container .tombos-summary-item svg {font-size:20px;color:var(--primary);}
+.book-info-container .tombos-summary-item:nth-child(2) svg {color:var(--success);}
+.book-info-container .tombos-summary-item:nth-child(3) svg {color:var(--warning);}
+.book-info-container .tombos-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px;}
+.book-info-container .tombo-card {
+  padding:12px 14px;border-radius:11px;text-align:left;box-shadow:none;
+}
+.book-info-container .tombo-code {font-size:14px;margin:0 0 6px;}
+.book-info-container .tombo-meta {margin:0;gap:4px;}
+.book-info-container .tombo-status {font-size:12px;color:var(--success);font-weight:700;}
+.book-info-container .tombo-card.indisponivel .tombo-status {color:var(--danger);}
+.book-info-container .tombo-isbn,.book-info-container .tombo-desc {
+  font-size:11px;white-space:normal;overflow-wrap:anywhere;
+}
+@media(max-width:700px) {
+  .book-info-overlay.modal-overlay {padding:8px;}
+  .book-info-container.modal-container {width:100%;max-height:calc(100dvh - 16px);padding:14px;border-radius:16px;}
+  .book-info-container .book-info-header h2 {font-size:19px;}
+  .book-info-container .book-info-summary.modal-content {grid-template-columns:minmax(0,1fr);gap:12px;padding:12px;}
+  .book-info-container .book-info-summary .info-capa {width:min(160px,60%);justify-self:center;}
+  .book-info-container .book-info-summary .info-capa img {max-height:220px;}
+  .book-info-container .info-dados h3 {font-size:19px;}
+  .book-info-container .ficha-section,.book-info-container .tombos-section {padding:13px;}
+  .book-info-container .tombos-grid {grid-template-columns:minmax(0,1fr);}
+}
+@media(max-width:400px){
+ .book-info-container .book-info-metadata div {grid-template-columns:90px minmax(0,1fr);}
+ .book-info-container .tombos-summary {gap:5px;}
+ .book-info-container .tombos-summary-item {padding:9px 7px;}
+ .book-info-container .tombos-summary-item strong {font-size:18px;}
+ .book-info-container .tombos-summary-item strong svg {font-size:15px;}
+ .book-info-container .tombos-summary-item span {font-size:11px;}
+}
