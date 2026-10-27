@@ -2,8 +2,9 @@ import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Aluno.css";
 import "../../../components/MobileUserCard/UserManagementLayout.css";
+import "../../../components/MobileUserCard/UserDirectory.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Users, UserCheck, UserX, GraduationCap, Pencil, Trash2, Upload } from "lucide-react";
+import { Users, UserCheck, UserX, GraduationCap, Pencil, Trash2, Upload, Plus } from "lucide-react";
 import { getAlunos, createAluno, updateAluno, deleteAluno, excluirAlunosLote, atualizarStatusLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -13,6 +14,7 @@ import SearchBar from "./components/SearchBar";
 import AlunoModal from "./components/AlunoModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import MobileUserCard from "../../../components/MobileUserCard/MobileUserCard";
+import { UserAvatar, UserStatus, UserProfile } from "../../../components/MobileUserCard/UserIdentity";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarAlunos } from "../../../services/api";
 import { reativarAluno } from "../../../services/api";
@@ -474,7 +476,7 @@ const handleSalvar = async () => {
   }
 
   return (
-    <div className="aluno-page page-shell admin-standard-page">
+    <div className="aluno-page page-shell admin-standard-page user-directory">
       <div className="titulo admin-standard-header">
         <div>
           <h1>Gestão de Alunos</h1>
@@ -520,9 +522,17 @@ const handleSalvar = async () => {
         />
       </div>
 
+      <div className="user-directory-toolbar">
+      <div className="user-management-list-heading">
+        <h2>{verFormados ? "Alunos Formados" : "Lista de Alunos"}</h2>
+        <span className="user-management-count">{alunosFiltrados.length} {alunosFiltrados.length === 1 ? "aluno" : "alunos"}</span>
+      </div>
+
       <div className="user-management-actions titulo-acoes">
-        <button className="btn-novo-aluno" onClick={abrirCriacao}>+ Novo Aluno</button>
+        <button className="btn-novo-aluno" onClick={abrirCriacao}><Plus size={17} aria-hidden="true" /> Cadastrar aluno</button>
         <button className="btn-importar" onClick={() => setModalImportar(true)}><Upload size={16} /> Importar</button>
+      </div>
+
       </div>
 
       <div className="user-management-controls">
@@ -537,15 +547,12 @@ const handleSalvar = async () => {
             <button key={status} type="button" className={(status === "Formados" ? verFormados : !verFormados && filtroStatus === status) ? "is-active" : ""}
               aria-pressed={status === "Formados" ? verFormados : !verFormados && filtroStatus === status}
               onClick={() => { setVerFormados(status === "Formados"); setFiltroStatus(status === "Formados" ? "Todos" : status); setSelecionados([]); irParaPagina(1); }}>
+              {status !== "Todos" && <span className={`directory-filter-dot ${status === "Ativo" ? "is-active" : status === "Formados" ? "is-graduated" : "is-inactive"}`} aria-hidden="true" />}
               {{ Todos: "Todos", Ativo: "Ativos", Inativo: "Inativos", Formados: "Formados" }[status]}
+              <span className="directory-filter-count">{status === "Formados" ? totalFormados : status === "Todos" ? (verFormados ? totalFormados : totalAlunos) : status === "Ativo" ? alunosAtivos : alunosInativos}</span>
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="user-management-list-heading">
-        <h2>{verFormados ? "Alunos Formados" : "Lista de Alunos"}</h2>
-        <span className="user-management-count">{alunosFiltrados.length} {alunosFiltrados.length === 1 ? "aluno" : "alunos"}</span>
       </div>
 
       {selecionados.length > 0 && (
@@ -574,13 +581,15 @@ const handleSalvar = async () => {
             <input type="checkbox" checked={selecionados.length === alunosFiltrados.length} onChange={toggleSelecionarTodos} />
             Selecionar todos ({alunosFiltrados.length})
           </label>}
+          {alunosFiltrados.length === 0 && <p className="directory-empty">Nenhum registro encontrado.</p>}
           {paginaItens.map((aluno) => (
             <MobileUserCard
               key={aluno.idUsuario}
               name={aluno.nome}
               identifier={`RA ${aluno.ra || "—"}`}
+              email={aluno.email}
               status={aluno.status}
-              fields={[{ label: "Série", value: aluno.serie }, { label: "Turma", value: aluno.turma }, { label: "E-mail", value: aluno.email, wide: true }]}
+              fields={[{ label: "Série", value: aluno.serie }, { label: "Turma", value: aluno.turma }]}
               books={aluno.livros}
               selected={selecionados.includes(aluno.idUsuario)}
               onSelect={() => toggleSelecionado(aluno.idUsuario)}
@@ -605,7 +614,6 @@ const handleSalvar = async () => {
               <th>RA</th>
               <th>Série</th>
               <th>Turma</th>
-              <th>E-mail</th>
               <th>Livros</th>
               <th>Status</th>
               <th>Ações</th>
@@ -613,6 +621,7 @@ const handleSalvar = async () => {
           </thead>
 
           <tbody>
+            {alunosFiltrados.length === 0 && <tr><td colSpan={8} className="directory-empty">Nenhum registro encontrado para os filtros selecionados.</td></tr>}
             {paginaItens.map((aluno) => (
               <tr key={aluno.idUsuario} className={selecionados.includes(aluno.idUsuario) ? "row-selecionada" : ""}>
                 <td className="col-check">
@@ -622,20 +631,17 @@ const handleSalvar = async () => {
                     onChange={() => toggleSelecionado(aluno.idUsuario)}
                   />
                 </td>
-                <td>{aluno.nome}</td>
+                <td><span className="directory-name-cell"><UserAvatar name={aluno.nome} /><span className="directory-name-details"><strong>{aluno.nome}</strong><small>{aluno.email || "—"}</small></span></span></td>
                 <td>{aluno.ra}</td>
                 <td>{aluno.serie || "-"}</td>
                 <td>{aluno.turma || "-"}</td>
-                <td>{aluno.email}</td>
                 <td>{aluno.livros}</td>
                 <td>
-                  <span className={aluno.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
-                    {aluno.status}
-                  </span>
+                  <UserStatus status={aluno.status} />
                 </td>
 
-                <td className="acoes">
-                  <button className="btn-status" onClick={() => handleToggleStatus(aluno.idUsuario)} title="Alterar status">
+                <td className="acoes-cell" data-label="Ações"><div className="acoes">
+                  <button className="btn-status" onClick={() => handleToggleStatus(aluno.idUsuario)} title="Alterar status" aria-label={`Alterar status de ${aluno.nome}`} title="Alterar status">
                     {aluno.status === "Ativo" ? (
                       <UserX size={16} className="icon-red" />
                     ) : (
@@ -643,13 +649,14 @@ const handleSalvar = async () => {
                     )}
                   </button>
 
-                  <button className="btn-edit" onClick={() => abrirEdicao(aluno.idUsuario)}>
+                  <button className="btn-edit" onClick={() => abrirEdicao(aluno.idUsuario)} title="Editar" aria-label={`Editar ${aluno.nome}`}>
                     <Pencil size={16} />
                   </button>
 
-                  <button className="btn-delete" onClick={() => handleExcluir(aluno.idUsuario)}>
+                  <button className="btn-delete" onClick={() => handleExcluir(aluno.idUsuario)} title="Excluir" aria-label={`Excluir ${aluno.nome}`}>
                     <Trash2 size={16} />
                   </button>
+                  </div>
                 </td>
               </tr>
             ))}

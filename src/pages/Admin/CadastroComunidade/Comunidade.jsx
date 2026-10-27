@@ -2,8 +2,9 @@ import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Comunidade.css";
 import "../../../components/MobileUserCard/UserManagementLayout.css";
+import "../../../components/MobileUserCard/UserDirectory.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload } from "lucide-react";
+import { Users, UserCheck, UserX, BookOpen, Pencil, Trash2, Upload, Plus } from "lucide-react";
 import {
   getComunidade,
   createComunidade,
@@ -21,6 +22,7 @@ import SearchBar from "./components/SearchBar";
 import ComunidadeModal from "./components/ComunidadeModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import MobileUserCard from "../../../components/MobileUserCard/MobileUserCard";
+import { UserAvatar, UserStatus, UserProfile } from "../../../components/MobileUserCard/UserIdentity";
 import ImportarModal from "../../../components/ImportarModal/ImportarModal";
 import { importarComunidade } from "../../../services/api";
 import { formatarCPF, formatarTelefone, validarCPF } from "../../../utils/masks";
@@ -401,7 +403,7 @@ const handleSalvar = async () => {
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(membrosFiltrados);
 
   return (
-    <div className="comunidade-page page-shell admin-standard-page">
+    <div className="comunidade-page page-shell admin-standard-page user-directory">
       <div className="titulo admin-standard-header">
         <div>
           <h1>Gestão da Comunidade</h1>
@@ -417,13 +419,21 @@ const handleSalvar = async () => {
         <StatsCard title="Livros Emprestados" value={totalLivros} subtitle="Atualizado com os dados da tela" icon={<BookOpen size={18} />} color="orange" />
       </div>
 
+      <div className="user-directory-toolbar">
+      <div className="user-management-list-heading">
+        <h2>Lista de Membros</h2>
+        <span className="user-management-count">{membrosFiltrados.length} {membrosFiltrados.length === 1 ? "membro" : "membros"}</span>
+      </div>
+
       <div className="user-management-actions titulo-acoes">
           <button className="btn-novo-comunidade" onClick={abrirCriacao}>
-            + Novo Membro
+            <Plus size={17} aria-hidden="true" /> Cadastrar membro
           </button>
           <button className="btn-importar" onClick={() => setModalImportar(true)}>
             <Upload size={16} /> Importar
           </button>
+      </div>
+
       </div>
 
       <div className="user-management-controls">
@@ -437,15 +447,12 @@ const handleSalvar = async () => {
           {["Todos", "Ativo", "Inativo"].map((status) => (
             <button key={status} type="button" className={filtroStatus === status ? "is-active" : ""}
               aria-pressed={filtroStatus === status} onClick={() => { setFiltroStatus(status); setSelecionados([]); irParaPagina(1); }}>
+              {status !== "Todos" && <span className={`directory-filter-dot ${status === "Ativo" ? "is-active" : status === "Formados" ? "is-graduated" : "is-inactive"}`} aria-hidden="true" />}
               {{ Todos: "Todos", Ativo: "Ativos", Inativo: "Inativos" }[status]}
+              <span className="directory-filter-count">{status === "Todos" ? totalMembros : status === "Ativo" ? membrosAtivos : membrosInativos}</span>
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="user-management-list-heading">
-        <h2>Lista de Membros</h2>
-        <span className="user-management-count">{membrosFiltrados.length} {membrosFiltrados.length === 1 ? "membro" : "membros"}</span>
       </div>
 
       {selecionados.length > 0 && (
@@ -474,13 +481,15 @@ const handleSalvar = async () => {
             <input type="checkbox" checked={selecionados.length === membrosFiltrados.length} onChange={toggleSelecionarTodos} />
             Selecionar todos ({membrosFiltrados.length})
           </label>}
+          {membrosFiltrados.length === 0 && <p className="directory-empty">Nenhum registro encontrado.</p>}
           {paginaItens.map((membro) => (
             <MobileUserCard
               key={membro.idUsuario}
               name={membro.nome}
-              identifier={`ID ${membro.idUsuario}`}
+              identifier={formatarCPF(membro.cpf)}
+              email={membro.email}
               status={membro.status}
-              fields={[{ label: "CPF/CIN", value: formatarCPF(membro.cpf) }, { label: "Telefone", value: formatarTelefone(membro.telefone) }, { label: "E-mail", value: membro.email, wide: true }]}
+              fields={[{ label: "Telefone", value: formatarTelefone(membro.telefone) }]}
               books={membro.livros}
               selected={selecionados.includes(membro.idUsuario)}
               onSelect={() => toggleSelecionado(membro.idUsuario)}
@@ -495,7 +504,6 @@ const handleSalvar = async () => {
             <col style={{ width: "40px" }} />
             <col className="col-nome" />
             <col className="col-cpf" />
-            <col className="col-email" />
             <col className="col-telefone" />
             <col className="col-livros-table" />
             <col className="col-status" />
@@ -513,7 +521,6 @@ const handleSalvar = async () => {
               </th>
               <th>Nome</th>
               <th>CPF/CIN</th>
-              <th>E-mail</th>
               <th>Telefone</th>
               <th>Livros</th>
               <th>Status</th>
@@ -522,6 +529,7 @@ const handleSalvar = async () => {
           </thead>
 
           <tbody>
+            {membrosFiltrados.length === 0 && <tr><td colSpan={7} className="directory-empty">Nenhum registro encontrado para os filtros selecionados.</td></tr>}
             {paginaItens.map((membro) => (
               <tr key={membro.idUsuario} className={selecionados.includes(membro.idUsuario) ? "row-selecionada" : ""}>
                 <td className="col-check" data-label="Selecionar">
@@ -531,20 +539,17 @@ const handleSalvar = async () => {
                     onChange={() => toggleSelecionado(membro.idUsuario)}
                   />
                 </td>
-                <td data-label="Nome">{membro.nome}</td>
+                <td data-label="Nome"><span className="directory-name-cell"><UserAvatar name={membro.nome} /><span className="directory-name-details"><strong>{membro.nome}</strong><small>{membro.email || "—"}</small></span></span></td>
                 <td data-label="CPF/CIN">{formatarCPF(membro.cpf)}</td>
-                <td data-label="E-mail">{membro.email}</td>
                 <td className="col-telefone-cell" data-label="Telefone">{formatarTelefone(membro.telefone)}</td>
                 <td className="col-livros" data-label="Livros">{membro.livros}</td>
                 <td data-label="Status">
-                  <span className={membro.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
-                    {membro.status}
-                  </span>
+                  <UserStatus status={membro.status} />
                 </td>
 
                 <td className="acoes-cell" data-label="Ações">
                   <div className="acoes">
-                    <button className="btn-status" onClick={() => handleToggleStatus(membro.idUsuario)}>
+                    <button className="btn-status" onClick={() => handleToggleStatus(membro.idUsuario)} title="Alterar status" aria-label={`Alterar status de ${membro.nome}`}>
                       {membro.status === "Ativo" ? (
                         <UserX size={16} className="icon-red" />
                       ) : (
@@ -552,11 +557,11 @@ const handleSalvar = async () => {
                       )}
                     </button>
 
-                    <button className="btn-edit" onClick={() => abrirEdicao(membro.idUsuario)}>
+                    <button className="btn-edit" onClick={() => abrirEdicao(membro.idUsuario)} title="Editar" aria-label={`Editar ${membro.nome}`}>
                       <Pencil size={16} />
                     </button>
 
-                    <button className="btn-delete" onClick={() => handleExcluir(membro.idUsuario)}>
+                    <button className="btn-delete" onClick={() => handleExcluir(membro.idUsuario)} title="Excluir" aria-label={`Excluir ${membro.nome}`}>
                       <Trash2 size={16} />
                     </button>
                   </div>
