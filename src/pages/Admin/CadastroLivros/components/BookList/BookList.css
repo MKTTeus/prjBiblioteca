@@ -340,7 +340,6 @@
 
 /* Microinterações dos botões do catálogo, sem alteração de ações. */
 .admin-shell .cadastro .booklist-container .shared-book-card__button {
-  will-change:transform;
   transition:transform 210ms cubic-bezier(.2,.8,.2,1),
     box-shadow 210ms ease, background-color 210ms ease,
     border-color 210ms ease, color 210ms ease;
@@ -430,7 +429,7 @@
   .admin-shell .cadastro .booklist-container .shared-book-card__cover-open,
   .admin-shell .cadastro .booklist-container .shared-book-card__desc-link,
   .admin-shell .cadastro .booklist-view-switch button,
-  .admin-shell .cadastro .booklist-order select {transition:none;will-change:auto;}
+  .admin-shell .cadastro .booklist-order select {transition:none;}
   .admin-shell .cadastro .booklist-container .shared-book-card__button:hover,
   .admin-shell .cadastro .booklist-container .shared-book-card__button:hover svg,
   .admin-shell .cadastro .booklist-container .shared-book-card__cover-open:hover,
