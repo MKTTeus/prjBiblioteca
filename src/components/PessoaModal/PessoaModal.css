@@ -311,3 +311,192 @@
     width: 100vw;
   }
 }
+
+/* Refinamento visual fiel ao mockup aprovado (desktop e mobile). */
+.person-editor-overlay.modal-overlay {
+  background: var(--overlay-bg);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.person-editor-modal.editor-modal-container {
+  width: min(940px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 12px;
+  border-radius: 21px;
+  background: var(--surface-muted);
+  box-shadow: 0 25px 85px rgba(9, 30, 67, .25);
+}
+.person-editor-header,
+.person-editor-scroll,
+.person-editor-footer {
+  background: var(--surface-bg);
+}
+.person-editor-header {
+  padding: 19px 23px 18px;
+  border-radius: 15px 15px 0 0;
+  gap: 16px;
+}
+.person-editor-symbol {
+  width: 58px;
+  height: 58px;
+  flex-basis: 58px;
+  border-radius: 15px;
+  background: var(--primary-muted);
+  color: var(--primary);
+}
+.person-editor-symbol svg { width: 29px; height: 29px; }
+.person-editor-heading h2 {
+  font-size: clamp(21px, 2.2vw, 25px);
+  font-weight: 750;
+}
+.person-editor-heading p { font-size: 12.5px; margin-top: 5px; font-weight: 450; }
+.person-close { width: 38px; height: 38px; }
+.person-editor-scroll { padding: 12px 17px 12px; }
+.person-editor-sections { gap: 11px; }
+.person-section {
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 11%, var(--surface-border));
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .015);
+}
+.person-section-title {
+  padding: 8px 17px;
+  gap: 10px;
+  min-height: 40px;
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface-bg));
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 7%, var(--surface-border));
+  font-size: 13px;
+  font-weight: 750;
+}
+.person-section-icon {
+  color: var(--primary);
+  background: var(--primary-muted);
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+}
+.person-section-icon svg { width: 17px; height: 17px; }
+.person-fields {
+  padding: 11px 19px 14px;
+  column-gap: 25px;
+  row-gap: 12px;
+}
+.person-field { gap: 5px; }
+.person-field-label { font-size: 12px; font-weight: 700; }
+.person-input-wrap { position: relative; display: block; min-width: 0; width: 100%; }
+.person-input-wrap > input,
+.person-input-wrap > .person-password,
+.person-input-wrap > .person-select-trigger {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.person-input-wrap > input,
+.person-input-wrap .person-password > input,
+.person-input-wrap > .person-select-trigger {
+  min-height: 40px;
+  height: 40px;
+  border-radius: 9px;
+  border: 1px solid var(--input-border);
+  background: var(--surface-muted);
+  color: var(--text-default);
+  padding: 0 13px;
+  font-size: 13px;
+}
+.person-input-wrap.has-icon > input,
+.person-input-wrap.has-icon .person-password > input,
+.person-input-wrap.has-icon > .person-select-trigger {
+  padding-left: 43px;
+}
+.person-input-wrap .person-password > input { padding-right: 43px; }
+.person-input-wrap .person-password-toggle { z-index: 1; }
+.person-field-icon {
+  position: absolute;
+  left: 13px;
+  top: 20px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+.person-input-wrap input:focus-visible,
+.person-input-wrap .person-password > input:focus-visible,
+.person-select-trigger:focus-visible {
+  background: var(--input-bg);
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.person-input-wrap input[aria-invalid="true"],
+.person-input-wrap .person-select-trigger[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+.person-select-trigger { gap: 8px; justify-content: flex-start; }
+.person-select-trigger > [data-radix-select-value] { min-width: 0; }
+.person-select-trigger > span:last-child { margin-left: auto; }
+.person-select-content {
+  border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(12, 31, 62, .18);
+}
+.person-select-item { gap: 8px; font-size: 13px; padding-block: 10px; }
+.person-select-status-dot,
+.person-select-option-dot {
+  display: inline-block;
+  flex: 0 0 10px;
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+}
+.person-select-status-dot.is-active,
+.person-select-option-dot.is-active { background: var(--success); }
+.person-select-status-dot.is-inactive,
+.person-select-option-dot.is-inactive { background: var(--text-muted); }
+.person-editor-footer {
+  padding: 13px 17px 13px;
+  border-radius: 0 0 15px 15px;
+  margin-top: 0;
+}
+.person-editor-hint { font-size: 11px; }
+.person-cancel, .person-save { min-height: 44px; padding-inline: 18px; }
+.person-save { min-width: 191px; }
+@media (max-width: 640px) {
+  .person-editor-modal.editor-modal-container {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: var(--surface-bg);
+  }
+  .person-editor-header { border-radius: 0; padding: 15px 14px; gap: 10px; }
+  .person-editor-symbol { width: 39px; height: 39px; flex-basis: 39px; border-radius: 50%; }
+  .person-editor-symbol svg { width: 21px; height: 21px; }
+  .person-editor-heading h2 { font-size: 17px; }
+  .person-editor-heading p { font-size: 11px; }
+  .person-close { width: 33px; height: 33px; }
+  .person-editor-scroll { padding: 10px 11px 14px; }
+  .person-editor-sections { gap: 9px; }
+  .person-section-title { padding: 7px 11px; min-height: 36px; font-size: 12px; }
+  .person-section-icon { width: 25px; height: 25px; }
+  .person-fields { grid-template-columns: minmax(0, 1fr); padding: 9px 12px 11px; gap: 10px; }
+  .person-field-label { font-size: 11px; }
+  .person-input-wrap > input,
+  .person-input-wrap .person-password > input,
+  .person-input-wrap > .person-select-trigger { min-height: 39px; height: 39px; font-size: 12px; }
+  .person-field-icon { top: 19.5px; }
+  .person-editor-footer { border-radius: 0; padding: 10px 14px max(12px, env(safe-area-inset-bottom)); }
+  .person-editor-hint { width: 100%; font-size: 10px; }
+  .person-editor-actions { width: 100%; }
+  .person-cancel { display: none; }
+  .person-save { width: 100%; min-width: 0; min-height: 44px; }
+}
+/* Evita que larguras legadas prevaleçam nas páginas dos três cadastros. */
+.aluno-page .person-editor-modal.aluno-editor-modal,
+.comunidade-page .person-editor-modal.comunidade-editor-modal,
+.admin-page .person-editor-modal.admin-editor-modal {
+  width: min(940px, calc(100vw - 32px));
+}
+@media (max-width: 640px) {
+  .aluno-page .person-editor-modal.aluno-editor-modal,
+  .comunidade-page .person-editor-modal.comunidade-editor-modal,
+  .admin-page .person-editor-modal.admin-editor-modal { width: 100vw; }
+}

@@ -9,6 +9,7 @@ export default function PessoaSelect({ name, value, onChange, options, placehold
       onValueChange={(selected) => onChange({ target: { name, value: selected } })}>
       <Select.Trigger className="person-select-trigger" name={name} aria-invalid={Boolean(invalid)}
         aria-label={name === "serie" ? "Série" : name === "perfil" ? "Perfil" : "Status"}>
+        {name === "status" && <span className={`person-select-status-dot ${value === "Ativo" ? "is-active" : "is-inactive"}`} aria-hidden="true" />}
         <Select.Value placeholder={placeholder || "Selecione"} />
         <Select.Icon><ChevronDown size={17} aria-hidden="true" /></Select.Icon>
       </Select.Trigger>
@@ -21,6 +22,7 @@ export default function PessoaSelect({ name, value, onChange, options, placehold
               const item = typeof option === "string" ? { value: option, label: option } : option;
               return (
                 <Select.Item key={item.value} value={item.value} className="person-select-item">
+                  {name === "status" && <span className={`person-select-option-dot ${item.value === "Ativo" ? "is-active" : "is-inactive"}`} aria-hidden="true" />}
                   <Select.ItemText>{item.label}</Select.ItemText>
                   <Select.ItemIndicator className="person-select-check"><Check size={16} /></Select.ItemIndicator>
                 </Select.Item>

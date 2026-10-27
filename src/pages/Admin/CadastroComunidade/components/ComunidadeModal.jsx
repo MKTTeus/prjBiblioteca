@@ -1,5 +1,5 @@
 import React from "react";
-import { UserRound, Phone, MapPin } from "lucide-react";
+import { UserRound, Phone, MapPin, IdCard, Mail, LockKeyhole } from "lucide-react";
 import { IMaskInput } from "react-imask";
 import PessoaModal, { PessoaField, PessoaPassword, PessoaSection } from "../../../../components/PessoaModal/PessoaModal";
 import PessoaSelect from "../../../../components/PessoaModal/PessoaSelect";
@@ -18,11 +18,11 @@ export default function ComunidadeModal({
       modoEdicao={modoEdicao} isProcessing={isProcessing} isDirty={isDirty}
       onClose={onClose} onSave={onSave} errors={errors}>
       <PessoaSection title="Identificação" icon={UserRound}>
-        <PessoaField title="Nome completo *">
+        <PessoaField title="Nome completo *" icon={UserRound}>
           <input name="nome" value={membro.nome || ""} onChange={onChange}
             aria-invalid={Boolean(errors.nome)} placeholder="Digite o nome completo do membro" />
         </PessoaField>
-        <PessoaField title="CPF *">
+        <PessoaField title="CPF *" icon={IdCard}>
           <IMaskInput name="cpf" mask={MASK_CPF} value={membro.cpf || ""}
             aria-invalid={Boolean(errors.cpf)} placeholder="000.000.000-00"
             onAccept={(value) => onChange({ target: { name: "cpf", value: value.replace(/\D/g, "") } })} />
@@ -30,28 +30,28 @@ export default function ComunidadeModal({
       </PessoaSection>
 
       <PessoaSection title="Contato e acesso" icon={Phone}>
-        <PessoaField title="E-mail">
+        <PessoaField title="E-mail" icon={Mail}>
           <input name="email" type="email" value={membro.email || ""} onChange={onChange}
             aria-invalid={Boolean(errors.email)} placeholder="membro@comunidade.com" />
         </PessoaField>
-        <PessoaField title="Telefone">
+        <PessoaField title="Telefone" icon={Phone}>
           <IMaskInput name="telefone" mask={MASK_TELEFONE} value={membro.telefone || ""}
             aria-invalid={Boolean(errors.telefone)} placeholder="(00) 00000-0000"
             onAccept={(value) => onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })} />
         </PessoaField>
-        <PessoaField title="Telefone secundário">
+        <PessoaField title="Telefone secundário" icon={Phone}>
           <IMaskInput name="telefone2" mask={MASK_TELEFONE} value={membro.telefone2 || ""}
             placeholder="(00) 00000-0000"
             onAccept={(value) => onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })} />
         </PessoaField>
-        <PessoaField title="Senha *">
+        <PessoaField title="Senha *" icon={LockKeyhole}>
           <PessoaPassword value={membro.senha} onChange={onChange}
             invalid={errors.senha} disabled={modoEdicao} />
         </PessoaField>
       </PessoaSection>
 
       <PessoaSection title="Endereço e status" icon={MapPin}>
-        <PessoaField title="Endereço *">
+        <PessoaField title="Endereço *" icon={MapPin}>
           <input name="endereco" value={membro.endereco || ""} onChange={onChange}
             aria-invalid={Boolean(errors.endereco)} placeholder="Rua, número e complemento" />
         </PessoaField>

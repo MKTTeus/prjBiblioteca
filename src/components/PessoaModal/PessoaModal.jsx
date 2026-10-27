@@ -1,11 +1,11 @@
 import React, { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
-import { UserRoundPlus, X, Save, UserRound, GraduationCap, ShieldCheck, Eye, EyeOff } from "lucide-react";
+import { UserRoundPlus, X, Save, UserRound, UsersRound, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import LoadingButton from "../LoadingButton/LoadingButton";
 import useDialogFocus from "../../hooks/useDialogFocus";
 import "./PessoaModal.css";
 
-const icons = { aluno: GraduationCap, comunidade: UserRound, admin: ShieldCheck };
+const icons = { aluno: UserRoundPlus, comunidade: UsersRound, admin: ShieldCheck };
 
 export function PessoaSection({ icon: Icon, title, children }) {
   return (
@@ -19,11 +19,14 @@ export function PessoaSection({ icon: Icon, title, children }) {
   );
 }
 
-export function PessoaField({ title, children, className = "" }) {
+export function PessoaField({ title, children, className = "", icon: Icon }) {
   return (
     <label className={`person-field ${className}`.trim()}>
       <span className="person-field-label">{title}</span>
-      {children}
+      <span className={`person-input-wrap ${Icon ? "has-icon" : ""}`.trim()}>
+        {Icon && <Icon className="person-field-icon" size={17} aria-hidden="true" />}
+        {children}
+      </span>
     </label>
   );
 }
@@ -66,7 +69,7 @@ export default function PessoaModal({
   const messages = Object.entries(errors).filter(([, message]) => Boolean(message));
   return createPortal(
     <div className="modal-overlay person-editor-overlay" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose();
+      if (event.target === event.currentTarget && !isProcessing) onClose();
     }}>
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}
         className={`editor-modal-container person-editor-modal ${modalClassName}`.trim()}>
@@ -95,7 +98,7 @@ export default function PessoaModal({
             <button type="button" className="person-cancel" onClick={onClose} disabled={isProcessing}>Cancelar</button>
             <LoadingButton type="button" className="person-save" onClick={onSave}
               isLoading={isProcessing} loadingText="Processando..." disabled={modoEdicao && !isDirty}>
-              <Save size={16} aria-hidden="true" />
+              {modoEdicao ? <Save size={16} aria-hidden="true" /> : <UserRoundPlus size={16} aria-hidden="true" />}
               {modoEdicao ? "Salvar alterações" : tipo === "admin" ? "Cadastrar administrador" : tipo === "comunidade" ? "Cadastrar membro" : "Cadastrar aluno"}
             </LoadingButton>
           </div>
