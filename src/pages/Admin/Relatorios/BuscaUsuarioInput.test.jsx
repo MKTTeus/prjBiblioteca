@@ -22,6 +22,7 @@ test('histórico existente envia a identidade correta e limpa o período ao sele
   getRelatorioEmprestimos.mockResolvedValue({itens:[],resumo:{ativos:0,atrasados:0,devolvidos:0,total:0}});
   render(<RelatorioEmprestimos />);
   await waitFor(() => expect(getRelatorioEmprestimos).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole('button',{name:'Filtros adicionais'}));
   const busca=screen.getByRole('textbox',{name:'Buscar leitor específico'});
   fireEvent.focus(busca); fireEvent.change(busca,{target:{value:'João'}});
   fireEvent.click(await screen.findByRole('button',{name:'Professor João Professor'}));
