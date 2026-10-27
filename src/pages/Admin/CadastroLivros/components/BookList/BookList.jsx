@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { HiOutlineViewGrid, HiOutlineViewList } from "react-icons/hi";
+import { HiOutlineBookOpen, HiOutlineViewGrid, HiOutlineViewList } from "react-icons/hi";
 import BookCard from "../../../../../components/BookCard/BookCard";
 import Pagination from "../../../../../components/Pagination/Pagination";
 import usePagination from "../../../../../hooks/usePagination";
@@ -37,16 +37,17 @@ export default function BookList({
     <section className={`booklist-container booklist-container--${view}`} aria-label="Catálogo de livros">
       <div className="booklist-toolbar">
         <div className="booklist-heading">
+          <HiOutlineBookOpen className="booklist-heading__icon" aria-hidden="true" />
           <h2>Catálogo de Livros</h2>
           <span>({safeBooks.length} {safeBooks.length === 1 ? "livro encontrado" : "livros encontrados"})</span>
         </div>
         <div className="booklist-controls">
           <div className="booklist-view-switch" role="group" aria-label="Modo de visualização">
-            <button type="button" className={view === "grade" ? "is-selected" : ""} aria-pressed={view === "grade"} onClick={() => changeView("grade")}>
-              <HiOutlineViewGrid aria-hidden="true" /> Grade
-            </button>
             <button type="button" className={view === "lista" ? "is-selected" : ""} aria-pressed={view === "lista"} onClick={() => changeView("lista")}>
               <HiOutlineViewList aria-hidden="true" /> Lista
+            </button>
+            <button type="button" className={view === "grade" ? "is-selected" : ""} aria-pressed={view === "grade"} onClick={() => changeView("grade")}>
+              <HiOutlineViewGrid aria-hidden="true" /> Grade
             </button>
           </div>
           <label className="booklist-order">
