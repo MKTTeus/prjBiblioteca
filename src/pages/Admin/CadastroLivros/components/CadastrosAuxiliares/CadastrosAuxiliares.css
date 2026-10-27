@@ -188,6 +188,9 @@
 }
 .taxonomia-livros-lista li:last-child { border-bottom: 0; }
 .taxonomia-livros-nome { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.taxonomia-livros-link { display: inline-flex; align-items: baseline; gap: 8px; color: var(--primary); text-decoration: none; }
+.taxonomia-livros-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.taxonomia-livros-link span { flex: none; font-weight: 400; }
 .taxonomia-livros-inativo { border-radius: 999px; padding: 3px 8px; background: var(--btn-muted-bg); color: var(--text-muted); font-size: 12px; white-space: nowrap; }
 .taxonomia-livros-aviso { margin: 0; padding: 28px 24px; color: var(--text-muted); }
 .taxonomia-livros-rodape {
