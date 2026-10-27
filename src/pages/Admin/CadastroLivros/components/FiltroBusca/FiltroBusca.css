@@ -90,3 +90,147 @@
   .cadastro .acervo-filtro-panel .acervo-filtros-grid {grid-template-columns:minmax(0,1fr);}
   .cadastro .acervo-filtro-panel .acervo-filtros-grid > .campo:first-child {grid-column:1;}
 }
+
+
+/* Dropdowns do Acervo: o menu Radix abre em portal, portanto não
+   pode depender de ancestrais como .cadastro para sua estilização. */
+.acervo-select-menu.SelectContent {
+  position:relative !important;
+  z-index:12000 !important;
+  box-sizing:border-box;
+  width:var(--radix-select-trigger-width);
+  min-width:210px;
+  max-width:calc(100vw - 24px);
+  max-height:min(320px,var(--radix-select-content-available-height,320px));
+  padding:6px;
+  overflow:hidden;
+  border:1px solid var(--surface-border);
+  border-radius:13px;
+  background:var(--surface-bg);
+  color:var(--text-default);
+  box-shadow:0 18px 45px rgba(8,32,78,.16),0 3px 12px rgba(8,32,78,.07);
+  transform-origin:var(--radix-select-content-transform-origin);
+}
+.acervo-select-menu[data-state="open"] {
+  animation:acervo-dropdown-enter 185ms cubic-bezier(.16,1,.3,1) both;
+}
+.acervo-select-menu[data-state="closed"] {
+  animation:acervo-dropdown-exit 120ms ease-in both;
+}
+@keyframes acervo-dropdown-enter {
+  from {opacity:0;transform:translateY(-5px) scale(.985);}
+  to {opacity:1;transform:translateY(0) scale(1);}
+}
+@keyframes acervo-dropdown-exit {
+  from {opacity:1;transform:translateY(0);}
+  to {opacity:0;transform:translateY(-3px);}
+}
+.acervo-select-menu .acervo-select-viewport {
+  padding:2px;
+  max-height:min(298px,var(--radix-select-content-available-height,298px));
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--input-border) transparent;
+}
+.acervo-select-menu .acervo-select-item.SelectItem {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:9px;box-sizing:border-box;
+  min-height:38px;padding:8px 11px;
+  border:1px solid transparent;border-radius:8px;
+  color:var(--text-default);font-size:13px;line-height:1.35;
+  outline:none;user-select:none;cursor:pointer;
+  transition:background-color 130ms ease,border-color 130ms ease,color 130ms ease;
+}
+.acervo-select-menu .acervo-select-item[data-highlighted] {
+  background:var(--primary-muted);
+  color:var(--primary);
+  border-color:rgba(37,99,235,.13);
+}
+.acervo-select-menu .acervo-select-item[data-state="checked"] {
+  color:var(--primary);
+  background:var(--primary-muted);
+  font-weight:650;
+}
+.acervo-select-menu .acervo-select-item[data-disabled] {
+  opacity:.45;cursor:not-allowed;
+}
+.acervo-select-menu .acervo-select-item [data-radix-select-item-indicator] {
+  color:var(--primary);
+}
+.cadastro .acervo-filtro-panel .acervo-select-trigger.SelectTrigger {
+  display:flex;align-items:center;gap:9px;justify-content:space-between;
+  padding:0 12px 0 38px;
+  cursor:pointer;
+  transition:border-color 190ms ease,box-shadow 190ms ease,background-color 190ms ease;
+}
+.cadastro .acervo-filtro-panel .acervo-select-trigger:hover,
+.cadastro .acervo-filtro-panel .filtro-exemplares:hover {
+  border-color:var(--primary);
+  background:var(--surface-bg);
+  box-shadow:0 0 0 2px rgba(37,99,235,.06);
+}
+.cadastro .acervo-filtro-panel .acervo-select-trigger[data-state="open"] {
+  border-color:var(--primary);
+  background:var(--surface-bg);
+  box-shadow:0 0 0 3px rgba(37,99,235,.12);
+}
+.cadastro .acervo-filtro-panel .acervo-select-trigger [data-radix-select-icon] svg,
+.cadastro .acervo-filtro-panel .acervo-select-trigger > span:last-child svg {
+  width:17px;height:17px;color:var(--text-muted);
+  transition:transform 200ms cubic-bezier(.2,.8,.2,1),color 200ms ease;
+}
+.cadastro .acervo-filtro-panel .acervo-select-trigger[data-state="open"] > span:last-child svg {
+  transform:rotate(180deg);color:var(--primary);
+}
+.cadastro .acervo-filtro-panel .acervo-native-select-wrap {
+  position:relative;min-width:0;
+}
+.cadastro .acervo-filtro-panel .acervo-native-select-wrap .filtro-exemplares {
+  appearance:none;-webkit-appearance:none;
+  padding-right:38px;cursor:pointer;
+  transition:border-color 190ms ease,box-shadow 190ms ease,background-color 190ms ease;
+}
+.cadastro .acervo-filtro-panel .acervo-native-chevron {
+  position:absolute;right:13px;top:50%;transform:translateY(-50%);
+  color:var(--text-muted);pointer-events:none;width:17px;height:17px;
+  transition:color 180ms ease;
+}
+.cadastro .acervo-filtro-panel .acervo-native-select-wrap:focus-within .acervo-native-chevron,
+.cadastro .acervo-filtro-panel .campo.is-active .acervo-native-chevron {
+  color:var(--primary);
+}
+.cadastro .acervo-filtro-panel .filtro-exemplares option {
+  background:var(--surface-bg);
+  color:var(--text-default);
+  padding:9px 12px;
+}
+/* O botão Limpar mantém sua ação original, mas ganha feedback suave. */
+.cadastro .acervo-filtro-panel .limpar-btn:not(:disabled) {
+  transition:transform 200ms cubic-bezier(.2,.8,.2,1),box-shadow 200ms ease,
+    background-color 200ms ease,border-color 200ms ease,opacity 200ms ease;
+}
+.cadastro .acervo-filtro-panel .limpar-btn:not(:disabled):hover {
+  transform:translateY(-2px);
+  box-shadow:0 7px 18px rgba(37,99,235,.2);
+}
+.cadastro .acervo-filtro-panel .limpar-btn:not(:disabled):active {
+  transform:translateY(0) scale(.985);
+  box-shadow:0 2px 7px rgba(37,99,235,.13);
+}
+.cadastro .acervo-filtro-panel .limpar-btn svg {
+  transition:transform 200ms cubic-bezier(.2,.8,.2,1);
+}
+.cadastro .acervo-filtro-panel .limpar-btn:not(:disabled):hover svg {
+  transform:rotate(-12deg);
+}
+@media (prefers-reduced-motion:reduce) {
+  .acervo-select-menu[data-state="open"],.acervo-select-menu[data-state="closed"] {
+    animation:none;
+  }
+  .acervo-select-menu .acervo-select-item,
+  .cadastro .acervo-filtro-panel .acervo-select-trigger,
+  .cadastro .acervo-filtro-panel .filtro-exemplares,
+  .cadastro .acervo-filtro-panel .limpar-btn,
+  .cadastro .acervo-filtro-panel .limpar-btn svg,
+  .cadastro .acervo-filtro-panel .acervo-select-trigger svg {transition:none;}
+}
