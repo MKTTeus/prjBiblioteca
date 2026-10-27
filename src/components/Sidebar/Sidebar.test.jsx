@@ -10,20 +10,46 @@ jest.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { tipo: "admin" }, logout: jest.fn() }),
 }));
 
-test("admin mobile menu keeps real routes and opens only one accordion", () => {
-  Object.defineProperty(window, "innerWidth", { configurable: true, value: 375 });
-  render(
-    <MemoryRouter initialEntries={["/admin"]}>
-      <SidebarProvider><Sidebar type="admin" /></SidebarProvider>
-    </MemoryRouter>,
-  );
+const renderSidebar = (path = "/admin") => render(
+  <MemoryRouter initialEntries={[path]}>
+    <SidebarProvider><Sidebar type="admin" /></SidebarProvider>
+  </MemoryRouter>,
+);
 
-  fireEvent.click(screen.getByRole("button", { name: "Empréstimos" }));
-  expect(screen.getByRole("button", { name: "Empréstimos" })).toHaveAttribute("aria-expanded", "true");
+test("admin permite manter Empréstimos, Livros e Pessoas abertos simultaneamente", () => {
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: 375 });
+  renderSidebar();
+  const emprestimos = screen.getByRole("button", { name: "Empréstimos" });
+  const livros = screen.getByRole("button", { name: "Livros" });
+  const pessoas = screen.getByRole("button", { name: "Pessoas" });
+
+  fireEvent.click(emprestimos);
+  fireEvent.click(livros);
+  fireEvent.click(pessoas);
+  expect(emprestimos).toHaveAttribute("aria-expanded", "true");
+  expect(livros).toHaveAttribute("aria-expanded", "true");
+  expect(pessoas).toHaveAttribute("aria-expanded", "true");
+
+  // Fechar manualmente um grupo não modifica os demais.
+  fireEvent.click(livros);
+  expect(emprestimos).toHaveAttribute("aria-expanded", "true");
+  expect(livros).toHaveAttribute("aria-expanded", "false");
+  expect(pessoas).toHaveAttribute("aria-expanded", "true");
+
   expect(screen.getByRole("link", { name: "Empréstimos e Devoluções" })).toHaveAttribute("href", "/admin/emprestimos");
-  fireEvent.click(screen.getByRole("button", { name: "Livros" }));
-  expect(screen.getByRole("button", { name: "Empréstimos" })).toHaveAttribute("aria-expanded", "false");
-  expect(screen.getByRole("button", { name: "Livros" })).toHaveAttribute("aria-expanded", "true");
-  expect(screen.getByRole("link", { name: "Cadastros Auxiliares" })).toHaveAttribute("href", "/admin/livros/cadastros-auxiliares");
   expect(screen.getByRole("link", { name: "Cadastro da Comunidade" })).toHaveAttribute("href", "/admin/comunidade");
+});
+
+test("navegar para outra seção expande o grupo correspondente sem fechar outros", () => {
+  Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
+  renderSidebar("/admin/emprestimos");
+  const emprestimos = screen.getByRole("button", { name: "Empréstimos" });
+  const livros = screen.getByRole("button", { name: "Livros" });
+  expect(emprestimos).toHaveAttribute("aria-expanded", "true");
+
+  fireEvent.click(livros);
+  fireEvent.click(screen.getByRole("link", { name: "Catálogo (acervo)" }));
+
+  expect(emprestimos).toHaveAttribute("aria-expanded", "true");
+  expect(livros).toHaveAttribute("aria-expanded", "true");
 });
