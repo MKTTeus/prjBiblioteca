@@ -114,7 +114,7 @@ export default function RelatorioAcervo() {
 
   return (
     <div className="rel-tab-content">
-      <div className="rel-subheader">
+      <div className="rel-subheader rel-subheader--acervo">
         <p>Quantidade de títulos e exemplares do acervo, agrupados por {labelGrupo.toLowerCase()}. Clique no nome para ver os títulos.</p>
 
         <div className="rel-export-actions">
@@ -166,6 +166,7 @@ export default function RelatorioAcervo() {
 
       <p className="rel-nota">Situação atual do acervo. Obras com vários autores ou gêneros aparecem em cada grupo; o resumo conta títulos e exemplares únicos.</p>
 
+      <div className="rel-resultados-heading"><div><h3>Distribuição do acervo por {labelGrupo.toLowerCase()}</h3><p>Selecione um grupo para consultar os títulos.</p></div></div>
       <div className="rel-table-box">
         <table>
           <thead>

@@ -116,7 +116,7 @@ export default function RelatorioAtrasos() {
 
   return (
     <div className="rel-tab-content">
-      <div className="rel-subheader">
+      <div className="rel-subheader rel-subheader--atrasos">
         <p>
           {filtrosAplicados.apenasAtivos
             ? "Usuários com empréstimos ativos que já passaram da data de devolução."
@@ -218,6 +218,7 @@ export default function RelatorioAtrasos() {
       {erro && <div className="rel-erro">{erro}</div>}
       {filtrosEditados && <p className="rel-nota">Clique em Filtrar para aplicar as alterações antes de exportar.</p>}
 
+      <div className="rel-resultados-heading"><div><h3>{emModoRanking ? "Ranking de atrasos" : "Lista de usuários em atraso"}</h3><p>Consulte livros, prazos e ocorrências por leitor.</p></div></div>
       {emModoRanking ? (
         <div className="rel-table-box">
           <table>

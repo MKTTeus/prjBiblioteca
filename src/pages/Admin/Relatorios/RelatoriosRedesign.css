@@ -1,0 +1,100 @@
+/* Interface renovada dos quatro relatórios: apenas esta área administrativa. */
+.rel-redesign { --report-blue: var(--primary); min-width: 0; }
+.rel-redesign .rel-header { margin-bottom: 16px; }
+.rel-header-eyebrow { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 10px; font-size: 12px; font-weight: 650; color: rgba(255,255,255,.82); }
+.rel-redesign .rel-tab-content, .rel-redesign .rel-gestao { display: flex; flex-direction: column; min-width: 0; }
+.rel-redesign .rel-subheader, .rel-redesign .rel-consulta-navegacao {
+  display: flex; gap: 14px; justify-content: space-between; align-items: center;
+  margin: 0 0 14px; padding: 16px 19px;
+  background: var(--surface-bg); border: 1px solid var(--surface-border);
+  border-radius: 14px; box-shadow: var(--shadow-soft);
+}
+.rel-redesign .rel-subheader > div:first-child { min-width: 0; }
+.rel-redesign .rel-subheader p { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+.rel-redesign .rel-modo-toggle { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 0; background: transparent; }
+.rel-redesign .rel-modo-toggle button,
+.rel-redesign .rel-grupos button {
+  display: inline-flex; gap: 8px; align-items: center; min-height: 40px; padding: 9px 14px;
+  border: 1px solid var(--surface-border); border-radius: 10px;
+  background: var(--surface-bg); color: var(--text-label); font-size: 13px; font-weight: 700;
+}
+.rel-redesign .rel-modo-toggle button.rel-modo-toggle-ativo,
+.rel-redesign .rel-grupos button[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-muted); color: var(--primary); box-shadow: none; }
+.rel-redesign .rel-export-actions { gap: 8px; flex-shrink: 0; }
+.rel-redesign .rel-btn-export {
+  border: 1px solid var(--surface-border); border-radius: 9px;
+  padding: 10px 13px; color: var(--primary); background: var(--surface-bg);
+  font-size: 12px; font-weight: 700; min-height: 40px;
+}
+.rel-redesign .rel-filtros, .rel-redesign .rel-filtros-consulta {
+  padding: 17px 19px; border-radius: 14px; border: 1px solid var(--surface-border);
+  background: var(--surface-bg); box-shadow: var(--shadow-soft); margin: 0 0 15px;
+  gap: 14px; min-width: 0;
+}
+.rel-redesign .rel-filtro-campo { min-width: 0; flex: 1 1 180px; }
+.rel-redesign .rel-filtro-campo label, .rel-redesign .rel-filtro-campo > span {
+  color: var(--text-label); font-size: 12px; text-transform: none; letter-spacing: 0; font-weight: 700;
+}
+.rel-redesign .rel-filtro-campo input, .rel-redesign .rel-filtro-campo select,
+.rel-redesign .rel-filtros-consulta input, .rel-redesign .rel-filtros-consulta select {
+  box-sizing: border-box; width: 100%; min-height: 42px; padding: 9px 12px;
+  border: 1px solid var(--input-border); border-radius: 9px;
+  background: var(--input-bg); color: var(--text-default); font-size: 13px;
+}
+.rel-redesign .rel-btn-filtrar {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  background: var(--primary); color: #fff; border: 1px solid var(--primary); border-radius: 9px;
+  font-size: 13px; font-weight: 700; min-height: 42px; padding: 9px 17px;
+}
+.rel-redesign .rel-avancados-toggle { color: var(--primary); font-size: 12px; font-weight: 700; }
+.rel-redesign .stats-cards-grid {
+  display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 13px;
+  margin: 0 0 15px;
+}
+.rel-redesign .stats-cards-grid:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.rel-redesign .stats-card { box-shadow: var(--shadow-soft); }
+.rel-redesign .rel-resultados-heading { margin: 2px 0 9px; }
+.rel-redesign .rel-resultados-heading h3 { font-size: 17px; font-weight: 750; }
+.rel-redesign .rel-resultados-heading p { font-size: 12px; }
+.rel-redesign .rel-table-box {
+  width: 100%; min-width: 0; max-width: 100%; margin: 0 0 14px; box-sizing: border-box;
+  border: 1px solid var(--surface-border); border-radius: 14px;
+  background: var(--surface-bg); box-shadow: var(--shadow-soft); overflow-x: auto;
+}
+.rel-redesign .rel-table-box th { background: var(--surface-muted); font-size: 11px; font-weight: 750; color: var(--text-label); }
+.rel-redesign .rel-table-box td { font-size: 12px; }
+.rel-redesign .rel-table-box tbody tr:hover { background: var(--surface-hover); }
+.rel-redesign .rel-table-box tbody tr:last-child td { border-bottom: 0; }
+.rel-redesign .rel-status { border-radius: 999px; }
+.rel-redesign .rel-subheader--atrasos { border-left: 3px solid #ef4444; }
+.rel-redesign .rel-subheader--acervo { border-left: 3px solid var(--primary); }
+.rel-redesign .rel-consulta-navegacao { display: block; }
+.rel-redesign .rel-grupos { flex-wrap: wrap; margin: 14px 0; }
+.rel-redesign .rel-selecao-consulta { gap: 14px; }
+.rel-redesign .rel-filtros-consulta { display: block; }
+.rel-redesign .rel-filtros-principais { gap: 12px; }
+.rel-redesign .rel-filtros-adicionais { gap: 11px; }
+.rel-redesign .rel-resumo { border-radius: 12px; border: 1px solid var(--surface-border); padding: 14px; margin-bottom: 14px; }
+.rel-redesign .rel-resumo dd { font-weight: 750; }
+.rel-redesign .rel-modal-titulos { max-width: min(840px,95vw); }
+@media (max-width: 950px) {
+  .rel-redesign .stats-cards-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .rel-redesign .stats-cards-grid:has(> :nth-child(3):last-child) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .rel-redesign .rel-emprestimos-filtros { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 640px) {
+  .rel-redesign .rel-header-eyebrow { font-size: 10px; }
+  .rel-redesign .rel-subheader { align-items: stretch; padding: 13px; flex-direction: column; }
+  .rel-redesign .rel-export-actions { width: 100%; }
+  .rel-redesign .rel-export-actions .rel-btn-export { flex: 1; justify-content: center; }
+  .rel-redesign .rel-filtros, .rel-redesign .rel-filtros-consulta { padding: 13px; gap: 10px; }
+  .rel-redesign .rel-emprestimos-filtros { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .rel-redesign .rel-filtro-campo { min-width: 0; }
+  .rel-redesign .rel-modo-toggle { width: 100%; }
+  .rel-redesign .rel-modo-toggle button { flex: 1; justify-content: center; font-size: 12px; padding: 8px; }
+  .rel-redesign .stats-cards-grid, .rel-redesign .stats-cards-grid:has(> :nth-child(3):last-child) { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 9px; }
+  .rel-redesign .rel-table-box { scrollbar-width: thin; }
+  .rel-redesign .rel-consulta-navegacao { padding: 13px; }
+  .rel-redesign .rel-grupos button { flex: 1; padding: 9px; justify-content: center; }
+  .rel-redesign .rel-filtros-acoes { align-items: stretch; }
+}
