@@ -1,6 +1,7 @@
 from rpc import executar_rpc
 from core import consultar_completo, consultar_lote
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from .livros_vinculados import listar_livros_vinculados
 
 from database import supabase
 from core import get_admin
@@ -59,6 +60,14 @@ def contar_uso_genero(idGenero: int, admin=Depends(get_admin)):
     except Exception as e:
         print("Erro ao contar uso do gênero:", 'falha de operação')
         raise HTTPException(status_code=503, detail="Não foi possível verificar os livros vinculados a este gênero. Tente novamente.") from e
+
+
+@router.get("/generos/{idGenero}/livros")
+def livros_do_genero(idGenero: int, pagina: int = Query(1, ge=1), admin=Depends(get_admin)):
+    try:
+        return listar_livros_vinculados("LivroGenero", "idGenero", idGenero, pagina)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Não foi possível carregar os livros deste gênero. Tente novamente.") from e
 
 
 @router.put("/generos/{idGenero}")

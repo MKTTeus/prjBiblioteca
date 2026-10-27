@@ -296,6 +296,9 @@ export const deleteGenero = (idGenero) =>
 export const getGeneroUso = (idGenero) =>
   apiFetch(`/generos/${idGenero}/uso`);
 
+export const getLivrosDoGenero = (idGenero, pagina = 1) =>
+  apiFetch(`/generos/${idGenero}/livros?pagina=${pagina}`);
+
 export const mesclarGenero = (idGenero, idDestino) =>
   apiFetch(`/generos/${idGenero}/mesclar`, {
     method: "POST",
@@ -309,6 +312,9 @@ export const deleteAutor = (idAutor) =>
 
 export const getAutorUso = (idAutor) =>
   apiFetch(`/autores/${idAutor}/uso`);
+
+export const getLivrosDoAutor = (idAutor, pagina = 1) =>
+  apiFetch(`/autores/${idAutor}/livros?pagina=${pagina}`);
 
 export const mesclarAutor = (idAutor, idDestino) =>
   apiFetch(`/autores/${idAutor}/mesclar`, {

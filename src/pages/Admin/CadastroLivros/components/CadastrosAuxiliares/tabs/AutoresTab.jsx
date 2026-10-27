@@ -8,12 +8,14 @@ import Pagination from "../../../../../../components/Pagination/Pagination";
 import usePagination from "../../../../../../hooks/usePagination";
 import MergeModal from "../MergeModal";
 import AutorModal from "./AutorModal";
+import LivrosVinculadosModal from "../LivrosVinculadosModal";
 import {
   getAutores,
   createAutor,
   updateAutor,
   deleteAutor,
   getAutorUso,
+  getLivrosDoAutor,
   mesclarAutor,
 } from "../../../../../../services/api";
 import { getErrorMessage } from "../../../../../../utils/apiError";
@@ -36,6 +38,7 @@ export default function AutoresTab() {
   const [confirmingMerge, setConfirmingMerge] = useState(false);
 
   const [verificandoId, setVerificandoId] = useState(null);
+  const [livrosDoRegistro, setLivrosDoRegistro] = useState(null);
 
   const carregar = useCallback(async () => {
     try {
@@ -201,9 +204,7 @@ export default function AutoresTab() {
                   <td data-label="Nascimento">{autor.autAnoNascimento || "—"}</td>
                   <td data-label="Falecimento">{autor.autAnoFalecimento || "—"}</td>
                   <td className="taxonomia-col-livros" data-label="Livros">
-                    <span className={`taxonomia-badge-livros ${!autor.total_livros ? "zero" : ""}`}>
-                      {autor.total_livros || 0}
-                    </span>
+                    {autor.total_livros ? <button type="button" className="taxonomia-badge-livros taxonomia-badge-link" onClick={() => setLivrosDoRegistro({ id: autor.idAutor, nome: autor.autNome, total: autor.total_livros })} aria-label={`Ver ${autor.total_livros} livros vinculados a ${autor.autNome}`} title="Ver livros vinculados">{autor.total_livros}</button> : <span className="taxonomia-badge-livros zero">0</span>}
                   </td>
                   <td className="taxonomia-acoes-cell">
                     <div className="acoes">
@@ -245,6 +246,8 @@ export default function AutoresTab() {
         onSave={handleSalvarAutor}
         saving={salvando}
       />
+
+      {livrosDoRegistro && <LivrosVinculadosModal registro={livrosDoRegistro} tipo="Autor" carregar={getLivrosDoAutor} onClose={() => setLivrosDoRegistro(null)} />}
 
       <ConfirmModal
         show={Boolean(pendingDelete)}
