@@ -28,10 +28,12 @@ function SelectStatus({ value = "todas", onChange, acervoStyle = false }) {
 
             <Select.Item value="ativo" className={`SelectItem${acervoStyle ? " acervo-select-item" : ""}`}>
               <Select.ItemText>Ativo</Select.ItemText>
+              <Select.ItemIndicator><CheckIcon /></Select.ItemIndicator>
             </Select.Item>
 
             <Select.Item value="inativo" className={`SelectItem${acervoStyle ? " acervo-select-item" : ""}`}>
               <Select.ItemText>Inativo</Select.ItemText>
+              <Select.ItemIndicator><CheckIcon /></Select.ItemIndicator>
             </Select.Item>
 
           </Select.Viewport>
