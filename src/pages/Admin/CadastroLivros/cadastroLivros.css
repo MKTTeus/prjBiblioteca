@@ -383,3 +383,36 @@
   .admin-shell .cadastro .acervo-hero.cadastro-header p {font-size:12px;margin-top:8px;}
   .admin-shell .cadastro .acervo-hero .btn-add {width:100%;margin-top:12px;}
 }
+
+
+/* Microinteração do CTA do Acervo, sem interferir nos botões globais. */
+.admin-shell .cadastro .acervo-hero .btn-add {
+  transition:transform 210ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 210ms ease,background-color 210ms ease,color 210ms ease;
+}
+.admin-shell .cadastro .acervo-hero .btn-add svg {
+  transition:transform 210ms cubic-bezier(.2,.8,.2,1);
+}
+.admin-shell .cadastro .acervo-hero .btn-add:hover {
+  transform:translateY(-2px);
+  box-shadow:0 9px 20px rgba(5,25,71,.2);
+  background:#f5f9ff;
+}
+.admin-shell .cadastro .acervo-hero .btn-add:hover svg {
+  transform:rotate(90deg);
+}
+.admin-shell .cadastro .acervo-hero .btn-add:active {
+  transform:translateY(0) scale(.985);
+  box-shadow:0 3px 8px rgba(5,25,71,.12);
+}
+.admin-shell .cadastro .acervo-hero .btn-add:focus-visible {
+  outline:2px solid #fff;outline-offset:3px;
+}
+@media (prefers-reduced-motion:reduce) {
+  .admin-shell .cadastro .acervo-hero .btn-add,
+  .admin-shell .cadastro .acervo-hero .btn-add svg {
+    transition:none;
+  }
+  .admin-shell .cadastro .acervo-hero .btn-add:hover,
+  .admin-shell .cadastro .acervo-hero .btn-add:hover svg {transform:none;}
+}
