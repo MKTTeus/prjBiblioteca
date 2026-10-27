@@ -39,14 +39,20 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
   const { user, logout } = useAuth();
   const { isOpen, isCollapsed, close } = useSidebar();
   const { pathname } = useLocation();
-  const [openGroup, setOpenGroup] = useState(null);
+  // Cada grupo mantém seu próprio estado: abrir outro não fecha os anteriores.
+  const [openGroups, setOpenGroups] = useState(() => new Set());
   const [libraryName, setLibraryName] = useState(() => localStorage.getItem("nomeBiblioteca") || "Sala de Leitura");
   const closeButtonRef = useRef(null);
   const adminSidebarRef = useRef(null);
-  const openPessoas = openGroup === "pessoas";
-  const openEmprestimos = openGroup === "emprestimos";
-  const openLivros = openGroup === "livros";
-  const toggleGroup = (group) => setOpenGroup((current) => current === group ? null : group);
+  const openPessoas = openGroups.has("pessoas");
+  const openEmprestimos = openGroups.has("emprestimos");
+  const openLivros = openGroups.has("livros");
+  const toggleGroup = (group) => setOpenGroups((current) => {
+    const next = new Set(current);
+    if (next.has(group)) next.delete(group);
+    else next.add(group);
+    return next;
+  });
 
   const isAdmin = type === "admin" || (!type && user?.tipo === "admin");
 
@@ -61,9 +67,18 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith("/admin/emprestimos")) setOpenGroup("emprestimos");
-    else if (pathname.startsWith("/admin/livros")) setOpenGroup("livros");
-    else if (/^\/admin\/(alunos|comunidade|admins)/.test(pathname)) setOpenGroup("pessoas");
+    let routeGroup = null;
+    if (pathname.startsWith("/admin/emprestimos")) routeGroup = "emprestimos";
+    else if (pathname.startsWith("/admin/livros")) routeGroup = "livros";
+    else if (/^\/admin\/(alunos|comunidade|admins)/.test(pathname)) routeGroup = "pessoas";
+    if (routeGroup) {
+      setOpenGroups((current) => {
+        if (current.has(routeGroup)) return current;
+        const next = new Set(current);
+        next.add(routeGroup);
+        return next;
+      });
+    }
   }, [pathname]);
 
   useEffect(() => {
