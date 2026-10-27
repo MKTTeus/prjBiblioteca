@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import useDialogFocus from "../../../../../hooks/useDialogFocus";
 import {
   addExemplares,
   createBook,
@@ -258,6 +260,19 @@ const DEFAULT_EDIT_ADD_CONFIG = {
   quantidade: 0,
 };
 
+function BookCoverPreview({ src, title, onClose }) {
+  const previewRef = useDialogFocus(true, onClose);
+  return createPortal(
+    <div className="book-editor-cover-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div ref={previewRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Capa completa de ${title}`} className="book-editor-cover-dialog">
+        <button type="button" onClick={onClose} className="book-editor-cover-close" aria-label="Fechar visualização da capa"><HiOutlineX /></button>
+        <img src={src} alt={`Capa completa de ${title}`} />
+        <span>{title}</span>
+      </div>
+    </div>, document.body
+  );
+}
+
 export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initialSection = "basic" }) {
   const { addToast } = useToast();
   const { user } = useAuth();
@@ -303,6 +318,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   const [fieldOrigins, setFieldOrigins] = useState({});
   const [regeneratingField, setRegeneratingField] = useState(null);
   const [fieldSuggestion, setFieldSuggestion] = useState(null);
+  const [coverPreviewOpen, setCoverPreviewOpen] = useState(false);
   // Diferente do highlightedFields acima (que é só o "brilho" visual e some
   // sozinho depois de alguns segundos), este aqui não expira — serve para o
   // painel de sugestões da IA saber, a qualquer momento, quais campos já
@@ -1013,10 +1029,11 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   }
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay book-editor-overlay">
       <div className="editor-modal-container book-editor-modal" role="dialog" aria-modal="true" aria-labelledby="book-editor-title">
         <div className="editor-shell">
           <div className="editor-topbar">
+            <span className="editor-topbar-icon" aria-hidden="true"><HiOutlineBookOpen /></span>
             <div className="editor-topbar-copy">
               <h2 id="book-editor-title">{bookToEdit ? "Editar Livro" : "Novo Livro"}</h2>
               <p>{bookToEdit ? "Edite as informações do livro selecionado." : "Cadastre os dados do título e dos exemplares."}</p>
@@ -1051,6 +1068,26 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
             <span><FieldOriginIcon name="ia" fieldOrigins={{ ia: "ia" }} /> IA</span>
           </div>
           <div className="editor-content" ref={editorContentRef} onScroll={updateActiveSection}>
+            {Boolean(bookToEdit) && !loadingDetails && (
+              <div className="editor-book-overview">
+                <div className="editor-book-overview__details">
+                  {form.livCapaURL
+                    ? <img src={form.livCapaURL} alt={`Capa de ${form.livTitulo || "livro"}`} className="editor-book-overview__cover" />
+                    : <span className="editor-book-overview__placeholder"><HiOutlineBookOpen /></span>}
+                  <div className="editor-book-overview__text">
+                    <strong>{form.livTitulo || "Livro sem título"}</strong>
+                    <span>{form.livAutor || "Autor não informado"}</span>
+                    <small>{[form.livAnoPublicacao, form.livPaginas ? `${form.livPaginas} páginas` : ""].filter(Boolean).join(" · ")}</small>
+                  </div>
+                </div>
+                {Boolean(form.livCapaURL) && (
+                  <button type="button" className="editor-book-overview__action" onClick={() => setCoverPreviewOpen(true)}>
+                    <HiOutlineBookOpen aria-hidden="true" /> Ver capa completa
+                  </button>
+                )}
+              </div>
+            )}
+
             {saveErrors.length > 0 && <div className="editor-copies-warning editor-save-errors" role="alert">
               <p><strong>Não foi possível salvar todas as alterações.</strong> {savedParts > 0 ? `${savedParts} parte(s) já foram salvas; ao tentar novamente, somente as pendências serão enviadas.` : "Revise os erros e tente novamente."}</p>
               <ul>{saveErrors.map((message, index) => <li key={`${index}-${message}`}>{message}</li>)}</ul>
@@ -1140,6 +1177,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
           </div>
         </div>
       </div>
+
+      {coverPreviewOpen && Boolean(form.livCapaURL) && (
+        <BookCoverPreview src={form.livCapaURL} title={form.livTitulo || "Livro"} onClose={() => setCoverPreviewOpen(false)} />
+      )}
 
       <ConfirmExitModal
         show={confirmandoSaida}
