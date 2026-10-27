@@ -297,3 +297,17 @@
 @media (prefers-reduced-motion: reduce) {
   .person-editor-modal *, .person-select-content * { transition: none !important; }
 }
+
+/* Sobrescreve larguras dos antigos modais definidas nos CSS das páginas. */
+.aluno-page .person-editor-modal.aluno-editor-modal,
+.comunidade-page .person-editor-modal.comunidade-editor-modal,
+.admin-page .person-editor-modal.admin-editor-modal {
+  width: min(890px, calc(100vw - 32px));
+}
+@media (max-width: 640px) {
+  .aluno-page .person-editor-modal.aluno-editor-modal,
+  .comunidade-page .person-editor-modal.comunidade-editor-modal,
+  .admin-page .person-editor-modal.admin-editor-modal {
+    width: 100vw;
+  }
+}
