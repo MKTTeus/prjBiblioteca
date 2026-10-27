@@ -416,3 +416,60 @@
   .admin-shell .cadastro .acervo-hero .btn-add:hover,
   .admin-shell .cadastro .acervo-hero .btn-add:hover svg {transform:none;}
 }
+
+
+/* Acervo: reproduz a posição e o azul do CTA mobile de Empréstimos e Devoluções.
+   O botão do header continua disponível apenas em telas desktop. */
+.admin-shell .cadastro .acervo-mobile-add {
+  display:none;
+}
+@media (max-width:768px) {
+  .admin-shell .cadastro .acervo-hero .acervo-desktop-add {
+    display:none;
+  }
+  .admin-shell .cadastro .acervo-mobile-add {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    width:100%;
+    min-height:46px;
+    margin:0 0 18px;
+    padding:10px 16px;
+    border:0;
+    border-radius:10px;
+    background:#0863f4;
+    color:#fff;
+    font:inherit;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform 210ms cubic-bezier(.2,.8,.2,1),box-shadow 210ms ease,background-color 210ms ease;
+  }
+  .admin-shell .cadastro .acervo-mobile-add svg {
+    flex:none;
+    font-size:19px;
+  }
+  .admin-shell .cadastro .acervo-mobile-add:hover {
+    background:#075adf;
+    transform:translateY(-2px);
+    box-shadow:0 7px 16px rgba(8,99,244,.20);
+  }
+  .admin-shell .cadastro .acervo-mobile-add:active {
+    transform:translateY(0) scale(.99);
+    box-shadow:none;
+  }
+  .admin-shell .cadastro .acervo-mobile-add:focus-visible {
+    outline:2px solid var(--primary);
+    outline-offset:3px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .admin-shell .cadastro .acervo-mobile-add {
+    transition:none;
+  }
+  .admin-shell .cadastro .acervo-mobile-add:hover,
+  .admin-shell .cadastro .acervo-mobile-add:active {
+    transform:none;
+  }
+}
