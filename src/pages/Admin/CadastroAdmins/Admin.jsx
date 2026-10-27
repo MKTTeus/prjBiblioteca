@@ -2,8 +2,9 @@ import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
 import "../../../components/MobileUserCard/UserManagementLayout.css";
+import "../../../components/MobileUserCard/UserDirectory.css";
 import "../CadastroLivros/components/BookForm/BookFormModal.css";
-import { Shield, UserCheck, UserX, Pencil, Trash2 } from "lucide-react";
+import { Shield, UserCheck, UserX, Pencil, Trash2, Plus, ChevronDown } from "lucide-react";
 import { getAdmins, createAdmin, updateAdmin, deleteAdmin, excluirAdminsLote, atualizarStatusAdminsLote } from "../../../services/api";
 import { useToast } from "../../../contexts/ToastContext";
 import ConfirmModal from "../../../components/ConfirmModal/ConfirmModal";
@@ -13,6 +14,7 @@ import SearchBar from "./components/SearchBar";
 import AdminModal from "./components/AdminModal";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import MobileUserCard from "../../../components/MobileUserCard/MobileUserCard";
+import { UserAvatar, UserStatus, UserProfile } from "../../../components/MobileUserCard/UserIdentity";
 import { getErrorMessage } from "../../../utils/apiError";
 import { filtrarPorBusca } from "../../../utils/busca";
 import { useAuth } from "../../../contexts/AuthContext";
@@ -36,6 +38,7 @@ export default function Admin() {
   const [isDirty, setIsDirty] = useState(false);
   const [pesquisa, setPesquisa] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [filtroPerfil, setFiltroPerfil] = useState("Todos");
   const [novoAdmin, setNovoAdmin] = useState(EMPTY_ADMIN);
   const [errosFormulario, setErrosFormulario] = useState({});
   const [admins, setAdmins] = useState([]);
@@ -337,13 +340,13 @@ export default function Admin() {
   const totalAdmins = admins.length;
   const adminsAtivos = admins.filter((a) => a.status === "Ativo").length;
   const adminsInativos = admins.filter((a) => a.status === "Inativo").length;
-  const adminsFiltrados = filtrarPorBusca(admins, pesquisa, (admin) => [admin.nome, admin.email])
-    .filter((admin) => filtroStatus === "Todos" || admin.status === filtroStatus);
+  const adminsFiltrados = filtrarPorBusca(admins, pesquisa, (admin) => [admin.nome, admin.email, admin.perfil])
+    .filter((admin) => (filtroStatus === "Todos" || admin.status === filtroStatus) && (filtroPerfil === "Todos" || admin.perfil === filtroPerfil));
 
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(adminsFiltrados);
 
   return (
-    <div className="admin-page page-shell admin-standard-page">
+    <div className="admin-page page-shell admin-standard-page user-directory">
       <div className="titulo admin-standard-header">
         <div>
           <h1>Gestão de Administradores</h1>
@@ -378,8 +381,16 @@ export default function Admin() {
         />
       </div>
 
+      <div className="user-directory-toolbar">
+      <div className="user-management-list-heading">
+        <h2>Lista de Administradores</h2>
+        <span className="user-management-count">{adminsFiltrados.length} {adminsFiltrados.length === 1 ? "administrador" : "administradores"}</span>
+      </div>
+
       <div className="user-management-actions">
-        <button className="btn-novo-admin" onClick={abrirCriacao}>+ Novo Administrador</button>
+        <button className="btn-novo-admin" onClick={abrirCriacao}><Plus size={17} aria-hidden="true" /> Cadastrar administrador</button>
+      </div>
+
       </div>
 
       <div className="user-management-controls">
@@ -393,15 +404,21 @@ export default function Admin() {
           {["Todos", "Ativo", "Inativo"].map((status) => (
             <button key={status} type="button" className={filtroStatus === status ? "is-active" : ""}
               aria-pressed={filtroStatus === status} onClick={() => { setFiltroStatus(status); setSelecionados([]); irParaPagina(1); }}>
+              {status !== "Todos" && <span className={`directory-filter-dot ${status === "Ativo" ? "is-active" : status === "Formados" ? "is-graduated" : "is-inactive"}`} aria-hidden="true" />}
               {{ Todos: "Todos", Ativo: "Ativos", Inativo: "Inativos" }[status]}
+              <span className="directory-filter-count">{status === "Todos" ? totalAdmins : status === "Ativo" ? adminsAtivos : adminsInativos}</span>
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="user-management-list-heading">
-        <h2>Lista de Administradores</h2>
-        <span className="user-management-count">{adminsFiltrados.length} {adminsFiltrados.length === 1 ? "administrador" : "administradores"}</span>
+        <label className="directory-profile-picker">
+          <span className="directory-visually-hidden">Filtrar por perfil</span>
+          <select value={filtroPerfil} onChange={(event) => { setFiltroPerfil(event.target.value); setSelecionados([]); irParaPagina(1); }}>
+            <option value="Todos">Todos os perfis</option>
+            <option value="Gestor">Gestor</option>
+            <option value="Professor">Professor</option>
+          </select>
+          <ChevronDown size={16} aria-hidden="true" />
+        </label>
       </div>
 
       {selecionados.length > 0 && (
@@ -427,13 +444,15 @@ export default function Admin() {
             <input type="checkbox" checked={selecionados.length === adminsFiltrados.length} onChange={toggleSelecionarTodos} />
             Selecionar todos ({adminsFiltrados.length})
           </label>}
+          {adminsFiltrados.length === 0 && <p className="directory-empty">Nenhum registro encontrado.</p>}
           {paginaItens.map((admin) => (
             <MobileUserCard
               key={admin.idAdmin}
               name={admin.nome}
-              identifier={`ID ${admin.idAdmin}`}
               status={admin.status}
-              fields={[{ label: "Perfil", value: admin.perfil, wide: true }, { label: "E-mail", value: admin.email, wide: true }]}
+              email={admin.email}
+              profile={admin.perfil}
+              fields={[]}
               selected={selecionados.includes(admin.idAdmin)}
               onSelect={() => toggleSelecionado(admin.idAdmin)}
               onEdit={() => abrirEdicao(admin.idAdmin)}
@@ -462,6 +481,7 @@ export default function Admin() {
           </thead>
 
           <tbody>
+            {adminsFiltrados.length === 0 && <tr><td colSpan={6} className="directory-empty">Nenhum registro encontrado para os filtros selecionados.</td></tr>}
             {paginaItens.map((admin) => (
               <tr key={admin.idAdmin} className={selecionados.includes(admin.idAdmin) ? "row-selecionada" : ""}>
                 <td className="col-check" data-label="Selecionar">
@@ -471,18 +491,16 @@ export default function Admin() {
                     onChange={() => toggleSelecionado(admin.idAdmin)}
                   />
                 </td>
-                <td data-label="Nome">{admin.nome}</td>
-                <td data-label="E-mail">{admin.email}</td>
-                <td data-label="Perfil">{admin.perfil}</td>
+                <td data-label="Nome"><span className="directory-name-cell"><UserAvatar name={admin.nome} /><strong>{admin.nome}</strong></span></td>
+                <td data-label="E-mail" className="directory-muted-cell">{admin.email || "—"}</td>
+                <td data-label="Perfil"><UserProfile profile={admin.perfil} /></td>
                 <td data-label="Status">
-                  <span className={admin.status === "Ativo" ? "badge-ativo" : "badge-inativo"}>
-                    {admin.status}
-                  </span>
+                  <UserStatus status={admin.status} />
                 </td>
 
                 <td className="acoes-cell" data-label="Ações">
                   <div className="acoes">
-                    <button className="btn-status" onClick={() => handleToggleStatus(admin.idAdmin)} title="Alterar status">
+                    <button className="btn-status" onClick={() => handleToggleStatus(admin.idAdmin)} title="Alterar status" aria-label={`Alterar status de ${admin.nome}`}>
                       {admin.status === "Ativo" ? (
                         <UserX size={16} className="icon-red" />
                       ) : (
@@ -490,11 +508,11 @@ export default function Admin() {
                       )}
                     </button>
 
-                    <button className="btn-edit" onClick={() => abrirEdicao(admin.idAdmin)}>
+                    <button className="btn-edit" onClick={() => abrirEdicao(admin.idAdmin)} title="Editar" aria-label={`Editar ${admin.nome}`}>
                       <Pencil size={16} />
                     </button>
 
-                    <button className="btn-delete" onClick={() => handleExcluir(admin.idAdmin)}>
+                    <button className="btn-delete" onClick={() => handleExcluir(admin.idAdmin)} title="Excluir" aria-label={`Excluir ${admin.nome}`}>
                       <Trash2 size={16} />
                     </button>
                   </div>

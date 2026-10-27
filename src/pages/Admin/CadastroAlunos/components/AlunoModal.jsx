@@ -1,34 +1,21 @@
 import React, { useState } from "react";
-import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { UserRound, Phone, GraduationCap, IdCard, Mail, LockKeyhole, UsersRound, MapPin } from "lucide-react";
 import { IMaskInput } from "react-imask";
-import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import PessoaModal, { PessoaField, PessoaPassword, PessoaSection } from "../../../../components/PessoaModal/PessoaModal";
+import PessoaSelect from "../../../../components/PessoaModal/PessoaSelect";
 import ConfirmExitModal from "../../../../components/ConfirmExitModal/ConfirmExitModal";
 import { MASK_TELEFONE } from "../../../../utils/masks";
 import { SERIES } from "../../../../utils/series";
 
 export default function AlunoModal({
-  aberto,
-  modoEdicao,
-  aluno,
-  isProcessing,
-  isDirty,
-  onChange,
-  onClose,
-  onSave,
-  errors = {},
+  aberto, modoEdicao, aluno, isProcessing, isDirty, onChange, onClose, onSave, errors = {},
 }) {
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
-  const [showSenha, setShowSenha] = useState(false);
-
   if (!aberto) return null;
 
   function handleRequestClose() {
-    if (isDirty) {
-      setConfirmandoSaida(true);
-    } else {
-      onClose();
-    }
+    if (isDirty) setConfirmandoSaida(true);
+    else onClose();
   }
 
   function confirmarSaida() {
@@ -37,229 +24,66 @@ export default function AlunoModal({
   }
 
   return (
-    <div className="modal-overlay">
-      <div className="editor-modal-container aluno-editor-modal">
-        <div className="editor-shell aluno-editor-shell">
-          <div className="editor-topbar aluno-editor-topbar">
-            <div className="editor-topbar-copy">
-              <h2>{modoEdicao ? "Editar Aluno" : "Cadastrar Novo Aluno"}</h2>
-              <p>
-                {modoEdicao
-                  ? "Altere as informações do aluno seguindo o padrão visual dos modais de livros."
-                  : "Preencha os dados do novo aluno usando o padrão visual do sistema."}
-              </p>
-            </div>
+    <>
+      <PessoaModal
+        aberto={aberto} tipo="aluno" modalClassName="aluno-editor-modal"
+        titulo={modoEdicao ? "Editar aluno" : "Cadastrar novo aluno"}
+        descricao={modoEdicao ? "Atualize as informações do aluno." : "Preencha os dados do novo aluno usando o padrão visual do sistema."}
+        modoEdicao={modoEdicao} isProcessing={isProcessing} isDirty={isDirty}
+        onClose={handleRequestClose} onSave={onSave} errors={errors}>
+        <PessoaSection title="Identificação" icon={UserRound}>
+          <PessoaField title="Nome completo *" icon={UserRound}>
+            <input name="nome" value={aluno.nome || ""} onChange={onChange}
+              aria-invalid={Boolean(errors.nome)} placeholder="Digite o nome completo do aluno" />
+          </PessoaField>
+          <PessoaField title="RA *" icon={IdCard}>
+            <input name="ra" value={aluno.ra || ""} onChange={onChange}
+              aria-invalid={Boolean(errors.ra)} placeholder="Informe o RA do aluno" />
+          </PessoaField>
+        </PessoaSection>
 
-            <div className="editor-top-actions">
-              <LoadingButton
-                type="button"
-                className="top-action primary"
-                onClick={onSave}
-                isLoading={isProcessing}
-                disabled={modoEdicao && !isDirty}
-                loadingText="Processando..."
-              >
-                <HiOutlineSave />
-                <span>
-                  {modoEdicao
-                    ? "Salvar Alterações"
-                    : "Criar Usuário"}
-                </span>
-              </LoadingButton>
+        <PessoaSection title="Contato e acesso" icon={Phone}>
+          <PessoaField title="E-mail *" icon={Mail}>
+            <input name="email" type="email" value={aluno.email || ""} onChange={onChange}
+              aria-invalid={Boolean(errors.email)} placeholder="aluno@escola.com" />
+          </PessoaField>
+          <PessoaField title="Telefone *" icon={Phone}>
+            <IMaskInput name="telefone" mask={MASK_TELEFONE} value={aluno.telefone || ""}
+              aria-invalid={Boolean(errors.telefone)} placeholder="(00) 00000-0000"
+              onAccept={(value) => onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })} />
+          </PessoaField>
+          <PessoaField title="Telefone secundário" icon={Phone}>
+            <IMaskInput name="telefone2" mask={MASK_TELEFONE} value={aluno.telefone2 || ""}
+              placeholder="(00) 00000-0000"
+              onAccept={(value) => onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })} />
+          </PessoaField>
+          <PessoaField title="Senha *" icon={LockKeyhole}>
+            <PessoaPassword value={aluno.senha} onChange={onChange}
+              invalid={errors.senha} disabled={modoEdicao} />
+          </PessoaField>
+        </PessoaSection>
 
-              <button
-                type="button"
-                className="editor-close-button"
-                onClick={handleRequestClose}
-                aria-label="Fechar"
-              >
-                <HiOutlineX />
-              </button>
-            </div>
-          </div>
+        <PessoaSection title="Informações escolares" icon={GraduationCap}>
+          <PessoaField title="Série *" icon={GraduationCap}>
+            <PessoaSelect name="serie" value={aluno.serie || ""} onChange={onChange}
+              invalid={errors.serie} placeholder="Selecione a série" options={SERIES} />
+          </PessoaField>
+          <PessoaField title="Turma" icon={UsersRound}>
+            <input name="turma" value={aluno.turma || ""} onChange={onChange} placeholder="Ex.: A, B, Única" />
+          </PessoaField>
+          <PessoaField title="Endereço *" icon={MapPin}>
+            <input name="endereco" value={aluno.endereco || ""} onChange={onChange}
+              aria-invalid={Boolean(errors.endereco)} placeholder="Rua, número e complemento" />
+          </PessoaField>
+          <PessoaField title="Status">
+            <PessoaSelect name="status" value={aluno.status || "Ativo"} onChange={onChange}
+              invalid={errors.status} options={["Ativo", "Inativo"]} />
+          </PessoaField>
+        </PessoaSection>
+      </PessoaModal>
 
-          <div className="editor-divider" />
-
-          <div className="editor-content aluno-editor-content">
-            {Object.keys(errors).length > 0 && <div className="editor-copies-warning" role="alert">
-              <strong>Revise os campos destacados:</strong>
-              <ul>{Object.entries(errors).filter(([, message]) => message).map(([name, message]) => <li key={name}>{message}</li>)}</ul>
-            </div>}
-            <div className="editor-section-grid aluno-editor-grid">
-              <div className="editor-form-panel basic-column">
-                <div className="basic-column-header">
-                  <span>Dados principais</span>
-                </div>
-
-                <div className="editor-field-grid basic-column-grid">
-                  <label className="editor-field">
-                    <span>Nome Completo *</span>
-                    <input
-                      name="nome"
-                      aria-invalid={Boolean(errors.nome)}
-                      value={aluno.nome}
-                      onChange={onChange}
-                      placeholder="Digite o nome completo do aluno"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>RA *</span>
-                    <input
-                      name="ra"
-                      aria-invalid={Boolean(errors.ra)}
-                      value={aluno.ra}
-                      onChange={onChange}
-                      placeholder="Informe o RA do aluno"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>E-mail *</span>
-                    <input
-                      name="email"
-                      aria-invalid={Boolean(errors.email)}
-                      value={aluno.email}
-                      onChange={onChange}
-                      placeholder="aluno@escola.com"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="editor-form-panel basic-column">
-                <div className="basic-column-header">
-                  <span>Contato e acesso</span>
-                </div>
-
-                <div className="editor-field-grid basic-column-grid">
-                  <label className="editor-field">
-                    <span>Telefone *</span>
-                    <IMaskInput
-                      mask={MASK_TELEFONE}
-                      name="telefone"
-                      aria-invalid={Boolean(errors.telefone)}
-                      value={aluno.telefone || ""}
-                      onAccept={(value) =>
-                        onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Telefone 2</span>
-                    <IMaskInput
-                      mask={MASK_TELEFONE}
-                      name="telefone2"
-                      value={aluno.telefone2 || ""}
-                      onAccept={(value) =>
-                        onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Senha *</span>
-                    <div className="password-input-wrapper">
-                      <input
-                        type={showSenha ? "text" : "password"}
-                        name="senha"
-                        aria-invalid={Boolean(errors.senha)}
-                        value={aluno.senha}
-                        onChange={onChange}
-                        disabled={modoEdicao}
-                        minLength={modoEdicao ? undefined : 8}
-                        autoComplete="new-password"
-                        placeholder={
-                          modoEdicao
-                            ? "Senha bloqueada durante a edição"
-                            : "Mínimo de 8 caracteres"
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="password-toggle-btn"
-                        onClick={() => setShowSenha((v) => !v)}
-                        disabled={modoEdicao}
-                        aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
-                        tabIndex={-1}
-                      >
-                        {showSenha ? <FiEyeOff /> : <FiEye />}
-                      </button>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="editor-side-panel basic-cover-column aluno-side-panel">
-                <div className="basic-column-header">
-                  <span>Status e localização</span>
-                </div>
-
-                <div className="cover-uploader aluno-side-card">
-                  <label className="editor-field">
-                    <span>Endereço *</span>
-                    <input
-                      name="endereco"
-                      aria-invalid={Boolean(errors.endereco)}
-                      value={aluno.endereco}
-                      onChange={onChange}
-                      placeholder="Rua, número e complemento"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Série *</span>
-                    <select name="serie" aria-invalid={Boolean(errors.serie)} value={aluno.serie || ""} onChange={onChange}>
-                      <option value="">Selecione a série</option>
-                      {SERIES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Turma</span>
-                    <input
-                      name="turma"
-                      value={aluno.turma || ""}
-                      onChange={onChange}
-                      placeholder="Ex: A, B, Única"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Status</span>
-                    <select name="status" aria-invalid={Boolean(errors.status)} value={aluno.status} onChange={onChange}>
-                      <option value="Ativo">Ativo</option>
-                      <option value="Inativo">Inativo</option>
-                    </select>
-                  </label>
-
-                  <div className="publication-highlight-card aluno-highlight-card">
-                    <div>
-                      <strong>{modoEdicao ? "Edição do cadastro" : "Novo cadastro"}</strong>
-                      <p>
-                        {modoEdicao
-                          ? "Revise os dados antes de salvar para manter o cadastro de alunos consistente."
-                          : "Confira os dados obrigatórios para concluir o cadastro sem retrabalho."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <ConfirmExitModal
-        show={confirmandoSaida}
-        onConfirm={confirmarSaida}
-        onCancel={() => setConfirmandoSaida(false)}
-      />
-    </div>
+      <ConfirmExitModal show={confirmandoSaida}
+        onConfirm={confirmarSaida} onCancel={() => setConfirmandoSaida(false)} />
+    </>
   );
 }

@@ -1,191 +1,48 @@
-import React, { useState } from "react";
-import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
-import { FiEye, FiEyeOff } from "react-icons/fi";
-import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import React from "react";
+import { UserRound, ShieldCheck, Mail, LockKeyhole } from "lucide-react";
+import PessoaModal, { PessoaField, PessoaPassword, PessoaSection } from "../../../../components/PessoaModal/PessoaModal";
+import PessoaSelect from "../../../../components/PessoaModal/PessoaSelect";
 
 export default function AdminModal({
-  aberto,
-  modoEdicao,
-  admin,
-  isProcessing,
-  isDirty,
-  onChange,
-  onClose,
-  onSave,
-  errors = {},
+  aberto, modoEdicao, admin, isProcessing, isDirty, onChange, onClose, onSave, errors = {},
 }) {
-  const [showSenha, setShowSenha] = useState(false);
-
   if (!aberto) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="editor-modal-container admin-editor-modal">
-        <div className="editor-shell admin-editor-shell">
-          <div className="editor-topbar admin-editor-topbar">
-            <div className="editor-topbar-copy">
-              <h2>{modoEdicao ? "Editar Administrador" : "Cadastrar Novo Administrador"}</h2>
-              <p>
-                {modoEdicao
-                  ? "Altere as informações do administrador seguindo o padrão visual dos modais de alunos."
-                  : "Preencha os dados do novo administrador usando o padrão visual do sistema."}
-              </p>
-            </div>
+    <PessoaModal
+      aberto={aberto} tipo="admin" modalClassName="admin-editor-modal"
+      titulo={modoEdicao ? "Editar administrador" : "Cadastrar novo administrador"}
+      descricao={modoEdicao ? "Atualize as informações e permissões do administrador." : "Preencha as informações para cadastrar um administrador."}
+      modoEdicao={modoEdicao} isProcessing={isProcessing} isDirty={isDirty}
+      onClose={onClose} onSave={onSave} errors={errors}>
+      <PessoaSection title="Identificação" icon={UserRound}>
+        <PessoaField title="Nome *" icon={UserRound}>
+          <input name="nome" value={admin.nome || ""} onChange={onChange}
+            aria-invalid={Boolean(errors.nome)} placeholder="Digite o nome do administrador" />
+        </PessoaField>
+        <PessoaField title="E-mail" icon={Mail}>
+          <input name="email" type="email" value={admin.email || ""} onChange={onChange}
+            aria-invalid={Boolean(errors.email)} placeholder="admin@sistema.com" />
+        </PessoaField>
+      </PessoaSection>
 
-            <div className="editor-top-actions">
-               <LoadingButton
-                type="button"
-                className="top-action primary"
-                onClick={onSave}
-                loading={isProcessing}
-                disabled={modoEdicao && !isDirty}
-                loadingText={modoEdicao ? "Processando..." : "Processando..."}
-              >
-
-              
-                <HiOutlineSave />
-                <span>
-                  {modoEdicao ? "Salvar Alterações" : "Criar Administrador"}
-                </span>
-              </LoadingButton>
-
-              <button
-                type="button"
-                className="editor-close-button"
-                onClick={onClose}
-                aria-label="Fechar"
-              >
-                <HiOutlineX />
-              </button>
-            </div>
-          </div>
-
-          <div className="editor-divider" />
-
-          <div className="editor-content admin-editor-content">
-            {Object.keys(errors).length > 0 && <div className="editor-copies-warning" role="alert">
-              <strong>Revise os campos destacados:</strong>
-              <ul>{Object.entries(errors).filter(([, message]) => message).map(([name, message]) => <li key={name}>{message}</li>)}</ul>
-            </div>}
-            <div className="editor-section-grid admin-editor-grid">
-              <div className="editor-form-panel basic-column">
-                <div className="basic-column-header">
-                  <span>Dados principais</span>
-                </div>
-
-                <div className="editor-field-grid basic-column-grid">
-                  <label className="editor-field">
-                    <span>Nome *</span>
-                    <input
-                      name="nome"
-                      aria-invalid={Boolean(errors.nome)}
-                      value={admin.nome}
-                      onChange={onChange}
-                      placeholder="Digite o nome do administrador"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>E-mail</span>
-                    <input
-                      name="email"
-                      aria-invalid={Boolean(errors.email)}
-                      value={admin.email}
-                      onChange={onChange}
-                      placeholder="admin@sistema.com"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="editor-form-panel basic-column">
-                <div className="basic-column-header">
-                  <span>Acesso e status</span>
-                </div>
-
-                <div className="editor-field-grid basic-column-grid">
-                  <label className="editor-field">
-                    <span>Senha *</span>
-                    <div className="password-input-wrapper">
-                      <input
-                        type={showSenha ? "text" : "password"}
-                        name="senha"
-                        aria-invalid={Boolean(errors.senha)}
-                        value={admin.senha}
-                        onChange={onChange}
-                        disabled={modoEdicao}
-                        minLength={modoEdicao ? undefined : 8}
-                        autoComplete="new-password"
-                        placeholder={
-                          modoEdicao
-                            ? "Senha bloqueada durante a edição"
-                            : "Mínimo de 8 caracteres"
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="password-toggle-btn"
-                        onClick={() => setShowSenha((v) => !v)}
-                        disabled={modoEdicao}
-                        aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
-                        tabIndex={-1}
-                      >
-                        {showSenha ? <FiEyeOff /> : <FiEye />}
-                      </button>
-                    </div>
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Status</span>
-                    <select name="status" value={admin.status} onChange={onChange}>
-                      <option value="Ativo">Ativo</option>
-                      <option value="Inativo">Inativo</option>
-                    </select>
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Perfil</span>
-                    <select name="perfil" value={admin.perfil} onChange={onChange}>
-                      <option value="Gestor">Gestor (acesso administrativo completo)</option>
-                      <option value="Professor">Professor (acesso restrito)</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-
-              <div className="editor-side-panel basic-cover-column admin-side-panel">
-                <div className="basic-column-header">
-                  <span>Resumo do cadastro</span>
-                </div>
-
-                <div className="cover-uploader admin-side-card">
-                  <div className="publication-highlight-card admin-highlight-card">
-                    <div>
-                      <strong>{modoEdicao ? "Edição do cadastro" : "Novo cadastro"}</strong>
-                      <p>
-                        {modoEdicao
-                          ? "Revise as informações antes de salvar para manter o cadastro de administradores consistente."
-                          : "Confirme nome, e-mail e permissão ativa para concluir o cadastro."}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="publication-highlight-card admin-highlight-card">
-                    <div>
-                      <strong>Status atual</strong>
-                      <p>
-                        {admin.status === "Ativo"
-                          ? "Este administrador poderá acessar as áreas protegidas do sistema."
-                          : "Este administrador permanecerá sem acesso até ser reativado."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <PessoaSection title="Acesso e permissões" icon={ShieldCheck}>
+        <PessoaField title="Senha *" icon={LockKeyhole}>
+          <PessoaPassword value={admin.senha} onChange={onChange}
+            invalid={errors.senha} disabled={modoEdicao} />
+        </PessoaField>
+        <PessoaField title="Status">
+          <PessoaSelect name="status" value={admin.status || "Ativo"} onChange={onChange}
+            options={["Ativo", "Inativo"]} />
+        </PessoaField>
+        <PessoaField title="Perfil" icon={ShieldCheck}>
+          <PessoaSelect name="perfil" value={admin.perfil || "Gestor"} onChange={onChange}
+            options={[
+              { value: "Gestor", label: "Gestor (acesso administrativo completo)" },
+              { value: "Professor", label: "Professor (acesso restrito)" },
+            ]} />
+        </PessoaField>
+      </PessoaSection>
+    </PessoaModal>
   );
 }
