@@ -6,6 +6,7 @@ import {
   updateGenero,
   deleteGenero,
   getGeneroUso,
+  getLivrosDoGenero,
   mesclarGenero,
 } from "../../../../../../services/api";
 
@@ -24,6 +25,7 @@ export default function GenerosTab() {
         atualizar: updateGenero,
         excluir: deleteGenero,
         getUso: getGeneroUso,
+        listarLivros: getLivrosDoGenero,
         mesclar: mesclarGenero,
       }}
     />

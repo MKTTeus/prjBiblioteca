@@ -7,6 +7,7 @@ import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
 import Pagination from "../../../../../components/Pagination/Pagination";
 import usePagination from "../../../../../hooks/usePagination";
 import MergeModal from "./MergeModal";
+import LivrosVinculadosModal from "./LivrosVinculadosModal";
 import { getErrorMessage } from "../../../../../utils/apiError";
 import { filtrarPorBusca } from "../../../../../utils/busca";
 
@@ -53,6 +54,7 @@ export default function SimpleTaxonomyTab({
   const [confirmingMerge, setConfirmingMerge] = useState(false);
 
   const [verificandoId, setVerificandoId] = useState(null);
+  const [livrosDoRegistro, setLivrosDoRegistro] = useState(null);
 
   const carregar = useCallback(async () => {
     try {
@@ -313,13 +315,7 @@ export default function SimpleTaxonomyTab({
                       )}
                     </td>
                     <td className="taxonomia-col-livros" data-label="Livros">
-                      <span
-                        className={`taxonomia-badge-livros ${
-                          !item.total_livros ? "zero" : ""
-                        }`}
-                      >
-                        {item.total_livros || 0}
-                      </span>
+                      {item.total_livros ? <button type="button" className="taxonomia-badge-livros taxonomia-badge-link" onClick={() => setLivrosDoRegistro({ id: item[idField], nome: item[nomeField], total: item.total_livros })} aria-label={`Ver ${item.total_livros} livros vinculados a ${item[nomeField]}`} title="Ver livros vinculados">{item.total_livros}</button> : <span className="taxonomia-badge-livros zero">0</span>}
                     </td>
                     <td className="taxonomia-acoes-cell">
                       <div className="acoes">
@@ -357,6 +353,8 @@ export default function SimpleTaxonomyTab({
         onChange={irParaPagina}
         totalItens={itensFiltrados.length}
       />
+
+      {livrosDoRegistro && <LivrosVinculadosModal registro={livrosDoRegistro} tipo={capitalize(singular)} carregar={api.listarLivros} onClose={() => setLivrosDoRegistro(null)} />}
 
       <ConfirmModal
         show={Boolean(pendingDelete)}

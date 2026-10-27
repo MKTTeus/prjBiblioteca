@@ -1,6 +1,7 @@
 from rpc import executar_rpc
 from core import consultar_completo, consultar_lote
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from .livros_vinculados import listar_livros_vinculados
 from database import supabase
 from core import get_admin
 from schemas import Autor, AutorUpdate, MesclarPayload
@@ -76,6 +77,14 @@ def contar_uso_autor(idAutor: int, admin=Depends(get_admin)):
     except Exception as e:
         print("Erro ao contar uso do autor:", 'falha de operação')
         raise HTTPException(status_code=503, detail="Não foi possível verificar os livros vinculados a este autor. Tente novamente.") from e
+
+
+@router.get("/autores/{idAutor}/livros")
+def livros_do_autor(idAutor: int, pagina: int = Query(1, ge=1), admin=Depends(get_admin)):
+    try:
+        return listar_livros_vinculados("LivroAutor", "idAutor", idAutor, pagina)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Não foi possível carregar os livros deste autor. Tente novamente.") from e
 
 
 @router.delete("/autores/{idAutor}")

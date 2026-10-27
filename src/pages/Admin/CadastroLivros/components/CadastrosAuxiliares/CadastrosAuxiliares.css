@@ -114,6 +114,95 @@
   opacity: 0.6;
 }
 
+.taxonomia-badge-link {
+  border: 1px solid var(--surface-border);
+  cursor: pointer;
+  font: inherit;
+  background: var(--primary-muted);
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.taxonomia-badge-link:hover { background: var(--surface-hover); }
+
+.taxonomia-livros-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, .55);
+}
+
+.taxonomia-livros-modal {
+  width: min(100%, 580px);
+  max-height: min(80vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius, 16px);
+  background: var(--surface-bg);
+  box-shadow: var(--shadow-soft);
+  color: var(--text-default);
+}
+
+.taxonomia-livros-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.taxonomia-livros-eyebrow { font-size: 12px; font-weight: 700; color: var(--primary); }
+.taxonomia-livros-header h2 { margin: 5px 0; font-size: 20px; overflow-wrap: anywhere; }
+.taxonomia-livros-header p { margin: 0; font-size: 13px; color: var(--text-muted); }
+.taxonomia-livros-fechar,
+.taxonomia-livros-navegacao button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+  color: var(--text-default);
+  cursor: pointer;
+}
+.taxonomia-livros-navegacao button:disabled { opacity: .45; cursor: default; }
+.taxonomia-livros-corpo { overflow-y: auto; min-height: 80px; }
+.taxonomia-livros-lista { list-style: none; margin: 0; padding: 0 24px; }
+.taxonomia-livros-lista li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+.taxonomia-livros-lista li:last-child { border-bottom: 0; }
+.taxonomia-livros-nome { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.taxonomia-livros-inativo { border-radius: 999px; padding: 3px 8px; background: var(--btn-muted-bg); color: var(--text-muted); font-size: 12px; white-space: nowrap; }
+.taxonomia-livros-aviso { margin: 0; padding: 28px 24px; color: var(--text-muted); }
+.taxonomia-livros-rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 60px;
+  padding: 12px 24px;
+  border-top: 1px solid var(--surface-border);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.taxonomia-livros-navegacao { display: flex; gap: 8px; }
+.taxonomia-livros-modal button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
 .taxonomia-acoes-cell .acoes {
   display: flex;
   gap: 8px;
@@ -196,6 +285,10 @@
 }
 
 @media (max-width: 720px) {
+  .taxonomia-livros-overlay { padding: 12px; }
+  .taxonomia-livros-modal { max-height: 85vh; }
+  .taxonomia-livros-header, .taxonomia-livros-rodape { padding-left: 16px; padding-right: 16px; }
+  .taxonomia-livros-lista { padding: 0 16px; }
   .tab-aux.page-shell { padding: 14px 8px; }
   .tab-aux .cadastro-header { margin-bottom: 18px; padding: 20px; }
   .tab-aux .cadastro-header p { font-size: 14px; }
