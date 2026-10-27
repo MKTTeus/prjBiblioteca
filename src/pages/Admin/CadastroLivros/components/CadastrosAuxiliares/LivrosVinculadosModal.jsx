@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getErrorMessage } from "../../../../../utils/apiError";
 
 export default function LivrosVinculadosModal({ registro, tipo, carregar, onClose }) {
@@ -17,7 +18,7 @@ export default function LivrosVinculadosModal({ registro, tipo, carregar, onClos
       if (event.key === "Escape") onClose();
       if (event.key === "Tab") {
         const modal = fecharRef.current?.closest('[role="dialog"]');
-        const botoes = [...(modal?.querySelectorAll('button:not(:disabled)') || [])];
+        const botoes = [...(modal?.querySelectorAll('a[href], button:not(:disabled)') || [])];
         const primeiro = botoes[0];
         const ultimo = botoes[botoes.length - 1];
         if (event.shiftKey && document.activeElement === primeiro) {
@@ -76,7 +77,10 @@ export default function LivrosVinculadosModal({ registro, tipo, carregar, onClos
             <ul className="taxonomia-livros-lista">
               {resultado.livros.map((livro) => (
                 <li key={livro.idLivro}>
-                  <span className="taxonomia-livros-nome">{livro.livTitulo}</span>
+                  <Link className="taxonomia-livros-nome taxonomia-livros-link" to={`/admin/livros?livro=${livro.idLivro}`} aria-label={`Ver ${livro.livTitulo} no acervo`}>
+                    {livro.livTitulo}
+                    <span aria-hidden="true">↗</span>
+                  </Link>
                   {livro.livAtivo === false && <span className="taxonomia-livros-inativo">Inativo</span>}
                 </li>
               ))}

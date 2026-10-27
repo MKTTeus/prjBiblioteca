@@ -1,7 +1,9 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import CadastroLivros from './CadastroLivros';
+global.TextEncoder = require('util').TextEncoder;
+const { MemoryRouter } = require('react-router-dom');
+const CadastroLivros = require('./CadastroLivros').default;
 import { getBooksForManagement } from '../../../services/api';
 
 const mockToast = jest.fn();
@@ -19,8 +21,12 @@ const books = [
 
 beforeEach(() => { getBooksForManagement.mockReset(); getBooksForManagement.mockResolvedValue(books); });
 
+function renderAcervo(url = '/admin/livros') {
+  return render(<MemoryRouter initialEntries={[url]}><CadastroLivros /></MemoryRouter>);
+}
+
 test('aviso filtra pendências e oferece acesso direto à correção', async () => {
-  render(<CadastroLivros />);
+  renderAcervo();
   expect(await screen.findByText('2 títulos ativos fora do acervo.')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Ver títulos' }));
   await waitFor(() => expect(screen.queryByRole('heading', { name: 'Em circulação' })).not.toBeInTheDocument());
@@ -36,14 +42,14 @@ test('aviso filtra pendências e oferece acesso direto à correção', async () 
 
 test('um título emprestado não dispara o aviso de falta de exemplares', async () => {
   getBooksForManagement.mockResolvedValue([books[2]]);
-  render(<CadastroLivros />);
+  renderAcervo();
   await screen.findByRole('heading', { name: 'Em circulação' });
   expect(screen.queryByRole('button', { name: 'Ver títulos' })).not.toBeInTheDocument();
 });
 
 test('falha temporária na API tenta novamente e carrega o acervo completo', async () => {
   getBooksForManagement.mockRejectedValueOnce(Object.assign(new Error('Indisponível'), { status: 503 }));
-  render(<CadastroLivros />);
+  renderAcervo();
   expect(await screen.findByRole('heading', { name: 'Em circulação' }, { timeout: 2000 })).toBeInTheDocument();
   expect(getBooksForManagement).toHaveBeenCalledTimes(2);
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
@@ -51,9 +57,18 @@ test('falha temporária na API tenta novamente e carrega o acervo completo', asy
 
 test('falha persistente não apresenta catálogo vazio como se estivesse carregado', async () => {
   getBooksForManagement.mockRejectedValueOnce(Object.assign(new Error('Falha'), { status: 400 }));
-  render(<CadastroLivros />);
+  renderAcervo();
   expect(await screen.findByRole('button', { name: 'Tentar novamente' })).toBeInTheDocument();
   expect(screen.queryByText(/0 livros encontrados/)).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
   expect(await screen.findByRole('heading', { name: 'Em circulação' })).toBeInTheDocument();
+});
+
+test('link por ID mostra o título exato e permite voltar ao acervo completo', async () => {
+  renderAcervo('/admin/livros?livro=2');
+  expect(await screen.findByText(/Exibindo o livro/)).toHaveTextContent('Tudo desativado');
+  expect(screen.getByRole('heading', { name: 'Tudo desativado' })).toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Sem cópias' })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Mostrar todo o acervo' }));
+  expect(screen.getByRole('heading', { name: 'Sem cópias' })).toBeInTheDocument();
 });

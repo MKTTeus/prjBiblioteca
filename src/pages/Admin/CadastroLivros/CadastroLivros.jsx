@@ -1,5 +1,6 @@
 import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { IoMdAdd } from "react-icons/io";
 import { useToast } from "../../../contexts/ToastContext";
 import {
@@ -24,6 +25,8 @@ import "./cadastroLivros.css";
 import { filtrarPorBusca } from "../../../utils/busca";
 
 export default function CadastroLivros() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const livroSelecionado = searchParams.get("livro");
   const { user } = useAuth();
   const isAdmin = user?.tipo === "admin";
 
@@ -75,7 +78,9 @@ export default function CadastroLivros() {
     b.tombo || b.idLivro,
   ]);
 
-  const filteredBooks = searchedBooks.filter((book) => {
+  const filteredBooks = (livroSelecionado
+    ? books.filter((book) => String(book.idLivro) === livroSelecionado)
+    : searchedBooks.filter((book) => {
     const disponiveis = Number(book.disponiveis ?? book.livrosDisponiveis ?? 0);
     const emprestados = Number(book.emprestados ?? book.livrosEmprestados ?? 0);
     const cadastrados = Number(book.exemplares_cadastrados ?? book.total_exemplares ?? 0);
@@ -83,7 +88,7 @@ export default function CadastroLivros() {
     if (quickFilter === "emprestados") return emprestados > 0;
     if (quickFilter === "sem") return cadastrados === 0;
     return true;
-  });
+    }));
 
   const pendentes = books.filter((b) => b.livAtivo !== false && Number(b.total_exemplares ?? 0) === 0);
 
@@ -257,14 +262,25 @@ export default function CadastroLivros() {
         </button>
       )}
 
-      {!loading && pendentes.length > 0 && (
+      {!livroSelecionado && !loading && pendentes.length > 0 && (
         <div className="acervo-pendencia" role="status">
           <p><strong>{pendentes.length} {pendentes.length === 1 ? "título ativo fora do acervo" : "títulos ativos fora do acervo"}.</strong> Cadastre ou reative um exemplar para exibir {pendentes.length === 1 ? "o livro" : "os livros"}.</p>
           <button type="button" onClick={() => setFilters({ q: "", genero: "todos", status: "ativo", exemplares: "pendentes" })}>Ver títulos</button>
         </div>
       )}
 
-      {booksLoaded && <FiltroBusca filters={filters} onFilter={setFilters} quickFilter={quickFilter} onQuickFilter={setQuickFilter} />}
+      {livroSelecionado && booksLoaded && (
+        <div className="acervo-livro-selecionado" role="status">
+          <p>{filteredBooks.length ? <>Exibindo o livro <strong>{filteredBooks[0].livTitulo}</strong> no acervo.</> : "Este livro não foi encontrado no acervo."}</p>
+          <button type="button" onClick={() => {
+            const novosParametros = new URLSearchParams(searchParams);
+            novosParametros.delete("livro");
+            setSearchParams(novosParametros);
+          }}>Mostrar todo o acervo</button>
+        </div>
+      )}
+
+      {booksLoaded && !livroSelecionado && <FiltroBusca filters={filters} onFilter={setFilters} quickFilter={quickFilter} onQuickFilter={setQuickFilter} />}
 
       {loading ? (
         <Skeleton variant="books" />

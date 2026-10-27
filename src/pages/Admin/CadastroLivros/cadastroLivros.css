@@ -27,6 +27,32 @@
   font: inherit;
 }
 
+.acervo-livro-selecionado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  background: var(--surface-bg);
+  color: var(--text-default);
+}
+.acervo-livro-selecionado p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.acervo-livro-selecionado button {
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--primary-muted);
+  color: var(--primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.acervo-livro-selecionado button:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
 /* HEADER */
 
 .cadastro-header {
