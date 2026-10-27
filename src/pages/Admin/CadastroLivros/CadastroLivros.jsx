@@ -193,8 +193,8 @@ export default function CadastroLivros() {
         </div>
 
         {isAdmin && (
-          <button onClick={handleAdd} className="btn-add">
-            <IoMdAdd /> Novo Livro
+          <button type="button" onClick={handleAdd} className="btn-add acervo-desktop-add">
+            <IoMdAdd aria-hidden="true" /> Novo Livro
           </button>
         )}
       </div>
@@ -243,6 +243,12 @@ export default function CadastroLivros() {
           color="red"
         />
       </div>}
+
+      {isAdmin && (
+        <button type="button" onClick={handleAdd} className="acervo-mobile-add">
+          <IoMdAdd aria-hidden="true" /> Novo Livro
+        </button>
+      )}
 
       {!loading && pendentes.length > 0 && (
         <div className="acervo-pendencia" role="status">
