@@ -14,6 +14,7 @@ import {
   HiOutlineMinus,
   HiOutlinePlus,
   HiOutlineDotsVertical,
+  HiOutlineArrowsExpand,
 } from "react-icons/hi";
 import Modal from "../Modal/Modal";
 import "./BookCard.css";
@@ -95,6 +96,7 @@ export default function BookCard({
   const locationText = getLocationText(book);
   const tags = [genreName || book?.genero].filter(Boolean);
   const [mostrarDescricao, setMostrarDescricao] = useState(false);
+  const [mostrarCapa, setMostrarCapa] = useState(false);
   const adminMenuRef = useRef(null);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() =>
@@ -220,6 +222,11 @@ export default function BookCard({
           decoding="async"
           onError={(e) => { e.target.src = "/placeholder.png"; }}
         />
+        {isAdmin && (
+          <button type="button" className="shared-book-card__cover-open" onClick={() => setMostrarCapa(true)} aria-label={`Ver capa completa de ${titulo}`} title="Abrir capa sem cortes">
+            <HiOutlineArrowsExpand aria-hidden="true" /> Ver capa
+          </button>
+        )}
       </div>
 
       <div className="shared-book-card__content">
@@ -362,8 +369,27 @@ export default function BookCard({
       <Modal
         show={mostrarDescricao}
         onClose={() => setMostrarDescricao(false)}
-        className="book-description-modal"
+        className={isAdmin ? "book-description-modal book-description-modal--admin" : "book-description-modal"}
       >
+        {isAdmin ? (
+          <div className="book-description-modal__admin-layout">
+            <div className="book-description-modal__cover">
+              <img src={capa} alt={`Capa de ${titulo}`} onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.png"; }} />
+              <button type="button" onClick={() => { setMostrarDescricao(false); setMostrarCapa(true); }}>
+                <HiOutlineArrowsExpand aria-hidden="true" /> Abrir capa
+              </button>
+            </div>
+            <div className="book-description-modal__admin-info">
+              <h3>{titulo}</h3>
+              <p className="book-description-modal__author">{autor}</p>
+              <p className="book-description-modal__meta"><HiOutlineCalendar /> {ano}{paginas ? ` · ${paginas} páginas` : ""}</p>
+              <div className="book-description-modal__tags">{tags.map((tag) => <span key={tag}>{tag}</span>)}</div>
+              <div className="book-description-modal__divider" />
+              <h4>Descrição</h4>
+              <div className="book-description-modal__body"><p className="book-description-modal__text">{descricao}</p></div>
+            </div>
+          </div>
+        ) : (<>
         <div className="book-description-modal__header">
           <img src={capa} alt={titulo} onError={(e) => { e.target.src = "/placeholder.png"; }} />
           <div className="book-description-modal__info">
@@ -384,7 +410,16 @@ export default function BookCard({
         <div className="book-description-modal__body">
           <p className="book-description-modal__text">{descricao}</p>
         </div>
+        </>)}
       </Modal>
+      {isAdmin && (
+        <Modal show={mostrarCapa} onClose={() => setMostrarCapa(false)} className="book-cover-modal" ariaLabel={`Capa completa de ${titulo}`}>
+          <figure className="book-cover-modal__figure">
+            <img src={capa} alt={`Capa completa de ${titulo}`} onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.png"; }} />
+            <figcaption>{titulo}</figcaption>
+          </figure>
+        </Modal>
+      )}
     </div>
   );
 }

@@ -11,8 +11,14 @@ import {
   HiOutlineCheck,
   HiOutlineX,
   HiOutlineExclamation,
+  HiOutlineBookOpen,
+  HiOutlineDocumentText,
+  HiOutlineCheckCircle,
+  HiOutlineClock,
+  HiOutlineArrowsExpand,
 } from "react-icons/hi";
 import { useAuth } from "../../../../../contexts/AuthContext";
+import Modal from "../../../../../components/Modal/Modal";
 import {
   getFichaCatalografica,
   gerarFichaCatalografica,
@@ -31,6 +37,7 @@ export default function BookInfoModal({ book, onClose }) {
   const [editCDD, setEditCDD] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [mostrarCapa, setMostrarCapa] = useState(false);
   const carregarFicha = useCallback(async () => {
     if (!book?.idLivro) return;
     setFichaStatus("loading");
@@ -157,7 +164,7 @@ export default function BookInfoModal({ book, onClose }) {
     return (
       <div className="ficha-section">
         <div className="ficha-section-header">
-          <h3>Ficha Catalográfica</h3>
+          <h3><HiOutlineDocumentText aria-hidden="true" /> Ficha Catalográfica</h3>
           {fichaStatus === "done" && isAdmin && (
             <div className="ficha-actions">
               {!editMode && (
@@ -290,43 +297,40 @@ export default function BookInfoModal({ book, onClose }) {
       </div>
     );
   }
+  const coverUrl = book.livCapaURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='220' viewBox='0 0 150 220'%3E%3Crect fill='%23e0e0e0' width='150' height='220'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E";
   return (
-    <div className="modal-overlay">
-      <div className="modal-container">
-        <div className="modal-header">
+    <>
+    <div className="modal-overlay book-info-overlay">
+      <div className="modal-container book-info-container" role="dialog" aria-modal="true" aria-label={`Informações do livro ${book.livTitulo}`}>
+        <div className="modal-header book-info-header">
+          <span className="book-info-header__icon"><HiOutlineBookOpen aria-hidden="true" /></span>
           <h2>Informações do Livro</h2>
-          <button onClick={onClose}>✕</button>
+          <button type="button" onClick={onClose} aria-label="Fechar informações do livro"><HiOutlineX /></button>
         </div>
-        <div className="modal-content info-layout">
+        <div className="modal-content info-layout book-info-summary">
           <div className="info-capa">
             <img
-              src={book.livCapaURL || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='220' viewBox='0 0 150 220'%3E%3Crect fill='%23e0e0e0' width='150' height='220'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E"}
-              onError={(e) => {
-                e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='220' viewBox='0 0 150 220'%3E%3Crect fill='%23e0e0e0' width='150' height='220'/%3E%3Ctext x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%23999'%3ESem capa%3C/text%3E%3C/svg%3E";
-              }}
+              src={coverUrl}
+              onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.png"; }}
               alt={book.livTitulo}
             />
+            <button type="button" className="book-info-open-cover" onClick={() => setMostrarCapa(true)}>
+              <HiOutlineArrowsExpand aria-hidden="true" /> Ver imagem completa
+            </button>
           </div>
           <div className="info-dados">
             <h3>{book.livTitulo}</h3>
-            <p><b>Autor:</b> {book.livAutor}</p>
-            <p><b>Editora:</b> {book.livEditora}</p>
-            <p><b>Ano:</b> {book.livAnoPublicacao}</p>
-            <p><b>Páginas:</b> {book.livPaginas}</p>
-            {book.livGenero && (
-              <p><b>Gênero:</b> {book.livGenero}</p>
-            )}
-            {book.livCDD && (
-              <p>
-                <b>CDD:</b> {book.livCDD}
-                {book.livCDDSugerida && (
-                  <span className="cdd-sugerida-badge"> (sugerida por IA)</span>
-                )}
-              </p>
-            )}
+            <dl className="book-info-metadata">
+              <div><dt>Autor</dt><dd>{book.livAutor || "Não informado"}</dd></div>
+              <div><dt>Editora</dt><dd>{book.livEditora || "Não informada"}</dd></div>
+              <div><dt>Ano</dt><dd>{book.livAnoPublicacao || "Não informado"}</dd></div>
+              <div><dt>Páginas</dt><dd>{book.livPaginas ?? "Não informadas"}</dd></div>
+              {book.livGenero && <div><dt>Gênero / Coleção</dt><dd>{book.livGenero}</dd></div>}
+              {book.livCDD && <div><dt>CDD</dt><dd>{book.livCDD}{book.livCDDSugerida && <span className="cdd-sugerida-badge"> (sugerida por IA)</span>}</dd></div>}
+            </dl>
             <div className="info-descricao">
-              <h4>Descrição</h4>
-              <p>{book.livDescricao || "Sem descrição"}</p>
+              <h4><HiOutlineDocumentText aria-hidden="true" /> Descrição</h4>
+              <p>{book.livDescricao || "Sem descrição."}</p>
             </div>
           </div>
         </div>
@@ -334,22 +338,22 @@ export default function BookInfoModal({ book, onClose }) {
         {renderFichaSection()}
         {/* ── Exemplares ── */}
         <div className="tombos-section">
-          <h3>Exemplares (Tombos)</h3>
+          <h3><HiOutlineBookOpen aria-hidden="true" /> Exemplares (Tombos)</h3>
           {tombos.length === 0 ? (
             <p>Nenhum exemplar cadastrado</p>
           ) : (
             <>
               <div className="tombos-summary">
                 <div className="tombos-summary-item">
-                  <strong>{tombos.length}</strong>
+                  <strong><HiOutlineDocumentText aria-hidden="true" /> {tombos.length}</strong>
                   <span>Total</span>
                 </div>
                 <div className="tombos-summary-item">
-                  <strong>{tombosDisponiveis.length}</strong>
+                  <strong><HiOutlineCheckCircle aria-hidden="true" /> {tombosDisponiveis.length}</strong>
                   <span>Disponíveis</span>
                 </div>
                 <div className="tombos-summary-item">
-                  <strong>{tombos.length - tombosDisponiveis.length}</strong>
+                  <strong><HiOutlineClock aria-hidden="true" /> {tombos.length - tombosDisponiveis.length}</strong>
                   <span>Emprestados</span>
                 </div>
               </div>
@@ -378,5 +382,12 @@ export default function BookInfoModal({ book, onClose }) {
         </div>
       </div>
     </div>
+    <Modal show={mostrarCapa} onClose={() => setMostrarCapa(false)} className="book-cover-modal" ariaLabel={`Capa completa de ${book.livTitulo}`}>
+      <figure className="book-cover-modal__figure">
+        <img src={coverUrl} alt={`Capa completa de ${book.livTitulo}`} onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.png"; }} />
+        <figcaption>{book.livTitulo}</figcaption>
+      </figure>
+    </Modal>
+    </>
   );
 }

@@ -1256,3 +1256,768 @@
   margin: 8px 0 0;
   padding-left: 20px;
 }
+
+
+/* ===== Acervo · Redesign do editor de livros =====
+   Uma única rolagem no conteúdo; barra de comandos e rodapé sempre visíveis.
+   Regras visuais restritas a .book-editor-modal. */
+.book-editor-overlay.modal-overlay {
+  padding:clamp(8px,1.6vw,20px);
+  background:rgba(13,26,50,.42);
+  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:blur(5px);
+}
+.book-editor-modal.editor-modal-container {
+  width:min(1400px,95vw);
+  height:min(960px,95dvh);
+  max-height:95dvh;
+  padding:0;
+  background:var(--surface-bg);
+  border:1px solid var(--surface-border);
+  border-radius:20px;
+  box-shadow:0 25px 90px rgba(9,30,67,.24);
+}
+.book-editor-modal > .editor-shell {
+  margin:0;padding:0;max-height:none;
+  border-radius:20px;overflow:hidden;
+  display:flex;flex-direction:column;min-height:0;flex:1;
+}
+.book-editor-modal .editor-topbar {
+  display:flex;flex:none;align-items:center;flex-direction:row;
+  gap:13px;margin:0;padding:16px 24px 13px;
+  background:var(--surface-bg);
+  border-bottom:1px solid var(--surface-border);
+}
+.book-editor-modal .editor-topbar-icon {
+  width:42px;height:42px;flex:0 0 42px;
+  display:grid;place-items:center;
+  border-radius:12px;background:rgba(37,99,235,.1);
+  color:var(--primary);font-size:23px;
+}
+.book-editor-modal .editor-topbar-copy {flex:1;min-width:0;}
+.book-editor-modal .editor-topbar h2 {
+  margin:0;font-size:clamp(21px,2vw,25px);
+  font-weight:750;line-height:1.2;
+  letter-spacing:-.02em;
+}
+.book-editor-modal .editor-topbar p {
+  font-size:12px;font-weight:500;line-height:1.4;
+  margin:4px 0 0;color:var(--text-muted);
+}
+.book-editor-modal .editor-top-actions {
+  flex:none;width:auto;justify-content:flex-end;
+}
+.book-editor-modal .editor-close-button {
+  flex:none;width:36px;height:36px;
+  border-radius:50%;background:var(--surface-muted);
+  border:1px solid var(--surface-border);
+  font-size:17px;color:var(--text-label);
+  transition:background-color .18s,color .18s,transform .18s;
+}
+.book-editor-modal .editor-close-button:hover {
+  background:var(--primary-muted);
+  color:var(--primary);transform:rotate(90deg);
+}
+.book-editor-modal .editor-tabs-bar {
+  display:flex;flex:none;justify-content:flex-start;flex-wrap:nowrap;
+  gap:6px;padding:9px 24px 8px;
+  border-bottom:0;background:var(--surface-bg);
+  overflow-x:auto;scrollbar-width:thin;
+}
+.book-editor-modal .editor-tab {
+  display:inline-flex;flex:0 0 auto;align-items:center;
+  min-height:35px;padding:0 13px;border:1px solid var(--surface-border);
+  border-radius:9px;background:var(--surface-muted);
+  color:var(--text-label);font-size:12px;font-weight:650;
+  white-space:nowrap;
+  transition:background-color .18s,border-color .18s,color .18s,transform .18s;
+}
+.book-editor-modal .editor-tab:hover {background:var(--primary-muted);color:var(--primary);border-color:rgba(37,99,235,.25);transform:translateY(-1px);}
+.book-editor-modal .editor-tab.is-active {
+  color:var(--primary);background:var(--primary-muted);
+  border-color:rgba(37,99,235,.38);
+  box-shadow:inset 0 0 0 1px rgba(37,99,235,.08);
+}
+.book-editor-modal .editor-origin-legend {
+  flex:none;justify-content:flex-end;gap:9px;
+  padding:0 26px 6px;margin:0;
+  font-size:10px;line-height:1.3;opacity:.8;
+}
+.book-editor-modal .editor-content {
+  flex:1;min-height:0;min-width:0;
+  overflow-y:auto;overscroll-behavior:contain;
+  scroll-behavior:smooth;
+  padding:13px 24px 25px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--input-border) transparent;
+}
+.book-editor-modal .editor-content:focus-visible,
+.book-editor-modal .editor-tab:focus-visible {
+  outline:2px solid var(--primary);outline-offset:2px;
+}
+.book-editor-modal .editor-book-overview {
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;padding:10px 14px;margin:0 0 17px;
+  border:1px solid var(--surface-border);
+  border-radius:12px;background:var(--surface-muted);
+}
+.book-editor-modal .editor-book-overview__details {
+  display:flex;align-items:center;min-width:0;gap:12px;
+}
+.book-editor-modal .editor-book-overview__cover,
+.book-editor-modal .editor-book-overview__placeholder {
+  flex:0 0 51px;width:51px;height:65px;
+  display:grid;place-items:center;border-radius:6px;
+  background:var(--surface-bg);border:1px solid var(--surface-border);
+  color:var(--primary);
+  object-fit:contain;font-size:23px;
+}
+.book-editor-modal .editor-book-overview__text {
+  display:flex;flex-direction:column;min-width:0;gap:3px;
+}
+.book-editor-modal .editor-book-overview__text strong {
+  font-size:14px;line-height:1.3;color:var(--text-default);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.book-editor-modal .editor-book-overview__text span {
+  font-size:12px;color:var(--text-muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.book-editor-modal .editor-book-overview__text small {
+  color:var(--text-muted);font-size:11px;
+}
+.book-editor-modal .editor-book-overview__action {
+  flex:none;display:inline-flex;align-items:center;gap:7px;
+  min-height:35px;padding:0 12px;
+  border:1px solid rgba(37,99,235,.32);border-radius:8px;
+  color:var(--primary);background:var(--surface-bg);
+  font-size:12px;font-weight:650;cursor:pointer;
+  transition:background-color .18s,transform .18s,box-shadow .18s;
+}
+.book-editor-modal .editor-book-overview__action:hover {
+  background:var(--primary-muted);
+  transform:translateY(-1px);
+  box-shadow:0 4px 10px rgba(37,99,235,.08);
+}
+.book-editor-modal .editor-page-section {scroll-margin-top:15px;}
+.book-editor-modal .editor-page-section-title {
+  display:flex;align-items:center;gap:10px;
+  position:static;top:auto;
+  font-size:18px;font-weight:750;
+  margin:0 0 14px;padding:0 0 11px;
+  border-bottom:1px solid var(--surface-border);
+  letter-spacing:-.015em;background:transparent;
+}
+.book-editor-modal .editor-page-section-title svg {
+  width:30px;height:30px;padding:7px;
+  border-radius:9px;background:var(--primary-muted);
+  color:var(--primary);font-size:17px;
+}
+.book-editor-modal .editor-section-separator {
+  margin:23px 0 22px;
+  height:1px;background:var(--surface-border);
+}
+.book-editor-modal .editor-section-grid {gap:14px;}
+.book-editor-modal .basic-grid {
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1.07fr) minmax(235px,.82fr);
+  align-items:start;
+}
+.book-editor-modal .basic-column,
+.book-editor-modal .basic-cover-column {
+  padding:15px;border-radius:12px;background:var(--surface-bg);
+  border:1px solid var(--surface-border);
+}
+.book-editor-modal .basic-column-header {margin:0 0 13px;}
+.book-editor-modal .basic-column-header span {
+  min-height:25px;padding:0 9px;
+  border-radius:7px;letter-spacing:0;
+  font-size:10px;font-weight:750;
+  background:var(--surface-muted);
+}
+.book-editor-modal .editor-field-grid {gap:13px;}
+.book-editor-modal .editor-field {gap:6px;}
+.book-editor-modal .editor-field > span,
+.book-editor-modal .editor-field > label,
+.book-editor-modal .editor-form-panel label > span {
+  font-size:12px;font-weight:650;line-height:1.4;
+}
+.book-editor-modal .editor-field input:not([type="checkbox"]),
+.book-editor-modal .editor-field select,
+.book-editor-modal .editor-field textarea,
+.book-editor-modal .cover-url-row input {
+  min-width:0;min-height:41px;border-radius:9px;font-size:13px;
+}
+.book-editor-modal .editor-field textarea {
+  min-height:117px;line-height:1.5;resize:vertical;
+}
+.book-editor-modal .isbn-hint-msg {
+  font-size:11px;line-height:1.4;font-weight:400;
+  color:var(--text-muted);
+}
+.book-editor-modal .isbn-action-btn {width:39px;min-width:39px;height:41px;border-radius:9px;}
+.book-editor-modal .cover-uploader {padding:12px;border-radius:12px;}
+.book-editor-modal .cover-preview-frame {max-width:205px;height:248px;border-radius:10px;}
+.book-editor-modal .cover-preview-frame img {object-fit:contain;}
+.book-editor-modal .cover-url-edit-button {padding:0 9px;min-height:39px;border-radius:9px;}
+.book-editor-modal .publication-panel {gap:15px;}
+.book-editor-modal .publication-panel .editor-field-grid.three-columns {
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:13px 14px;
+}
+.book-editor-modal .publication-highlight-grid {gap:10px;}
+.book-editor-modal .publication-highlight-card {
+  border-radius:10px;gap:9px;padding:10px 13px;
+  background:var(--surface-muted);
+}
+.book-editor-modal .publication-highlight-card svg {
+  font-size:17px;flex:none;color:var(--text-muted);
+}
+.book-editor-modal .publication-highlight-card strong {font-size:12px;margin:0 0 3px;}
+.book-editor-modal .publication-highlight-card p {
+  font-size:11px;line-height:1.4;color:var(--text-muted);
+}
+.book-editor-modal .tombos-panel {gap:12px;}
+.book-editor-modal .tombos-panel-header h3 {font-size:17px;font-weight:700;}
+.book-editor-modal .tombos-panel-header p {
+  font-size:12px;line-height:1.5;margin:5px 0 0;
+}
+.book-editor-modal .tombos-summary-bar {gap:9px;}
+.book-editor-modal .tombos-summary-bar div {
+  min-width:100px;padding:10px 13px;border-radius:10px;
+  background:var(--surface-muted);
+}
+.book-editor-modal .tombos-summary-bar strong {font-size:20px;line-height:1.3;}
+.book-editor-modal .tombos-summary-bar span {font-size:11px;}
+.book-editor-modal .tombos-list {
+  overflow:visible;max-height:none;padding:0;
+  gap:9px;
+}
+.book-editor-modal .tombo-editor-card {
+  grid-template-columns: minmax(125px,1.05fr) minmax(120px,.85fr) minmax(0,1.8fr);
+  gap:10px;align-items:end;
+  padding:11px 13px;border-radius:11px;
+  background:var(--surface-muted);
+}
+.book-editor-modal .add-tombo-badge {border-radius:9px;min-height:39px;font-size:12px;}
+.book-editor-modal .editor-bottom-save-bar {
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:10px;flex:none;
+  margin:0;padding:12px 24px;
+  border-top:1px solid var(--surface-border);
+  background:var(--surface-bg);
+  box-shadow:0 -6px 20px rgba(15,23,42,.035);
+}
+.book-editor-modal .editor-bottom-save-bar .top-action {
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;min-height:42px;padding:0 17px;
+  border-radius:9px;font-size:13px;font-weight:700;
+}
+.book-editor-modal .editor-cancel-button {
+  background:var(--surface-bg);color:var(--text-default);
+  border:1px solid var(--surface-border);
+}
+.book-editor-modal .editor-cancel-button:hover {background:var(--surface-muted);}
+.book-editor-modal .bottom-save-button {
+  background:var(--primary);color:#fff;
+  border:1px solid var(--primary);
+  box-shadow:0 4px 12px rgba(37,99,235,.13);
+}
+.book-editor-modal .bottom-save-button:hover {filter:brightness(1.06);box-shadow:0 7px 15px rgba(37,99,235,.2);}
+.book-editor-modal .top-action:focus-visible,
+.book-editor-modal .editor-close-button:focus-visible,
+.book-editor-modal .editor-book-overview__action:focus-visible {
+  outline:2px solid var(--primary);outline-offset:2px;
+}
+.book-editor-cover-overlay {
+  position:fixed;inset:0;z-index:12000;
+  display:grid;place-items:center;padding:18px;
+  background:rgba(6,12,26,.82);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.book-editor-cover-dialog {
+  position:relative;display:flex;flex-direction:column;
+  align-items:center;gap:9px;max-width:min(95vw,700px);
+  max-height:95dvh;padding:14px 48px 12px;border-radius:14px;
+  color:#fff;outline:none;
+}
+.book-editor-cover-dialog img {
+  display:block;max-width:100%;max-height:calc(95dvh - 95px);
+  object-fit:contain;border-radius:7px;box-shadow:0 20px 50px rgba(0,0,0,.4);
+}
+.book-editor-cover-dialog span {text-align:center;font-size:13px;}
+.book-editor-cover-close {
+  position:absolute;top:2px;right:0;
+  width:38px;height:38px;display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.3);border-radius:50%;
+  background:rgba(255,255,255,.12);color:#fff;
+  cursor:pointer;font-size:20px;
+}
+.book-editor-cover-close:focus-visible {outline:2px solid white;outline-offset:2px;}
+@media(max-width:1150px) {
+  .book-editor-modal .basic-grid {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .book-editor-modal .basic-cover-column {grid-column:1/-1;}
+  .book-editor-modal .cover-uploader {display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,210px);gap:14px;}
+  .book-editor-modal .cover-preview-frame {grid-column:2;grid-row:1/4;max-width:210px;width:100%;}
+  .book-editor-modal .publication-panel .editor-field-grid.three-columns {
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+@media(max-width:720px) {
+  .book-editor-overlay.modal-overlay {padding:0;}
+  .book-editor-modal.editor-modal-container {
+    width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border-radius:0;border:0;
+  }
+  .book-editor-modal > .editor-shell {border-radius:0;}
+  .book-editor-modal .editor-topbar {padding:13px 14px;gap:9px;}
+  .book-editor-modal .editor-topbar-icon {
+    flex-basis:35px;width:35px;height:35px;font-size:19px;border-radius:9px;
+  }
+  .book-editor-modal .editor-topbar h2 {font-size:19px;}
+  .book-editor-modal .editor-topbar p {font-size:11px;}
+  .book-editor-modal .editor-close-button {width:33px;height:33px;}
+  .book-editor-modal .editor-tabs-bar {gap:5px;padding:7px 14px;}
+  .book-editor-modal .editor-tab {min-height:33px;padding:0 10px;font-size:11px;}
+  .book-editor-modal .editor-origin-legend {padding:2px 14px 5px;}
+  .book-editor-modal .editor-content {padding:10px 14px 20px;}
+  .book-editor-modal .editor-book-overview {padding:10px;gap:8px;align-items:flex-start;}
+  .book-editor-modal .editor-book-overview__cover,
+  .book-editor-modal .editor-book-overview__placeholder {
+    width:44px;height:60px;flex-basis:44px;
+  }
+  .book-editor-modal .editor-book-overview__action {font-size:0;padding:0 9px;min-height:35px;}
+  .book-editor-modal .editor-book-overview__action svg {font-size:16px;}
+  .book-editor-modal .editor-page-section-title {font-size:16px;gap:8px;}
+  .book-editor-modal .editor-page-section-title svg {width:28px;height:28px;}
+  .book-editor-modal .basic-grid {grid-template-columns:minmax(0,1fr);}
+  .book-editor-modal .basic-cover-column {grid-column:auto;}
+  .book-editor-modal .basic-column,.book-editor-modal .basic-cover-column {padding:12px;}
+  .book-editor-modal .cover-uploader {display:block;}
+  .book-editor-modal .cover-preview-frame {height:250px;max-width:210px;width:100%;}
+  .book-editor-modal .publication-panel .editor-field-grid.three-columns {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .book-editor-modal .publication-highlight-grid {grid-template-columns:minmax(0,1fr);}
+  .book-editor-modal .tombo-editor-card {grid-template-columns:repeat(2,minmax(0,1fr));}
+  .book-editor-modal .tombo-editor-card .grow-field {grid-column:1/-1;}
+  .book-editor-modal .editor-bottom-save-bar {padding:10px 14px;}
+  .book-editor-modal .editor-bottom-save-bar .top-action {flex:1 1 0;min-width:0;padding:0 9px;}
+  .book-editor-cover-dialog {padding:42px 10px 10px;}
+  .book-editor-cover-close {top:0;right:0;}
+}
+@media(max-width:420px) {
+  .book-editor-modal .publication-panel .editor-field-grid.three-columns {grid-template-columns:minmax(0,1fr);}
+  .book-editor-modal .tombos-summary-bar {gap:6px;}
+  .book-editor-modal .tombos-summary-bar div {min-width:0;flex:1 1 0;padding:8px;}
+  .book-editor-modal .editor-book-overview__text strong {font-size:12px;}
+  .book-editor-modal .editor-book-overview__text span {font-size:11px;}
+}
+@media(prefers-reduced-motion:reduce) {
+  .book-editor-modal .editor-content {scroll-behavior:auto;}
+  .book-editor-modal .editor-tab,.book-editor-modal .editor-close-button,
+  .book-editor-modal .editor-book-overview__action {transition:none;}
+  .book-editor-modal .editor-tab:hover,.book-editor-modal .editor-close-button:hover,
+  .book-editor-modal .editor-book-overview__action:hover {transform:none;}
+}
+
+
+/* Edição de tombos: lista escalável no modal com uma única rolagem. */
+.book-editor-modal .tombos-panel--editing {
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  min-width:0;
+}
+
+.book-editor-modal .tombos-editor-head {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  flex-wrap:wrap;
+  min-width:0;
+}
+.book-editor-modal .tombos-editor-head__intro { flex:1 1 270px; min-width:0; }
+.book-editor-modal .tombos-editor-head__intro h3 {
+  margin:0 0 5px;
+  font-size:16px;
+  line-height:1.35;
+  font-weight:750;
+  color:var(--text-default);
+  overflow-wrap:anywhere;
+}
+.book-editor-modal .tombos-editor-head__intro p {
+  margin:0;
+  color:var(--text-muted);
+  font-size:12px;
+  line-height:1.45;
+  font-weight:400;
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar {
+  flex:0 1 auto;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(110px,1fr));
+  align-items:stretch;
+  gap:9px;
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar > div {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  min-width:0;
+  min-height:65px;
+  padding:10px 15px;
+  border:1px solid var(--surface-border);
+  border-radius:11px;
+  background:var(--surface-muted);
+  box-shadow:none;
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar strong {
+  font-size:23px;
+  font-weight:750;
+  line-height:1.2;
+  color:var(--text-default);
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar span {
+  font-size:11px;
+  line-height:1.3;
+  font-weight:550;
+  color:var(--text-muted);
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar__total {
+  border-left:3px solid var(--primary);
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar__available {
+  border-left:3px solid #15a86d;
+}
+.book-editor-modal .tombos-panel--editing .tombos-summary-bar__loaned {
+  border-left:3px solid #f97316;
+}
+
+.book-editor-modal .tombos-add-panel {
+  padding:16px 18px;
+  border:1px solid var(--surface-border);
+  border-radius:13px;
+  background:var(--surface-muted);
+  min-width:0;
+}
+.book-editor-modal .tombos-add-panel__heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  flex-wrap:wrap;
+  gap:10px 18px;
+  margin:0 0 13px;
+}
+.book-editor-modal .tombos-add-panel__title {
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  min-width:0;
+}
+.book-editor-modal .tombos-add-panel__title > svg {
+  flex:none;
+  width:19px;
+  height:19px;
+  color:var(--primary);
+  margin-top:1px;
+}
+.book-editor-modal .tombos-add-panel__title h4,
+.book-editor-modal .tombos-collection__heading h4 {
+  margin:0;
+  font-size:14px;
+  font-weight:750;
+  line-height:1.4;
+  color:var(--text-default);
+}
+.book-editor-modal .tombos-add-panel__title p,
+.book-editor-modal .tombos-collection__heading p {
+  margin:3px 0 0;
+  color:var(--text-muted);
+  font-size:11px;
+  line-height:1.45;
+  font-weight:400;
+}
+.book-editor-modal .tombos-add-panel .add-tombo-toolbar {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,200px));
+  width:100%;
+  gap:12px;
+  align-items:end;
+}
+.book-editor-modal .tombos-add-panel .add-tombo-toolbar .editor-field {
+  min-width:0;
+  width:100%;
+}
+.book-editor-modal .tombos-add-panel .add-tombo-toolbar input {
+  min-width:0;
+  width:100%;
+  box-sizing:border-box;
+  background:var(--surface-bg);
+}
+.book-editor-modal .tombos-add-panel .add-tombo-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  min-height:30px;
+  padding:5px 10px;
+  font-size:11px;
+  font-weight:600;
+  line-height:1.2;
+  border-radius:8px;
+  background:var(--surface-bg);
+  border:1px solid var(--surface-border);
+  box-sizing:border-box;
+  color:var(--text-muted);
+  max-width:100%;
+}
+.book-editor-modal .tombos-add-panel .add-tombo-badge svg {
+  flex:none;
+  width:14px;
+  height:14px;
+}
+.book-editor-modal .tombos-add-panel .add-tombo-badge--pending {
+  color:var(--primary);
+  border-color:rgba(37,99,235,.35);
+  background:var(--primary-muted);
+}
+
+.book-editor-modal .tombos-collection {
+  border:1px solid var(--surface-border);
+  border-radius:13px;
+  overflow:hidden;
+  min-width:0;
+  background:var(--surface-bg);
+}
+.book-editor-modal .tombos-collection__heading {
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  border-bottom:1px solid var(--surface-border);
+}
+.book-editor-modal .tombos-collection__heading h4 {
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.book-editor-modal .tombos-collection__heading h4 svg {
+  color:var(--primary);
+  width:18px;
+  height:18px;
+  flex:none;
+}
+.book-editor-modal .tombos-collection__count {
+  display:inline-flex;
+  align-items:center;
+  white-space:nowrap;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  color:var(--primary);
+  background:var(--primary-muted);
+}
+.book-editor-modal .tombos-list-head,
+.book-editor-modal .tombos-collection .tombo-editor-card {
+  display:grid;
+  grid-template-columns:36px minmax(145px,1.05fr) minmax(145px,.85fr) minmax(180px,1.75fr);
+  gap:10px;
+  align-items:center;
+}
+.book-editor-modal .tombos-list-head {
+  padding:9px 15px;
+  background:var(--surface-muted);
+  color:var(--text-muted);
+  font-weight:650;
+  font-size:11px;
+  line-height:1.4;
+  border-bottom:1px solid var(--surface-border);
+}
+.book-editor-modal .tombos-collection .tombos-list {
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  margin:0;
+  padding:0;
+  max-height:none;
+  overflow:visible;
+}
+.book-editor-modal .tombos-collection .tombo-editor-card {
+  position:relative;
+  padding:9px 15px;
+  border:0;
+  border-radius:0;
+  min-width:0;
+  min-height:62px;
+  background:var(--surface-bg);
+  transition:background-color .16s ease;
+}
+.book-editor-modal .tombos-collection .tombo-editor-card + .tombo-editor-card {
+  border-top:1px solid var(--surface-border);
+}
+.book-editor-modal .tombos-collection .tombo-editor-card:hover {
+  background:var(--surface-muted);
+}
+.book-editor-modal .tombos-collection .tombo-editor-card:focus-within {
+  background:var(--primary-muted);
+}
+.book-editor-modal .tombo-row-index {
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  font-size:10px;
+  font-weight:750;
+  color:var(--primary);
+  background:var(--primary-muted);
+  border:1px solid rgba(37,99,235,.12);
+}
+.book-editor-modal .tombo-editor-card[data-status="Disponível"] .tombo-row-index {
+  color:#099665;
+  background:rgba(16,185,129,.08);
+  border-color:rgba(16,185,129,.18);
+}
+.book-editor-modal .tombo-editor-card[data-status="Emprestado"] .tombo-row-index,
+.book-editor-modal .tombo-editor-card[data-status="Reservado"] .tombo-row-index {
+  color:#d97706;
+  background:rgba(245,158,11,.08);
+  border-color:rgba(245,158,11,.18);
+}
+.book-editor-modal .tombo-editor-card[data-status="Indisponível"] .tombo-row-index,
+.book-editor-modal .tombo-editor-card[data-status="Desativado"] .tombo-row-index {
+  color:#df4450;
+  background:rgba(239,68,68,.08);
+  border-color:rgba(239,68,68,.18);
+}
+.book-editor-modal .tombos-collection .tombo-editor-card > .editor-field {
+  display:flex;
+  min-width:0;
+  margin:0;
+  gap:4px;
+}
+.book-editor-modal .tombo-editor-card .tombo-row-field-label {
+  /* Rótulos ficam visíveis em telas estreitas; no desktop existe um cabeçalho de colunas. */
+  position:absolute;
+  width:1px;height:1px;
+  padding:0;margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+.book-editor-modal .tombos-collection .tombo-editor-card input,
+.book-editor-modal .tombos-collection .tombo-editor-card select {
+  width:100%;
+  min-width:0;
+  min-height:39px;
+  height:39px;
+  box-sizing:border-box;
+  padding:0 12px;
+  border-radius:9px;
+  background:var(--surface-bg);
+  border:1px solid var(--input-border);
+  font-size:12px;
+  color:var(--text-default);
+  transition:border-color .16s,box-shadow .16s;
+}
+.book-editor-modal .tombos-collection .tombo-editor-card input:hover,
+.book-editor-modal .tombos-collection .tombo-editor-card select:hover {
+  border-color:var(--border-strong);
+}
+.book-editor-modal .tombos-collection .tombo-editor-card input:focus,
+.book-editor-modal .tombos-collection .tombo-editor-card select:focus {
+  outline:2px solid var(--primary);
+  outline-offset:1px;
+  border-color:var(--primary);
+}
+.book-editor-modal .tombos-collection .empty-tombos-state {
+  margin:14px;
+  min-height:120px;
+  padding:15px;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.5;
+  text-align:center;
+  border-radius:10px;
+}
+
+/* Tablet: os tombos passam a cartões compactos com rótulos próprios. */
+@media (max-width:960px) {
+  .book-editor-modal .tombos-editor-head {align-items:stretch;}
+  .book-editor-modal .tombos-panel--editing .tombos-summary-bar {
+    width:100%;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  .book-editor-modal .tombos-collection .tombos-list-head {display:none;}
+  .book-editor-modal .tombos-collection .tombos-list {
+    gap:9px;
+    padding:10px;
+  }
+  .book-editor-modal .tombos-collection .tombo-editor-card {
+    grid-template-columns:32px repeat(2,minmax(0,1fr));
+    gap:8px 10px;
+    border:1px solid var(--surface-border);
+    border-radius:10px;
+    padding:12px;
+  }
+  .book-editor-modal .tombos-collection .tombo-editor-card + .tombo-editor-card {
+    border-top:1px solid var(--surface-border);
+  }
+  .book-editor-modal .tombo-row-index {grid-column:1;grid-row:1;align-self:end;}
+  .book-editor-modal .tombos-collection .tombo-editor-card > .editor-field:nth-child(2) {grid-column:2;grid-row:1;}
+  .book-editor-modal .tombos-collection .tombo-editor-card > .editor-field:nth-child(3) {grid-column:3;grid-row:1;}
+  .book-editor-modal .tombos-collection .tombo-editor-card > .grow-field {grid-column:2/-1;grid-row:2;}
+  .book-editor-modal .tombo-editor-card .tombo-row-field-label {
+    position:static;
+    width:auto;height:auto;
+    padding:0;margin:0;
+    overflow:visible;
+    clip:auto;
+    white-space:normal;
+    color:var(--text-muted);
+    font-weight:650;
+    font-size:11px;
+  }
+  .book-editor-modal .tombo-row-index {align-self:center;}
+}
+
+@media (max-width:570px) {
+  .book-editor-modal .tombos-add-panel {padding:13px;}
+  .book-editor-modal .tombos-add-panel .add-tombo-toolbar {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .book-editor-modal .tombos-add-panel__heading {gap:10px;}
+  .book-editor-modal .tombos-collection__heading {padding:12px;}
+  .book-editor-modal .tombos-panel--editing .tombos-summary-bar {gap:6px;}
+  .book-editor-modal .tombos-panel--editing .tombos-summary-bar > div {
+    min-height:60px;padding:8px;
+  }
+  .book-editor-modal .tombos-panel--editing .tombos-summary-bar strong {font-size:19px;}
+  .book-editor-modal .tombos-panel--editing .tombos-summary-bar span {font-size:10px;}
+  .book-editor-modal .tombos-collection .tombo-editor-card {
+    grid-template-columns:25px minmax(0,1fr);
+    gap:9px;
+    padding:10px;
+  }
+  .book-editor-modal .tombo-row-index {width:24px;height:26px;font-size:9px;grid-column:1;grid-row:1;}
+  .book-editor-modal .tombos-collection .tombo-editor-card > .editor-field:nth-child(2) {
+    grid-column:2;grid-row:1;
+  }
+  .book-editor-modal .tombos-collection .tombo-editor-card > .editor-field:nth-child(3) {
+    grid-column:2;grid-row:2;
+  }
+  .book-editor-modal .tombos-collection .tombo-editor-card > .grow-field {
+    grid-column:2;grid-row:3;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .book-editor-modal .tombos-collection .tombo-editor-card,
+  .book-editor-modal .tombos-collection .tombo-editor-card input,
+  .book-editor-modal .tombos-collection .tombo-editor-card select {
+    transition:none;
+  }
+}

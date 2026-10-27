@@ -198,12 +198,17 @@ export default function CadastroLivros() {
 
   return (
     <div className="cadastro page-shell">
-      <div className="cadastro-header">
-        <div>
-          <h1>Acervo</h1>
-          <p>Consulte e gerencie os livros da biblioteca.</p>
+      <div className="cadastro-header acervo-hero">
+        <div className="acervo-hero__copy">
+          <h1>Acervo e gestão de livros</h1>
+          <p>Consulte títulos, gerencie exemplares e mantenha os dados bibliográficos atualizados.</p>
         </div>
 
+        {isAdmin && (
+          <button type="button" onClick={handleAdd} className="btn-add acervo-desktop-add">
+            <IoMdAdd aria-hidden="true" /> Novo Livro
+          </button>
+        )}
       </div>
 
       {booksLoaded && <div className="stats-cards-grid">
@@ -245,7 +250,12 @@ export default function CadastroLivros() {
         />
       </div>}
 
-      {isAdmin && <div className="acervo-primary-action"><button onClick={handleAdd} className="btn-add"><IoMdAdd /> Cadastrar Livro</button></div>}
+
+      {isAdmin && (
+        <button type="button" onClick={handleAdd} className="acervo-mobile-add">
+          <IoMdAdd aria-hidden="true" /> Novo Livro
+        </button>
+      )}
 
       {!loading && pendentes.length > 0 && (
         <div className="acervo-pendencia" role="status">
@@ -255,13 +265,6 @@ export default function CadastroLivros() {
       )}
 
       {booksLoaded && <FiltroBusca filters={filters} onFilter={setFilters} quickFilter={quickFilter} onQuickFilter={setQuickFilter} />}
-
-      {booksLoaded && <div className="catalog-header">
-        <h2>
-          Livros do Acervo
-        </h2>
-        <span className="catalog-count">{filteredBooks.length} {filteredBooks.length === 1 ? "título" : "títulos"}</span>
-      </div>}
 
       {loading ? (
         <Skeleton variant="books" />

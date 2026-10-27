@@ -288,3 +288,218 @@
   .catalog-header { align-items: center; gap: 8px; margin: 18px 0 12px; }
   .catalog-header h2 { font-size: 19px; }
 }
+
+
+/* Redesign localizado ao Acervo: mesma linguagem visual do Dashboard. */
+.admin-shell .cadastro.page-shell { max-width: none; padding: 16px 11px 36px; background: transparent; }
+.admin-shell .cadastro .cadastro-header {
+  position: relative; overflow: hidden; min-height: 151px; margin: 0 0 29px;
+  padding: 27px 29px; border-radius: 16px; gap: 22px;
+  background: linear-gradient(125deg,#1463dc,#0641ae 72%,#073c9c);
+  box-shadow: 0 14px 30px rgba(9,50,116,.11);
+}
+.admin-shell .cadastro .cadastro-header h1 {font-size:clamp(22px,1.9vw,29px);font-weight:700;}
+.admin-shell .cadastro .cadastro-header p {font-size:14px;margin:10px 0 0;line-height:1.55;color:#fff;}
+.admin-shell .cadastro .cadastro-header .btn-add {position:relative;z-index:1;min-height:44px;font-weight:600;}
+.admin-shell .cadastro .stats-cards-grid {gap:18px;margin-bottom:24px;}
+.admin-shell .cadastro .stats-card {min-height:153px;display:flex;flex-direction:column;justify-content:center;gap:11px;padding:20px 22px;border-radius:15px;box-shadow:var(--shadow-soft);}
+.admin-shell .cadastro .stats-card-header {font-size:13px;font-weight:600;gap:8px;margin:0;}
+.admin-shell .cadastro .stats-card h2 {font-size:31px;font-weight:750;line-height:1;margin:0;}
+.admin-shell .cadastro .stats-card small {font-size:12px;line-height:1.3;margin:0;}
+.admin-shell .cadastro .stats-card-icon {width:43px;height:43px;flex-basis:43px;border-radius:11px;font-size:21px;}
+.admin-shell .cadastro .stats-card-icon.blue {background:#0863f4;}
+.admin-shell .cadastro .stats-card-icon.green {background:#08ac62;}
+.admin-shell .cadastro .stats-card-icon.orange {background:#ff7517;}
+.admin-shell .cadastro .stats-card-icon.red {background:#f12244;}
+@media (max-width:700px) {
+  .admin-shell .cadastro.page-shell {padding:12px 10px 28px;}
+  .admin-shell .cadastro .cadastro-header {min-height:auto;padding:20px;gap:16px;margin-bottom:20px;flex-direction:column;align-items:stretch;}
+  .admin-shell .cadastro .cadastro-header h1 {font-size:23px;}
+  .admin-shell .cadastro .stats-cards-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .admin-shell .cadastro .stats-card {min-height:126px;padding:13px;gap:8px;}
+  .admin-shell .cadastro .stats-card-header {align-items:flex-start;font-size:12px;}
+  .admin-shell .cadastro .stats-card h2 {font-size:26px;}
+  .admin-shell .cadastro .stats-card-icon {width:34px;height:34px;flex-basis:34px;font-size:17px;}
+  .admin-shell .cadastro .stats-card small {font-size:11px;}
+}
+
+/* Refino exclusivo da tela de Acervo — não afeta sidebar, dashboard ou backend. */
+.admin-shell .cadastro.page-shell {
+  width:100%;max-width:none;min-width:0;padding:16px 11px 36px;background:transparent;
+}
+/* Mesma especificação visual do cabeçalho do Dashboard administrativo. */
+.admin-shell .cadastro .acervo-hero.cadastro-header {
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:nowrap;
+  gap:24px; min-height:168px; padding:30px 32px; margin:0 0 32px;
+  border-radius:16px;
+  background:linear-gradient(125deg, #1463dc, #0641ae 72%, #073c9c);
+  color:#fff; box-shadow:0 14px 30px rgba(9,50,116,.11);
+  position:relative; overflow:hidden;
+}
+.admin-shell .cadastro .acervo-hero::after {
+  content:""; position:absolute; right:23%; bottom:-42px;
+  width:150px; height:140px; opacity:.14;
+  background:linear-gradient(90deg, transparent 10%, #b0d4ff 10% 24%, transparent 24% 33%, #b0d4ff 33% 58%, transparent 58% 67%, #b0d4ff 67% 88%, transparent 88%);
+  clip-path:polygon(0 36%, 30% 36%, 30% 15%, 59% 15%, 59% 45%, 100% 45%, 100% 100%, 0 100%);
+  pointer-events:none;
+}
+.admin-shell .cadastro .acervo-hero__copy {position:relative; z-index:1; min-width:0; flex:1;}
+.admin-shell .cadastro .acervo-hero.cadastro-header h1 {
+  margin:0; font-size:clamp(24px,2.1vw,32px); font-weight:700; line-height:1.2; color:#fff;
+}
+.admin-shell .cadastro .acervo-hero.cadastro-header p {
+  margin:12px 0 0; max-width:760px; font-size:16px;
+  line-height:1.55; color:#fff; opacity:1;
+}
+.admin-shell .cadastro .acervo-hero .btn-add {
+  position:relative; z-index:1; flex-shrink:0; min-height:44px;
+  padding:0 16px; border-radius:10px; background:#fff;
+  color:var(--primary); font-weight:600;
+}
+@media (min-width:769px) {
+  .admin-shell .cadastro .acervo-hero.cadastro-header {
+    min-height:151px; padding:27px 29px; margin-bottom:29px; gap:22px;
+  }
+  .admin-shell .cadastro .acervo-hero.cadastro-header h1 {font-size:clamp(22px,1.9vw,29px);}
+  .admin-shell .cadastro .acervo-hero.cadastro-header p {font-size:14px;margin-top:10px;}
+}
+.admin-shell .cadastro .stats-cards-grid {
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 16px;
+}
+.admin-shell .cadastro .stats-cards-grid .stats-card {
+  min-height:86px;min-width:0;padding:14px 16px;border-radius:12px;
+  background:var(--surface-bg);border:1px solid var(--surface-border);
+  box-shadow:0 7px 18px rgba(26,56,97,.05);
+  display:grid;grid-template-columns:56px minmax(0,1fr);
+  grid-template-rows:auto auto;column-gap:14px;row-gap:0;align-content:center;
+}
+.admin-shell .cadastro .stats-card-header {display:contents;}
+.admin-shell .cadastro .stats-card-header > span {
+  grid-column:2;grid-row:2;font-size:13px;line-height:1.4;
+  margin:0;align-self:start;font-weight:500;color:var(--text-muted);
+}
+.admin-shell .cadastro .stats-card h2 {
+  grid-column:2;grid-row:1;align-self:end;margin:0;
+  font-size:27px;line-height:1.15;font-weight:750;color:var(--text-default);
+}
+.admin-shell .cadastro .stats-card small {display:none;}
+.admin-shell .cadastro .stats-card-icon {
+  grid-column:1;grid-row:1/3;align-self:center;display:grid;place-items:center;
+  width:52px;height:52px;border-radius:12px;font-size:24px;flex-basis:auto;
+  background:var(--primary-muted);color:#1165ef;
+}
+.admin-shell .cadastro .stats-card-icon.blue {background:rgba(37,99,235,.09);color:#1165ef;}
+.admin-shell .cadastro .stats-card-icon.green {background:rgba(16,185,129,.09);color:#079951;}
+.admin-shell .cadastro .stats-card-icon.orange {background:rgba(249,115,22,.09);color:#f97316;}
+.admin-shell .cadastro .stats-card-icon.red {background:rgba(239,68,68,.09);color:#e94355;}
+@media(max-width:1120px) {
+ .admin-shell .cadastro .stats-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:720px) {
+ .admin-shell .cadastro.page-shell{padding:12px 10px 24px;}
+ .admin-shell .cadastro .stats-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
+ .admin-shell .cadastro .stats-cards-grid .stats-card{grid-template-columns:38px minmax(0,1fr);padding:10px;column-gap:8px;min-height:78px;}
+ .admin-shell .cadastro .stats-card-icon{width:36px;height:36px;font-size:19px;}
+ .admin-shell .cadastro .stats-card h2{font-size:23px;}
+ .admin-shell .cadastro .stats-card-header > span{font-size:11px;}
+}
+
+@media (max-width:768px) {
+  .admin-shell .cadastro.page-shell {padding:0 8px 28px;}
+  .admin-shell .cadastro .acervo-hero.cadastro-header {
+    display:block; min-height:0; padding:20px; margin-bottom:14px; border-radius:12px;
+  }
+  .admin-shell .cadastro .acervo-hero.cadastro-header h1 {font-size:21px;line-height:1.2;}
+  .admin-shell .cadastro .acervo-hero.cadastro-header p {font-size:12px;margin-top:8px;}
+  .admin-shell .cadastro .acervo-hero .btn-add {width:100%;margin-top:12px;}
+}
+
+
+/* Microinteração do CTA do Acervo, sem interferir nos botões globais. */
+.admin-shell .cadastro .acervo-hero .btn-add {
+  transition:transform 210ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 210ms ease,background-color 210ms ease,color 210ms ease;
+}
+.admin-shell .cadastro .acervo-hero .btn-add svg {
+  transition:transform 210ms cubic-bezier(.2,.8,.2,1);
+}
+.admin-shell .cadastro .acervo-hero .btn-add:hover {
+  transform:translateY(-2px);
+  box-shadow:0 9px 20px rgba(5,25,71,.2);
+  background:#f5f9ff;
+}
+.admin-shell .cadastro .acervo-hero .btn-add:hover svg {
+  transform:rotate(90deg);
+}
+.admin-shell .cadastro .acervo-hero .btn-add:active {
+  transform:translateY(0) scale(.985);
+  box-shadow:0 3px 8px rgba(5,25,71,.12);
+}
+.admin-shell .cadastro .acervo-hero .btn-add:focus-visible {
+  outline:2px solid #fff;outline-offset:3px;
+}
+@media (prefers-reduced-motion:reduce) {
+  .admin-shell .cadastro .acervo-hero .btn-add,
+  .admin-shell .cadastro .acervo-hero .btn-add svg {
+    transition:none;
+  }
+  .admin-shell .cadastro .acervo-hero .btn-add:hover,
+  .admin-shell .cadastro .acervo-hero .btn-add:hover svg {transform:none;}
+}
+
+
+/* Acervo: reproduz a posição e o azul do CTA mobile de Empréstimos e Devoluções.
+   O botão do header continua disponível apenas em telas desktop. */
+.admin-shell .cadastro .acervo-mobile-add {
+  display:none;
+}
+@media (max-width:768px) {
+  .admin-shell .cadastro .acervo-hero .acervo-desktop-add {
+    display:none;
+  }
+  .admin-shell .cadastro .acervo-mobile-add {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    width:100%;
+    min-height:46px;
+    margin:0 0 18px;
+    padding:10px 16px;
+    border:0;
+    border-radius:10px;
+    background:#0863f4;
+    color:#fff;
+    font:inherit;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform 210ms cubic-bezier(.2,.8,.2,1),box-shadow 210ms ease,background-color 210ms ease;
+  }
+  .admin-shell .cadastro .acervo-mobile-add svg {
+    flex:none;
+    font-size:19px;
+  }
+  .admin-shell .cadastro .acervo-mobile-add:hover {
+    background:#075adf;
+    transform:translateY(-2px);
+    box-shadow:0 7px 16px rgba(8,99,244,.20);
+  }
+  .admin-shell .cadastro .acervo-mobile-add:active {
+    transform:translateY(0) scale(.99);
+    box-shadow:none;
+  }
+  .admin-shell .cadastro .acervo-mobile-add:focus-visible {
+    outline:2px solid var(--primary);
+    outline-offset:3px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .admin-shell .cadastro .acervo-mobile-add {
+    transition:none;
+  }
+  .admin-shell .cadastro .acervo-mobile-add:hover,
+  .admin-shell .cadastro .acervo-mobile-add:active {
+    transform:none;
+  }
+}
