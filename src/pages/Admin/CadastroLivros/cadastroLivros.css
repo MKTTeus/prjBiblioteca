@@ -295,36 +295,43 @@
 
 /* Refino exclusivo da tela de Acervo — não afeta sidebar, dashboard ou backend. */
 .admin-shell .cadastro.page-shell {
-  width:100%;max-width:none;min-width:0;padding:16px 12px 38px;background:transparent;
+  width:100%;max-width:none;min-width:0;padding:16px 11px 36px;background:transparent;
 }
+/* Mesma especificação visual do cabeçalho do Dashboard administrativo. */
 .admin-shell .cadastro .acervo-hero.cadastro-header {
-  isolation:isolate;display:flex;flex-wrap:nowrap;justify-content:flex-start;
-  align-items:center;min-height:112px;padding:22px 26px;gap:18px;
-  margin:0 0 16px;border-radius:13px;overflow:hidden;
-  background:linear-gradient(108deg,#0861e5 5%,#137df1 65%,#269bff 100%);
-  box-shadow:0 8px 25px rgba(28,88,159,.12);position:relative;
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:nowrap;
+  gap:24px; min-height:168px; padding:30px 32px; margin:0 0 32px;
+  border-radius:16px;
+  background:linear-gradient(125deg, #1463dc, #0641ae 72%, #073c9c);
+  color:#fff; box-shadow:0 14px 30px rgba(9,50,116,.11);
+  position:relative; overflow:hidden;
 }
 .admin-shell .cadastro .acervo-hero::after {
-  content:"";position:absolute;right:5%;top:-14px;
-  width:230px;height:148px;opacity:.25;pointer-events:none;
-  background:linear-gradient(165deg,transparent 17%,#d1edff 17% 26%,#72baff 26% 34%,transparent 34% 40%,#d1edff 40% 53%,#6fbcff 53% 61%,transparent 61% 67%,#d1edff 67% 80%,#76beff 80% 88%,transparent 88%);
-  transform:skewY(-8deg) rotate(-4deg);border-radius:18px;
+  content:""; position:absolute; right:23%; bottom:-42px;
+  width:150px; height:140px; opacity:.14;
+  background:linear-gradient(90deg, transparent 10%, #b0d4ff 10% 24%, transparent 24% 33%, #b0d4ff 33% 58%, transparent 58% 67%, #b0d4ff 67% 88%, transparent 88%);
+  clip-path:polygon(0 36%, 30% 36%, 30% 15%, 59% 15%, 59% 45%, 100% 45%, 100% 100%, 0 100%);
+  pointer-events:none;
 }
-.admin-shell .cadastro .acervo-hero__icon {
-  position:relative;z-index:1;display:grid;place-items:center;flex:0 0 62px;
-  width:62px;height:62px;border-radius:50%;
-  color:white;background:rgba(255,255,255,.14);font-size:34px;
-}
-.admin-shell .cadastro .acervo-hero__copy {flex:1;position:relative;z-index:1;min-width:0;}
+.admin-shell .cadastro .acervo-hero__copy {position:relative; z-index:1; min-width:0; flex:1;}
 .admin-shell .cadastro .acervo-hero.cadastro-header h1 {
-  font-size:clamp(22px,2.3vw,31px);font-weight:750;line-height:1.18;color:white;margin:0;
+  margin:0; font-size:clamp(24px,2.1vw,32px); font-weight:700; line-height:1.2; color:#fff;
 }
 .admin-shell .cadastro .acervo-hero.cadastro-header p {
-  color:#f0f7ff;font-size:14px;line-height:1.5;margin:7px 0 0;max-width:670px;
+  margin:12px 0 0; max-width:760px; font-size:16px;
+  line-height:1.55; color:#fff; opacity:1;
 }
 .admin-shell .cadastro .acervo-hero .btn-add {
-  position:relative;z-index:1;margin-left:auto;min-height:42px;flex-shrink:0;
-  padding:0 16px;border-radius:10px;background:white;color:#105ad6;font-weight:700;
+  position:relative; z-index:1; flex-shrink:0; min-height:44px;
+  padding:0 16px; border-radius:10px; background:#fff;
+  color:var(--primary); font-weight:600;
+}
+@media (min-width:769px) {
+  .admin-shell .cadastro .acervo-hero.cadastro-header {
+    min-height:151px; padding:27px 29px; margin-bottom:29px; gap:22px;
+  }
+  .admin-shell .cadastro .acervo-hero.cadastro-header h1 {font-size:clamp(22px,1.9vw,29px);}
+  .admin-shell .cadastro .acervo-hero.cadastro-header p {font-size:14px;margin-top:10px;}
 }
 .admin-shell .cadastro .stats-cards-grid {
   display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0 0 16px;
@@ -360,15 +367,19 @@
 }
 @media(max-width:720px) {
  .admin-shell .cadastro.page-shell{padding:12px 10px 24px;}
- .admin-shell .cadastro .acervo-hero.cadastro-header{min-height:auto;padding:18px;gap:12px;flex-wrap:wrap;}
- .admin-shell .cadastro .acervo-hero__icon{width:43px;height:43px;flex-basis:43px;font-size:25px;}
- .admin-shell .cadastro .acervo-hero.cadastro-header h1{font-size:21px;}
- .admin-shell .cadastro .acervo-hero.cadastro-header p{font-size:12px;}
- .admin-shell .cadastro .acervo-hero .btn-add {flex:1 0 100%;margin:0;}
- .admin-shell .cadastro .acervo-hero::after{right:-75px;opacity:.13;}
  .admin-shell .cadastro .stats-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
  .admin-shell .cadastro .stats-cards-grid .stats-card{grid-template-columns:38px minmax(0,1fr);padding:10px;column-gap:8px;min-height:78px;}
  .admin-shell .cadastro .stats-card-icon{width:36px;height:36px;font-size:19px;}
  .admin-shell .cadastro .stats-card h2{font-size:23px;}
  .admin-shell .cadastro .stats-card-header > span{font-size:11px;}
+}
+
+@media (max-width:768px) {
+  .admin-shell .cadastro.page-shell {padding:0 8px 28px;}
+  .admin-shell .cadastro .acervo-hero.cadastro-header {
+    display:block; min-height:0; padding:20px; margin-bottom:14px; border-radius:12px;
+  }
+  .admin-shell .cadastro .acervo-hero.cadastro-header h1 {font-size:21px;line-height:1.2;}
+  .admin-shell .cadastro .acervo-hero.cadastro-header p {font-size:12px;margin-top:8px;}
+  .admin-shell .cadastro .acervo-hero .btn-add {width:100%;margin-top:12px;}
 }
