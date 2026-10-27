@@ -1,226 +1,65 @@
-import React, { useState } from "react";
-import { HiOutlineSave, HiOutlineX } from "react-icons/hi";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import React from "react";
+import { UserRound, Phone, MapPin } from "lucide-react";
 import { IMaskInput } from "react-imask";
-import LoadingButton from "../../../../components/LoadingButton/LoadingButton";
+import PessoaModal, { PessoaField, PessoaPassword, PessoaSection } from "../../../../components/PessoaModal/PessoaModal";
+import PessoaSelect from "../../../../components/PessoaModal/PessoaSelect";
 import { MASK_CPF, MASK_TELEFONE } from "../../../../utils/masks";
 
 export default function ComunidadeModal({
-  aberto,
-  modoEdicao,
-  membro,
-  isProcessing,
-  isDirty,
-  onChange,
-  onClose,
-  onSave,
-  errors = {},
+  aberto, modoEdicao, membro, isProcessing, isDirty, onChange, onClose, onSave, errors = {},
 }) {
-  const [showSenha, setShowSenha] = useState(false);
-
   if (!aberto) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="editor-modal-container comunidade-editor-modal">
-        <div className="editor-shell comunidade-editor-shell">
-          <div className="editor-topbar comunidade-editor-topbar">
-            <div className="editor-topbar-copy">
-              <h2>{modoEdicao ? "Editar Membro" : "Cadastrar Novo Membro"}</h2>
-              <p>
-                {modoEdicao
-                  ? "Altere as informações do membro seguindo o padrão visual dos modais de alunos."
-                  : "Preencha os dados do novo membro usando o padrão visual do sistema."}
-              </p>
-            </div>
+    <PessoaModal
+      aberto={aberto} tipo="comunidade" modalClassName="comunidade-editor-modal"
+      titulo={modoEdicao ? "Editar membro" : "Cadastrar novo membro"}
+      descricao={modoEdicao ? "Atualize os dados do membro da comunidade." : "Preencha as informações para adicionar um membro à comunidade."}
+      modoEdicao={modoEdicao} isProcessing={isProcessing} isDirty={isDirty}
+      onClose={onClose} onSave={onSave} errors={errors}>
+      <PessoaSection title="Identificação" icon={UserRound}>
+        <PessoaField title="Nome completo *">
+          <input name="nome" value={membro.nome || ""} onChange={onChange}
+            aria-invalid={Boolean(errors.nome)} placeholder="Digite o nome completo do membro" />
+        </PessoaField>
+        <PessoaField title="CPF *">
+          <IMaskInput name="cpf" mask={MASK_CPF} value={membro.cpf || ""}
+            aria-invalid={Boolean(errors.cpf)} placeholder="000.000.000-00"
+            onAccept={(value) => onChange({ target: { name: "cpf", value: value.replace(/\D/g, "") } })} />
+        </PessoaField>
+      </PessoaSection>
 
-            <div className="editor-top-actions">
-              <LoadingButton
-                type="button"
-                className="top-action primary"
-                onClick={onSave}
-                isLoading={isProcessing}
-                disabled={modoEdicao && !isDirty}
-                loadingText="Processando..."
-              >
-                <HiOutlineSave />
-                <span>
-                  {modoEdicao
-                    ? "Salvar Alterações"
-                    : "Criar Membro"}
-                </span>
-              </LoadingButton>
+      <PessoaSection title="Contato e acesso" icon={Phone}>
+        <PessoaField title="E-mail">
+          <input name="email" type="email" value={membro.email || ""} onChange={onChange}
+            aria-invalid={Boolean(errors.email)} placeholder="membro@comunidade.com" />
+        </PessoaField>
+        <PessoaField title="Telefone">
+          <IMaskInput name="telefone" mask={MASK_TELEFONE} value={membro.telefone || ""}
+            aria-invalid={Boolean(errors.telefone)} placeholder="(00) 00000-0000"
+            onAccept={(value) => onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })} />
+        </PessoaField>
+        <PessoaField title="Telefone secundário">
+          <IMaskInput name="telefone2" mask={MASK_TELEFONE} value={membro.telefone2 || ""}
+            placeholder="(00) 00000-0000"
+            onAccept={(value) => onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })} />
+        </PessoaField>
+        <PessoaField title="Senha *">
+          <PessoaPassword value={membro.senha} onChange={onChange}
+            invalid={errors.senha} disabled={modoEdicao} />
+        </PessoaField>
+      </PessoaSection>
 
-              <button
-                type="button"
-                className="editor-close-button"
-                onClick={onClose}
-                aria-label="Fechar"
-              >
-                <HiOutlineX />
-              </button>
-            </div>
-          </div>
-
-          <div className="editor-divider" />
-
-          <div className="editor-content comunidade-editor-content">
-            {Object.keys(errors).length > 0 && <div className="editor-copies-warning" role="alert">
-              <strong>Revise os campos destacados:</strong>
-              <ul>{Object.entries(errors).filter(([, message]) => message).map(([name, message]) => <li key={name}>{message}</li>)}</ul>
-            </div>}
-            <div className="editor-section-grid comunidade-editor-grid">
-              <div className="editor-form-panel basic-column">
-                <div className="basic-column-header">
-                  <span>Dados principais</span>
-                </div>
-
-                <div className="editor-field-grid basic-column-grid">
-                  <label className="editor-field">
-                    <span>Nome Completo *</span>
-                    <input
-                      name="nome"
-                      aria-invalid={Boolean(errors.nome)}
-                      value={membro.nome}
-                      onChange={onChange}
-                      placeholder="Digite o nome completo do membro"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>CPF *</span>
-                    <IMaskInput
-                      mask={MASK_CPF}
-                      name="cpf"
-                      aria-invalid={Boolean(errors.cpf)}
-                      value={membro.cpf || ""}
-                      onAccept={(value) =>
-                        onChange({ target: { name: "cpf", value: value.replace(/\D/g, "") } })
-                      }
-                      placeholder="000.000.000-00"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>E-mail</span>
-                    <input
-                      name="email"
-                      aria-invalid={Boolean(errors.email)}
-                      value={membro.email}
-                      onChange={onChange}
-                      placeholder="membro@comunidade.com"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="editor-form-panel basic-column">
-                <div className="basic-column-header">
-                  <span>Contato e acesso</span>
-                </div>
-
-                <div className="editor-field-grid basic-column-grid">
-                  <label className="editor-field">
-                    <span>Telefone</span>
-                    <IMaskInput
-                      mask={MASK_TELEFONE}
-                      name="telefone"
-                      aria-invalid={Boolean(errors.telefone)}
-                      value={membro.telefone || ""}
-                      onAccept={(value) =>
-                        onChange({ target: { name: "telefone", value: value.replace(/\D/g, "") } })
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Telefone 2</span>
-                    <IMaskInput
-                      mask={MASK_TELEFONE}
-                      name="telefone2"
-                      value={membro.telefone2 || ""}
-                      onAccept={(value) =>
-                        onChange({ target: { name: "telefone2", value: value.replace(/\D/g, "") } })
-                      }
-                      placeholder="(00) 00000-0000"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Senha *</span>
-                    <div className="password-input-wrapper">
-                      <input
-                        type={showSenha ? "text" : "password"}
-                        name="senha"
-                        aria-invalid={Boolean(errors.senha)}
-                        value={membro.senha}
-                        onChange={onChange}
-                        disabled={modoEdicao}
-                        minLength={modoEdicao ? undefined : 8}
-                        autoComplete="new-password"
-                        placeholder={
-                          modoEdicao
-                            ? "Senha bloqueada durante a edição"
-                            : "Mínimo de 8 caracteres"
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="password-toggle-btn"
-                        onClick={() => setShowSenha((v) => !v)}
-                        disabled={modoEdicao}
-                        aria-label={showSenha ? "Ocultar senha" : "Mostrar senha"}
-                        tabIndex={-1}
-                      >
-                        {showSenha ? <FiEyeOff /> : <FiEye />}
-                      </button>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div className="editor-side-panel basic-cover-column comunidade-side-panel">
-                <div className="basic-column-header">
-                  <span>Status e localização</span>
-                </div>
-
-                <div className="cover-uploader comunidade-side-card">
-                  <label className="editor-field">
-                    <span>Endereço *</span>
-                    <input
-                      name="endereco"
-                      aria-invalid={Boolean(errors.endereco)}
-                      value={membro.endereco}
-                      onChange={onChange}
-                      placeholder="Rua, número e complemento"
-                    />
-                  </label>
-
-                  <label className="editor-field">
-                    <span>Status</span>
-                    <select name="status" value={membro.status} onChange={onChange}>
-                      <option value="Ativo">Ativo</option>
-                      <option value="Inativo">Inativo</option>
-                    </select>
-                  </label>
-
-                  <div className="publication-highlight-card comunidade-highlight-card">
-                    <div>
-                      <strong>{modoEdicao ? "Edição do cadastro" : "Novo cadastro"}</strong>
-                      <p>
-                        {modoEdicao
-                          ? "Revise os dados antes de salvar para manter o cadastro da comunidade consistente."
-                          : "Confira os dados obrigatórios para concluir o cadastro sem retrabalho."}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <PessoaSection title="Endereço e status" icon={MapPin}>
+        <PessoaField title="Endereço *">
+          <input name="endereco" value={membro.endereco || ""} onChange={onChange}
+            aria-invalid={Boolean(errors.endereco)} placeholder="Rua, número e complemento" />
+        </PessoaField>
+        <PessoaField title="Status">
+          <PessoaSelect name="status" value={membro.status || "Ativo"} onChange={onChange}
+            options={["Ativo", "Inativo"]} />
+        </PessoaField>
+      </PessoaSection>
+    </PessoaModal>
   );
 }
