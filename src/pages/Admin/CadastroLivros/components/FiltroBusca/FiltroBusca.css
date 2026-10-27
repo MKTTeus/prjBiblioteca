@@ -503,3 +503,28 @@
     }
   }
 }
+
+
+/* Integração com os filtros rápidos adicionados recentemente à main.
+   Os chips ficam na linha seguinte sem comprimir busca e seletores. */
+.cadastro .acervo-filtro-panel { flex-wrap:wrap; }
+.cadastro .acervo-filtro-panel .acervo-quick-filters-wrap {
+  order:3;flex:1 1 100%;width:100%;min-width:0;
+  padding-top:12px;margin-top:1px;
+  border-top:1px solid var(--surface-border);
+}
+.cadastro .acervo-filtro-panel .acervo-quick-filters { min-width:0; }
+.cadastro .acervo-filtro-panel .acervo-quick-filters button {
+  transition:background-color .18s ease,color .18s ease,
+    border-color .18s ease,transform .18s ease;
+}
+.cadastro .acervo-filtro-panel .acervo-quick-filters button:hover:not(.is-active) {
+  background:var(--primary-muted);color:var(--primary);
+  border-color:rgba(37,99,235,.3);
+}
+.cadastro .acervo-filtro-panel .acervo-quick-filters button:focus-visible {
+  outline:2px solid var(--primary);outline-offset:2px;
+}
+@media(prefers-reduced-motion:reduce) {
+  .cadastro .acervo-filtro-panel .acervo-quick-filters button {transition:none;}
+}
