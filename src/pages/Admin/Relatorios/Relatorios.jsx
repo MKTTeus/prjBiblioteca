@@ -1,3 +1,4 @@
+import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import { useState } from "react";
 import { FiBookOpen, FiAlertTriangle, FiGrid } from "react-icons/fi";
 import "./Relatorios.css";
@@ -20,8 +21,8 @@ export default function Relatorios() {
   const AbaAtual = ABAS.find((a) => a.valor === abaAtiva)?.Componente || RelatorioEmprestimos;
 
   return (
-    <div className="rel-page page-shell">
-      <div className="rel-header">
+    <div className="rel-page page-shell admin-standard-page">
+      <div className="rel-header admin-standard-header">
         <div>
           <h1>Relatórios</h1>
           <p>Controle leitores, professores, acervo e circulação. Consulte históricos, rankings e inventário e exporte os resultados.</p>

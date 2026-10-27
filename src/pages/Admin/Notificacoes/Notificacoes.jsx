@@ -1,3 +1,4 @@
+import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import {
@@ -12,6 +13,7 @@ import { getErrorMessage } from "../../../utils/apiError";
 import { formatarCPF, formatarTelefone } from "../../../utils/masks";
 import "../../user/UserArea.css";
 import "./Notificacoes.css";
+import StatsCard from "../../../components/StatsCard/StatsCard";
 
 function renderLoanItem(item, badgeLabel, variant) {
   const documento =
@@ -88,12 +90,19 @@ export default function AdminNotificacoes() {
   }, []);
 
   return (
-    <div className="user-page admin-notifications-page page-shell">
-      <section className="user-page__hero">
+    <div className="user-page admin-notifications-page page-shell admin-standard-page">
+      <section className="user-page__hero admin-standard-header">
         <div className="user-page__hero-content">
-          <h2>Notificações do Admin</h2>
+          <h1>Notificações do Admin</h1>
           <p>Veja os empréstimos em atraso, retiradas e devoluções recentes.</p>
         </div>
+      </section>
+
+      <section className="stats-cards-grid admin-standard-kpis" aria-label="Resumo de notificações">
+        <StatsCard title="Alunos em atraso" value={isLoading || error ? "—" : atrasadosAlunos.length} subtitle="Empréstimos pendentes" icon={<FaClock />} color="red" />
+        <StatsCard title="Comunidade em atraso" value={isLoading || error ? "—" : atrasadosComunidade.length} subtitle="Empréstimos pendentes" icon={<FaBell />} color="orange" />
+        <StatsCard title="Retiradas recentes" value={isLoading || error ? "—" : recentes.length} subtitle="Últimas 24 horas" icon={<FaBell />} color="blue" />
+        <StatsCard title="Devoluções recentes" value={isLoading || error ? "—" : devolucoesRecentes.length} subtitle="Últimas 24 horas" icon={<FaCheckCircle />} color="green" />
       </section>
 
       <section className="user-section-card admin-notification-section">

@@ -1,3 +1,4 @@
+import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Aluno.css";
 import "../../../components/MobileUserCard/UserManagementLayout.css";
@@ -473,8 +474,8 @@ const handleSalvar = async () => {
   }
 
   return (
-    <div className="aluno-page page-shell">
-      <div className="titulo">
+    <div className="aluno-page page-shell admin-standard-page">
+      <div className="titulo admin-standard-header">
         <div>
           <h1>Gestão de Alunos</h1>
           <p>Cadastre e acompanhe os alunos da biblioteca.</p>
@@ -483,7 +484,7 @@ const handleSalvar = async () => {
       </div>
 
 
-      <div className="stats-cards-grid">
+      <div className="stats-cards-grid admin-standard-kpis">
         <StatsCard
           title="Total de Alunos"
           value={totalAlunos}

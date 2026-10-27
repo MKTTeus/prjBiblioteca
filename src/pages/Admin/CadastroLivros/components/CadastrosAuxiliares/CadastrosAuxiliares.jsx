@@ -1,3 +1,4 @@
+import "../../../../../components/AdminPageLayout/AdminPageLayout.css";
 import React from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,8 +13,8 @@ export default function CadastrosAuxiliares() {
   const location = useLocation();
 
   return (
-    <div className="tab-aux page-shell">
-      <div className="cadastro-header">
+    <div className="tab-aux page-shell admin-standard-page">
+      <div className="cadastro-header admin-standard-header">
         <div>
           <h1>Cadastros Auxiliares</h1>
           <p>Gerencie os autores e gêneros usados no cadastro de livros — corrija nomes duplicados ou remova itens que não são mais usados.</p>

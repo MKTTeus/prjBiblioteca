@@ -1,3 +1,4 @@
+import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Comunidade.css";
 import "../../../components/MobileUserCard/UserManagementLayout.css";
@@ -400,8 +401,8 @@ const handleSalvar = async () => {
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(membrosFiltrados);
 
   return (
-    <div className="comunidade-page page-shell">
-      <div className="titulo">
+    <div className="comunidade-page page-shell admin-standard-page">
+      <div className="titulo admin-standard-header">
         <div>
           <h1>Gestão da Comunidade</h1>
           <p>Cadastre e acompanhe os membros da biblioteca.</p>
@@ -409,7 +410,7 @@ const handleSalvar = async () => {
 
       </div>
 
-      <div className="stats-cards-grid">
+      <div className="stats-cards-grid admin-standard-kpis">
         <StatsCard title="Total de Membros" value={totalMembros} subtitle="Atualizado com os dados da tela" icon={<Users size={18} />} color="blue" />
         <StatsCard title="Membros Ativos" value={membrosAtivos} subtitle="Atualizado com os dados da tela" icon={<UserCheck size={18} />} color="green" />
         <StatsCard title="Membros Inativos" value={membrosInativos} subtitle="Atualizado com os dados da tela" icon={<UserX size={18} />} color="red" />

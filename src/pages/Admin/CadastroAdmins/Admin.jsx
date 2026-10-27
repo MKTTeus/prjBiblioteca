@@ -1,3 +1,4 @@
+import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import React, { useEffect, useRef, useState } from "react";
 import "./Admin.css";
 import "../../../components/MobileUserCard/UserManagementLayout.css";
@@ -342,8 +343,8 @@ export default function Admin() {
   const { paginaAtual, totalPaginas, paginaItens, irParaPagina } = usePagination(adminsFiltrados);
 
   return (
-    <div className="admin-page page-shell">
-      <div className="titulo">
+    <div className="admin-page page-shell admin-standard-page">
+      <div className="titulo admin-standard-header">
         <div>
           <h1>Gestão de Administradores</h1>
           <p>Cadastre e acompanhe os administradores do sistema.</p>
@@ -351,7 +352,7 @@ export default function Admin() {
 
       </div>
 
-      <div className="stats-cards-grid stats-cards-grid-admin">
+      <div className="stats-cards-grid stats-cards-grid-admin admin-standard-kpis">
         <StatsCard
           title="Administradores Total"
           value={totalAdmins}

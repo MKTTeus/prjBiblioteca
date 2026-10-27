@@ -1,3 +1,4 @@
+import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,8 +20,8 @@ function ConfiguracoesInner() {
   const [showExport, setShowExport] = useState(false);
 
   return (
-    <div className="config-container page-shell">
-      <div className="top-bar">
+    <div className="config-container page-shell admin-standard-page">
+      <div className="top-bar admin-standard-header">
         <div>
           <h1>Configurações do Sistema</h1>
           <p>Gerencie as configurações da biblioteca</p>
