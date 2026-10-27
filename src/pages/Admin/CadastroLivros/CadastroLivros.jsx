@@ -187,7 +187,6 @@ export default function CadastroLivros() {
   return (
     <div className="cadastro page-shell">
       <div className="cadastro-header acervo-hero">
-        <span className="acervo-hero__icon" aria-hidden="true"><HiOutlineBookOpen /></span>
         <div className="acervo-hero__copy">
           <h1>Acervo e gestão de livros</h1>
           <p>Consulte títulos, gerencie exemplares e mantenha os dados bibliográficos atualizados.</p>
