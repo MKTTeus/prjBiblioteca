@@ -1,5 +1,5 @@
 import React from "react";
-import { FiFilter, FiSearch, FiTag, FiX } from "react-icons/fi";
+import { FiFilter, FiSearch, FiTag, FiX, FiChevronDown } from "react-icons/fi";
 import "./FiltroBusca.css";
 import SelectGenero from "../SelectGenero/SelectGenero";
 import SelectStatus from "../SelectStatus/SelectStatus";
@@ -60,7 +60,7 @@ function FiltroBusca({ filters, onFilter }) {
 
           <div className="select-icon">
             <FiTag className="campo-icone" />
-            <SelectGenero value={filters.genero} onChange={(v) => updateField("genero", v)} />
+            <SelectGenero acervoStyle value={filters.genero} onChange={(v) => updateField("genero", v)} />
           </div>
         </div>
 
@@ -69,18 +69,18 @@ function FiltroBusca({ filters, onFilter }) {
 
           <div className="select-icon">
             <FiTag className="campo-icone" />
-            <SelectStatus value={filters.status} onChange={(v) => updateField("status", v)} />
+            <SelectStatus acervoStyle value={filters.status} onChange={(v) => updateField("status", v)} />
           </div>
         </div>
         <div className={`campo ${filters.exemplares !== "todos" ? "is-active" : ""}`}>
           <label htmlFor="filtro-exemplares">Exemplares</label>
-          <select id="filtro-exemplares" className="filtro-exemplares" value={filters.exemplares} onChange={(e) => updateField("exemplares", e.target.value)}>
+          <div className="acervo-native-select-wrap"><select id="filtro-exemplares" className="filtro-exemplares" value={filters.exemplares} onChange={(e) => updateField("exemplares", e.target.value)}>
             <option value="todos">Todos os títulos</option>
             <option value="pendentes">Pendências no acervo</option>
             <option value="sem">Sem exemplares</option>
             <option value="desativados">Todos desativados</option>
             <option value="com">Com exemplares não desativados</option>
-          </select>
+          </select><FiChevronDown className="acervo-native-chevron" aria-hidden="true" /></div>
         </div>
       </div>
     </div>
