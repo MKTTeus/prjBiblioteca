@@ -10,6 +10,7 @@ import {
   updateExemplar,
   uploadCover,
   createGenero,
+  completarLivroComIA,
 } from "../../../../../services/api";
 import { HiOutlineSave, HiOutlineX, HiOutlineBookOpen, HiOutlineOfficeBuilding, HiOutlineClipboardList } from "react-icons/hi";
 import LoadingButton from "../../../../../components/LoadingButton/LoadingButton";
@@ -21,6 +22,8 @@ import PublicationInfoSection from "./PublicationInfoSection";
 import TombosSection from "./TombosSection";
 import ConfirmExitModal from "../../../../../components/ConfirmExitModal/ConfirmExitModal";
 import ConfirmModal from "../../../../../components/ConfirmModal/ConfirmModal";
+import FieldOriginIcon, { FIELD_LABELS } from "./FieldOriginIcon";
+import FieldSuggestionModal from "./FieldSuggestionModal";
 import "./BookFormModal.css";
 
 function normalizeText(value = "") {
@@ -134,6 +137,18 @@ const PUBLICATION_FIELD_KEYS = new Set([
   "ediEstado",
   "ediPais",
 ]);
+
+const AI_FIELD_KEYS = {
+  livTitulo: "titulo", livSubtitulo: "subtitulo", livAutor: "autor_principal",
+  autorAnoNascimento: "autor_ano_nascimento", autorAnoFalecimento: "autor_ano_falecimento",
+  livEditora: "editora", livAnoPublicacao: "ano_publicacao", livPaginas: "paginas",
+  livDescricao: "descricao", idGenero: "genero_sugerido", livIdioma: "idioma",
+  livFaixaEtaria: "faixa_etaria", livPalavrasChave: "palavras_chave",
+  livEdicao: "edicao", livIlustrado: "ilustrado", ediCidade: "editora_cidade",
+  ediEstado: "editora_estado", ediPais: "editora_pais", livCDD: "cdd",
+  livAlturaCm: "altura_cm", livLarguraCm: "largura_cm", livCapaURL: "url_capa",
+  exemplarISBN: "isbn_sugerido",
+};
 
 const DEFAULT_FORM = {
   livTitulo: "",
@@ -284,6 +299,10 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   // temporariamente para receber destaque visual na tela — some sozinho
   // depois de um tempo ou assim que o usuário edita o campo manualmente.
   const [highlightedFields, setHighlightedFields] = useState(() => new Set());
+  // Apenas memória do modal: a origem nunca entra no form enviado ao backend.
+  const [fieldOrigins, setFieldOrigins] = useState({});
+  const [regeneratingField, setRegeneratingField] = useState(null);
+  const [fieldSuggestion, setFieldSuggestion] = useState(null);
   // Diferente do highlightedFields acima (que é só o "brilho" visual e some
   // sozinho depois de alguns segundos), este aqui não expira — serve para o
   // painel de sugestões da IA saber, a qualquer momento, quais campos já
@@ -293,17 +312,40 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
   const basicSectionRef = useRef(null);
   const publicationSectionRef = useRef(null);
   const copiesSectionRef = useRef(null);
+  const editorContentRef = useRef(null);
+  const [activeSection, setActiveSection] = useState("basic");
   const sectionRefs = {
     basic: basicSectionRef,
     publication: publicationSectionRef,
     copies: copiesSectionRef,
   };
 
+  function scrollToSection(id) {
+    const content = editorContentRef.current;
+    const section = sectionRefs[id]?.current;
+    if (!content || !section) return;
+    setActiveSection(id);
+    content.scrollTo({
+      top: content.scrollTop + section.getBoundingClientRect().top - content.getBoundingClientRect().top - 16,
+      behavior: "smooth",
+    });
+  }
+
+  function updateActiveSection() {
+    const content = editorContentRef.current;
+    if (!content) return;
+    const current = [...SECTIONS].reverse().find(({ id }) => {
+      const section = sectionRefs[id]?.current;
+      return section && section.getBoundingClientRect().top <= content.getBoundingClientRect().top + 90;
+    });
+    setActiveSection(current?.id || "basic");
+  }
+
   const semExemplares = !loadingDetails && Number(addConfig.quantidade || 0) === 0 &&
     (bookToEdit ? loadedBookId === bookToEdit.idLivro && exemplares.every((ex) => String(ex.exeLivStatus || "").toLowerCase().includes("desativado")) : true);
 
   function irParaExemplares() {
-    copiesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    scrollToSection("copies");
     copiesSectionRef.current?.querySelector('input[type="number"]')?.focus({ preventScroll: true });
   }
 
@@ -333,7 +375,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     const tocaPublicacao = nomesCampos.some((campo) => PUBLICATION_FIELD_KEYS.has(campo));
     if (tocaPublicacao && publicationSectionRef.current) {
       setTimeout(() => {
-        publicationSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        scrollToSection("publication");
       }, 120);
     }
   }
@@ -342,6 +384,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     setLoadedBookId(null);
     setHighlightedFields(new Set());
     setIsbnFilledFields(new Set());
+    setFieldOrigins({});
 
     if (!bookToEdit) {
       const draft = readRegistrationDraft("livros", user);
@@ -459,6 +502,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       next.delete(name);
       return next;
     });
+    setFieldOrigins((prev) => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   }
 
   function handleExemplarChange(id, field, value) {
@@ -529,11 +578,22 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     }
 
     setForm(next);
+    setFieldOrigins((prev) => {
+      const origins = { ...prev };
+      for (const campo of [...ISBN_FILLABLE_FIELDS, "idGenero"]) {
+        if (origins[campo] === "isbn" && !next[campo]) delete origins[campo];
+      }
+      camposAlterados.forEach((campo) => { origins[campo] = "isbn"; });
+      return origins;
+    });
     marcarCamposPreenchidosAutomaticamente(camposAlterados);
     // Substitui (em vez de somar) o conjunto anterior: os campos "vindos do
     // ISBN" precisam refletir apenas a busca atual, não a de um livro
     // anterior que o usuário tenha consultado antes neste mesmo formulário.
-    setIsbnFilledFields(new Set(camposAlterados));
+    setIsbnFilledFields((prev) => new Set([
+      ...[...prev].filter((campo) => Boolean(next[campo])),
+      ...camposAlterados,
+    ]));
     addToast("Dados preenchidos a partir do ISBN! Campos alterados foram destacados.", "success");
   }
 
@@ -545,7 +605,66 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
     if (entradas.length === 0) return;
 
     setForm((prev) => ({ ...prev, ...atualizacoes }));
+    setFieldOrigins((prev) => ({
+      ...prev,
+      ...Object.fromEntries(entradas.map(([campo]) => [campo, "ia"])),
+    }));
+    setIsbnFilledFields((prev) => new Set([...prev].filter((campo) => !Object.hasOwn(atualizacoes, campo))));
     marcarCamposPreenchidosAutomaticamente(entradas.map(([campo]) => campo));
+  }
+
+  async function regenerateField(campo) {
+    if (regeneratingField || !AI_FIELD_KEYS[campo]) return;
+    if (!form.exemplarISBN && !form.livTitulo && !form.livAutor) {
+      addToast("Informe ISBN, título ou autor para gerar uma sugestão.", "error");
+      return;
+    }
+    setRegeneratingField(campo);
+    setFieldSuggestion(null);
+    try {
+      const genero = generos.find((item) => String(item.idGenero) === String(form.idGenero));
+      const result = await completarLivroComIA({
+        campo_alvo: campo,
+        valor_atual: String(form[campo] ?? ""),
+        isbn: form.exemplarISBN || undefined,
+        livTitulo: form.livTitulo || undefined,
+        livAutor: form.livAutor || undefined,
+        livEditora: form.livEditora || undefined,
+        livAnoPublicacao: Number(form.livAnoPublicacao) || undefined,
+        livPaginas: Number(form.livPaginas) || undefined,
+        livDescricao: form.livDescricao || undefined,
+        generoNome: genero?.genNome,
+        generos_existentes: generos.map((item) => item.genNome),
+      });
+      const value = result?.[AI_FIELD_KEYS[campo]];
+      if (value === undefined || value === null || value === "" || (Array.isArray(value) && !value.length)) {
+        addToast("A IA não encontrou uma sugestão segura para este campo.", "info");
+        return;
+      }
+      setFieldSuggestion({ campo, value });
+    } catch (err) {
+      addToast(err?.data?.detail || "Não foi possível gerar uma sugestão agora.", "error");
+    } finally {
+      setRegeneratingField(null);
+    }
+  }
+
+  async function applyFieldSuggestion() {
+    if (!fieldSuggestion) return;
+    const { campo, value } = fieldSuggestion;
+    let normalized = Array.isArray(value) ? value.join(", ") : value;
+    if (campo === "idGenero") {
+      const existing = generos.find((item) => normalizeText(item.genNome) === normalizeText(value));
+      const item = existing || await handleCriarGenero(String(value));
+      if (!item) return;
+      normalized = item.idGenero;
+    }
+    if (campo === "livFaixaEtaria" && !["Infantil", "Juvenil", "Adulto", "Livre"].includes(normalized)) {
+      addToast("A sugestão de faixa etária não corresponde às opções do cadastro.", "error");
+      return;
+    }
+    handleCamposAutoFillIA({ [campo]: normalized });
+    setFieldSuggestion(null);
   }
 
   // Recebe o arquivo já ajustado (giro/redimensionamento) pelo
@@ -557,6 +676,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       setLoading(true);
       const res = await uploadCover(file);
       setForm((prev) => ({ ...prev, livCapaURL: res.url }));
+      setFieldOrigins((prev) => {
+        const next = { ...prev };
+        delete next.livCapaURL;
+        return next;
+      });
+      setIsbnFilledFields((prev) => new Set([...prev].filter((campo) => campo !== "livCapaURL")));
     } catch (err) {
       console.error(err);
       addToast(err?.message || "Falha ao enviar a capa", "error");
@@ -793,6 +918,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
       }
 
       addToast(bookToEdit ? "Livro atualizado com sucesso" : "Livro cadastrado com sucesso", "success");
+      setFieldOrigins({});
       clearDraft();
       if (onBookSaved) onBookSaved();
     } catch (err) {
@@ -888,12 +1014,12 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
 
   return (
     <div className="modal-overlay">
-      <div className="editor-modal-container">
+      <div className="editor-modal-container book-editor-modal" role="dialog" aria-modal="true" aria-labelledby="book-editor-title">
         <div className="editor-shell">
           <div className="editor-topbar">
             <div className="editor-topbar-copy">
-              <h2>{bookToEdit ? "Editar Livro" : "Novo Livro"}</h2>
-              <p>Edite as informações do livro selecionado.</p>
+              <h2 id="book-editor-title">{bookToEdit ? "Editar Livro" : "Novo Livro"}</h2>
+              <p>{bookToEdit ? "Edite as informações do livro selecionado." : "Cadastre os dados do título e dos exemplares."}</p>
             </div>
             <div className="editor-top-actions">
               <button
@@ -912,22 +1038,19 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
               <button
                 key={section.id}
                 type="button"
-                className="editor-tab"
-                onClick={() =>
-                  sectionRefs[section.id]?.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
+                className={`editor-tab${activeSection === section.id ? " is-active" : ""}`}
+                aria-current={activeSection === section.id ? "location" : undefined}
+                onClick={() => scrollToSection(section.id)}
               >
                 {section.label}
               </button>
             ))}
           </div>
-          <p className="editor-tabs-hint">
-            <strong>Use os atalhos acima para pular direto até uma seção.</strong>
-          </p>
-
-          <div className="editor-divider" />
-
-          <div className="editor-content">
+          <div className="editor-origin-legend" aria-label="Origem dos campos preenchidos automaticamente">
+            <span><FieldOriginIcon name="isbn" fieldOrigins={{ isbn: "isbn" }} /> ISBN</span>
+            <span><FieldOriginIcon name="ia" fieldOrigins={{ ia: "ia" }} /> IA</span>
+          </div>
+          <div className="editor-content" ref={editorContentRef} onScroll={updateActiveSection}>
             {saveErrors.length > 0 && <div className="editor-copies-warning editor-save-errors" role="alert">
               <p><strong>Não foi possível salvar todas as alterações.</strong> {savedParts > 0 ? `${savedParts} parte(s) já foram salvas; ao tentar novamente, somente as pendências serão enviadas.` : "Revise os erros e tente novamente."}</p>
               <ul>{saveErrors.map((message, index) => <li key={`${index}-${message}`}>{message}</li>)}</ul>
@@ -939,7 +1062,7 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
               </div>
             )}
             {loadingDetails ? (
-              <div className="editor-loading-state">Carregando dados do livro...</div>
+              <div className="editor-loading-state" role="status">Carregando dados do livro...</div>
             ) : (
               <>
                 <section ref={basicSectionRef} className="editor-page-section">
@@ -951,6 +1074,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                     generos={generos}
                     autores={autores}
                     highlightedFields={highlightedFields}
+                    fieldOrigins={fieldOrigins}
+                    onRegenerate={regenerateField}
+                    regeneratingField={regeneratingField}
                     isbnFilledFields={isbnFilledFields}
                     onFieldChange={handleFieldChange}
                     onUpload={handleUpload}
@@ -972,6 +1098,9 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                     onFieldChange={handleFieldChange}
                     editoras={editoras}
                     highlightedFields={highlightedFields}
+                    fieldOrigins={fieldOrigins}
+                    onRegenerate={regenerateField}
+                    regeneratingField={regeneratingField}
                   />
                 </section>
 
@@ -991,20 +1120,23 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
                   />
                 </section>
 
-                <div className="editor-bottom-save-bar">
-                  <LoadingButton
-                    type="button"
-                    className="top-action primary bottom-save-button"
-                    onClick={handleSave}
-                    isLoading={loading || loadingDetails}
-                    loadingText="Salvando..."
-                  >
-                    <HiOutlineSave />
-                    <span>Salvar Atualizações</span>
-                  </LoadingButton>
-                </div>
               </>
             )}
+          </div>
+          <div className="editor-bottom-save-bar">
+            <button type="button" className="top-action editor-cancel-button" onClick={handleRequestClose} disabled={loading}>
+              Cancelar
+            </button>
+            <LoadingButton
+              type="button"
+              className="top-action primary bottom-save-button"
+              onClick={handleSave}
+              isLoading={loading || loadingDetails}
+              loadingText="Salvando..."
+            >
+              <HiOutlineSave />
+              <span>{bookToEdit ? "Salvar alterações" : "Salvar livro"}</span>
+            </LoadingButton>
           </div>
         </div>
       </div>
@@ -1013,6 +1145,16 @@ export default function BookFormModal({ onClose, onBookSaved, bookToEdit, initia
         show={confirmandoSaida}
         onConfirm={confirmarSaida}
         onCancel={() => setConfirmandoSaida(false)}
+      />
+
+      <FieldSuggestionModal
+        suggestion={fieldSuggestion}
+        fieldLabel={fieldSuggestion && FIELD_LABELS[fieldSuggestion.campo]}
+        currentValue={fieldSuggestion?.campo === "idGenero"
+          ? generos.find((item) => String(item.idGenero) === String(form.idGenero))?.genNome
+          : fieldSuggestion && form[fieldSuggestion.campo]}
+        onApply={applyFieldSuggestion}
+        onClose={() => setFieldSuggestion(null)}
       />
 
       <ConfirmModal
