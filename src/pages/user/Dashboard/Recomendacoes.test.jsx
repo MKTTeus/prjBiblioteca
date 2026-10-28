@@ -58,6 +58,21 @@ test('falha do painel permite tentar novamente', async () => {
   expect(await screen.findByText('Nova leitura')).toBeInTheDocument();
 });
 
+test('atualizar solicita nova rodada e mostra outros títulos', async () => {
+  getPainelRecomendacoes.mockResolvedValueOnce({
+    itens: [{ livro: { idLivro: 2, livTitulo: 'Primeira leitura' }, motivo: 'Popular.' }], avaliacoes: [],
+  }).mockResolvedValueOnce({
+    itens: [{ livro: { idLivro: 3, livTitulo: 'Outra leitura' }, motivo: 'Popular.' }], avaliacoes: [],
+  });
+  render(<Recomendacoes />);
+  expect(await screen.findByText('Primeira leitura')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Atualizar sugestões de leitura' }));
+  expect(await screen.findByText('Outra leitura')).toBeInTheDocument();
+  expect(getPainelRecomendacoes).toHaveBeenNthCalledWith(1, 0);
+  expect(getPainelRecomendacoes).toHaveBeenNthCalledWith(2, 1);
+  expect(screen.queryByText('Primeira leitura')).not.toBeInTheDocument();
+});
+
 test('reutiliza solicitação e impede envio duplicado', async () => {
   render(<Recomendacoes />);
   const button = await screen.findByRole('button', { name: 'Solicitar empréstimo' });
