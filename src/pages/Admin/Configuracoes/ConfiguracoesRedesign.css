@@ -1,0 +1,135 @@
+/* Configurações: identidade alinhada ao padrão do painel; sem afetar outras telas. */
+.admin-shell .config-container.admin-standard-page .tabs {
+ display:flex;align-items:stretch;gap:5px;padding:5px;margin:0 0 15px;
+ background:var(--surface-muted);border:1px solid var(--surface-border);border-radius:12px;
+}
+.admin-shell .config-container .tabs .tab-btn {
+ flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-width:0;min-height:39px;padding:9px 5px;border-radius:8px;
+ color:var(--text-soft);font-size:12px;font-weight:650;line-height:1.2;
+}
+.admin-shell .config-container .tabs .tab-btn.active {
+ background:var(--primary);color:white;box-shadow:0 2px 7px rgba(37,99,235,.18);transform:none;
+}
+.admin-shell .config-container .tabs .tab-btn:hover:not(.active) {background:var(--surface-hover);color:var(--text-default);transform:none;}
+.admin-shell .config-container .tabs .tab-btn:focus-visible {outline:2px solid var(--primary);outline-offset:1px;}
+.admin-shell .config-container .top-bar.admin-standard-header {margin-bottom:15px;}
+.admin-shell .config-container .top-actions .config-export-btn {display:inline-flex;align-items:center;gap:8px;justify-content:center;min-height:40px;}
+.config-mobile-picker {display:none;}
+.admin-shell .config-container .card {
+ padding:20px;border:1px solid var(--surface-border);border-radius:13px;
+ background:var(--surface-bg);box-shadow:var(--shadow-soft);
+}
+.admin-shell .config-container :is(.geral-header,.noti-title-icon,.seguranca-header,.avancado-header) {display:flex;align-items:center;gap:10px;margin:0 0 14px;}
+.admin-shell .config-container :is(.geral-header,.noti-title-icon,.seguranca-header,.avancado-header) h3 {font-size:15px;font-weight:750;margin:0;color:var(--text-default);}
+.admin-shell .config-container :is(.card-section-icon,.bell-icon,.shield-icon,.settings-icon) {
+ width:32px;height:32px;flex:0 0 32px;padding:8px;border-radius:10px;
+ box-sizing:border-box;color:var(--primary);background:var(--primary-muted);
+}
+.admin-shell .config-container .form-group label {font-size:12px;font-weight:700;color:var(--text-label);margin:0 0 6px;}
+.admin-shell .config-container .form-group input {
+ width:100%;height:41px;min-width:0;box-sizing:border-box;
+ padding:8px 12px;border:1px solid var(--input-border);border-radius:9px;
+ background:var(--input-bg);color:var(--text-default);font-size:13px;
+}
+.admin-shell .config-container .form-group input:focus-visible {outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--focus-ring);}
+.admin-shell .config-container .field-hint {font-size:11px;line-height:1.4;margin-top:6px;color:var(--text-muted);}
+.admin-shell .config-container .card-actions {margin-top:16px;}
+.admin-shell .config-container .card-actions>.btn-secondary {
+ min-height:41px;border:1px solid var(--primary);background:var(--primary);
+ color:#fff;border-radius:9px;padding:0 16px;font-weight:700;
+}
+.admin-shell .config-container .card-actions>.btn-secondary:hover:not(:disabled) {background:var(--primary-hover);color:#fff;}
+.admin-shell .config-container .card-actions>.btn-secondary:disabled {opacity:.55;}
+.admin-shell .config-container .geral-sections {
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;
+}
+.admin-shell .config-container .geral-sections>.card {min-width:0;}
+.admin-shell .config-container .geral-sections>.geral-regras {grid-column:1 / -1;}
+.admin-shell .config-container .geral-sections .form-grid {gap:14px;margin-top:0;}
+.admin-shell .config-container .geral-sections .form-grid.three-col {grid-template-columns:repeat(3,minmax(0,1fr));}
+.config-theme-choice {display:flex;flex-wrap:wrap;gap:8px;}
+.admin-shell .config-container .config-theme-choice button {
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ padding:10px 15px;min-width:110px;min-height:39px;border:1px solid var(--input-border);
+ border-radius:9px;color:var(--text-label);background:var(--surface-bg);font-size:13px;font-weight:650;transform:none;
+}
+.admin-shell .config-container .config-theme-choice button.selected {
+ background:var(--primary-muted);border-color:var(--primary);color:var(--primary);
+}
+.admin-shell .config-container .switch-row,.admin-shell .config-container .noti-item {
+ display:flex;align-items:center;justify-content:space-between;gap:16px;
+ min-height:54px;margin:0;padding:11px 0;border-bottom:1px solid var(--surface-border);
+}
+.admin-shell .config-container .switch-row:last-of-type,.admin-shell .config-container .noti-item:last-child {border-bottom:0;}
+.admin-shell .config-container .switch-title,.admin-shell .config-container .noti-title {font-size:13px;font-weight:700;color:var(--text-default);}
+.admin-shell .config-container .switch-row p,.admin-shell .config-container .noti-item p {font-size:11px;margin:4px 0 0;color:var(--text-muted);}
+.admin-shell .config-container .noti-list {gap:0;margin-bottom:15px;}
+.admin-shell .config-container .noti-item>div,.admin-shell .config-container .switch-row>div {min-width:0;}
+.admin-shell .config-container .seguranca-settings .alert-box {
+ background:var(--status-warning-surface);color:var(--status-warning-text);
+ border:1px solid var(--status-warning-bg);border-radius:9px;padding:12px 14px;font-size:12px;
+}
+.admin-shell .config-container .seguranca-settings .grid-2 {gap:14px;}
+.config-section-heading {display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.config-icon {display:grid;place-items:center;flex:none;width:37px;height:37px;border-radius:11px;background:var(--primary-muted);color:var(--primary);}
+.config-section-heading h3 {font-size:16px;margin:0 0 3px;color:var(--text-default);}
+.config-section-heading p {font-size:12px;margin:0;color:var(--text-muted);}
+.config-email-status {display:flex;align-items:center;gap:11px;padding:14px;border-radius:10px;}
+.config-email-status.is-ready {background:var(--success-soft);color:var(--success-text);}
+.config-email-status.is-error {background:var(--danger-soft);color:var(--danger-text);}
+.config-email-status strong {display:block;font-size:13px;}
+.config-email-status small {display:block;margin-top:3px;font-size:12px;}
+.config-email-sender {margin-top:17px;}
+.config-email-sender label {display:block;font-size:12px;font-weight:700;margin-bottom:7px;}
+.config-email-sender>div {padding:12px;border-radius:9px;border:1px solid var(--input-border);background:var(--input-bg);overflow-wrap:anywhere;font-size:13px;}
+.config-email-notice {display:flex;align-items:center;gap:9px;margin:15px 0 0;padding:12px;border-radius:9px;background:var(--primary-muted);color:var(--text-label);font-size:12px;}
+.config-email-notice svg {flex:none;color:var(--primary);}
+.config-email-loading {font-size:13px;color:var(--text-muted);}
+.admin-shell .config-container .ano-letivo-cards {gap:13px;}
+.admin-shell .config-container .ano-letivo-cards>.stats-card {min-width:0;}
+.admin-shell .config-container .bk-page {min-width:0;}
+.admin-shell .config-container .bk-info-banner {font-size:12px;line-height:1.55;padding:12px 14px;}
+.admin-shell .config-container .bk-header {gap:12px;padding-bottom:14px;margin-bottom:14px;}
+.admin-shell .config-container .bk-table-wrapper {border-radius:12px;}
+.admin-shell .config-container .bk-table th {background:var(--surface-muted);}
+.admin-shell .config-container .bk-row td {padding:11px 13px;}
+.admin-shell .config-container .alert-neutral {font-size:12px;}
+.admin-shell .config-container .avancado-header {margin-bottom:14px;}
+.admin-shell .config-container .acoes-sistema {margin-top:17px;}
+@media(max-width:1050px) and (min-width:769px){
+ .admin-shell .config-container .tabs .tab-btn {font-size:11px;gap:4px;padding:9px 3px;}
+ .admin-shell .config-container .tabs .tab-btn svg {display:none;}
+}
+@media(max-width:768px){
+ .admin-shell .config-container .tabs {display:none;}
+ .config-mobile-picker {display:block;margin:0 0 14px;}
+ .config-mobile-picker>label {display:block;margin:0 0 6px;font-size:11px;font-weight:700;color:var(--text-label);}
+ .config-mobile-select-wrap {position:relative;}
+ .config-mobile-picker select {
+ appearance:none;width:100%;min-height:45px;box-sizing:border-box;
+ border:1px solid var(--input-border);border-radius:10px;
+ background:var(--surface-bg);color:var(--text-default);font-size:13px;font-weight:750;
+ padding:10px 43px 10px 15px;
+ }
+ .config-mobile-select-wrap>svg {position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--primary);}
+ .admin-shell .config-container .geral-sections {grid-template-columns:minmax(0,1fr);gap:12px;}
+ .admin-shell .config-container .geral-sections>.geral-regras {grid-column:auto;}
+ .admin-shell .config-container .geral-sections .form-grid.three-col {grid-template-columns:minmax(0,1fr);gap:14px;}
+ .admin-shell .config-container .card {padding:15px;}
+ .admin-shell .config-container .seguranca-settings .grid-2 {grid-template-columns:minmax(0,1fr);}
+ .admin-shell .config-container .top-actions {width:100%;margin-top:8px;}
+ .admin-shell .config-container .top-actions .config-export-btn {width:100%;}
+ .admin-shell .config-container .ano-letivo-cards {grid-template-columns:repeat(2,minmax(0,1fr));}
+ .admin-shell .config-container .ano-letivo-acao {align-items:stretch;}
+ .admin-shell .config-container .ano-letivo-acao .btn-encerrar {width:100%;}
+ .admin-shell .config-container .bk-header-actions {width:100%;}
+ .admin-shell .config-container .bk-header-actions .bk-btn {flex:1;justify-content:center;}
+ .admin-shell .config-container .bk-modal,.admin-shell .config-container .al-modal {max-height:calc(100dvh - 40px);overflow-y:auto;box-sizing:border-box;}
+ .admin-shell .config-container .bk-actions-group {justify-content:flex-start;}
+ .admin-shell .config-container .card-actions>.btn-secondary {width:100%;}
+}
+@media(max-width:480px){
+ .admin-shell .config-container .ano-letivo-cards {grid-template-columns:minmax(0,1fr);}
+ .config-email-notice {align-items:flex-start;}
+}
