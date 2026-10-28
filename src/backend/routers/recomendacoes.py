@@ -22,11 +22,12 @@ class Avaliacao(BaseModel):
 
 
 @router.get('/aluno/recomendacoes/painel')
-def painel_recomendacoes(response: Response, limite: int = Query(6, ge=1, le=12), aluno=Depends(get_aluno)):
+def painel_recomendacoes(response: Response, limite: int = Query(6, ge=1, le=12),
+                         rodada: int = Query(0, ge=0, le=1000000), aluno=Depends(get_aluno)):
     response.headers['Cache-Control'] = 'private, no-store'
     livros, historico = executar_em_paralelo(carregar_catalogo, carregar_historico)
     return {
-        'itens': recomendar(livros, historico, aluno['id'], limite),
+        'itens': recomendar(livros, historico, aluno['id'], limite, rodada),
         'avaliacoes': montar_avaliacoes(
             [item for item in historico if item['idUsuario'] == aluno['id']], livros
         ),
@@ -34,10 +35,11 @@ def painel_recomendacoes(response: Response, limite: int = Query(6, ge=1, le=12)
 
 
 @router.get('/aluno/recomendacoes')
-def listar_recomendacoes(response: Response, limite: int = Query(6, ge=1, le=12), aluno=Depends(get_aluno)):
+def listar_recomendacoes(response: Response, limite: int = Query(6, ge=1, le=12),
+                         rodada: int = Query(0, ge=0, le=1000000), aluno=Depends(get_aluno)):
     response.headers['Cache-Control'] = 'private, no-store'
     livros, historico = executar_em_paralelo(carregar_catalogo, carregar_historico)
-    return {'itens': recomendar(livros, historico, aluno['id'], limite)}
+    return {'itens': recomendar(livros, historico, aluno['id'], limite, rodada)}
 
 
 @router.get('/aluno/avaliacoes')
