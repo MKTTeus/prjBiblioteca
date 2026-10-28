@@ -235,3 +235,25 @@
 @media(prefers-reduced-motion:reduce){
  .user-shell .user-library-page .shared-book-card__cover-open{transition:none}
 }
+
+/* Acesso à descrição no mobile em Grade e Lista; não afeta Admin/Professor. */
+@media (max-width: 768px) {
+  .user-shell .user-library-page .shared-book-card--touch-details .shared-book-card__media,
+  .user-shell .user-library-page .shared-book-card--touch-details .shared-book-card__body {
+    cursor: pointer;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__description-wrap {
+    display: flex;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__description {
+    display: none;
+  }
+  .user-shell .user-library-page .shared-book-card__desc-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 27px;
+    margin-top: 2px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+}

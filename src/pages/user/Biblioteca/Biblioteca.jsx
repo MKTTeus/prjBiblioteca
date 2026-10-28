@@ -195,6 +195,7 @@ export default function Biblioteca() {
                   solicitando={!!solicitando[id]}
                   isComunidade={!isAluno}
                   allowCoverPreview
+                  openDetailsOnCard
                 />
               );
             })}

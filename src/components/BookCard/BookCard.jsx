@@ -76,6 +76,7 @@ export default function BookCard({
   solicitando = false,
   isComunidade = false,
   allowCoverPreview = false,
+  openDetailsOnCard = false,
   // ── Modo carrinho (usado pelo professor ao montar um empréstimo) ──
   cartMode = false,
   pendingQuantity = 0,
@@ -165,6 +166,14 @@ export default function BookCard({
     ? REQUEST_STATUS_LABEL[statusSolicitacao] || "Já Solicitado"
     : "Solicitar Empréstimo";
 
+  // Disponível apenas para o catálogo do usuário no mobile. Botões, links
+  // e os portais dos modais não disparam a abertura da descrição por engano.
+  const handleCardTap = (event) => {
+    if (!openDetailsOnCard || !window.matchMedia?.("(max-width: 768px)").matches) return;
+    if (event.target.closest("button, a, input, select, textarea, summary, [role='button'], .modal-overlay")) return;
+    setMostrarDescricao(true);
+  };
+
   const adminActions = isAdmin ? (
     <>
       <button
@@ -211,7 +220,10 @@ export default function BookCard({
   ) : null;
 
   return (
-    <div className="shared-book-card">
+    <div
+      className={`shared-book-card${openDetailsOnCard ? " shared-book-card--touch-details" : ""}`}
+      onClick={openDetailsOnCard ? handleCardTap : undefined}
+    >
       <div className="shared-book-card__media">
         <div className="shared-book-card__badges">
           <span className={`shared-book-card__status ${status.className}`}>{status.label}</span>
