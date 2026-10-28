@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { FaBell, FaCheckCircle, FaClock, FaUsers } from "react-icons/fa";
 import { BellOff, CalendarDays, ChevronDown, Clock3, BookOpen, UserRound, IdCard, Phone } from "lucide-react";
 import Skeleton from "../../../components/Skeleton/Skeleton";
-import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getAdminNotifications } from "../../../services/api";
 import { getErrorMessage } from "../../../utils/apiError";
 import { formatarCPF, formatarTelefone } from "../../../utils/masks";
@@ -66,6 +65,22 @@ function NotificationRow({ item, open, onToggle }) {
   </article>;
 }
 const contaLeitores = lista => new Set(lista.map(i=>i.userId != null ? "id-"+i.userId : "nome-"+i.userName)).size;
+
+// Os indicadores desta página têm disposição horizontal própria. Não alteramos
+// o StatsCard compartilhado pelas outras telas do sistema.
+function NotificationSummary({ title, value, subtitle, icon, color }) {
+  return (
+    <article className="notif-summary" aria-label={title + ": " + value}>
+      <div className={"notif-summary__icon notif-summary__icon--" + color} aria-hidden="true">{icon}</div>
+      <div className="notif-summary__content">
+        <strong className="notif-summary__value">{value}</strong>
+        <span className="notif-summary__title">{title}</span>
+        <small className="notif-summary__subtitle">{subtitle}</small>
+      </div>
+    </article>
+  );
+}
+
 export default function AdminNotificacoes() {
   const [dados,setDados] = useState(()=>normalizar({}));
   const [loading,setLoading] = useState(true);
@@ -87,10 +102,10 @@ export default function AdminNotificacoes() {
   return <div className="admin-notificacoes page-shell admin-standard-page">
     <header className="admin-standard-header"><div><h1>Notificações do Admin</h1><p>Acompanhe empréstimos em atraso, retiradas e devoluções recentes.</p></div><FaBell className="notif-hero-icon" aria-hidden="true"/></header>
     <section className="stats-cards-grid admin-standard-kpis" aria-label="Resumo de notificações">
-      <StatsCard title="Alunos em atraso" value={numero(contaLeitores(dados.atrasadosAlunos))} subtitle="Com empréstimos pendentes" icon={<FaClock/>} color="red"/>
-      <StatsCard title="Comunidade em atraso" value={numero(contaLeitores(dados.atrasadosComunidade))} subtitle="Com empréstimos pendentes" icon={<FaUsers/>} color="orange"/>
-      <StatsCard title="Retiradas hoje" value={numero(dados.recentes.length)} subtitle="Registradas hoje" icon={<FaBell/>} color="blue"/>
-      <StatsCard title="Devoluções hoje" value={numero(dados.devolucoesRecentes.length)} subtitle="Registradas hoje" icon={<FaCheckCircle/>} color="green"/>
+      <NotificationSummary title="Alunos em atraso" value={numero(contaLeitores(dados.atrasadosAlunos))} subtitle="Com empréstimos pendentes" icon={<FaClock/>} color="red"/>
+      <NotificationSummary title="Comunidade em atraso" value={numero(contaLeitores(dados.atrasadosComunidade))} subtitle="Com empréstimos pendentes" icon={<FaUsers/>} color="orange"/>
+      <NotificationSummary title="Retiradas hoje" value={numero(dados.recentes.length)} subtitle="Registradas hoje" icon={<FaBell/>} color="blue"/>
+      <NotificationSummary title="Devoluções hoje" value={numero(dados.devolucoesRecentes.length)} subtitle="Registradas hoje" icon={<FaCheckCircle/>} color="green"/>
     </section>
     <section className="notif-list" aria-labelledby="notif-title">
       <header className="notif-heading"><div><h2 id="notif-title">Notificações recentes</h2><p>Empréstimos em atraso e movimentações registradas hoje.</p></div>{!loading && !error && <small>{lista.length} notificações</small>}</header>

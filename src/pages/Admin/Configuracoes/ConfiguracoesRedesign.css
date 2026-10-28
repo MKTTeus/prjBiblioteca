@@ -102,7 +102,8 @@
  .admin-shell .config-container .tabs .tab-btn svg {display:none;}
 }
 @media(max-width:768px){
- .admin-shell .config-container .tabs {display:none;}
+ /* A regra precisa superar o seletor desktop e o layout administrativo compartilhado. */
+ .admin-shell .config-container.admin-standard-page nav.tabs {display:none;}
  .config-mobile-picker {display:block;margin:0 0 14px;}
  .config-mobile-picker>label {display:block;margin:0 0 6px;font-size:11px;font-weight:700;color:var(--text-label);}
  .config-mobile-select-wrap {position:relative;}
