@@ -299,8 +299,8 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
           />
         ))}
       </section>
-      <Recomendacoes />
-      <section className="user-dashboard-recent" aria-labelledby="recent-notifications-heading">
+      <Recomendacoes notifications={(
+        <section className="user-dashboard-recent" aria-labelledby="recent-notifications-heading">
         <div className="user-section-card user-dashboard-recent__card">
           <div className="user-section-card__header">
             <div>
@@ -321,6 +321,7 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
           ) : <div className="user-empty-state">Nenhuma notificação nova no momento.</div>}
         </div>
       </section>
+      )} />
     </div>
   );
 }

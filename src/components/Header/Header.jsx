@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, LogOut, Menu, UserRound, ChevronDown } from "lucide-react";
+import { Bell, LogOut, Menu } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { Link, useLocation } from "react-router-dom";
@@ -43,7 +43,7 @@ function Header({ sidebarType = "admin" }) {
   const handleLogout = () => logout();
 
   return (
-    <header className={`header${isAdmin ? " admin-header" : isUser ? " user-header" : ""}`}>
+    <header className={`header${isAdmin || isUser ? " admin-header" : ""}${isUser ? " user-header" : ""}`}>
       <div className="header-left">
         <button type="button" className="hamburger-btn" onClick={() => {
           if ((isAdmin || isUser) && window.innerWidth > 768) toggleCollapse();
@@ -83,18 +83,12 @@ function Header({ sidebarType = "admin" }) {
           </div>
           <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Administrador"}</span>
         </>}
-        {isUser && (
-          <div className="user-header-tools">
-            <Link to="/user/notificacoes" className="user-header-bell" aria-label="Ver notificações">
-              <Bell size={20} aria-hidden="true" />
-            </Link>
-            <Link to="/user/configuracoes" className="user-header-profile" aria-label="Abrir configurações do perfil">
-              <span className="user-header-profile__icon"><UserRound size={17} aria-hidden="true" /></span>
-              <span className="user-header-profile__name">{user?.nome?.split(" ")[0] || "Usuário"} <small>({roleLabel})</small></span>
-              <ChevronDown size={14} aria-hidden="true" />
-            </Link>
+        {isUser && <>
+          <div className="header-notification-slot">
+            <Link to="/user/notificacoes" className="header-bell" aria-label="Ver notificações"><Bell size={21} aria-hidden="true" /></Link>
           </div>
-        )}
+          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Leitor"}</span>
+        </>}
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair
         </button>

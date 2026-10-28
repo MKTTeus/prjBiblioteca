@@ -51,7 +51,7 @@ function AvaliacaoLivro({ livro, onSaved }) {
   </form>;
 }
 
-function PainelRecomendacoes() {
+function PainelRecomendacoes({ notifications }) {
   const { addToast } = useToast();
   const [itens, setItens] = useState([]);
   const [avaliacoes, setAvaliacoes] = useState([]);
@@ -139,7 +139,7 @@ function PainelRecomendacoes() {
   const semNota = avaliacoes.filter(livro => !livro.nota);
   const comNota = avaliacoes.filter(livro => livro.nota);
 
-  return <section className="reading-suggestions" aria-labelledby="reading-suggestions-title">
+  return <><section className="reading-suggestions" aria-labelledby="reading-suggestions-title">
     <div className="user-section-card__header">
       <div><h2 id="reading-suggestions-title">Para sua próxima leitura</h2>
         <p>Sugestões a partir das suas leituras, avaliações e interesses em comum.</p></div>
@@ -165,7 +165,6 @@ function PainelRecomendacoes() {
       <div className="reading-suggestions__track" ref={trilho} onScroll={atualizarNavegacao}
         role="region" aria-roledescription="carrossel" aria-label="Livros recomendados" tabIndex={0}>
         {itens.map(({ livro, motivo }) => {
-          const total = Number(livro.total_exemplares ?? livro.totalExemplares ?? 0);
           const disponiveis = Number(livro.disponiveis ?? livro.livrosDisponiveis ?? 0);
           const podeSolicitar = livro.livAtivo !== false && disponiveis > 0;
           const solicitado = solicitados[livro.idLivro];
@@ -179,7 +178,7 @@ function PainelRecomendacoes() {
               <div className="reading-suggestions__compact-body">
                 <button type="button" className="reading-suggestions__book-title" onClick={() => setDetalheLivro(livro)}>{livro.livTitulo}</button>
                 <p className="reading-suggestions__book-author">{livro.livAutor || "Autor não informado"}</p>
-                <p className="reading-suggestions__compact-meta">{livro.livGenero || "Explore esta leitura"}</p>
+                <p className="reading-suggestions__compact-meta">{disponiveis > 0 ? `${disponiveis} ${disponiveis === 1 ? "exemplar disponível" : "exemplares disponíveis"}` : "Sem exemplares disponíveis"}</p>
                 <button type="button" className="reading-suggestions__request" onClick={() => solicitar(livro)}
                   disabled={!podeSolicitar || !!solicitado || !!solicitando[livro.idLivro]}>
                   <BookOpen size={15} aria-hidden="true"/>
@@ -208,6 +207,8 @@ function PainelRecomendacoes() {
       </div>
     </div>}
     {erroAvaliacoes && <p role="alert">{erroAvaliacoes} Use “Atualizar sugestões” para tentar novamente.</p>}
+    </section>
+    <div className="user-dashboard-bottom-grid">
     {!!avaliacoes.length && <section className="user-section-card reading-feedback" aria-labelledby="reading-feedback-title">
       <div className="user-section-card__header">
         <div className="reading-feedback__heading">
@@ -225,11 +226,15 @@ function PainelRecomendacoes() {
         {comNota.map(livro => <AvaliacaoLivro key={livro.idLivro} livro={livro} onSaved={avaliacaoSalva} />)}
       </details>}
     </section>}
-  </section>;
+    {notifications}
+    </div>
+  </>;
 }
 
-export default function Recomendacoes() {
+export default function Recomendacoes({ notifications }) {
   const { user } = useAuth();
-  // Comunidade compartilha /user, mas não participa deste MVP.
-  return user?.tipo === 'Aluno' ? <PainelRecomendacoes key={user.email || user.id} /> : null;
+  // Recomendações continuam exclusivas de Alunos; Comunidade mantém notificações.
+  return user?.tipo === 'Aluno'
+    ? <PainelRecomendacoes key={user.email || user.id} notifications={notifications}/>
+    : <div className="user-dashboard-bottom-grid user-dashboard-bottom-grid--single">{notifications}</div>;
 }
