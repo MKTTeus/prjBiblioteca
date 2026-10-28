@@ -158,16 +158,54 @@ def listar_emprestimos(user=Depends(get_loan_reader)):
 
 @router.get("/emprestimos/notificacoes-admin")
 def notificacoes_admin(admin=Depends(get_admin)):
-    itens=montar_itens(buscar_todos(lambda:supabase.table('Movimentacao').select('*').eq('movTipo','EMPRESTIMO').order('idMovimentacao')))
-    resultado={'atrasadosAlunos':[],'atrasadosComunidade':[],'recentes':[],'devolucoesRecentes':[]}
-    hoje=utc_now().astimezone(ZoneInfo('America/Sao_Paulo')).date()
-    for i in itens:
-        entrada={'id':f"{i['idMovimentacao']}-{i['idExemplar']}",'userName':i['usuario'],'userType':i['usuarioTipo'],'bookTitle':i['titulo'],'tombo':i['codigo'],'loanDate':i['dataEmprestimo']}
-        if i['status']=='atrasado': resultado['atrasadosComunidade' if i['usuarioTipo']=='Comunidade' else 'atrasadosAlunos'].append(entrada)
-        if i.get('dataEmprestimo')==hoje.isoformat(): resultado['recentes'].append(entrada)
-        if i.get('dataDevolucao')==hoje.isoformat(): resultado['devolucoesRecentes'].append(entrada)
-    return resultado
+    # O endpoint permanece restrito ao admin. Campos adicionais são somente
+    # metadados de apresentação; nenhuma transição de empréstimo é alterada.
+    itens = montar_itens(buscar_todos(
+        lambda: supabase.table("Movimentacao").select("*").eq("movTipo", "EMPRESTIMO").order("idMovimentacao")
+    ))
+    resultado = {"atrasadosAlunos": [], "atrasadosComunidade": [], "atrasadosProfessores": [],
+                 "recentes": [], "devolucoesRecentes": []}
+    hoje = utc_now().astimezone(ZoneInfo("America/Sao_Paulo")).date()
+    ids = list({i["idUsuario"] for i in itens if i.get("idUsuario") is not None})
+    pessoas = {}
+    if ids:
+        registros = consultar_lote(
+            lambda lote: supabase.table("Usuario")
+                .select("idUsuario,usuRA,usuCPF,usuTelefone")
+                .in_("idUsuario", lote),
+            "Usuario", ids,
+        ).data or []
+        pessoas = {p["idUsuario"]: p for p in registros}
 
+    for item in itens:
+        pessoa = pessoas.get(item.get("idUsuario"), {})
+        tipo = item.get("usuarioTipo") or "-"
+        prazo = item.get("dataPrevistaDevolucao")
+        atraso = max((hoje - datetime_utc(prazo).date()).days, 0) if prazo else 0
+        entrada = {
+            "id": f"{item['idMovimentacao']}-{item['idExemplar']}",
+            "userId": item.get("idUsuario"),
+            "userName": item.get("usuario"),
+            "userType": tipo,
+            "userDocument": pessoa.get("usuCPF") if tipo == "Comunidade" else pessoa.get("usuRA"),
+            "telefone": pessoa.get("usuTelefone"),
+            "serie": item.get("serie"), "turma": item.get("turma"),
+            "bookTitle": item.get("titulo"), "tombo": item.get("codigo"),
+            "loanDate": item.get("dataEmprestimo"),
+            "dueDate": prazo, "returnDate": item.get("dataDevolucao"),
+            "diasAtraso": atraso if item.get("status") == "atrasado" else 0,
+        }
+        if item.get("status") == "atrasado":
+            grupo = "atrasadosComunidade" if tipo == "Comunidade" else (
+                "atrasadosProfessores" if tipo == "Professor" else "atrasadosAlunos"
+            )
+            resultado[grupo].append(entrada)
+        # Datas armazenadas como date, sem hora: não afirmar intervalo móvel de 24h.
+        if str(item.get("dataEmprestimo") or "")[:10] == hoje.isoformat():
+            resultado["recentes"].append(entrada)
+        if str(item.get("dataDevolucao") or "")[:10] == hoje.isoformat():
+            resultado["devolucoesRecentes"].append(entrada)
+    return resultado
 
 @router.post("/emprestimos")
 def criar_emprestimo(data: Emprestimo, admin=Depends(get_admin), idempotency_key: UUID | None = Header(default=None, alias="Idempotency-Key")):

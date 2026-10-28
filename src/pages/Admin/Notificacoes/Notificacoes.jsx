@@ -1,241 +1,103 @@
 import "../../../components/AdminPageLayout/AdminPageLayout.css";
+import React, { useEffect, useMemo, useState } from "react";
+import { FaBell, FaCheckCircle, FaClock, FaUsers } from "react-icons/fa";
+import { BellOff, CalendarDays, ChevronDown, Clock3, BookOpen, UserRound, IdCard, Phone } from "lucide-react";
 import Skeleton from "../../../components/Skeleton/Skeleton";
-import React, { useEffect, useState } from "react";
-import {
-  FaBell,
-  FaCheckCircle,
-  FaClock,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
+import StatsCard from "../../../components/StatsCard/StatsCard";
 import { getAdminNotifications } from "../../../services/api";
 import { getErrorMessage } from "../../../utils/apiError";
 import { formatarCPF, formatarTelefone } from "../../../utils/masks";
-import "../../user/UserArea.css";
 import "./Notificacoes.css";
-import StatsCard from "../../../components/StatsCard/StatsCard";
 
-function renderLoanItem(item, badgeLabel, variant) {
-  const documento =
-    item.userType === "Comunidade" && item.userDocument
-      ? formatarCPF(item.userDocument)
-      : item.userDocument;
-  const telefone = item.telefone && item.telefone !== "-"
-    ? formatarTelefone(item.telefone)
-    : item.telefone;
-  return (
-    <article
-      className={`user-notification-item admin-notification-card user-notification-item--${variant}`}
-      key={`${item.id}-${item.userDocument}-${item.tombo}`}
-    >
-      <div className="user-notification-item__content admin-notification-card__content">
-        <div className={`user-notification-item__icon user-notification-card__icon user-notification-item__icon--${variant}`}>
-          {variant === "warning" || variant === "recent" ? <FaClock /> : <FaCheckCircle />}
-        </div>
-
-        <div className="user-notification-item__body admin-notification-card__body">
-          <div className="admin-notification-card__header">
-            <div>
-              <p className="admin-notification-card__user-type">{item.userType}</p>
-              <h4>{item.userName}</h4>
-            </div>
-            <span className={`notification-badge ${variant}`}>{badgeLabel}</span>
-          </div>
-
-          <p className="admin-notification-card__book">{item.bookTitle}</p>
-
-          <div className="admin-notification-card__details">
-            <span>{documento}</span>
-            <span>{telefone}</span>
-            <span>Tombo: {item.tombo}</span>
-          </div>
-        </div>
-      </div>
-    </article>
-  );
+const KEYS = ["atrasadosAlunos", "atrasadosComunidade", "atrasadosProfessores", "recentes", "devolucoesRecentes"];
+const normalizar = (data) => Object.fromEntries(KEYS.map(key => [key, Array.isArray(data?.[key]) ? data[key] : []]));
+const formatoData = value => {
+  const d = typeof value === "string" ? value.slice(0, 10) : "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d.slice(8,10) + "/" + d.slice(5,7) + "/" + d.slice(0,4) : "Não informada";
+};
+const iniciais = nome => {
+  const p = String(nome || "").trim().split(/\s+/).filter(Boolean);
+  return (p.length > 1 ? p[0][0] + p[p.length-1][0] : (p[0] || "?").slice(0,2)).toUpperCase();
+};
+const statusTexto = item => item.tipo === "atraso"
+  ? item.diasAtraso > 0 ? item.diasAtraso + (item.diasAtraso === 1 ? " dia em atraso" : " dias em atraso") : "Em atraso"
+  : item.tipo === "retirada" ? "Retirada realizada" : "Devolução realizada";
+const montarLista = dados => [
+  ...dados.atrasadosAlunos.map((i, n) => ({...i, tipo:"atraso", chave:"a-"+(i.id ?? n)})),
+  ...dados.atrasadosComunidade.map((i, n) => ({...i, tipo:"atraso", chave:"c-"+(i.id ?? n)})),
+  ...dados.atrasadosProfessores.map((i, n) => ({...i, tipo:"atraso", chave:"p-"+(i.id ?? n)})),
+  ...dados.recentes.map((i, n) => ({...i, tipo:"retirada", chave:"r-"+(i.id ?? n)})),
+  ...dados.devolucoesRecentes.map((i, n) => ({...i, tipo:"devolucao", chave:"d-"+(i.id ?? n)})),
+].sort((a,b) => {
+  const ordem = {atraso:0, retirada:1, devolucao:2};
+  return ordem[a.tipo]-ordem[b.tipo] || (a.tipo === "atraso" ? (b.diasAtraso||0)-(a.diasAtraso||0) : 0);
+});
+function Detail({ icon: Icon, label, value }) {
+  if (!value && value !== 0) return null;
+  return <div className="notif-detail"><Icon size={15} aria-hidden="true"/><div><dt>{label}</dt><dd>{value}</dd></div></div>;
 }
-
+function NotificationRow({ item, open, onToggle }) {
+  const data = item.tipo === "devolucao" ? item.returnDate : item.tipo === "retirada" ? item.loanDate : item.dueDate;
+  const tipoData = item.tipo === "atraso" ? "Prazo" : item.tipo === "retirada" ? "Retirada" : "Devolução";
+  const turma = [item.serie, item.turma].filter(Boolean).join(" · ");
+  const doc = item.userDocument ? item.userType === "Comunidade" ? formatarCPF(item.userDocument) : item.userDocument : null;
+  const telefone = item.telefone && item.telefone !== "-" ? formatarTelefone(item.telefone) : null;
+  const label = statusTexto(item);
+  const id = "notif-" + String(item.chave).replace(/[^a-zA-Z0-9_-]/g,"-");
+  return <article className={"notif-row" + (open ? " is-open" : "")}>
+    <button type="button" className="notif-trigger" onClick={onToggle} aria-expanded={open} aria-controls={id}
+      aria-label={(open ? "Recolher" : "Expandir") + " notificação de " + (item.userName || "leitor") + ", " + label}>
+      <span className="notif-person"><span className="notif-avatar" aria-hidden="true">{iniciais(item.userName)}</span><span><strong>{item.userName || "Leitor não informado"}</strong><small>{[turma,item.userType].filter(Boolean).join(" · ")}</small></span></span>
+      <span className="notif-book"><strong>{item.bookTitle || "Livro não informado"}</strong><small>Tombo: {item.tombo || "—"}</small></span>
+      <span className="notif-date"><CalendarDays size={15} aria-hidden="true"/>{tipoData}: {formatoData(data)}</span>
+      <span className={"notif-status notif-status--"+item.tipo}>{label}</span>
+      <ChevronDown className="notif-arrow" size={17} aria-hidden="true"/>
+    </button>
+    {open && <div className="notif-expanded" id={id}><dl>
+      <Detail icon={CalendarDays} label="Data do empréstimo" value={item.loanDate ? formatoData(item.loanDate) : null}/>
+      <Detail icon={CalendarDays} label="Prazo de devolução" value={item.dueDate ? formatoData(item.dueDate) : null}/>
+      <Detail icon={CalendarDays} label="Data da devolução" value={item.returnDate ? formatoData(item.returnDate) : null}/>
+      {item.tipo === "atraso" && <Detail icon={Clock3} label="Dias em atraso" value={item.diasAtraso > 0 ? item.diasAtraso+" dias" : "Em atraso"}/>}
+      <Detail icon={UserRound} label="Tipo de leitor" value={item.userType}/>
+      <Detail icon={BookOpen} label="Série e turma" value={turma}/>
+      <Detail icon={IdCard} label={item.userType === "Comunidade" ? "CPF" : "RA"} value={doc}/>
+      <Detail icon={Phone} label="Telefone" value={telefone}/>
+    </dl></div>}
+  </article>;
+}
+const contaLeitores = lista => new Set(lista.map(i=>i.userId != null ? "id-"+i.userId : "nome-"+i.userName)).size;
 export default function AdminNotificacoes() {
-  const [atrasadosAlunos, setAtrasadosAlunos] = useState([]);
-  const [atrasadosComunidade, setAtrasadosComunidade] = useState([]);
-  const [recentes, setRecentes] = useState([]);
-  const [devolucoesRecentes, setDevolucoesRecentes] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [openAlunos, setOpenAlunos] = useState(false);
-  const [openComunidade, setOpenComunidade] = useState(false);
-  const [openRecentes, setOpenRecentes] = useState(false);
-  const [openDevolucoes, setOpenDevolucoes] = useState(false);
-
-  useEffect(() => {
-    async function loadNotifications() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await getAdminNotifications();
-        setAtrasadosAlunos(Array.isArray(data.atrasadosAlunos) ? data.atrasadosAlunos : []);
-        setAtrasadosComunidade(Array.isArray(data.atrasadosComunidade) ? data.atrasadosComunidade : []);
-        setRecentes(Array.isArray(data.recentes) ? data.recentes : []);
-        setDevolucoesRecentes(Array.isArray(data.devolucoesRecentes) ? data.devolucoesRecentes : []);
-      } catch (err) {
-        console.error("Erro ao carregar notificações do admin:", err);
-        setError(getErrorMessage(err, "Não foi possível carregar os avisos da equipe. Verifique sua conexão e tente novamente."));
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadNotifications();
-  }, []);
-
-  return (
-    <div className="user-page admin-notifications-page page-shell admin-standard-page">
-      <section className="user-page__hero admin-standard-header">
-        <div className="user-page__hero-content">
-          <h1>Notificações do Admin</h1>
-          <p>Veja os empréstimos em atraso, retiradas e devoluções recentes.</p>
-        </div>
-      </section>
-
-      <section className="stats-cards-grid admin-standard-kpis" aria-label="Resumo de notificações">
-        <StatsCard title="Alunos em atraso" value={isLoading || error ? "—" : atrasadosAlunos.length} subtitle="Empréstimos pendentes" icon={<FaClock />} color="red" />
-        <StatsCard title="Comunidade em atraso" value={isLoading || error ? "—" : atrasadosComunidade.length} subtitle="Empréstimos pendentes" icon={<FaBell />} color="orange" />
-        <StatsCard title="Retiradas recentes" value={isLoading || error ? "—" : recentes.length} subtitle="Últimas 24 horas" icon={<FaBell />} color="blue" />
-        <StatsCard title="Devoluções recentes" value={isLoading || error ? "—" : devolucoesRecentes.length} subtitle="Últimas 24 horas" icon={<FaCheckCircle />} color="green" />
-      </section>
-
-      <section className="user-section-card admin-notification-section">
-        <button
-          type="button"
-          className="admin-section-toggle"
-          onClick={() => setOpenAlunos((current) => !current)}
-        >
-          <div className="admin-section-toggle__title">
-            <span className="admin-section-toggle__icon">
-              <FaBell />
-            </span>
-            <div>
-              <h3>Alunos com livros em atraso</h3>
-              <p>{atrasadosAlunos.length} registro(s)</p>
-            </div>
-          </div>
-          <span>{openAlunos ? <FaChevronUp /> : <FaChevronDown />}</span>
-        </button>
-
-        <div className={`admin-section-content ${openAlunos ? "open" : "collapsed"}`}>
-          {isLoading ? (
-            <Skeleton variant="notifications" />
-          ) : error ? (
-            <div className="user-empty-state">{error}</div>
-          ) : atrasadosAlunos.length > 0 ? (
-            <div className="user-notifications-list">
-              {atrasadosAlunos.map((item) => renderLoanItem(item, "Atrasado", "atrasado"))}
-            </div>
-          ) : (
-            <div className="user-empty-state">Nenhum empréstimo atrasado de aluno encontrado.</div>
-          )}
-        </div>
-      </section>
-
-      <section className="user-section-card admin-notification-section">
-        <button
-          type="button"
-          className="admin-section-toggle"
-          onClick={() => setOpenComunidade((current) => !current)}
-        >
-          <div className="admin-section-toggle__title">
-            <span className="admin-section-toggle__icon">
-              <FaBell />
-            </span>
-            <div>
-              <h3>Comunidade com livros em atraso</h3>
-              <p>{atrasadosComunidade.length} registro(s)</p>
-            </div>
-          </div>
-          <span>{openComunidade ? <FaChevronUp /> : <FaChevronDown />}</span>
-        </button>
-
-        <div className={`admin-section-content ${openComunidade ? "open" : "collapsed"}`}>
-          {isLoading ? (
-            <Skeleton variant="notifications" />
-          ) : error ? (
-            <div className="user-empty-state">{error}</div>
-          ) : atrasadosComunidade.length > 0 ? (
-            <div className="user-notifications-list">
-              {atrasadosComunidade.map((item) => renderLoanItem(item, "Atrasado", "atrasado"))}
-            </div>
-          ) : (
-            <div className="user-empty-state">Nenhum empréstimo atrasado de comunidade encontrado.</div>
-          )}
-        </div>
-      </section>
-
-      <section className="user-section-card admin-notification-section">
-        <button
-          type="button"
-          className="admin-section-toggle"
-          onClick={() => setOpenRecentes((current) => !current)}
-        >
-          <div className="admin-section-toggle__title">
-            <span className="admin-section-toggle__icon admin-section-toggle__icon--warning">
-              <FaClock />
-            </span>
-            <div>
-              <h3>Retiradas recentes (últimas 24h)</h3>
-              <p>{recentes.length} registro(s)</p>
-            </div>
-          </div>
-          <span>{openRecentes ? <FaChevronUp /> : <FaChevronDown />}</span>
-        </button>
-
-        <div className={`admin-section-content ${openRecentes ? "open" : "collapsed"}`}>
-          {isLoading ? (
-            <Skeleton variant="notifications" />
-          ) : error ? (
-            <div className="user-empty-state">{error}</div>
-          ) : recentes.length > 0 ? (
-            <div className="user-notifications-list">
-              {recentes.map((item) => renderLoanItem(item, "Retirada", "recent"))}
-            </div>
-          ) : (
-            <div className="user-empty-state">Nenhuma retirada recente encontrada.</div>
-          )}
-        </div>
-      </section>
-
-      <section className="user-section-card admin-notification-section">
-        <button
-          type="button"
-          className="admin-section-toggle"
-          onClick={() => setOpenDevolucoes((current) => !current)}
-        >
-          <div className="admin-section-toggle__title">
-            <span className="admin-section-toggle__icon admin-section-toggle__icon--success">
-              <FaCheckCircle />
-            </span>
-            <div>
-              <h3>Devoluções recentes (últimas 24h)</h3>
-              <p>{devolucoesRecentes.length} registro(s)</p>
-            </div>
-          </div>
-          <span>{openDevolucoes ? <FaChevronUp /> : <FaChevronDown />}</span>
-        </button>
-
-        <div className={`admin-section-content ${openDevolucoes ? "open" : "collapsed"}`}>
-          {isLoading ? (
-            <Skeleton variant="notifications" />
-          ) : error ? (
-            <div className="user-empty-state">{error}</div>
-          ) : devolucoesRecentes.length > 0 ? (
-            <div className="user-notifications-list">
-              {devolucoesRecentes.map((item) => renderLoanItem(item, "Devolvido", "returned"))}
-            </div>
-          ) : (
-            <div className="user-empty-state">Nenhuma devolução recente encontrada.</div>
-          )}
-        </div>
-      </section>
-    </div>
-  );
+  const [dados,setDados] = useState(()=>normalizar({}));
+  const [loading,setLoading] = useState(true);
+  const [error,setError] = useState(null);
+  const [retry,setRetry] = useState(0);
+  const [visible,setVisible] = useState(8);
+  const [open,setOpen] = useState(()=>new Set());
+  useEffect(()=>{
+    let active = true;
+    setLoading(true); setError(null);
+    getAdminNotifications().then(data=>{if(active)setDados(normalizar(data));})
+      .catch(err=>{if(active)setError(getErrorMessage(err,"Não foi possível carregar notificações."));})
+      .finally(()=>{if(active)setLoading(false);});
+    return ()=>{active=false;};
+  },[retry]);
+  const lista = useMemo(()=>montarLista(dados),[dados]);
+  const numero = n => loading || error ? "—" : n;
+  const toggle = key => setOpen(prev=>{const next=new Set(prev);next.has(key)?next.delete(key):next.add(key);return next;});
+  return <div className="admin-notificacoes page-shell admin-standard-page">
+    <header className="admin-standard-header"><div><h1>Notificações do Admin</h1><p>Acompanhe empréstimos em atraso, retiradas e devoluções recentes.</p></div><FaBell className="notif-hero-icon" aria-hidden="true"/></header>
+    <section className="stats-cards-grid admin-standard-kpis" aria-label="Resumo de notificações">
+      <StatsCard title="Alunos em atraso" value={numero(contaLeitores(dados.atrasadosAlunos))} subtitle="Com empréstimos pendentes" icon={<FaClock/>} color="red"/>
+      <StatsCard title="Comunidade em atraso" value={numero(contaLeitores(dados.atrasadosComunidade))} subtitle="Com empréstimos pendentes" icon={<FaUsers/>} color="orange"/>
+      <StatsCard title="Retiradas hoje" value={numero(dados.recentes.length)} subtitle="Registradas hoje" icon={<FaBell/>} color="blue"/>
+      <StatsCard title="Devoluções hoje" value={numero(dados.devolucoesRecentes.length)} subtitle="Registradas hoje" icon={<FaCheckCircle/>} color="green"/>
+    </section>
+    <section className="notif-list" aria-labelledby="notif-title">
+      <header className="notif-heading"><div><h2 id="notif-title">Notificações recentes</h2><p>Empréstimos em atraso e movimentações registradas hoje.</p></div>{!loading && !error && <small>{lista.length} notificações</small>}</header>
+      {loading ? <div className="notif-empty"><Skeleton variant="notifications"/></div> : error ? <div className="notif-empty" role="alert"><BellOff size={27}/><strong>Não foi possível carregar as notificações</strong><p>{error}</p><button onClick={()=>setRetry(v=>v+1)}>Tentar novamente</button></div> :
+      lista.length === 0 ? <div className="notif-empty"><BellOff size={27}/><strong>Sem notificações no momento</strong><p>Não há empréstimos em atraso nem retiradas ou devoluções registradas hoje.</p></div> :
+      <><div className="notif-items">{lista.slice(0,visible).map(i=><NotificationRow key={i.chave} item={i} open={open.has(i.chave)} onToggle={()=>toggle(i.chave)}/>)}</div>
+      {visible<lista.length && <div className="notif-footer"><button type="button" onClick={()=>setVisible(n=>n+8)}>Mostrar mais notificações <ChevronDown size={14}/></button><small>Exibindo {Math.min(visible,lista.length)} de {lista.length}</small></div>}</>}
+    </section>
+  </div>;
 }
