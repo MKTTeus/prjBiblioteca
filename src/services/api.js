@@ -116,6 +116,10 @@ export const getResumoAcervo = () => apiFetch('/livros/resumo');
 export const getBook = (idLivro) =>
   apiFetch(`/livros/gestao/${idLivro}`);
 
+// Endpoint público: permite consultar a capa sem autorização de Admin.
+export const getPublicBookDetails = (idLivro) =>
+  apiFetch(`/livros/${encodeURIComponent(idLivro)}`);
+
 // A API limita cada resposta a 10 mil títulos. Percorrer páginas evita que
 // livros posteriores sumam da gestão e que a contagem local fique incorreta.
 export const getBooksForManagement = async () => {
