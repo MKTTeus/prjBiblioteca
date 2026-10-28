@@ -1,0 +1,25 @@
+/* A navegação do usuário usa exatamente os mesmos estilos de header e sidebar
+   do Admin. Apenas o espaço do conteúdo permanece isolado por perfil. */
+@media (min-width: 769px) {
+  .user-shell .content {
+    margin-left: 225px;
+    margin-top: 63px;
+    padding: 22px 25px;
+    width: calc(100% - 225px);
+    min-height: calc(100vh - 63px);
+  }
+  .user-shell.user-shell--collapsed .content {
+    margin-left: 72px;
+    width: calc(100% - 72px);
+  }
+}
+@media (max-width: 768px) {
+  .user-shell .content,
+  .user-shell.user-shell--collapsed .content {
+    margin-left: 0;
+    margin-top: 70px;
+    width: 100%;
+    min-height: calc(100vh - 70px);
+    padding: 14px 8px;
+  }
+}

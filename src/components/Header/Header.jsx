@@ -10,6 +10,7 @@ function Header({ sidebarType = "admin" }) {
   const { toggle, toggleCollapse } = useSidebar();
   const { pathname } = useLocation();
   const isAdmin = sidebarType === "admin";
+  const isUser = sidebarType === "user";
 
   const [nomeBiblioteca, setNomeBiblioteca] = useState(
     localStorage.getItem("nomeBiblioteca") || "Sala de Leitura"
@@ -42,18 +43,18 @@ function Header({ sidebarType = "admin" }) {
   const handleLogout = () => logout();
 
   return (
-    <header className={`header${isAdmin ? " admin-header" : ""}`}>
+    <header className={`header${isAdmin || isUser ? " admin-header" : ""}`}>
       <div className="header-left">
         <button type="button" className="hamburger-btn" onClick={() => {
-          if (isAdmin && window.innerWidth > 768) toggleCollapse();
+          if ((isAdmin || isUser) && window.innerWidth > 768) toggleCollapse();
           else toggle();
         }} aria-label="Alternar menu">
           <Menu size={22} />
         </button>
-        <Link to={isAdmin ? "/admin" : "/dashboard"} className="header-logo">
+        <Link to={isAdmin ? "/admin" : isUser ? "/user" : "/dashboard"} className="header-logo">
           <div className="header-icon">
             <img
-              src={isAdmin ? "/logo-novedejulho-semfundo.png" : "/logo-novedejulho-fundo.png"}
+              src={isAdmin || isUser ? "/logo-novedejulho-semfundo.png" : "/logo-novedejulho-fundo.png"}
               alt="Logo Nove de Julho"
               className="header-brand-logo"
               width="48"
@@ -64,7 +65,7 @@ function Header({ sidebarType = "admin" }) {
         </Link>
       </div>
 
-      {!isAdmin && <div className="header-center">
+      {!isAdmin && !isUser && <div className="header-center">
         {user && (
           <p className="welcome-text">
             Bem-vindo,{" "}
@@ -76,11 +77,15 @@ function Header({ sidebarType = "admin" }) {
       </div>}
 
       <div className="header-right">
-        {isAdmin && <>
-          <div id="admin-header-notifications" className="header-notification-slot">
-            {pathname !== "/admin" && <Link to="/admin/notificacoes" className="header-bell" aria-label="Ver notificações"><Bell size={21} /></Link>}
+        {(isAdmin || isUser) && <>
+          <div id={isAdmin ? "admin-header-notifications" : undefined} className="header-notification-slot">
+            {pathname !== (isAdmin ? "/admin" : "/user") && (
+              <Link to={isAdmin ? "/admin/notificacoes" : "/user/notificacoes"} className="header-bell" aria-label="Ver notificações">
+                <Bell size={21} aria-hidden="true" />
+              </Link>
+            )}
           </div>
-          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Administrador"}</span>
+          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || (isAdmin ? "Administrador" : "Leitor")}</span>
         </>}
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair

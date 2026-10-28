@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import NoviChat from "../NoviChat/NoviChat";
 import NoviWelcome from "../NoviWelcome/NoviWelcome";
 import "./AppShell.css";
+import "./UserShell.css";
 import { useSidebar } from "../../contexts/SidebarContext";
 
 function AppShell({ children, sidebarType = "admin", activePage, setActivePage }) {
@@ -19,7 +20,7 @@ function AppShell({ children, sidebarType = "admin", activePage, setActivePage }
   }, [showNoviWelcome]);
 
   return (
-    <div className={`layout ${sidebarType === "admin" ? `admin-shell${isCollapsed ? " admin-shell--collapsed" : ""}` : ""}`}>
+    <div className={`layout ${sidebarType === "admin" ? `admin-shell${isCollapsed ? " admin-shell--collapsed" : ""}` : sidebarType === "user" ? `user-shell${isCollapsed ? " user-shell--collapsed" : ""}` : ""}`}>
       <Header sidebarType={sidebarType} />
       <Sidebar
         type={sidebarType}

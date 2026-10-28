@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaBookOpen, FaChevronLeft, FaChevronRight, FaRegStar, FaStar } from 'react-icons/fa';
 import BookCard from '../../../components/BookCard/BookCard';
+import { BookOpen, ChevronRight, RefreshCw } from 'lucide-react';
 import LoadingButton from '../../../components/LoadingButton/LoadingButton';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
@@ -50,7 +51,7 @@ function AvaliacaoLivro({ livro, onSaved }) {
   </form>;
 }
 
-function PainelRecomendacoes() {
+function PainelRecomendacoes({ notifications }) {
   const { addToast } = useToast();
   const [itens, setItens] = useState([]);
   const [avaliacoes, setAvaliacoes] = useState([]);
@@ -64,6 +65,7 @@ function PainelRecomendacoes() {
   const pendentes = useRef(new Set());
   const trilho = useRef(null);
   const [navegacao, setNavegacao] = useState({ anterior: false, proximo: false });
+  const [detalheLivro, setDetalheLivro] = useState(null);
 
   const atualizarNavegacao = useCallback(() => {
     const element = trilho.current;
@@ -137,12 +139,20 @@ function PainelRecomendacoes() {
   const semNota = avaliacoes.filter(livro => !livro.nota);
   const comNota = avaliacoes.filter(livro => livro.nota);
 
-  return <section className="reading-suggestions" aria-labelledby="reading-suggestions-title">
+  return <><section className="reading-suggestions" aria-labelledby="reading-suggestions-title">
     <div className="user-section-card__header">
       <div><h2 id="reading-suggestions-title">Para sua próxima leitura</h2>
         <p>Sugestões a partir das suas leituras, avaliações e interesses em comum.</p></div>
-      <LoadingButton className="btn-secondary" onClick={carregar} loading={loading}
-        loadingText="Atualizando...">Atualizar sugestões</LoadingButton>
+      <LoadingButton
+        className="reading-suggestions__refresh"
+        onClick={carregar}
+        loading={loading}
+        ariaLabel="Atualizar sugestões de leitura"
+        loadingText={<><RefreshCw size={16} className="reading-suggestions__refresh-spinner" aria-hidden="true" /><span>Atualizando...</span></>}
+      >
+        <RefreshCw size={16} aria-hidden="true" />
+        <span>Atualizar sugestões</span>
+      </LoadingButton>
     </div>
     {erro && <p role="alert">{erro} Use “Atualizar sugestões” para tentar novamente.</p>}
     {loading && <p role="status">Buscando novas leituras...</p>}
@@ -162,14 +172,51 @@ function PainelRecomendacoes() {
       </div>
       <div className="reading-suggestions__track" ref={trilho} onScroll={atualizarNavegacao}
         role="region" aria-roledescription="carrossel" aria-label="Livros recomendados" tabIndex={0}>
-        {itens.map(({ livro, motivo }) => <div key={livro.idLivro} className="reading-suggestions__item">
-          <BookCard book={livro} genreName={livro.livGenero} onRequestLoan={solicitar}
-            solicitando={!!solicitando[livro.idLivro]} statusSolicitacao={solicitados[livro.idLivro] || null} />
-          <p className="reading-suggestions__reason">{motivo}</p>
-        </div>)}
+        {itens.map(({ livro, motivo }) => {
+          const disponiveis = Number(livro.disponiveis ?? livro.livrosDisponiveis ?? 0);
+          const podeSolicitar = livro.livAtivo !== false && disponiveis > 0;
+          const solicitado = solicitados[livro.idLivro];
+          const capa = livro.livCapaURL || livro.capa || "/placeholder.png";
+          return <article key={livro.idLivro} className="reading-suggestions__item">
+            <div className="reading-suggestions__compact-card">
+              <button type="button" className="reading-suggestions__cover-button" onClick={() => setDetalheLivro(livro)} aria-label={`Ver detalhes de ${livro.livTitulo}`}>
+                <img src={capa} alt={`Capa de ${livro.livTitulo}`} loading="lazy" onError={e => { e.currentTarget.src = "/placeholder.png"; }}/>
+                <span className={`reading-suggestions__availability ${podeSolicitar ? "is-available" : ""}`}>{podeSolicitar ? "Disponível" : "Indisponível"}</span>
+              </button>
+              <div className="reading-suggestions__compact-body">
+                <button type="button" className="reading-suggestions__book-title" onClick={() => setDetalheLivro(livro)}>{livro.livTitulo}</button>
+                <p className="reading-suggestions__book-author">{livro.livAutor || "Autor não informado"}</p>
+                <p className="reading-suggestions__compact-meta">{disponiveis > 0 ? `${disponiveis} ${disponiveis === 1 ? "exemplar disponível" : "exemplares disponíveis"}` : "Sem exemplares disponíveis"}</p>
+                <button type="button" className="reading-suggestions__request" onClick={() => solicitar(livro)}
+                  disabled={!podeSolicitar || !!solicitado || !!solicitando[livro.idLivro]}>
+                  <BookOpen size={15} aria-hidden="true"/>
+                  {solicitando[livro.idLivro] ? "Enviando..." : solicitado ? "Solicitado" : "Solicitar empréstimo"}
+                </button>
+              </div>
+            </div>
+            <p className="reading-suggestions__reason">{motivo}</p>
+          </article>;
+        })}
+      </div>
+    </div>}
+    {detalheLivro && <div className="reading-suggestions__modal-backdrop" role="presentation" onMouseDown={e => { if(e.target === e.currentTarget) setDetalheLivro(null); }}>
+      <div role="dialog" aria-modal="true" aria-label={`Detalhes de ${detalheLivro.livTitulo}`} className="reading-suggestions__modal">
+        <div className="reading-suggestions__modal-header"><h3>Informações do livro</h3><button type="button" onClick={() => setDetalheLivro(null)} aria-label="Fechar detalhes">×</button></div>
+        <div className="reading-suggestions__modal-info">
+          <img src={detalheLivro.livCapaURL || detalheLivro.capa || "/placeholder.png"} alt={`Capa de ${detalheLivro.livTitulo}`}/>
+          <div><h4>{detalheLivro.livTitulo}</h4><p>{detalheLivro.livAutor || "Autor não informado"}</p>
+            <p>{detalheLivro.livDescricao || "Descrição não informada para este livro."}</p>
+            <p><strong>Gênero:</strong> {detalheLivro.livGenero || "Não informado"}</p>
+            <p><strong>Exemplares disponíveis:</strong> {Number(detalheLivro.disponiveis ?? detalheLivro.livrosDisponiveis ?? 0)}</p>
+            <button type="button" className="reading-suggestions__request" disabled={Number(detalheLivro.disponiveis ?? detalheLivro.livrosDisponiveis ?? 0) <= 0 || !!solicitados[detalheLivro.idLivro] || !!solicitando[detalheLivro.idLivro]}
+              onClick={() => solicitar(detalheLivro)}><BookOpen size={15}/> {solicitados[detalheLivro.idLivro] ? "Solicitado" : "Solicitar empréstimo"}</button>
+          </div>
+        </div>
       </div>
     </div>}
     {erroAvaliacoes && <p role="alert">{erroAvaliacoes} Use “Atualizar sugestões” para tentar novamente.</p>}
+    </section>
+    <div className="user-dashboard-bottom-grid">
     {!!avaliacoes.length && <section className="user-section-card reading-feedback" aria-labelledby="reading-feedback-title">
       <div className="user-section-card__header">
         <div className="reading-feedback__heading">
@@ -187,11 +234,15 @@ function PainelRecomendacoes() {
         {comNota.map(livro => <AvaliacaoLivro key={livro.idLivro} livro={livro} onSaved={avaliacaoSalva} />)}
       </details>}
     </section>}
-  </section>;
+    {notifications}
+    </div>
+  </>;
 }
 
-export default function Recomendacoes() {
+export default function Recomendacoes({ notifications }) {
   const { user } = useAuth();
-  // Comunidade compartilha /user, mas não participa deste MVP.
-  return user?.tipo === 'Aluno' ? <PainelRecomendacoes key={user.email || user.id} /> : null;
+  // Recomendações continuam exclusivas de Alunos; Comunidade mantém notificações.
+  return user?.tipo === 'Aluno'
+    ? <PainelRecomendacoes key={user.email || user.id} notifications={notifications}/>
+    : <div className="user-dashboard-bottom-grid user-dashboard-bottom-grid--single">{notifications}</div>;
 }
