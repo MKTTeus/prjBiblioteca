@@ -33,3 +33,25 @@ test('não mostra o aviso quando a busca é exata', async () => {
   expect(await screen.findByText('Dom Casmurro')).toBeInTheDocument();
   expect(screen.queryByRole('status')).not.toBeInTheDocument();
 });
+
+
+test('permite alternar entre Grade e Lista sem alterar a pesquisa paginada', async () => {
+  localStorage.removeItem('biblioteca-usuario-visualizacao');
+  getBooksPage.mockResolvedValue({ itens: [{ idLivro: 2, livTitulo: 'O Pequeno Príncipe' }], total: 1 });
+  const { container } = render(<Biblioteca />);
+  expect(await screen.findByText('O Pequeno Príncipe')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Grade/ })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: /Lista/ }));
+  expect(screen.getByRole('button', { name: /Lista/ })).toHaveAttribute('aria-pressed', 'true');
+  expect(container.querySelector('.user-library-results--lista')).toBeTruthy();
+  expect(localStorage.getItem('biblioteca-usuario-visualizacao')).toBe('lista');
+  expect(getBooksPage).toHaveBeenCalledWith({page:1,per_page:20});
+  localStorage.removeItem('biblioteca-usuario-visualizacao');
+});
+
+test('as instruções continuam expansíveis e identificáveis', async () => {
+  getBooksPage.mockResolvedValue({ itens: [], total: 0 });
+  render(<Biblioteca />);
+  expect(screen.getByText('Como solicitar e retirar um livro?')).toBeInTheDocument();
+  expect(await screen.findByText('Nenhum livro encontrado para a busca informada.')).toBeInTheDocument();
+});

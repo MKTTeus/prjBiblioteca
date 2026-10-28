@@ -177,3 +177,49 @@
   font-size: 0.92rem;
   background: rgba(0, 0, 0, 0.05);
 }
+
+/* Cabeçalhos do usuário: mesmas medidas e tratamento visual do Admin. */
+.user-shell .user-page.page-shell:not(.user-dashboard-page){
+  box-sizing:border-box;width:100%;max-width:none;min-width:0;
+  padding:16px 11px 36px;background:transparent;
+}
+.user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero,
+.user-shell .user-page.page-shell.user-config-page > .top-bar {
+  position:relative;isolation:isolate;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;gap:22px;
+  box-sizing:border-box;width:100%;min-height:151px;
+  margin:0 0 20px;padding:27px 29px;border:0;border-radius:16px;
+  background:linear-gradient(125deg,#1463dc,#0641ae 72%,#073c9c);
+  color:#fff;box-shadow:0 14px 30px rgba(9,50,116,.11);
+}
+.user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero::after,
+.user-shell .user-page.page-shell.user-config-page > .top-bar::after {
+  content:"";position:absolute;z-index:-1;right:23%;bottom:-42px;
+  width:150px;height:140px;opacity:.14;pointer-events:none;
+  background:linear-gradient(90deg,transparent 10%,#b0d4ff 10% 24%,transparent 24% 33%,#b0d4ff 33% 58%,transparent 58% 67%,#b0d4ff 67% 88%,transparent 88%);
+  clip-path:polygon(0 36%,30% 36%,30% 15%,59% 15%,59% 45%,100% 45%,100% 100%,0 100%);
+}
+.user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero h1,
+.user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero h2,
+.user-shell .user-page.page-shell.user-config-page > .top-bar h1 {
+  margin:0;font-size:clamp(22px,1.9vw,29px);font-weight:700;line-height:1.2;color:#fff;
+}
+.user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero p,
+.user-shell .user-page.page-shell.user-config-page > .top-bar p {
+  margin:10px 0 0;max-width:780px;font-size:14px;line-height:1.5;color:#fff;opacity:1;
+}
+.user-shell .user-page.page-shell:not(.user-dashboard-page) > :not(.user-page__hero) + :not(.user-page__hero){margin-top:16px}
+.user-shell .user-page.page-shell.user-config-page > .top-bar + .user-config-cards{margin-top:0}
+@media(max-width:768px){
+ .user-shell .user-page.page-shell:not(.user-dashboard-page){padding:12px 10px 28px}
+ .user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero,
+ .user-shell .user-page.page-shell.user-config-page > .top-bar{
+   min-height:0;flex-direction:column;align-items:stretch;gap:14px;
+   padding:20px;margin-bottom:14px;border-radius:12px;
+ }
+ .user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero h1,
+ .user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero h2,
+ .user-shell .user-page.page-shell.user-config-page > .top-bar h1{font-size:21px}
+ .user-shell .user-page.page-shell:not(.user-dashboard-page) > .user-page__hero p,
+ .user-shell .user-page.page-shell.user-config-page > .top-bar p{font-size:12px;margin-top:8px;line-height:1.45}
+}

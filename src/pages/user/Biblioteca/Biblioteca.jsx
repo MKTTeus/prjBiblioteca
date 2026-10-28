@@ -8,11 +8,22 @@ import { getBooksPage, solicitarLivro, getEmprestimos } from "../../../services/
 import "../UserArea.css";
 import "./Biblioteca.css";
 import { useAuth } from "../../../contexts/AuthContext";
+import { LayoutGrid, List, BookOpen, Info, ChevronDown } from "lucide-react";
 import { getErrorMessage } from "../../../utils/apiError";
+
+const VIEW_STORAGE_KEY = "biblioteca-usuario-visualizacao";
 
 export default function Biblioteca() {
   const { addToast } = useToast();
   const [search, setSearch] = useState("");
+  const [view, setView] = useState(() => {
+    try { return localStorage.getItem(VIEW_STORAGE_KEY) === "lista" ? "lista" : "grade"; }
+    catch { return "grade"; }
+  });
+  const changeView = (next) => {
+    setView(next);
+    try { localStorage.setItem(VIEW_STORAGE_KEY, next); } catch { /* armazenamento indisponível */ }
+  };
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -124,17 +135,33 @@ export default function Biblioteca() {
         </div>
       </section>
 
-      <details className="user-section-card">
-        <summary>Como solicitar e retirar um livro?</summary>
-        <p>Escolha um título disponível e envie a solicitação. Acompanhe a aprovação em Empréstimos. Aguarde a confirmação e as orientações na tela antes de ir à biblioteca; a equipe registrará a retirada.</p>
+      <details className="user-section-card user-library-help">
+        <summary><span className="user-library-help__icon"><Info size={18} aria-hidden="true" /></span><span>Como solicitar e retirar um livro?</span><ChevronDown size={18} className="user-library-help__chevron" aria-hidden="true" /></summary>
+        <p>Escolha um título disponível e envie a solicitação. Acompanhe a aprovação em Meus empréstimos. Aguarde a confirmação e as orientações na tela antes de ir à biblioteca; a equipe registrará a retirada.</p>
       </details>
 
-      <section className="user-section-card user-library-toolbar">
-        <SearchBar
-          value={search}
-          onChange={(value) => { setSearch(value); setPaginaAtual(1); }}
-          placeholder="Buscar por livro, autor ou gênero..."
-        />
+      <section className="user-section-card user-library-toolbar" aria-label="Buscar e visualizar livros">
+        <div className="user-library-toolbar__search">
+          <SearchBar
+            value={search}
+            onChange={(value) => { setSearch(value); setPaginaAtual(1); }}
+            placeholder="Buscar por livro, autor ou gênero..."
+          />
+        </div>
+        <div className="user-library-toolbar__bottom">
+          <div className="user-library-toolbar__summary">
+            <BookOpen size={16} aria-hidden="true" />
+            <span>{!isLoading && !error ? `${totalItens.toLocaleString("pt-BR")} ${totalItens === 1 ? "livro encontrado" : "livros encontrados"}` : "Catálogo da biblioteca"}</span>
+          </div>
+          <div className="user-library-view-switch" role="group" aria-label="Modo de visualização">
+            <button type="button" className={view === "grade" ? "is-selected" : ""} aria-pressed={view === "grade"} onClick={() => changeView("grade")}>
+              <LayoutGrid size={16} aria-hidden="true" /><span>Grade</span>
+            </button>
+            <button type="button" className={view === "lista" ? "is-selected" : ""} aria-pressed={view === "lista"} onClick={() => changeView("lista")}>
+              <List size={17} aria-hidden="true" /><span>Lista</span>
+            </button>
+          </div>
+        </div>
       </section>
 
       {isLoading ? (
@@ -145,13 +172,13 @@ export default function Biblioteca() {
           <button type="button" onClick={() => setTentativa((n) => n + 1)}>Tentar novamente</button>
         </div>
       ) : books.length > 0 ? (
-        <section className="user-library-results">
+        <section className={`user-library-results user-library-results--${view}`}>
           {resultadoAproximado && (
             <p className="user-library-notice" role="status">
               Não encontramos exatamente o que você digitou. Estes são resultados parecidos com “{search.trim()}”.
             </p>
           )}
-          <div className="shared-book-grid">
+          <div className="shared-book-grid" aria-label={view === "grade" ? "Livros em grade" : "Livros em lista"}>
             {books.map((book, index) => {
               const id = book.idLivro ?? book.id;
               return (
