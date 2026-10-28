@@ -14,6 +14,8 @@ import { getResumoAcervo, getEmprestimos } from "../../../services/api";
 import "../UserArea.css";
 import "./DashboardHome.css";
 import Recomendacoes from "./Recomendacoes";
+import { useAuth } from "../../../contexts/AuthContext";
+import "./UserDashboardRedesign.css";
 
 const notificationTypeMap = {
   info: {
@@ -34,6 +36,7 @@ const notificationTypeMap = {
 };
 
 export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
+  const { user } = useAuth();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [latestNotifications, setLatestNotifications] = useState([]);
   const [notificationCount, setNotificationCount] = useState(0);
@@ -185,10 +188,9 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
       <section className="user-page__hero">
         <div className="user-dashboard-hero">
           <div className="user-dashboard-hero__copy">
-            <h1>Área do usuário</h1>
+            <h1>Olá, {user?.nome?.trim()?.split(/\s+/)[0] || "leitor"}!</h1>
             <p>
-              Acompanhe seus empréstimos, consulte o acervo da biblioteca e veja os
-              avisos mais recentes em um único lugar.
+              Encontre sua próxima leitura, acompanhe seus empréstimos e fique por dentro das novidades da biblioteca.
             </p>
           </div>
 
@@ -298,6 +300,27 @@ export default function DashboardHome({ onViewAllNotifications, onNavigate }) {
         ))}
       </section>
       <Recomendacoes />
+      <section className="user-dashboard-recent" aria-labelledby="recent-notifications-heading">
+        <div className="user-section-card user-dashboard-recent__card">
+          <div className="user-section-card__header">
+            <div>
+              <h2 id="recent-notifications-heading">Notificações recentes</h2>
+              <p>Acompanhe as atualizações dos seus empréstimos.</p>
+            </div>
+            <button type="button" className="user-dashboard-recent__link" onClick={onViewAllNotifications}>Ver todas</button>
+          </div>
+          {latestNotifications.length ? (
+            <div className="user-dashboard-recent__list">
+              {latestNotifications.slice(0, 3).map((item) => (
+                <div className="user-dashboard-recent__item" key={item.id}>
+                  <span className={`user-dashboard-recent__icon user-dashboard-recent__icon--${item.tipo}`} aria-hidden="true">{notificationTypeMap[item.tipo]?.icon}</span>
+                  <div><strong>{item.label}</strong><p>{item.descricao}</p></div>
+                </div>
+              ))}
+            </div>
+          ) : <div className="user-empty-state">Nenhuma notificação nova no momento.</div>}
+        </div>
+      </section>
     </div>
   );
 }

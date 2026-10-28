@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaBookOpen, FaChevronLeft, FaChevronRight, FaRegStar, FaStar } from 'react-icons/fa';
 import BookCard from '../../../components/BookCard/BookCard';
+import { BookOpen, ChevronRight } from 'lucide-react';
 import LoadingButton from '../../../components/LoadingButton/LoadingButton';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
@@ -64,6 +65,7 @@ function PainelRecomendacoes() {
   const pendentes = useRef(new Set());
   const trilho = useRef(null);
   const [navegacao, setNavegacao] = useState({ anterior: false, proximo: false });
+  const [detalheLivro, setDetalheLivro] = useState(null);
 
   const atualizarNavegacao = useCallback(() => {
     const element = trilho.current;
@@ -162,11 +164,47 @@ function PainelRecomendacoes() {
       </div>
       <div className="reading-suggestions__track" ref={trilho} onScroll={atualizarNavegacao}
         role="region" aria-roledescription="carrossel" aria-label="Livros recomendados" tabIndex={0}>
-        {itens.map(({ livro, motivo }) => <div key={livro.idLivro} className="reading-suggestions__item">
-          <BookCard book={livro} genreName={livro.livGenero} onRequestLoan={solicitar}
-            solicitando={!!solicitando[livro.idLivro]} statusSolicitacao={solicitados[livro.idLivro] || null} />
-          <p className="reading-suggestions__reason">{motivo}</p>
-        </div>)}
+        {itens.map(({ livro, motivo }) => {
+          const total = Number(livro.total_exemplares ?? livro.totalExemplares ?? 0);
+          const disponiveis = Number(livro.disponiveis ?? livro.livrosDisponiveis ?? 0);
+          const podeSolicitar = livro.livAtivo !== false && disponiveis > 0;
+          const solicitado = solicitados[livro.idLivro];
+          const capa = livro.livCapaURL || livro.capa || "/placeholder.png";
+          return <article key={livro.idLivro} className="reading-suggestions__item">
+            <div className="reading-suggestions__compact-card">
+              <button type="button" className="reading-suggestions__cover-button" onClick={() => setDetalheLivro(livro)} aria-label={`Ver detalhes de ${livro.livTitulo}`}>
+                <img src={capa} alt={`Capa de ${livro.livTitulo}`} loading="lazy" onError={e => { e.currentTarget.src = "/placeholder.png"; }}/>
+                <span className={`reading-suggestions__availability ${podeSolicitar ? "is-available" : ""}`}>{podeSolicitar ? "Disponível" : "Indisponível"}</span>
+              </button>
+              <div className="reading-suggestions__compact-body">
+                <button type="button" className="reading-suggestions__book-title" onClick={() => setDetalheLivro(livro)}>{livro.livTitulo}</button>
+                <p className="reading-suggestions__book-author">{livro.livAutor || "Autor não informado"}</p>
+                <p className="reading-suggestions__compact-meta">{livro.livGenero || "Explore esta leitura"}</p>
+                <button type="button" className="reading-suggestions__request" onClick={() => solicitar(livro)}
+                  disabled={!podeSolicitar || !!solicitado || !!solicitando[livro.idLivro]}>
+                  <BookOpen size={15} aria-hidden="true"/>
+                  {solicitando[livro.idLivro] ? "Enviando..." : solicitado ? "Solicitado" : "Solicitar empréstimo"}
+                </button>
+              </div>
+            </div>
+            <p className="reading-suggestions__reason">{motivo}</p>
+          </article>;
+        })}
+      </div>
+    </div>}
+    {detalheLivro && <div className="reading-suggestions__modal-backdrop" role="presentation" onMouseDown={e => { if(e.target === e.currentTarget) setDetalheLivro(null); }}>
+      <div role="dialog" aria-modal="true" aria-label={`Detalhes de ${detalheLivro.livTitulo}`} className="reading-suggestions__modal">
+        <div className="reading-suggestions__modal-header"><h3>Informações do livro</h3><button type="button" onClick={() => setDetalheLivro(null)} aria-label="Fechar detalhes">×</button></div>
+        <div className="reading-suggestions__modal-info">
+          <img src={detalheLivro.livCapaURL || detalheLivro.capa || "/placeholder.png"} alt={`Capa de ${detalheLivro.livTitulo}`}/>
+          <div><h4>{detalheLivro.livTitulo}</h4><p>{detalheLivro.livAutor || "Autor não informado"}</p>
+            <p>{detalheLivro.livDescricao || "Descrição não informada para este livro."}</p>
+            <p><strong>Gênero:</strong> {detalheLivro.livGenero || "Não informado"}</p>
+            <p><strong>Exemplares disponíveis:</strong> {Number(detalheLivro.disponiveis ?? detalheLivro.livrosDisponiveis ?? 0)}</p>
+            <button type="button" className="reading-suggestions__request" disabled={Number(detalheLivro.disponiveis ?? detalheLivro.livrosDisponiveis ?? 0) <= 0 || !!solicitados[detalheLivro.idLivro] || !!solicitando[detalheLivro.idLivro]}
+              onClick={() => solicitar(detalheLivro)}><BookOpen size={15}/> {solicitados[detalheLivro.idLivro] ? "Solicitado" : "Solicitar empréstimo"}</button>
+          </div>
+        </div>
       </div>
     </div>}
     {erroAvaliacoes && <p role="alert">{erroAvaliacoes} Use “Atualizar sugestões” para tentar novamente.</p>}
