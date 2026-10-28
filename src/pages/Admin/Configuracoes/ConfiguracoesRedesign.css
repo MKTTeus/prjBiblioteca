@@ -104,16 +104,51 @@
 @media(max-width:768px){
  /* A regra precisa superar o seletor desktop e o layout administrativo compartilhado. */
  .admin-shell .config-container.admin-standard-page nav.tabs {display:none;}
- .config-mobile-picker {display:block;margin:0 0 14px;}
- .config-mobile-picker>label {display:block;margin:0 0 6px;font-size:11px;font-weight:700;color:var(--text-label);}
- .config-mobile-select-wrap {position:relative;}
- .config-mobile-picker select {
- appearance:none;width:100%;min-height:45px;box-sizing:border-box;
- border:1px solid var(--input-border);border-radius:10px;
- background:var(--surface-bg);color:var(--text-default);font-size:13px;font-weight:750;
- padding:10px 43px 10px 15px;
+ .config-mobile-picker {display:block;position:relative;z-index:20;margin:0 0 14px;}
+ .config-mobile-picker__caption {display:block;margin:0 0 8px;font-size:11px;font-weight:750;color:var(--text-label);}
+ .admin-shell .config-container .config-mobile-trigger {
+   display:flex;align-items:center;gap:12px;width:100%;min-height:62px;
+   box-sizing:border-box;padding:10px 12px;border:1px solid var(--surface-border);
+   border-radius:13px;background:var(--surface-bg);color:var(--text-default);
+   box-shadow:var(--shadow-soft);text-align:left;transform:none;
+   transition:border-color .15s ease,box-shadow .15s ease;
  }
- .config-mobile-select-wrap>svg {position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--primary);}
+ .admin-shell .config-container .config-mobile-trigger.is-open,
+ .admin-shell .config-container .config-mobile-trigger:focus-visible {
+   border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--focus-ring);
+ }
+ .config-mobile-trigger__icon {
+   display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;
+   border-radius:10px;color:var(--primary);background:var(--primary-muted);
+ }
+ .config-mobile-trigger__text {display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;}
+ .config-mobile-trigger__eyebrow {font-size:10px;font-weight:500;color:var(--text-muted);}
+ .config-mobile-trigger__text strong {font-size:14px;line-height:1.3;color:var(--text-default);}
+ .config-mobile-trigger__chevron {display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border-radius:8px;background:var(--surface-muted);color:var(--text-soft);}
+ .config-mobile-trigger.is-open .config-mobile-trigger__chevron svg {transform:rotate(180deg);}
+ .config-mobile-options {
+   position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:21;
+   display:flex;flex-direction:column;gap:4px;
+   box-sizing:border-box;max-height:min(420px,calc(100dvh - 200px));overflow-y:auto;
+   padding:7px;border:1px solid var(--surface-border);
+   border-radius:13px;background:var(--surface-bg);
+   box-shadow:0 15px 35px rgba(12,35,68,.16);
+ }
+ .admin-shell .config-container .config-mobile-option {
+   display:flex;align-items:center;gap:11px;min-height:46px;box-sizing:border-box;
+   padding:8px 10px;border-radius:9px;color:var(--text-label);
+   text-decoration:none;font-size:13px;font-weight:600;
+ }
+ .admin-shell .config-container .config-mobile-option:hover,
+ .admin-shell .config-container .config-mobile-option:focus-visible {
+   background:var(--surface-hover);outline:none;
+ }
+ .admin-shell .config-container .config-mobile-option.is-active {
+   color:var(--primary);background:var(--primary-muted);font-weight:750;
+ }
+ .config-mobile-option__icon {display:grid;place-items:center;flex:0 0 33px;width:33px;height:33px;border-radius:9px;background:var(--surface-muted);color:var(--text-soft);}
+ .config-mobile-option.is-active .config-mobile-option__icon {color:var(--primary);background:var(--surface-bg);}
+ .config-mobile-option__check {margin-left:auto;color:var(--primary);flex-shrink:0;}
  .admin-shell .config-container .geral-sections {grid-template-columns:minmax(0,1fr);gap:12px;}
  .admin-shell .config-container .geral-sections>.geral-regras {grid-column:auto;}
  .admin-shell .config-container .geral-sections .form-grid.three-col {grid-template-columns:minmax(0,1fr);gap:14px;}
