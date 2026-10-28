@@ -21,7 +21,7 @@ import "./Sidebar.css";
 const userMenuItems = [
   { key: "dashboard", label: "Dashboard", icon: FiHome },
   { key: "biblioteca", label: "Biblioteca", icon: FiBookmark },
-  { key: "emprestimos", label: "Empréstimos", icon: FiRepeat },
+  { key: "emprestimos", label: "Meus empréstimos", icon: FiRepeat },
   { key: "notificacoes", label: "Notificações", icon: FiBell },
   { key: "configuracoes", label: "Configurações", icon: FiSettings },
 ];
@@ -85,14 +85,14 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    if (type === "admin" && window.innerWidth <= 768) closeButtonRef.current?.focus();
+    if ((type === "admin" || type === "user") && window.innerWidth <= 768) closeButtonRef.current?.focus();
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         close();
-        document.querySelector(".admin-header .hamburger-btn")?.focus();
+        document.querySelector(".header .hamburger-btn")?.focus();
       }
-      if (event.key !== "Tab" || type !== "admin" || window.innerWidth > 768) return;
-      const focusable = [...adminSidebarRef.current.querySelectorAll('a[href], button:not([disabled])')]
+      if (event.key !== "Tab" || (type !== "admin" && type !== "user") || window.innerWidth > 768) return;
+      const focusable = [...(adminSidebarRef.current?.querySelectorAll('a[href], button:not([disabled])') || [])]
         .filter((element) => element.getClientRects().length > 0);
       if (!focusable.length) return;
       const first = focusable[0];
@@ -109,25 +109,43 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
     return (
       <>
         <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
-        <aside className={`sidebar ${isOpen ? "open" : ""}`}>
+        <aside ref={adminSidebarRef} className={`sidebar ${isOpen ? "open" : ""}${type === "user" && isCollapsed ? " collapsed" : ""}`} aria-label={type === "user" ? "Navegação do usuário" : "Navegação do professor"}>
+          {type === "user" && (
+            <div className="user-sidebar-mobile-top">
+              <span className="user-sidebar-mobile-brand"><img src="/logo-novedejulho-semfundo.png" alt="" />{libraryName}</span>
+              <button ref={closeButtonRef} type="button" onClick={close} aria-label="Fechar menu"><FiX size={18}/></button>
+            </div>
+          )}
           <div className="sidebar-section">
             <p className="sidebar-title">Principal</p>
             <ul>
-              {items.map(({ key, label, icon: Icon }) => (
+              {items.filter(item => type !== "user" || item.key !== "configuracoes").map(({ key, label, icon: Icon }) => (
                 <li key={key}>
-                  <button
-                    type="button"
-                    className={`sidebar-action ${activePage === key ? "active" : ""}`}
+                  <button type="button" className={`sidebar-action ${activePage === key ? "active" : ""}`}
                     aria-current={activePage === key ? "page" : undefined}
-                    onClick={() => { setActivePage && setActivePage(key); close(); }}
-                  >
-                    <Icon />
-                    <span>{label}</span>
+                    title={label}
+                    onClick={() => { setActivePage && setActivePage(key); close(); }}>
+                    <Icon aria-hidden="true" /><span>{label}</span>
                   </button>
                 </li>
               ))}
             </ul>
           </div>
+          {type === "user" && <>
+            <div className="sidebar-section user-sidebar-system">
+              <p className="sidebar-title">Sistema</p>
+              <ul><li><button type="button" title="Configurações"
+                className={`sidebar-action ${activePage === "configuracoes" ? "active" : ""}`}
+                aria-current={activePage === "configuracoes" ? "page" : undefined}
+                onClick={() => { setActivePage?.("configuracoes"); close(); }}>
+                <FiSettings aria-hidden="true"/><span>Configurações</span></button></li></ul>
+            </div>
+            <div className="user-sidebar-footer">
+              <span className="user-sidebar-avatar" aria-hidden="true">{(user?.nome?.trim()?.[0] || "U").toUpperCase()}</span>
+              <span className="user-sidebar-identity"><strong>{user?.nome || "Usuário"}</strong><small>{user?.tipo === "Comunidade" ? "Comunidade" : "Aluno"}</small></span>
+              <button type="button" onClick={logout} aria-label="Sair do sistema" title="Sair"><FiLogOut aria-hidden="true"/></button>
+            </div>
+          </>}
         </aside>
       </>
     );

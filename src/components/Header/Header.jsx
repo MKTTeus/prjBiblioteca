@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, LogOut, Menu } from "lucide-react";
+import { Bell, LogOut, Menu, UserRound, ChevronDown } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { Link, useLocation } from "react-router-dom";
@@ -10,6 +10,7 @@ function Header({ sidebarType = "admin" }) {
   const { toggle, toggleCollapse } = useSidebar();
   const { pathname } = useLocation();
   const isAdmin = sidebarType === "admin";
+  const isUser = sidebarType === "user";
 
   const [nomeBiblioteca, setNomeBiblioteca] = useState(
     localStorage.getItem("nomeBiblioteca") || "Sala de Leitura"
@@ -42,18 +43,18 @@ function Header({ sidebarType = "admin" }) {
   const handleLogout = () => logout();
 
   return (
-    <header className={`header${isAdmin ? " admin-header" : ""}`}>
+    <header className={`header${isAdmin ? " admin-header" : isUser ? " user-header" : ""}`}>
       <div className="header-left">
         <button type="button" className="hamburger-btn" onClick={() => {
-          if (isAdmin && window.innerWidth > 768) toggleCollapse();
+          if ((isAdmin || isUser) && window.innerWidth > 768) toggleCollapse();
           else toggle();
         }} aria-label="Alternar menu">
           <Menu size={22} />
         </button>
-        <Link to={isAdmin ? "/admin" : "/dashboard"} className="header-logo">
+        <Link to={isAdmin ? "/admin" : isUser ? "/user" : "/dashboard"} className="header-logo">
           <div className="header-icon">
             <img
-              src={isAdmin ? "/logo-novedejulho-semfundo.png" : "/logo-novedejulho-fundo.png"}
+              src={isAdmin || isUser ? "/logo-novedejulho-semfundo.png" : "/logo-novedejulho-fundo.png"}
               alt="Logo Nove de Julho"
               className="header-brand-logo"
               width="48"
@@ -64,7 +65,7 @@ function Header({ sidebarType = "admin" }) {
         </Link>
       </div>
 
-      {!isAdmin && <div className="header-center">
+      {!isAdmin && !isUser && <div className="header-center">
         {user && (
           <p className="welcome-text">
             Bem-vindo,{" "}
@@ -82,6 +83,18 @@ function Header({ sidebarType = "admin" }) {
           </div>
           <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Administrador"}</span>
         </>}
+        {isUser && (
+          <div className="user-header-tools">
+            <Link to="/user/notificacoes" className="user-header-bell" aria-label="Ver notificações">
+              <Bell size={20} aria-hidden="true" />
+            </Link>
+            <Link to="/user/configuracoes" className="user-header-profile" aria-label="Abrir configurações do perfil">
+              <span className="user-header-profile__icon"><UserRound size={17} aria-hidden="true" /></span>
+              <span className="user-header-profile__name">{user?.nome?.split(" ")[0] || "Usuário"} <small>({roleLabel})</small></span>
+              <ChevronDown size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        )}
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair
         </button>
