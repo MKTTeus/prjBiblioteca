@@ -181,6 +181,7 @@
 .user-shell .user-library-page .user-library-results .shared-book-card__button--request{border-radius:9px}
 .user-shell .user-library-page .user-library-results .shared-book-card__community-hint{padding:9px 10px;background:var(--primary-muted);border-radius:8px;color:var(--text-label)}
 .user-shell .user-library-page .user-library-results > .pagination{margin:0 15px 13px}
+.user-shell .user-library-page .user-library-results--lista .shared-book-card{grid-template-columns:140px minmax(0,1fr)}
 .user-shell .user-library-page .user-library-results--lista .shared-book-card__media{
   position:relative;width:133px;height:156px;min-height:0;
 }
@@ -214,8 +215,9 @@
   .user-shell .user-library-page .user-library-results--grade .shared-book-card__media{
     height:205px;min-height:205px;flex-basis:205px;
   }
-  .user-shell .user-library-page .user-library-results--grade .shared-book-card__description-wrap{display:none}
+  .user-shell .user-library-page .user-library-results--grade .shared-book-card__description{display:none}
   .user-shell .user-library-page .user-library-results--grade .shared-book-card__cover-open{font-size:10px;min-height:27px;padding:5px 7px;bottom:6px;right:6px}
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card{grid-template-columns:95px minmax(0,1fr)}
   .user-shell .user-library-page .user-library-results--lista .shared-book-card__media{
     height:123px;width:88px;
   }
