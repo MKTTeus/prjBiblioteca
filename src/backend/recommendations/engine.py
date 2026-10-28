@@ -58,7 +58,7 @@ def afinidade(nota):
     return {1: -1.0, 2: -0.5, 3: 0.0, 4: 0.75, 5: 1.0}.get(nota, 0.35)
 
 
-def recomendar(livros, historico, usuario_id, limite=6):
+def recomendar(livros, historico, usuario_id, limite=6, rodada=0):
     catalogo = {b['idLivro']: b for b in livros}
     # Defesa adicional contra duplicatas: uma interação por aluno/título.
     interacoes = {(h['idUsuario'], h['idLivro']): h for h in historico}
@@ -123,7 +123,9 @@ def recomendar(livros, historico, usuario_id, limite=6):
 
     # Penalidade suave evita uma vitrine composta só pelo mesmo gênero.
     escolhidos, generos = [], Counter()
-    while candidatos and len(escolhidos) < limite:
+    # Mantém uma vitrine pequena para que a renovação não ordene todo o acervo
+    # (que pode conter milhares de títulos) a cada clique.
+    while candidatos and len(escolhidos) < 4 * limite:
         def ordem(item):
             genero = item['livro'].get('livGenero')
             score = item['_score'] - (0.08 * generos[genero] if genero else 0)
@@ -132,4 +134,9 @@ def recomendar(livros, historico, usuario_id, limite=6):
         candidatos.remove(vencedor)
         generos[vencedor['livro'].get('livGenero')] += 1
         escolhidos.append({k: v for k, v in vencedor.items() if k != '_score'})
-    return escolhidos
+    if not escolhidos:
+        return []
+    # A primeira rodada mostra os melhores. As seguintes percorrem outros
+    # títulos elegíveis sem perder o ranking pessoal ou repetir uma página inteira.
+    inicio = (rodada * limite if len(escolhidos) > limite else rodada) % len(escolhidos)
+    return (escolhidos[inicio:] + escolhidos[:inicio])[:limite]
