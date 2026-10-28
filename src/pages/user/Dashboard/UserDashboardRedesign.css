@@ -120,3 +120,57 @@
  .user-shell .user-dashboard-page .user-dashboard-bottom-grid{grid-template-columns:1fr;}
  .user-shell .user-dashboard-page .reading-feedback,.user-shell .user-dashboard-page .user-dashboard-recent__card{padding:14px;}
 }
+
+/* Ação auxiliar de recomendações: compacta e consistente com o azul do sistema. */
+.user-shell .user-dashboard-page .reading-suggestions__refresh {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  flex:0 0 auto;
+  align-self:center;
+  width:auto;
+  min-height:40px;
+  padding:9px 15px;
+  border:1px solid var(--primary);
+  border-radius:10px;
+  background:var(--primary-muted);
+  color:var(--primary);
+  box-shadow:none;
+  font-size:12px;
+  font-weight:750;
+  line-height:1.2;
+  white-space:nowrap;
+  cursor:pointer;
+  transition:background .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+.user-shell .user-dashboard-page .reading-suggestions__refresh svg {flex:none;}
+.user-shell .user-dashboard-page .reading-suggestions__refresh:not(:disabled):hover {
+  background:var(--primary);
+  color:#fff;
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(37,99,235,.16);
+}
+.user-shell .user-dashboard-page .reading-suggestions__refresh:focus-visible {
+  outline:2px solid var(--primary);
+  outline-offset:3px;
+}
+.user-shell .user-dashboard-page .reading-suggestions__refresh:disabled {
+  opacity:.7;
+  cursor:wait;
+}
+.reading-suggestions__refresh-spinner {animation:reading-refresh-spin 1s linear infinite;}
+@keyframes reading-refresh-spin {to {transform:rotate(360deg);}}
+@media (max-width:768px) {
+  .user-shell .user-dashboard-page .reading-suggestions__refresh {
+    align-self:flex-start;
+    min-height:37px;
+    padding:8px 12px;
+    font-size:11px;
+    gap:7px;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .user-shell .user-dashboard-page .reading-suggestions__refresh {transition:none;}
+  .reading-suggestions__refresh-spinner {animation:none;}
+}
