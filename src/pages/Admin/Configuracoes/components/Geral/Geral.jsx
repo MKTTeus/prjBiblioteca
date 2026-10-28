@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import Switch from "react-switch";
 import { FiBookOpen, FiMoon, FiSliders } from "react-icons/fi";
+import { Sun, Moon } from "lucide-react";
 import { useToast } from "../../../../../contexts/ToastContext";
 import { salvarConfiguracoes } from "../../utils/saveSettings";
 import {
@@ -98,7 +98,7 @@ export default function Geral() {
   return (
     <div className="geral-sections">
       {/* Identidade da Biblioteca */}
-      <div className="card">
+      <div className="card geral-identidade">
         <div className="geral-header">
           <FiBookOpen className="card-section-icon" />
           <h3>Identidade da Biblioteca</h3>
@@ -119,7 +119,7 @@ export default function Geral() {
       </div>
 
       {/* Aparência */}
-      <div className="card">
+      <div className="card geral-aparencia">
         <div className="geral-header">
           <FiMoon className="card-section-icon" />
           <h3>Aparência</h3>
@@ -127,26 +127,20 @@ export default function Geral() {
 
         <div className="form-group switch-section">
           <label>Tema do sistema</label>
-          <div className="control-row">
-            <Switch
-              checked={temaDark}
-              onChange={handleToggleTema}
-              offColor="#cbd5e1"
-              onColor="#111827"
-              uncheckedIcon={false}
-              checkedIcon={false}
-              height={26}
-              width={52}
-              handleDiameter={22}
-            />
-            <span className="toggle-text">{temaDark ? "Escuro" : "Claro"}</span>
+          <div className="control-row config-theme-choice" role="group" aria-label="Tema do sistema">
+            <button type="button" className={!temaDark ? "selected" : ""} aria-pressed={!temaDark} onClick={() => temaDark && handleToggleTema(false)}>
+              <Sun size={17} aria-hidden="true"/> Claro
+            </button>
+            <button type="button" className={temaDark ? "selected" : ""} aria-pressed={temaDark} onClick={() => !temaDark && handleToggleTema(true)}>
+              <Moon size={17} aria-hidden="true"/> Escuro
+            </button>
           </div>
           <span className="field-hint">Aplicado apenas para a sua conta de administrador</span>
         </div>
       </div>
 
       {/* Regras de Empréstimo */}
-      <div className="card">
+      <div className="card geral-regras">
         <div className="geral-header">
           <FiSliders className="card-section-icon" />
           <h3>Regras de Empréstimo</h3>
