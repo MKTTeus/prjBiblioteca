@@ -62,6 +62,27 @@ def test_cold_start_empty_metadata_and_duplicate_loans():
     assert ids(recomendar(books, [], 1, limite=1)) == [1]
 
 
+def test_refresh_rotates_ranked_books_without_repeating_the_first_page():
+    books = [book(i, livPalavrasChave='magia' if i in (1, 2, 3, 4) else 'ciência')
+             for i in range(1, 13)]
+    hist = [history(1, 1, 5)]
+    initial = ids(recomendar(books, hist, 1, limite=3))
+    refreshed = ids(recomendar(books, hist, 1, limite=3, rodada=1))
+    assert initial[0] in (2, 3, 4)
+    assert not set(initial) & set(refreshed)
+    assert 1 not in refreshed
+    assert ids(recomendar(books, hist, 1, limite=3, rodada=11)) == initial
+
+
+def test_refresh_cold_start_uses_popularity_and_small_catalog_changes_order():
+    books = [book(i) for i in range(1, 9)]
+    hist = [history(2, 8), history(3, 8), history(4, 7)]
+    assert ids(recomendar(books, hist, 1, limite=2))[0] == 8
+    assert not set(ids(recomendar(books, hist, 1, limite=2))) & set(
+        ids(recomendar(books, hist, 1, limite=2, rodada=1)))
+    assert ids(recomendar(books[:2], [], 1, limite=6, rodada=1)) == [2, 1]
+
+
 def test_ratings_do_not_create_history_and_neutral_is_not_positive():
     books = [book(1), book(2)]
     assert recomendar(books, [history(2, 2, 5, consumido=False, devolvido=False)], 1) == recomendar(books, [], 1)
@@ -109,7 +130,7 @@ def test_recommendations_no_peer_data_and_limit(client, monkeypatch):
 
 def test_panel_reuses_catalog_and_history_for_recommendations_and_ratings(client, monkeypatch):
     calls = {'catalogo': 0, 'historico': 0}
-    livros = [book(1), book(2)]
+    livros = [book(1), book(2), book(3)]
     historico = [history(7, 1, 5)]
     def catalogo(): calls['catalogo'] += 1; return livros
     def history_all(): calls['historico'] += 1; return historico
@@ -119,6 +140,9 @@ def test_panel_reuses_catalog_and_history_for_recommendations_and_ratings(client
     assert response.status_code == 200
     assert response.json()['avaliacoes'][0]['idLivro'] == 1
     assert calls == {'catalogo': 1, 'historico': 1}
+    refreshed = client.get('/aluno/recomendacoes/painel?limite=1&rodada=1', headers={'Authorization': 'Bearer Aluno'})
+    assert ids(refreshed.json()['itens']) != ids(response.json()['itens'])
+    assert client.get('/aluno/recomendacoes/painel?rodada=-1', headers={'Authorization': 'Bearer Aluno'}).status_code == 422
 
 
 def test_provisional_password_is_rejected(client, monkeypatch):

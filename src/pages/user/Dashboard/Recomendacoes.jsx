@@ -62,6 +62,7 @@ function PainelRecomendacoes({ notifications }) {
   const [solicitando, setSolicitando] = useState({});
   const [solicitados, setSolicitados] = useState({});
   const sequence = useRef(0);
+  const rodada = useRef(0);
   const pendentes = useRef(new Set());
   const trilho = useRef(null);
   const [navegacao, setNavegacao] = useState({ anterior: false, proximo: false });
@@ -77,6 +78,7 @@ function PainelRecomendacoes({ notifications }) {
   }, []);
 
   useEffect(() => {
+    if (trilho.current) trilho.current.scrollLeft = 0;
     atualizarNavegacao();
     window.addEventListener('resize', atualizarNavegacao);
     return () => window.removeEventListener('resize', atualizarNavegacao);
@@ -91,14 +93,16 @@ function PainelRecomendacoes({ notifications }) {
     element.scrollBy({ left: direcao * distancia, behavior: 'smooth' });
   }
 
-  const carregar = useCallback(async () => {
+  const carregar = useCallback(async (renovar = false) => {
     const request = ++sequence.current;
+    const proximaRodada = rodada.current + (renovar ? 1 : 0);
     setLoading(true);
     setErro('');
     setErroAvaliacoes('');
     try {
-      const painel = await getPainelRecomendacoes();
+      const painel = await getPainelRecomendacoes(proximaRodada);
       if (sequence.current !== request) return;
+      rodada.current = proximaRodada;
       setItens(painel.itens || []);
       setAvaliacoes(painel.avaliacoes || []);
     } catch (error) {
@@ -134,6 +138,7 @@ function PainelRecomendacoes({ notifications }) {
 
   function avaliacaoSalva(id, nota) {
     setAvaliacoes(previous => previous.map(livro => livro.idLivro === id ? { ...livro, nota } : livro));
+    rodada.current = 0;
     carregar();
   }
   const semNota = avaliacoes.filter(livro => !livro.nota);
@@ -145,7 +150,7 @@ function PainelRecomendacoes({ notifications }) {
         <p>Sugestões a partir das suas leituras, avaliações e interesses em comum.</p></div>
       <LoadingButton
         className="reading-suggestions__refresh"
-        onClick={carregar}
+        onClick={() => carregar(true)}
         loading={loading}
         ariaLabel="Atualizar sugestões de leitura"
         loadingText={<><RefreshCw size={16} className="reading-suggestions__refresh-spinner" aria-hidden="true" /><span>Atualizando...</span></>}

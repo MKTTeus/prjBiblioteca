@@ -733,7 +733,8 @@ export const getEmailStatus = () => apiFetch("/configuracoes/email-status");
 // Painel do aluno: o backend obtém a identidade exclusivamente da sessão.
 export const getRecomendacoes = () => apiFetch('/aluno/recomendacoes');
 export const getAvaliacoes = () => apiFetch('/aluno/avaliacoes');
-export const getPainelRecomendacoes = () => apiFetch('/aluno/recomendacoes/painel');
+export const getPainelRecomendacoes = (rodada = 0) =>
+  apiFetch(`/aluno/recomendacoes/painel?rodada=${rodada}`);
 export const avaliarLivro = (idLivro, nota) => apiFetch(`/aluno/avaliacoes/${idLivro}`, {
   method: 'PUT', body: JSON.stringify({ nota }),
 });
