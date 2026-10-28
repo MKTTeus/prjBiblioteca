@@ -68,6 +68,8 @@
  .user-shell .user-dashboard-hero{flex-direction:row;align-items:flex-start;}
  .user-shell .user-dashboard-notifications__trigger{width:35px;height:35px;}
  .user-shell .user-dashboard-page .stats-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:12px;}
+ /* Três KPIs: primeiro ocupa as duas colunas; os demais dividem a segunda linha. */
+ .user-shell .user-dashboard-page .stats-cards-grid > .stats-card:first-child{grid-column:1 / -1;}
  .user-shell .user-dashboard-page .stats-card{min-height:112px;padding:12px;}
  .user-shell .user-dashboard-page .stats-card-header{font-size:11px;gap:7px;margin-bottom:8px;}
  .user-shell .user-dashboard-page .stats-card-header>.stats-card-icon{width:34px;height:34px;flex-basis:34px;}
