@@ -53,7 +53,7 @@ test("mostra histórico e estado vazio com link de exploração", async () => {
   fireEvent.click(screen.getByRole("button", { name: /Em análise \(1\)/ }));
   fireEvent.change(screen.getByRole("searchbox", { name: "Buscar empréstimos" }), { target: { value: "inexistente" } });
   expect(screen.getByText("Nenhum resultado para sua busca")).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("button", { name: "Limpar busca" }));
+  fireEvent.click(screen.getByText("Limpar busca"));
   expect(screen.getByText("A Marca de Atena")).toBeInTheDocument();
 });
 
