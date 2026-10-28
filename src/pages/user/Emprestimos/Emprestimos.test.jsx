@@ -3,9 +3,9 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Emprestimos from "./Emprestimos";
-import { getEmprestimos } from "../../../services/api";
+import { getEmprestimos, getPublicBookDetails } from "../../../services/api";
 
-jest.mock("../../../services/api", () => ({ getEmprestimos: jest.fn() }));
+jest.mock("../../../services/api", () => ({ getEmprestimos: jest.fn(), getPublicBookDetails: jest.fn() }));
 const sample = [
   { idEmprestimo: 1, idExemplar: 10, titulo: "A Marca de Atena", codigo: "T0012", status: "pendente", dataEmprestimo: "2026-10-27" },
   { idEmprestimo: 2, idExemplar: 11, titulo: "O Último Olimpiano", codigo: "T0018", status: "aprovado" },
@@ -17,6 +17,7 @@ const sample = [
 beforeEach(() => {
   jest.clearAllMocks();
   getEmprestimos.mockResolvedValue(sample);
+  getPublicBookDetails.mockResolvedValue({ livro: { livCapaURL: null } });
 });
 
 const renderPage = () => render(<MemoryRouter initialEntries={["/user/emprestimos"]}><Emprestimos /></MemoryRouter>);
@@ -69,4 +70,37 @@ test("erro da API permite tentar novamente", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
   expect(await screen.findByText("Nenhum empréstimo encontrado")).toBeInTheDocument();
   expect(getEmprestimos).toHaveBeenCalledTimes(2);
+});
+
+test("exibe a capa retornada pelo catálogo e consulta apenas uma vez por livro", async () => {
+  const mesmosExemplares = [
+    { idEmprestimo: 1, idExemplar: 10, idLivro: 55, titulo: "Capa compartilhada", status: "ativo" },
+    { idEmprestimo: 2, idExemplar: 11, idLivro: 55, titulo: "Capa compartilhada", status: "devolvido" },
+  ];
+  getEmprestimos.mockResolvedValue(mesmosExemplares);
+  getPublicBookDetails.mockResolvedValue({ livro: { livCapaURL: "https://example.org/capa.jpg" } });
+  renderPage();
+  expect((await screen.findAllByRole("img", { name: "Capa de Capa compartilhada" })).length).toBe(2);
+  expect(getPublicBookDetails).toHaveBeenCalledTimes(1);
+  expect(getPublicBookDetails).toHaveBeenCalledWith(55);
+});
+
+test("mantém o ícone quando a capa não existe ou apresenta erro", async () => {
+  getEmprestimos.mockResolvedValue([{ idEmprestimo: 1, idExemplar: 8, idLivro: 56, titulo: "Sem capa", status: "ativo" }]);
+  getPublicBookDetails.mockResolvedValue({ livro: { livCapaURL: "https://example.org/quebrada.jpg" } });
+  const { container } = renderPage();
+  const img = await screen.findByRole("img", { name: "Capa de Sem capa" });
+  fireEvent.error(img);
+  await waitFor(() => expect(screen.queryByRole("img", { name: "Capa de Sem capa" })).not.toBeInTheDocument());
+  expect(container.querySelector(".user-loan-row__thumbnail svg")).toBeInTheDocument();
+});
+
+test("mostra fallback quando o livro não tem imagem", async () => {
+  getEmprestimos.mockResolvedValue([{ idEmprestimo: 1, idExemplar: 9, idLivro: 57, titulo: "Livro sem imagem", status: "ativo" }]);
+  getPublicBookDetails.mockResolvedValue({ livro: { livCapaURL: null } });
+  const { container } = renderPage();
+  await screen.findByText("Livro sem imagem");
+  await waitFor(() => expect(getPublicBookDetails).toHaveBeenCalledWith(57));
+  expect(screen.queryByRole("img", { name: "Capa de Livro sem imagem" })).not.toBeInTheDocument();
+  expect(container.querySelector(".user-loan-row__thumbnail svg")).toBeInTheDocument();
 });

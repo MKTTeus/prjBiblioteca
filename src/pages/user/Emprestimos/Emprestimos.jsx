@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, BookOpen, BookOpenCheck, CalendarDays, ChevronDown, ChevronUp, Clock3, FileText, LibraryBig, List, RotateCcw, Search, X } from "lucide-react";
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import Skeleton from "../../../components/Skeleton/Skeleton";
-import { getEmprestimos } from "../../../services/api";
+import { getEmprestimos, getPublicBookDetails } from "../../../services/api";
 import { formatarData } from "../../../utils/masks";
 import { resolverStatus } from "../../../utils/loanStatus";
 import { getErrorMessage } from "../../../utils/apiError";
@@ -46,6 +46,49 @@ const EMPTY = {
   historico: ["Seu histórico está vazio", "As devoluções e solicitações encerradas aparecerão aqui."],
 };
 
+// Reutiliza a consulta pública para exemplares de um mesmo título.
+// Não altera a API de empréstimos nem faz consultas repetidas a cada atualização.
+const coverCache = new Map();
+
+function consultarCapa(idLivro) {
+  const key = String(idLivro);
+  if (!coverCache.has(key)) {
+    const promise = getPublicBookDetails(idLivro)
+      .then(resposta => resposta?.livro?.livCapaURL || resposta?.livro?.capa || null)
+      .catch(() => null);
+    coverCache.set(key, promise);
+  }
+  return coverCache.get(key);
+}
+
+function LoanCover({ loan }) {
+  const source = loan.livCapaURL || loan.capa || "";
+  const idLivro = loan.idLivro;
+  const [capa, setCapa] = useState(source);
+  const [falhaImagem, setFalhaImagem] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+    setFalhaImagem(false);
+    setCapa(source);
+    if (!source && idLivro !== undefined && idLivro !== null && idLivro !== "") {
+      consultarCapa(idLivro).then(url => {
+        if (ativo) setCapa(url || "");
+      });
+    }
+    return () => { ativo = false; };
+  }, [source, idLivro]);
+
+  const mostrarCapa = typeof capa === "string" && capa.trim() && !falhaImagem;
+  return (
+    <div className="user-loan-row__thumbnail">
+      {mostrarCapa
+        ? <img src={capa} alt={`Capa de ${loan.titulo || loan.empLiv_Titulo || "livro"}`} loading="lazy" onError={() => setFalhaImagem(true)} />
+        : <BookOpen size={27} strokeWidth={1.5} aria-hidden="true" />}
+    </div>
+  );
+}
+
 function LoanRow({ loan, itemIndex }) {
   const [expanded, setExpanded] = useState(false);
   const status = loan._status;
@@ -61,7 +104,7 @@ function LoanRow({ loan, itemIndex }) {
     <article className={"user-loan-row user-loan-row--" + status} aria-label={title + ", " + meta.label}>
       <div className="user-loan-row__main">
         <div className="user-loan-row__book">
-          <div className="user-loan-row__thumbnail" aria-hidden="true"><BookOpen size={27} strokeWidth={1.5} /></div>
+          <LoanCover loan={loan} />
           <div className="user-loan-row__identity">
             <strong title={title}>{title}</strong>
             <span>Tombo: {codigo}</span>
