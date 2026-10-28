@@ -1,72 +1,25 @@
-/* Identidade do usuário: isolada, sem alterar Admin e Professor. */
-.user-shell .content{margin-left:225px;margin-top:63px;width:calc(100% - 225px);min-height:calc(100vh - 63px);padding:22px 25px;}
-.user-shell.user-shell--collapsed .content{margin-left:72px;width:calc(100% - 72px);}
-.user-shell .user-header{height:63px;padding:0 25px;color:var(--text-default);}
-.user-shell .user-header .hamburger-btn{display:flex;margin-right:6px;}
-.user-shell .user-header .header-icon,.user-shell .user-header .header-brand-logo{width:52px;height:52px;flex-basis:52px;}
-.user-shell .user-header .header-title{font-size:17px;font-weight:750;max-width:330px;}
-.user-shell .user-header .header-right{gap:18px;}
-.user-shell .user-header .header-bell{width:42px;height:42px;display:grid;place-items:center;color:var(--text-label);border-radius:10px;}
-.user-shell .user-header .header-bell:hover{background:var(--surface-hover);}
-.user-shell .user-header .admin-header-greeting{font-size:13px;color:var(--text-label);white-space:nowrap;border-left:1px solid var(--surface-border);padding:0 18px;}
-.user-shell .user-header .logout-btn{background:#ef2342;padding:8px 13px;border-radius:7px;font-size:13px;font-weight:700;}
-.user-shell .sidebar{top:63px;left:0;width:225px;height:calc(100vh - 63px);padding:18px 0 0;}
-.user-shell .sidebar-section{margin:0 0 24px;}
-.user-shell .sidebar-title{font-size:11px;color:var(--sidebar-title);font-weight:600;padding:0 19px;}
-.user-shell .sidebar-section ul{padding:0 7px;}
-.user-shell .sidebar-section ul li{margin-bottom:6px;}
-.user-shell .sidebar-action{min-height:42px;border-radius:8px;color:var(--text-label);font-size:14px;padding:10px 14px;}
-.user-shell .sidebar-action svg{width:19px;height:19px;flex:none;}
-.user-shell .sidebar-action.active{background:#0861f2;color:#fff;font-weight:700;}
-.user-shell .sidebar-action:not(.active):hover{background:var(--surface-hover);}
-.user-shell .user-sidebar-system{padding-top:11px;border-top:1px solid var(--surface-border);}
-.user-shell .user-sidebar-footer{margin-top:auto;border-top:1px solid var(--surface-border);padding:14px;display:flex;align-items:center;gap:9px;min-width:0;}
-.user-sidebar-avatar{display:grid;place-items:center;flex:0 0 35px;height:35px;border-radius:50%;background:#e0ebff;color:#0d55cc;font-weight:750;}
-.user-sidebar-identity{display:flex;flex:1;flex-direction:column;min-width:0;gap:2px;}
-.user-sidebar-identity strong{font-size:12px;color:var(--text-default);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.user-sidebar-identity small{font-size:10px;color:var(--text-muted);}
-.user-shell .user-sidebar-footer button{background:transparent;color:var(--text-muted);border:0;padding:5px;cursor:pointer;}
-.user-sidebar-mobile-top{display:none;}
-@media(min-width:769px){
- .user-shell.user-shell--collapsed .sidebar{width:72px;}
- .user-shell.user-shell--collapsed .sidebar-title,.user-shell.user-shell--collapsed .sidebar-action span,
- .user-shell.user-shell--collapsed .user-sidebar-identity,.user-shell.user-shell--collapsed .user-sidebar-footer button{display:none;}
- .user-shell.user-shell--collapsed .sidebar-action{justify-content:center;padding:10px;}
- .user-shell.user-shell--collapsed .user-sidebar-footer{justify-content:center;padding:12px 0;}
+/* A navegação do usuário usa exatamente os mesmos estilos de header e sidebar
+   do Admin. Apenas o espaço do conteúdo permanece isolado por perfil. */
+@media (min-width: 769px) {
+  .user-shell .content {
+    margin-left: 225px;
+    margin-top: 63px;
+    padding: 22px 25px;
+    width: calc(100% - 225px);
+    min-height: calc(100vh - 63px);
+  }
+  .user-shell.user-shell--collapsed .content {
+    margin-left: 72px;
+    width: calc(100% - 72px);
+  }
 }
-@media(max-width:768px){
- .user-shell .content,.user-shell.user-shell--collapsed .content{margin:70px 0 0;width:100%;min-height:calc(100vh - 70px);padding:14px 9px;}
- .user-shell .user-header{height:70px;padding:0 10px;}
- .user-shell .user-header .header-left{gap:1px;}
- .user-shell .user-header .hamburger-btn{display:flex;margin:0;padding:5px;}
- .user-shell .user-header .header-icon,.user-shell .user-header .header-brand-logo{width:35px;height:35px;flex-basis:35px;margin-right:2px;}
- .user-shell .user-header .header-title{font-size:13px;max-width:145px;}
- .user-shell .user-header .header-right{gap:3px;}
- .user-shell .user-header .header-notification-slot{min-width:32px;}
- .user-shell .user-header .header-bell{width:32px;height:34px;}
- .user-shell .user-header .admin-header-greeting{max-width:78px;overflow:hidden;text-overflow:ellipsis;font-size:10px;border:0;padding:0 3px;}
- .user-shell .user-header .logout-btn{display:none;}
- .user-shell .sidebar{top:0;width:min(100%,430px);height:auto;max-height:min(80dvh,660px);transform:translateY(-105%);padding:0 0 12px;border:0;border-radius:0 0 17px 17px;z-index:111;box-shadow:0 14px 35px rgba(9,27,70,.24);}
- .user-shell .sidebar.open{transform:translateY(0);}
- .user-shell .sidebar-overlay{z-index:110;}
- .user-shell .sidebar-section{margin:0 0 5px;}
- .user-shell .sidebar-title{display:none;}
- .user-shell .sidebar-section ul{padding:0 13px;}
- .user-shell .sidebar-action{min-height:40px;font-size:13px;padding:8px 12px;}
- .user-shell .user-sidebar-system{margin:9px 14px 0;padding-top:9px;}
- .user-shell .user-sidebar-system ul{padding:0;}
- .user-shell .user-sidebar-mobile-top{display:flex;align-items:center;justify-content:space-between;padding:13px 15px 10px;border-bottom:1px solid var(--surface-border);}
- .user-sidebar-mobile-brand{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:750;color:var(--text-default);}
- .user-sidebar-mobile-brand img{width:28px;height:28px;object-fit:contain;}
- .user-shell .user-sidebar-mobile-top button{border:1px solid var(--surface-border);border-radius:50%;background:var(--surface-bg);color:var(--text-default);width:31px;height:31px;display:grid;place-items:center;cursor:pointer;}
- .user-shell .sidebar-action.active{background:#e0edff;color:#0757d8;}
- .user-shell .user-sidebar-footer{margin-top:12px;padding:12px 20px 5px;}
- .user-shell .user-sidebar-footer button{display:grid;color:var(--danger);}
+@media (max-width: 768px) {
+  .user-shell .content,
+  .user-shell.user-shell--collapsed .content {
+    margin-left: 0;
+    margin-top: 70px;
+    width: 100%;
+    min-height: calc(100vh - 70px);
+    padding: 14px 8px;
+  }
 }
-@media(max-width:375px){.user-shell .user-header .header-title{max-width:108px;font-size:12px;}}
-html.dark .user-shell .user-header .header-icon{background:#fff;border-radius:10px;padding:2px;}
-html.dark .user-sidebar-mobile-brand img{background:#fff;border-radius:8px;padding:2px;}
-
-html.dark .user-shell .user-header .header-title,html.dark .user-shell .user-header .admin-header-greeting,html.dark .user-shell .user-header .header-bell{color:var(--text-default);}
-html.dark .user-shell .sidebar-action.active{color:#fff;}
-@media(max-width:768px){html.dark .user-shell .sidebar-action.active{background:#163b70;color:#e3efff;}}

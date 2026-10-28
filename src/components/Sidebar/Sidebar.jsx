@@ -104,48 +104,86 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, close]);
 
-  if (type === "user" || type === "professor") {
-    const items = type === "professor" ? professorMenuItems : userMenuItems;
+  if (type === "user") {
     return (
       <>
         <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
-        <aside ref={adminSidebarRef} className={`sidebar ${isOpen ? "open" : ""}${type === "user" && isCollapsed ? " collapsed" : ""}`} aria-label={type === "user" ? "Navegação do usuário" : "Navegação do professor"}>
-          {type === "user" && (
-            <div className="user-sidebar-mobile-top">
-              <span className="user-sidebar-mobile-brand"><img src="/logo-novedejulho-semfundo.png" alt="" />{libraryName}</span>
-              <button ref={closeButtonRef} type="button" onClick={close} aria-label="Fechar menu"><FiX size={18}/></button>
-            </div>
-          )}
+        <aside
+          ref={adminSidebarRef}
+          className={`sidebar ${isOpen ? "open" : ""}${isCollapsed ? " collapsed" : ""}`}
+          aria-label="Navegação do usuário"
+        >
+          <div className="admin-sidebar-mobile-top">
+            <span className="admin-sidebar-mobile-brand">
+              <img src="/logo-novedejulho-semfundo.png" alt="" />{libraryName}
+            </span>
+            <button ref={closeButtonRef} type="button" onClick={() => {
+              close();
+              document.querySelector(".admin-header .hamburger-btn")?.focus();
+            }} aria-label="Fechar menu">
+              Fechar <FiX />
+            </button>
+          </div>
           <div className="sidebar-section">
             <p className="sidebar-title">Principal</p>
             <ul>
-              {items.filter(item => type !== "user" || item.key !== "configuracoes").map(({ key, label, icon: Icon }) => (
+              {userMenuItems.filter(item => item.key !== "configuracoes").map(({ key, label, icon: Icon }) => (
                 <li key={key}>
-                  <button type="button" className={`sidebar-action ${activePage === key ? "active" : ""}`}
-                    aria-current={activePage === key ? "page" : undefined}
+                  <NavLink
+                    to={key === "dashboard" ? "/user" : `/user/${key}`}
+                    end
                     title={label}
-                    onClick={() => { setActivePage && setActivePage(key); close(); }}>
+                    onClick={close}
+                  >
+                    <Icon aria-hidden="true" />
+                    <span>{label}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="sidebar-section">
+            <p className="sidebar-title sidebar-system">Sistema</p>
+            <ul>
+              <li>
+                <NavLink to="/user/configuracoes" title="Configurações" onClick={close}>
+                  <FiSettings aria-hidden="true" />
+                  <span>Configurações</span>
+                </NavLink>
+              </li>
+            </ul>
+          </div>
+          <button className="admin-sidebar-mobile-logout" type="button" onClick={logout}>
+            <FiLogOut /> Sair
+          </button>
+        </aside>
+      </>
+    );
+  }
+
+  // O professor mantém o fluxo de navegação próprio, sem rotas administrativas.
+  if (type === "professor") {
+    return (
+      <>
+        <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
+        <aside className={`sidebar ${isOpen ? "open" : ""}`} aria-label="Navegação do professor">
+          <div className="sidebar-section">
+            <p className="sidebar-title">Principal</p>
+            <ul>
+              {professorMenuItems.map(({ key, label, icon: Icon }) => (
+                <li key={key}>
+                  <button
+                    type="button"
+                    className={`sidebar-action ${activePage === key ? "active" : ""}`}
+                    aria-current={activePage === key ? "page" : undefined}
+                    onClick={() => { setActivePage?.(key); close(); }}
+                  >
                     <Icon aria-hidden="true" /><span>{label}</span>
                   </button>
                 </li>
               ))}
             </ul>
           </div>
-          {type === "user" && <>
-            <div className="sidebar-section user-sidebar-system">
-              <p className="sidebar-title">Sistema</p>
-              <ul><li><button type="button" title="Configurações"
-                className={`sidebar-action ${activePage === "configuracoes" ? "active" : ""}`}
-                aria-current={activePage === "configuracoes" ? "page" : undefined}
-                onClick={() => { setActivePage?.("configuracoes"); close(); }}>
-                <FiSettings aria-hidden="true"/><span>Configurações</span></button></li></ul>
-            </div>
-            <div className="user-sidebar-footer">
-              <span className="user-sidebar-avatar" aria-hidden="true">{(user?.nome?.trim()?.[0] || "U").toUpperCase()}</span>
-              <span className="user-sidebar-identity"><strong>{user?.nome || "Usuário"}</strong><small>{user?.tipo === "Comunidade" ? "Comunidade" : "Aluno"}</small></span>
-              <button type="button" onClick={logout} aria-label="Sair do sistema" title="Sair"><FiLogOut aria-hidden="true"/></button>
-            </div>
-          </>}
         </aside>
       </>
     );

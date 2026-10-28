@@ -43,7 +43,7 @@ function Header({ sidebarType = "admin" }) {
   const handleLogout = () => logout();
 
   return (
-    <header className={`header${isAdmin || isUser ? " admin-header" : ""}${isUser ? " user-header" : ""}`}>
+    <header className={`header${isAdmin || isUser ? " admin-header" : ""}`}>
       <div className="header-left">
         <button type="button" className="hamburger-btn" onClick={() => {
           if ((isAdmin || isUser) && window.innerWidth > 768) toggleCollapse();
@@ -77,17 +77,15 @@ function Header({ sidebarType = "admin" }) {
       </div>}
 
       <div className="header-right">
-        {isAdmin && <>
-          <div id="admin-header-notifications" className="header-notification-slot">
-            {pathname !== "/admin" && <Link to="/admin/notificacoes" className="header-bell" aria-label="Ver notificações"><Bell size={21} /></Link>}
+        {(isAdmin || isUser) && <>
+          <div id={isAdmin ? "admin-header-notifications" : undefined} className="header-notification-slot">
+            {pathname !== (isAdmin ? "/admin" : "/user") && (
+              <Link to={isAdmin ? "/admin/notificacoes" : "/user/notificacoes"} className="header-bell" aria-label="Ver notificações">
+                <Bell size={21} aria-hidden="true" />
+              </Link>
+            )}
           </div>
-          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Administrador"}</span>
-        </>}
-        {isUser && <>
-          <div className="header-notification-slot">
-            <Link to="/user/notificacoes" className="header-bell" aria-label="Ver notificações"><Bell size={21} aria-hidden="true" /></Link>
-          </div>
-          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || "Leitor"}</span>
+          <span className="admin-header-greeting">Olá, {user?.nome?.split(" ")[0] || (isAdmin ? "Administrador" : "Leitor")}</span>
         </>}
         <button className="logout-btn" onClick={handleLogout}>
           <LogOut size={16} /> Sair

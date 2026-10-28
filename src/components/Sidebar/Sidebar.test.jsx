@@ -64,3 +64,23 @@ test("navegar para outra seção expande o grupo correspondente sem fechar outro
   expect(emprestimos).toHaveAttribute("aria-expanded", "true");
   expect(livros).toHaveAttribute("aria-expanded", "true");
 });
+
+const renderUserSidebar = (path = "/user") => render(
+  <MemoryRouter initialEntries={[path]}>
+    <SidebarProvider><Sidebar type="user" /></SidebarProvider>
+  </MemoryRouter>,
+);
+
+test("usuário utiliza a mesma estrutura de links e estados ativos do admin", () => {
+  renderUserSidebar("/user/biblioteca");
+  const biblioteca = screen.getByRole("link", { name: "Biblioteca" });
+  expect(biblioteca).toHaveClass("active");
+  expect(biblioteca).toHaveAttribute("aria-current", "page");
+  expect(biblioteca).toHaveAttribute("href", "/user/biblioteca");
+  expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/user");
+  expect(screen.getByRole("link", { name: "Meus empréstimos" })).toHaveAttribute("href", "/user/emprestimos");
+  expect(screen.getByRole("link", { name: "Notificações" })).toHaveAttribute("href", "/user/notificacoes");
+  expect(screen.getByRole("link", { name: "Configurações" })).toHaveAttribute("href", "/user/configuracoes");
+  expect(screen.queryByText("Aluno")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Sair/ })).toHaveClass("admin-sidebar-mobile-logout");
+});
