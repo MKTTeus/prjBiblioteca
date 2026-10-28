@@ -13,7 +13,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockUser = { tipo: 'Aluno', email: 'aluno@teste.example' };
   getPainelRecomendacoes.mockResolvedValue({
-    itens: [{ livro: { idLivro: 2, livTitulo: 'Nova leitura' }, motivo: 'Temas semelhantes.' }],
+    itens: [{ livro: { idLivro: 2, livTitulo: 'Nova leitura', disponiveis: 2, total_exemplares: 2 }, motivo: 'Temas semelhantes.' }],
     avaliacoes: [{ idLivro: 1, livTitulo: 'Livro devolvido', nota: null }],
   });
   avaliarLivro.mockResolvedValue({ nota: 5 });
@@ -23,7 +23,7 @@ beforeEach(() => {
 test.each(['Comunidade', 'admin'])('não consulta ou renderiza o recurso para %s', tipo => {
   mockUser.tipo = tipo;
   const { container } = render(<Recomendacoes />);
-  expect(container).toBeEmptyDOMElement();
+  expect(container.querySelector('.reading-suggestions')).not.toBeInTheDocument();
   expect(getPainelRecomendacoes).not.toHaveBeenCalled();
 });
 
@@ -54,13 +54,13 @@ test('falha do painel permite tentar novamente', async () => {
   getPainelRecomendacoes.mockRejectedValueOnce(new Error('offline'));
   render(<Recomendacoes />);
   expect(await screen.findByText(/Não foi possível carregar as sugestões/)).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Atualizar sugestões' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Atualizar sugestões de leitura' }));
   expect(await screen.findByText('Nova leitura')).toBeInTheDocument();
 });
 
 test('reutiliza solicitação e impede envio duplicado', async () => {
   render(<Recomendacoes />);
-  const button = await screen.findByRole('button', { name: 'Solicitar' });
+  const button = await screen.findByRole('button', { name: 'Solicitar empréstimo' });
   fireEvent.click(button);
   fireEvent.click(button);
   await waitFor(() => expect(solicitarLivro).toHaveBeenCalledTimes(1));

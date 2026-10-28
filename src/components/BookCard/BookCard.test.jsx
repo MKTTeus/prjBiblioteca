@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 import BookCard from "./BookCard";
 
-jest.mock("../Modal/Modal", () => ({ show, children, ariaLabel }) =>
+jest.mock("../Modal/Modal", () => ({ show, children, ariaLabel = "Janela de diálogo" }) =>
   show ? <div role="dialog" aria-label={ariaLabel}>{children}</div> : null
 );
 
