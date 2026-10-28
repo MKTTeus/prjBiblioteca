@@ -52,6 +52,15 @@ test('permite alternar entre Grade e Lista sem alterar a pesquisa paginada', asy
 test('as instruções continuam expansíveis e identificáveis', async () => {
   getBooksPage.mockResolvedValue({ itens: [], total: 0 });
   render(<Biblioteca />);
-  expect(screen.getByText('Como solicitar e retirar um livro?')).toBeInTheDocument();
+  expect(screen.getByText('Como consultar e emprestar livros?')).toBeInTheDocument();
   expect(await screen.findByText('Nenhum livro encontrado para a busca informada.')).toBeInTheDocument();
+});
+
+// A Comunidade consulta o catálogo, mas não recebe o comando de solicitar online.
+test('comunidade vê instruções de empréstimo presencial e pode visualizar capas', async () => {
+  getBooksPage.mockResolvedValue({ itens: [{ idLivro: 9, livTitulo: 'Livro da comunidade' }], total: 1 });
+  render(<Biblioteca />);
+  expect(await screen.findByText('Livro da comunidade')).toBeInTheDocument();
+  expect(screen.getByText('Como consultar e emprestar livros?')).toBeInTheDocument();
+  expect(screen.getByText('Catálogo de Livros')).toBeInTheDocument();
 });

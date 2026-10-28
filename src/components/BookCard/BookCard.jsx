@@ -75,6 +75,7 @@ export default function BookCard({
   statusSolicitacao = null,
   solicitando = false,
   isComunidade = false,
+  allowCoverPreview = false,
   // ── Modo carrinho (usado pelo professor ao montar um empréstimo) ──
   cartMode = false,
   pendingQuantity = 0,
@@ -222,7 +223,7 @@ export default function BookCard({
           decoding="async"
           onError={(e) => { e.target.src = "/placeholder.png"; }}
         />
-        {isAdmin && (
+        {(isAdmin || allowCoverPreview) && (
           <button type="button" className="shared-book-card__cover-open" onClick={() => setMostrarCapa(true)} aria-label={`Ver capa completa de ${titulo}`} title="Abrir capa sem cortes">
             <HiOutlineArrowsExpand aria-hidden="true" /> Ver capa
           </button>
@@ -348,7 +349,7 @@ export default function BookCard({
 
             {isComunidade && (
               <p className="shared-book-card__community-hint">
-                Para solicitar este livro, entre em contato com a biblioteca.
+                Para realizar o empréstimo, compareça à biblioteca da escola.
               </p>
             )}
 
@@ -406,13 +407,18 @@ export default function BookCard({
             )}
           </div>
         </div>
+        {allowCoverPreview && (
+          <button type="button" className="book-description-modal__open-cover" onClick={() => { setMostrarDescricao(false); setMostrarCapa(true); }}>
+            <HiOutlineArrowsExpand aria-hidden="true" /> Ver capa completa
+          </button>
+        )}
         <div className="book-description-modal__divider" />
         <div className="book-description-modal__body">
           <p className="book-description-modal__text">{descricao}</p>
         </div>
         </>)}
       </Modal>
-      {isAdmin && (
+      {(isAdmin || allowCoverPreview) && (
         <Modal show={mostrarCapa} onClose={() => setMostrarCapa(false)} className="book-cover-modal" ariaLabel={`Capa completa de ${titulo}`}>
           <figure className="book-cover-modal__figure">
             <img src={capa} alt={`Capa completa de ${titulo}`} onError={(e) => { e.target.onerror = null; e.target.src = "/placeholder.png"; }} />
