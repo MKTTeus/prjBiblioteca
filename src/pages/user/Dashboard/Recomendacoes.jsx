@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaBookOpen, FaChevronLeft, FaChevronRight, FaRegStar, FaStar } from 'react-icons/fa';
 import BookCard from '../../../components/BookCard/BookCard';
-import { BookOpen, ChevronRight } from 'lucide-react';
+import { BookOpen, ChevronRight, RefreshCw } from 'lucide-react';
 import LoadingButton from '../../../components/LoadingButton/LoadingButton';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
@@ -143,8 +143,16 @@ function PainelRecomendacoes({ notifications }) {
     <div className="user-section-card__header">
       <div><h2 id="reading-suggestions-title">Para sua próxima leitura</h2>
         <p>Sugestões a partir das suas leituras, avaliações e interesses em comum.</p></div>
-      <LoadingButton className="btn-secondary" onClick={carregar} loading={loading}
-        loadingText="Atualizando...">Atualizar sugestões</LoadingButton>
+      <LoadingButton
+        className="reading-suggestions__refresh"
+        onClick={carregar}
+        loading={loading}
+        ariaLabel="Atualizar sugestões de leitura"
+        loadingText={<><RefreshCw size={16} className="reading-suggestions__refresh-spinner" aria-hidden="true" /><span>Atualizando...</span></>}
+      >
+        <RefreshCw size={16} aria-hidden="true" />
+        <span>Atualizar sugestões</span>
+      </LoadingButton>
     </div>
     {erro && <p role="alert">{erro} Use “Atualizar sugestões” para tentar novamente.</p>}
     {loading && <p role="status">Buscando novas leituras...</p>}
