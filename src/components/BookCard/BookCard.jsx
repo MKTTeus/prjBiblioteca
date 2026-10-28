@@ -286,7 +286,10 @@ export default function BookCard({
             </p>
             <p className="shared-book-card__detail availability-line">
               <HiOutlineBookOpen />
-              <span>{disponiveis}/{totalExemplares} disponíveis</span>
+              <span className="shared-book-card__count-full">{disponiveis}/{totalExemplares} disponíveis</span>
+              {openDetailsOnCard && (
+                <span className="shared-book-card__count-mobile">{disponiveis} de {totalExemplares} exemplares</span>
+              )}
             </p>
             {(emprestados > 0 || reservados > 0) && (
               <p className="shared-book-card__detail loan-line">

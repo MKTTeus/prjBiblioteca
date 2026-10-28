@@ -257,3 +257,125 @@
     font-weight: 700;
   }
 }
+
+/*
+ * Lista compacta para telas pequenas: uma única informação de status,
+ * quantidade de exemplares no texto e aproveitamento da largura disponível.
+ * A apresentação do Admin, Professor e Grade não sofre mudanças.
+ */
+.user-shell .user-library-page .shared-book-card__count-mobile{display:none;}
+@media(max-width:768px){
+  .user-shell .user-library-page .user-library-catalog-heading{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;
+    align-items:center;gap:8px;padding:10px 12px;
+  }
+  .user-shell .user-library-page .user-library-catalog-heading__title{
+    display:grid;grid-template-columns:20px minmax(0,1fr);
+    align-items:center;gap:2px 6px;min-width:0;
+  }
+  .user-shell .user-library-page .user-library-catalog-heading__title svg{
+    width:19px;height:19px;grid-row:1 / 3;
+  }
+  .user-shell .user-library-page .user-library-catalog-heading__title h2{
+    font-size:13px;min-width:0;line-height:1.3;
+  }
+  .user-shell .user-library-page .user-library-catalog-heading__title span{
+    grid-column:2;font-size:10px;white-space:nowrap;
+  }
+  .user-shell .user-library-page .user-library-view-switch{
+    margin:0;align-self:center;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-grid{
+    padding:8px;gap:8px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card{
+    grid-template-columns:88px minmax(0,1fr);
+    gap:10px;align-items:stretch;padding:8px;
+    border-radius:11px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__media{
+    width:88px;height:auto;min-height:135px;
+    align-self:stretch;overflow:hidden;border-radius:8px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__media img{
+    width:100%;height:100%;object-fit:cover;padding:0;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__badges{
+    top:5px;left:5px;right:5px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__status{
+    font-size:9px;padding:4px 6px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__content{
+    display:flex;flex-direction:column;gap:5px;justify-content:space-between;
+    min-width:0;padding:0;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__body{
+    display:flex;flex-direction:column;flex:0 1 auto;
+    align-items:stretch;gap:4px;min-width:0;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__header h3{
+    font-size:12px;font-weight:750;line-height:1.25;
+    min-height:0;max-height:2.5em;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__author{
+    margin-top:3px;font-size:10px;min-height:0;line-height:1.3;
+    -webkit-line-clamp:1;line-clamp:1;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__meta{
+    margin-top:4px;font-size:10px;line-height:1.25;gap:4px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__description-wrap{
+    display:flex;flex-direction:column;gap:0;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__description{
+    display:none;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__desc-link{
+    min-height:22px;margin:0;font-size:10px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__tags{
+    display:none;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__details{
+    grid-row:auto;grid-column:auto;display:flex;
+    align-items:flex-start;gap:0;min-height:0;margin:0;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__details .status-line{
+    display:none;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__detail.availability-line{
+    display:inline-flex;align-items:center;gap:5px;
+    border:0;padding:0;margin:0;
+    background:transparent;color:var(--text-muted);
+    font-size:10px;line-height:1.25;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__detail.availability-line svg{
+    width:12px;height:12px;margin:0;color:var(--text-subtle);
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__count-full{
+    display:none;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__count-mobile{
+    display:inline;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__actions{
+    align-self:stretch;min-width:0;margin:0;padding:0;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__button--request,
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__button--requested{
+    min-height:33px;border-radius:7px;font-size:10px;
+    padding:5px 8px;white-space:normal;line-height:1.3;
+  }
+}
+@media(max-width:360px){
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card{
+    grid-template-columns:80px minmax(0,1fr);gap:8px;
+  }
+  .user-shell .user-library-page .user-library-results--lista .shared-book-card__media{
+    width:80px;min-height:128px;
+  }
+  .user-shell .user-library-page .user-library-catalog-heading__title h2{
+    font-size:12px;
+  }
+}
