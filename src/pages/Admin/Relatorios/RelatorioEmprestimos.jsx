@@ -8,7 +8,6 @@ import {
 
 import StatsCard from "../../../components/StatsCard/StatsCard";
 import BuscaUsuarioInput from "./BuscaUsuarioInput";
-import GraficoEmprestimosMensal from "./GraficoEmprestimosMensal";
 import { getRelatorioEmprestimos, getRelatorioEmprestimosMensal } from "../../../services/api";
 import { exportarPDF, exportarExcel } from "../../../utils/exportarArquivo";
 import { getErrorMessage } from "../../../utils/apiError";
@@ -223,23 +222,23 @@ export default function RelatorioEmprestimos() {
 
   return (
     <div className="rel-tab-content">
-      <div className="rel-subheader">
+      <div className="rel-subheader rel-subheader--emprestimos">
         <div>
           <p>Histórico de empréstimos, ativos e atrasados por período — ou ranking por aluno, turma, série e livro.</p>
-          <div className="rel-modo-toggle" role="tablist" aria-label="Modo de visualização">
+          <div className="rel-modo-toggle" role="group" aria-label="Modo de visualização">
             <button
               type="button"
               className={modoVisualizacao === "padrao" ? "rel-modo-toggle-ativo" : ""}
               onClick={() => setModoVisualizacao("padrao")}
             >
-              <FiList /> Lista / Ranking
+              <FiList /> Histórico / Ranking
             </button>
             <button
               type="button"
               className={modoVisualizacao === "mensal" ? "rel-modo-toggle-ativo" : ""}
               onClick={() => setModoVisualizacao("mensal")}
             >
-              <FiBarChart2 /> Por mês
+              <FiCalendar /> Por mês
             </button>
           </div>
         </div>
@@ -343,7 +342,6 @@ export default function RelatorioEmprestimos() {
             <div className="rel-table-box"><Skeleton variant="table" /></div>
           ) : (
             <>
-              <GraficoEmprestimosMensal meses={dadosMensal.meses} mesPico={dadosMensal.resumo.mesPico} />
 
               <div className="rel-table-box">
                 <table>
@@ -512,6 +510,7 @@ export default function RelatorioEmprestimos() {
 
       {erro && <div className="rel-erro">{erro}</div>}
 
+      <div className="rel-resultados-heading"><div><h3>{emModoRanking ? "Ranking de empréstimos" : "Histórico de empréstimos"}</h3><p>Dados correspondentes aos filtros aplicados.</p></div></div>
       {emModoRanking ? (
         <div className="rel-table-box">
           <table>

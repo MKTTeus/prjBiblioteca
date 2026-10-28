@@ -45,6 +45,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
   const closeButtonRef = useRef(null);
   const adminSidebarRef = useRef(null);
   const openPessoas = openGroups.has("pessoas");
+  const openRelatorios = openGroups.has("relatorios");
   const openEmprestimos = openGroups.has("emprestimos");
   const openLivros = openGroups.has("livros");
   const toggleGroup = (group) => setOpenGroups((current) => {
@@ -71,6 +72,7 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
     if (pathname.startsWith("/admin/emprestimos")) routeGroup = "emprestimos";
     else if (pathname.startsWith("/admin/livros")) routeGroup = "livros";
     else if (/^\/admin\/(alunos|comunidade|admins)/.test(pathname)) routeGroup = "pessoas";
+    else if (pathname.startsWith("/admin/relatorios")) routeGroup = "relatorios";
     if (routeGroup) {
       setOpenGroups((current) => {
         if (current.has(routeGroup)) return current;
@@ -269,15 +271,26 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
             )}
 
             {isAdmin && (
-              <li>
-                <NavLink
-                  to="/admin/relatorios"
-                  className={({ isActive }) => (isActive ? "active" : undefined)}
-                  onClick={close}
+              <li className="submenu-container">
+                <button
+                  type="button"
+                  className={`submenu-toggle ${openRelatorios ? "open" : ""}`}
+                  aria-expanded={openRelatorios}
+                  aria-controls="submenu-relatorios"
+                  onClick={() => toggleGroup("relatorios")}
                 >
-                  <FiPieChart />
-                  <span>Relatórios</span>
-                </NavLink>
+                  <div className="submenu-left">
+                    <FiPieChart />
+                    <span>Relatórios</span>
+                  </div>
+                  <FiChevronDown className="arrow" />
+                </button>
+                <ul id="submenu-relatorios" inert={!openRelatorios} className={`submenu ${openRelatorios ? "open" : ""}`}>
+                  <li><NavLink to="/admin/relatorios/emprestimos" onClick={close}>Relatório de Empréstimos</NavLink></li>
+                  <li><NavLink to="/admin/relatorios/atrasos" onClick={close}>Usuários em Atraso</NavLink></li>
+                  <li><NavLink to="/admin/relatorios/acervo" onClick={close}>Acervo por Grupo</NavLink></li>
+                  <li><NavLink to="/admin/relatorios/consultas" onClick={close}>Consultas e Controle</NavLink></li>
+                </ul>
               </li>
             )}
 

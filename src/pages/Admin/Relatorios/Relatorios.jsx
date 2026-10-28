@@ -1,53 +1,29 @@
 import "../../../components/AdminPageLayout/AdminPageLayout.css";
-import { useState } from "react";
-import { FiBookOpen, FiAlertTriangle, FiGrid } from "react-icons/fi";
+import { Outlet, useLocation } from "react-router-dom";
 import "./Relatorios.css";
+import "./RelatoriosRedesign.css";
 
-import RelatorioEmprestimos from "./RelatorioEmprestimos";
-import RelatorioAtrasos from "./RelatorioAtrasos";
-import RelatorioAcervo from "./RelatorioAcervo";
-import RelatorioGestao from "./RelatorioGestao";
-
-const ABAS = [
-  { valor: "emprestimos", label: "Empréstimos", icon: <FiBookOpen />, Componente: RelatorioEmprestimos },
-  { valor: "atrasos", label: "Usuários em Atraso", icon: <FiAlertTriangle />, Componente: RelatorioAtrasos },
-  { valor: "acervo", label: "Acervo por Grupo", icon: <FiGrid />, Componente: RelatorioAcervo },
-  { valor: "gestao", label: "Consultas e Controle", icon: <FiGrid />, Componente: RelatorioGestao },
-];
+const SECOES = {
+  emprestimos: { titulo: "Relatório de Empréstimos", subtitulo: "Histórico, rankings e movimentação dos empréstimos." },
+  atrasos: { titulo: "Usuários em Atraso", subtitulo: "Acompanhe pendências atuais e ocorrências de atrasos." },
+  acervo: { titulo: "Acervo por Grupo", subtitulo: "Explore títulos e exemplares por gênero, autor, editora ou ano." },
+  consultas: { titulo: "Consultas e Controle", subtitulo: "Relatórios especializados de acervo, leitores e circulação." },
+};
 
 export default function Relatorios() {
-  const [abaAtiva, setAbaAtiva] = useState("emprestimos");
-
-  const AbaAtual = ABAS.find((a) => a.valor === abaAtiva)?.Componente || RelatorioEmprestimos;
+  const { pathname } = useLocation();
+  const ultimoTrecho = pathname.split("/").filter(Boolean).pop();
+  const secao = SECOES[ultimoTrecho] || SECOES.emprestimos;
 
   return (
-    <div className="rel-page page-shell admin-standard-page">
-      <div className="rel-header admin-standard-header">
+    <div className="rel-page page-shell admin-standard-page rel-redesign">
+      <header className="rel-header admin-standard-header">
         <div>
-          <h1>Relatórios</h1>
-          <p>Controle leitores, professores, acervo e circulação. Consulte históricos, rankings e inventário e exporte os resultados.</p>
+          <h1>{secao.titulo}</h1>
+          <p>{secao.subtitulo}</p>
         </div>
-      </div>
-
-      <div className="rel-tabs" role="tablist" aria-label="Tipos de relatório">
-        {ABAS.map((aba) => (
-          <button
-            key={aba.valor}
-            type="button"
-            role="tab"
-            aria-selected={abaAtiva === aba.valor}
-            className={`rel-tab-btn ${abaAtiva === aba.valor ? "rel-tab-btn-active" : ""}`}
-            onClick={() => setAbaAtiva(aba.valor)}
-          >
-            {aba.icon} {aba.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Cada aba mantém seu próprio estado (filtros, itens, etc.) — ao trocar
-          de aba e voltar, ela some do DOM e refaz a busca do zero, o que é
-          intencional aqui: mantém o relatório sempre com dados atuais. */}
-      <AbaAtual />
+      </header>
+      <Outlet />
     </div>
   );
 }

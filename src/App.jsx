@@ -30,6 +30,10 @@ const Backups = lazy(() => import("./pages/Admin/Configuracoes/components/Backup
 const AnoLetivo = lazy(() => import("./pages/Admin/Configuracoes/components/AnoLetivo/AnoLetivo"));
 const UserDashboard = lazy(() => import("./pages/user/UserDashboard"));
 const Relatorios = lazy(() => import("./pages/Admin/Relatorios/Relatorios"));
+const RelatorioEmprestimos = lazy(() => import("./pages/Admin/Relatorios/RelatorioEmprestimos"));
+const RelatorioAtrasos = lazy(() => import("./pages/Admin/Relatorios/RelatorioAtrasos"));
+const RelatorioAcervo = lazy(() => import("./pages/Admin/Relatorios/RelatorioAcervo"));
+const RelatorioGestao = lazy(() => import("./pages/Admin/Relatorios/RelatorioGestao"));
 const PainelProfessor = lazy(() => import("./pages/Professor/PainelProfessor"));
 
 function RoleHomeRedirect() {
@@ -140,7 +144,13 @@ function App() {
         <Route path="comunidade" element={<Comunidade />} />
         <Route path="emprestimos" element={<Emprestimos />} />
         <Route path="emprestimos/solicitacoes" element={<SolicitacoesEmprestimo />} />
-        <Route path="relatorios" element={<Relatorios />} />
+        <Route path="relatorios" element={<Relatorios />}>
+          <Route index element={<Navigate to="emprestimos" replace />} />
+          <Route path="emprestimos" element={<RelatorioEmprestimos />} />
+          <Route path="atrasos" element={<RelatorioAtrasos />} />
+          <Route path="acervo" element={<RelatorioAcervo />} />
+          <Route path="consultas" element={<RelatorioGestao />} />
+        </Route>
         <Route path="notificacoes" element={<AdminNotificacoes />} />
         <Route path="admins" element={<Admin />} />
         <Route path="biblioteca" element={<Biblioteca />} />
