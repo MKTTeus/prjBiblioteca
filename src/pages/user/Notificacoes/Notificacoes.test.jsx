@@ -4,8 +4,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Notificacoes from "./Notificacoes";
 import { getEmprestimos, getPublicBookDetails } from "../../../services/api";
 
-const navigate = jest.fn();
-jest.mock("react-router-dom", () => ({ useNavigate: () => navigate }));
+const mockNavigate = jest.fn();
+jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate }));
 jest.mock("../../../services/api", () => ({ getEmprestimos: jest.fn(), getPublicBookDetails: jest.fn() }));
 
 beforeEach(() => {
@@ -40,7 +40,7 @@ test("abre detalhes e navega para os empréstimos existentes", async () => {
   expect(screen.getByText("Tombo")).toBeInTheDocument();
   expect(screen.getByText("T0003")).toBeInTheDocument();
   fireEvent.click(screen.getAllByRole("button", {name:"Ver empréstimo"})[0]);
-  expect(navigate).toHaveBeenCalledWith("/user/emprestimos");
+  expect(mockNavigate).toHaveBeenCalledWith("/user/emprestimos");
 });
 
 test("exibe mensagem correta quando não há empréstimos", async () => {
@@ -48,7 +48,7 @@ test("exibe mensagem correta quando não há empréstimos", async () => {
   render(<Notificacoes/>);
   expect(await screen.findByText("Tudo em dia!")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", {name:"Explorar livros"}));
-  expect(navigate).toHaveBeenCalledWith("/user/biblioteca");
+  expect(mockNavigate).toHaveBeenCalledWith("/user/biblioteca");
 });
 
 test("mostra erro e permite tentar novamente", async () => {
