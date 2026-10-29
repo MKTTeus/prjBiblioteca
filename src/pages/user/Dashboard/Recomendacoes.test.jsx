@@ -73,6 +73,22 @@ test('atualizar solicita nova rodada e mostra outros títulos', async () => {
   expect(screen.queryByText('Primeira leitura')).not.toBeInTheDocument();
 });
 
+test('card abre a descrição do livro mesmo quando não há sinopse cadastrada', async () => {
+  getPainelRecomendacoes.mockResolvedValue({
+    itens: [
+      { livro: { idLivro: 2, livTitulo: 'Com sinopse', livDescricao: 'Uma aventura no mar.' }, motivo: 'Popular.' },
+      { livro: { idLivro: 3, livTitulo: 'Sem sinopse', livDescricao: null }, motivo: 'Popular.' },
+    ],
+    avaliacoes: [],
+  });
+  render(<Recomendacoes />);
+  fireEvent.click(await screen.findByRole('button', { name: 'Ver descrição de Com sinopse' }));
+  expect(within(screen.getByRole('dialog', { name: 'Detalhes de Com sinopse' })).getByText('Uma aventura no mar.')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Fechar detalhes' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Ver descrição de Sem sinopse' }));
+  expect(within(screen.getByRole('dialog', { name: 'Detalhes de Sem sinopse' })).getByText('Descrição não informada para este livro.')).toBeInTheDocument();
+});
+
 test('reutiliza solicitação e impede envio duplicado', async () => {
   render(<Recomendacoes />);
   const button = await screen.findByRole('button', { name: 'Solicitar empréstimo' });
