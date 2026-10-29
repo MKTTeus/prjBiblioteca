@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FaBookOpen, FaChevronLeft, FaChevronRight, FaRegStar, FaStar } from 'react-icons/fa';
 import BookCard from '../../../components/BookCard/BookCard';
-import { BookOpen, ChevronRight, RefreshCw } from 'lucide-react';
+import { AlignLeft, BookOpen, RefreshCw } from 'lucide-react';
 import LoadingButton from '../../../components/LoadingButton/LoadingButton';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useToast } from '../../../contexts/ToastContext';
@@ -192,6 +192,10 @@ function PainelRecomendacoes({ notifications }) {
                 <button type="button" className="reading-suggestions__book-title" onClick={() => setDetalheLivro(livro)}>{livro.livTitulo}</button>
                 <p className="reading-suggestions__book-author">{livro.livAutor || "Autor não informado"}</p>
                 <p className="reading-suggestions__compact-meta">{disponiveis > 0 ? `${disponiveis} ${disponiveis === 1 ? "exemplar disponível" : "exemplares disponíveis"}` : "Sem exemplares disponíveis"}</p>
+                <button type="button" className="reading-suggestions__description"
+                  onClick={() => setDetalheLivro(livro)} aria-label={`Ver descrição de ${livro.livTitulo}`}>
+                  <AlignLeft size={15} aria-hidden="true" /> Ver descrição
+                </button>
                 <button type="button" className="reading-suggestions__request" onClick={() => solicitar(livro)}
                   disabled={!podeSolicitar || !!solicitado || !!solicitando[livro.idLivro]}>
                   <BookOpen size={15} aria-hidden="true"/>
