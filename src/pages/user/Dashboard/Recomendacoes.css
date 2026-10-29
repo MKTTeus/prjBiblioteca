@@ -40,9 +40,30 @@
 .reading-suggestions__item .shared-book-card__details { min-height: 0; gap: 4px; }
 .reading-suggestions__item .shared-book-card__actions { padding-top: 8px; }
 .reading-suggestions__reason { margin: 8px 2px 12px; font-size: 12px; }
+.user-shell .user-dashboard-page .reading-suggestions__description {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  margin-top: auto;
+  padding: 7px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--surface-bg);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.user-shell .user-dashboard-page .reading-suggestions__description:hover { background: var(--surface-muted); }
+.user-shell .user-dashboard-page .reading-suggestions__description:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.user-shell .user-dashboard-page .reading-suggestions__description + .reading-suggestions__request { margin-top: 0; }
 @media (max-width: 640px) {
   .reading-suggestions__controls { inset-inline: -14px; }
   .reading-suggestions__controls button { width: 28px; }
+  .user-shell .user-dashboard-page .reading-suggestions__description { min-height: 36px; font-size: 10px; }
 }
 /* Avaliações seguem as superfícies, ícones e botões da área do aluno. */
 .reading-feedback { margin-top: 24px; }
