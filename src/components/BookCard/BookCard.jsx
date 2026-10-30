@@ -10,7 +10,6 @@ import {
   HiOutlineRefresh,
   HiOutlineTrash,
   HiOutlineDocumentText,
-  HiOutlineShoppingCart,
   HiOutlineMinus,
   HiOutlinePlus,
   HiOutlineDotsVertical,
@@ -309,7 +308,7 @@ export default function BookCard({
               <div className="shared-book-card__cart">
                 {cartQuantity > 0 && (
                   <p className="shared-book-card__cart-current">
-                    {cartQuantity} no carrinho
+                    {cartQuantity} na seleção
                   </p>
                 )}
                 <div className="shared-book-card__qty-row">
@@ -339,8 +338,8 @@ export default function BookCard({
                   onClick={() => onAddToCart && pendingQuantity > 0 && onAddToCart(pendingQuantity)}
                   disabled={disponiveis <= 0 || pendingQuantity <= 0}
                 >
-                  <HiOutlineShoppingCart />
-                  <span>{disponiveis <= 0 ? "Indisponível" : "Adicionar ao carrinho"}</span>
+                  <HiOutlineBookOpen />
+                  <span>{disponiveis <= 0 ? "Indisponível" : "Adicionar à seleção"}</span>
                 </button>
               </div>
             )}

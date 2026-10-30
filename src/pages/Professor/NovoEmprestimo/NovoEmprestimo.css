@@ -159,6 +159,9 @@
   font-size: 1rem;
   color: var(--text-default);
 }
+.professor-carrinho__cabecalho { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.professor-carrinho__cabecalho span { display: block; margin-top: 4px; color: var(--text-soft); font-size: .8rem; }
+.professor-carrinho__fechar, .professor-selecao-atalho, .professor-selecao-backdrop { display: none; }
 
 .professor-carrinho__vazio {
   margin: 0;
@@ -291,4 +294,31 @@
   display: flex;
   gap: 12px;
   margin-top: 8px;
+}
+
+@media (max-width: 1080px) {
+  .professor-novo-emprestimo { padding-bottom: 90px; }
+  .professor-selecao-atalho {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    position: fixed; z-index: 30; bottom: calc(16px + env(safe-area-inset-bottom));
+    left: 50%; transform: translateX(-50%); width: min(calc(100% - 32px), 440px);
+    min-height: 52px; border: 0; border-radius: 14px; background: var(--primary);
+    color: var(--btn-primary-text); box-shadow: 0 12px 30px rgba(15,23,42,.25);
+    font: inherit; font-weight: 700; cursor: pointer;
+  }
+  .professor-selecao-atalho strong { padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.22); }
+  .professor-selecao-backdrop { display: block; position: fixed; z-index: 39; inset: 0; border: 0; background: rgba(15,23,42,.5); }
+  .professor-carrinho {
+    display: none; position: fixed; z-index: 40; top: auto; bottom: 0; left: 0; right: 0;
+    max-height: min(85dvh, 720px); overflow-y: auto; border-radius: 20px 20px 0 0;
+    padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+  }
+  .professor-carrinho--aberto { display: flex; }
+  .professor-carrinho__fechar { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 9px; background: var(--surface-border); color: var(--text-default); cursor: pointer; }
+  .professor-carrinho__lista { max-height: none; overflow: visible; }
+}
+
+.professor-finalidade-card:focus-visible, .professor-btn:focus-visible,
+.professor-selecao-atalho:focus-visible, .professor-carrinho button:focus-visible {
+  outline: 3px solid var(--primary); outline-offset: 3px;
 }
