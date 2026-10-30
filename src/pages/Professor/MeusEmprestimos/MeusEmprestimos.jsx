@@ -36,6 +36,7 @@ export default function MeusEmprestimos() {
   const [selecionado, setSelecionado] = useState(null);
   const [idsDevolucao, setIdsDevolucao] = useState([]);
   const [devolvendo, setDevolvendo] = useState(false);
+  const [aba, setAba] = useState("ativos");
 
   async function carregar({ mostrarLoading } = { mostrarLoading: true }) {
     if (mostrarLoading) {
@@ -136,7 +137,7 @@ export default function MeusEmprestimos() {
   };
 
   return (
-    <div className="user-page page-shell">
+    <div className="user-page page-shell professor-loans-page">
       <section className="user-page__hero">
         <div className="user-page__hero-content">
           <h2>Meus empréstimos</h2>
@@ -144,8 +145,13 @@ export default function MeusEmprestimos() {
         </div>
       </section>
 
-      <section className="user-loans-grid">
-        <div className="user-section-card user-loans-column">
+      <nav className="professor-loans-tabs" aria-label="Filtrar meus empréstimos">
+        {[["ativos", "Ativos", ativos.length], ["atrasados", "Atrasados", atrasados.length], ["aguardando", "Aguardando", aguardando.length], ["historico", "Histórico", devolvidos.length]].map(([key, label, count]) => (
+          <button key={key} type="button" className={aba === key ? "is-active" : ""} aria-pressed={aba === key} onClick={() => setAba(key)}>{label} <span>{count}</span></button>
+        ))}
+      </nav>
+      <section className="user-loans-grid professor-loans-grid">
+        <div className={`user-section-card user-loans-column professor-loans-section ${aba === "ativos" ? "is-active" : ""}`}>
           <div className="user-section-card__header user-section-card__header--ativo">
             <FiCheckCircle className="user-section-card__header-icon" />
             <h3>Ativos</h3>
@@ -156,7 +162,7 @@ export default function MeusEmprestimos() {
           {renderLista(ativos, "Nenhum empréstimo ativo no momento.")}
         </div>
 
-        <div className="user-section-card user-loans-column">
+        <div className={`user-section-card user-loans-column professor-loans-section ${aba === "atrasados" ? "is-active" : ""}`}>
           <div className="user-section-card__header user-section-card__header--atrasado">
             <FiAlertCircle className="user-section-card__header-icon" />
             <h3>Atrasados</h3>
@@ -167,7 +173,7 @@ export default function MeusEmprestimos() {
           {renderLista(atrasados, "Nenhum empréstimo atrasado.")}
         </div>
 
-        <div className="user-section-card user-loans-column">
+        <div className={`user-section-card user-loans-column professor-loans-section ${aba === "aguardando" ? "is-active" : ""}`}>
           <div className="user-section-card__header user-section-card__header--pendente">
             <FiClock className="user-section-card__header-icon" />
             <h3>Aguardando aprovação</h3>
@@ -178,7 +184,7 @@ export default function MeusEmprestimos() {
           {renderLista(aguardando, "Nenhuma solicitação aguardando aprovação ou retirada.")}
         </div>
 
-        <div className="user-section-card user-loans-column">
+        <div className={`user-section-card user-loans-column professor-loans-section ${aba === "historico" ? "is-active" : ""}`}>
           <div className="user-section-card__header user-section-card__header--pendente">
             <FiClock className="user-section-card__header-icon" />
             <h3>Histórico</h3>

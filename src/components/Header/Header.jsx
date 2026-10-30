@@ -10,7 +10,7 @@ function Header({ sidebarType = "admin" }) {
   const { toggle, toggleCollapse } = useSidebar();
   const { pathname } = useLocation();
   const isAdmin = sidebarType === "admin";
-  const isUser = sidebarType === "user";
+  const isUser = sidebarType === "user" || sidebarType === "professor";
 
   const [nomeBiblioteca, setNomeBiblioteca] = useState(
     localStorage.getItem("nomeBiblioteca") || "Sala de Leitura"
@@ -51,7 +51,7 @@ function Header({ sidebarType = "admin" }) {
         }} aria-label="Alternar menu">
           <Menu size={22} />
         </button>
-        <Link to={isAdmin ? "/admin" : isUser ? "/user" : "/dashboard"} className="header-logo">
+        <Link to={isAdmin ? "/admin" : sidebarType === "professor" ? "/professor" : "/user"} className="header-logo">
           <div className="header-icon">
             <img
               src={isAdmin || isUser ? "/logo-novedejulho-semfundo.png" : "/logo-novedejulho-fundo.png"}
@@ -79,7 +79,7 @@ function Header({ sidebarType = "admin" }) {
       <div className="header-right">
         {(isAdmin || isUser) && <>
           <div id={isAdmin ? "admin-header-notifications" : undefined} className="header-notification-slot">
-            {pathname !== (isAdmin ? "/admin" : "/user") && (
+            {sidebarType !== "professor" && pathname !== (isAdmin ? "/admin" : "/user") && (
               <Link to={isAdmin ? "/admin/notificacoes" : "/user/notificacoes"} className="header-bell" aria-label="Ver notificações">
                 <Bell size={21} aria-hidden="true" />
               </Link>

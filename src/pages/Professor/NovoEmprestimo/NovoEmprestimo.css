@@ -52,13 +52,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: none;
-  border: none;
+  background: var(--primary-muted);
+  border: 1px solid var(--primary);
+  border-radius: 10px;
   color: var(--primary);
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: 700;
+  font-size: 0.9rem;
   cursor: pointer;
-  padding: 0;
+  padding: 10px 14px;
   margin: 4px 0 16px;
 }
 
@@ -303,11 +304,18 @@
 .professor-view-switch button { display:flex; align-items:center; gap:5px; border:0; border-radius:8px; padding:8px 11px; background:transparent; color:var(--text-default); cursor:pointer; }
 .professor-view-switch button.is-selected { background:var(--primary); color:var(--btn-primary-text); }
 .professor-book-grid { gap:14px; }
-.professor-book-grid--lista { grid-template-columns:1fr; }
-.professor-book-grid--lista .shared-book-card { min-height:0; display:grid; grid-template-columns:120px minmax(0,1fr); }
-.professor-book-grid--lista .shared-book-card__media { height:100%; min-height:190px; }
-.professor-book-grid--lista .shared-book-card__media img { object-fit:contain; }
-.professor-book-grid--lista .shared-book-card__content { min-width:0; }
+.professor-novo-emprestimo .professor-book-grid--lista { grid-template-columns:minmax(0,1fr); }
+.professor-novo-emprestimo .professor-book-grid--lista .shared-book-card { width:100%; min-width:0; min-height:0; display:grid; grid-template-columns:136px minmax(0,1fr); align-items:stretch; }
+.professor-book-grid--lista .shared-book-card__media { width:136px; height:100%; min-height:176px; }
+.professor-book-grid--lista .shared-book-card__media img { object-fit:contain; padding:8px; }
+.professor-novo-emprestimo .professor-book-grid--lista .shared-book-card__content { display:grid; grid-template-columns:minmax(0,1fr) minmax(180px,220px); gap:16px; align-items:center; min-width:0; padding:14px 16px; }
+.professor-book-grid--lista .shared-book-card__body { min-width:0; }
+.professor-book-grid--lista .shared-book-card__header h3 { min-height:0; overflow-wrap:anywhere; }
+.professor-book-grid--lista .shared-book-card__description { display:none; }
+.professor-book-grid--lista .shared-book-card__actions { min-width:0; margin:0; }
+@media (max-width: 900px) {
+  .professor-novo-emprestimo .professor-book-grid--lista .shared-book-card__content { grid-template-columns:minmax(0,1fr); gap:10px; }
+}
 .professor-carrinho__destino { margin:0; padding:12px; background:var(--surface-muted); border-radius:10px; color:var(--text-default); line-height:1.5; font-size:.85rem; }
 .professor-carrinho__quantidade { font-weight:700; color:var(--primary); font-size:.85rem; }
 .professor-novo-emprestimo { padding-bottom: 80px; }
@@ -332,9 +340,11 @@
 @media (max-width: 600px) {
   .professor-carrinho { bottom:0; right:0; width:100%; max-height:85dvh; border-radius:20px 20px 0 0; padding-bottom:calc(20px + env(safe-area-inset-bottom)); }
   .professor-selecao-atalho { right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); }
-  .professor-book-grid--lista .shared-book-card { grid-template-columns:88px minmax(0,1fr); }
-  .professor-book-grid--lista .shared-book-card__media { min-height:150px; }
-  .professor-book-grid--lista .shared-book-card__content { padding:10px; }
+  .professor-novo-emprestimo .professor-book-grid--lista .shared-book-card { grid-template-columns:88px minmax(0,1fr); }
+  .professor-book-grid--lista .shared-book-card__media { width:88px; min-height:100%; }
+  .professor-novo-emprestimo .professor-book-grid--lista .shared-book-card__content { padding:10px; }
+  .professor-book-grid--lista .shared-book-card__tags, .professor-book-grid--lista .shared-book-card__description-wrap { display:none; }
+  .professor-book-grid--lista .shared-book-card__button--request { white-space:normal; }
 }
 
 .professor-finalidade-card:focus-visible, .professor-btn:focus-visible,
