@@ -23,24 +23,24 @@ export default function DashboardProfessor({ onNavigate }) {
   const atrasados = emprestimos.filter((e) => e.status === "Atrasado").length;
 
   return (
-    <div className="user-page page-shell">
+    <div className="user-page page-shell professor-dashboard">
       <section className="user-page__hero">
         <div className="user-page__hero-content">
           <h2>Olá, {user?.nome || "professor(a)"}!</h2>
-          <p>Esta é a sua área na Biblioteca. Faça empréstimos para você ou para suas turmas.</p>
+          <p>Consulte seus empréstimos e solicite livros da Sala de Leitura para você ou suas turmas.</p>
         </div>
       </section>
 
       <section className="professor-dashboard-stats">
         <div className="user-section-card professor-stat-card">
-          <FiCheckCircle className="professor-stat-card__icon professor-stat-card__icon--ativo" />
+          <span className="professor-stat-card__icon-wrap professor-stat-card__icon-wrap--ativo"><FiCheckCircle aria-hidden="true" /></span>
           <div>
             <strong>{isLoading ? "-" : ativos}</strong>
             <span>Empréstimos ativos</span>
           </div>
         </div>
         <div className="user-section-card professor-stat-card">
-          <FiAlertCircle className="professor-stat-card__icon professor-stat-card__icon--atrasado" />
+          <span className="professor-stat-card__icon-wrap professor-stat-card__icon-wrap--atrasado"><FiAlertCircle aria-hidden="true" /></span>
           <div>
             <strong>{isLoading ? "-" : atrasados}</strong>
             <span>Empréstimos atrasados</span>
@@ -54,10 +54,10 @@ export default function DashboardProfessor({ onNavigate }) {
           className="user-section-card professor-dashboard-action"
           onClick={() => onNavigate && onNavigate("novo-emprestimo")}
         >
-          <FiPlusCircle />
+          <span className="professor-dashboard-action__icon"><FiPlusCircle aria-hidden="true" /></span>
           <div>
             <h3>Novo empréstimo</h3>
-            <p>Retire livros para você ou para uma turma.</p>
+            <p>Selecione livros para você ou para uma turma e envie a solicitação.</p>
           </div>
         </button>
         <button
@@ -65,7 +65,7 @@ export default function DashboardProfessor({ onNavigate }) {
           className="user-section-card professor-dashboard-action"
           onClick={() => onNavigate && onNavigate("emprestimos")}
         >
-          <FiRepeat />
+          <span className="professor-dashboard-action__icon"><FiRepeat aria-hidden="true" /></span>
           <div>
             <h3>Meus empréstimos</h3>
             <p>Acompanhe e devolva os livros retirados.</p>
