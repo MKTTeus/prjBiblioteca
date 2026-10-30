@@ -20,7 +20,7 @@ function AppShell({ children, sidebarType = "admin", activePage, setActivePage }
   }, [showNoviWelcome]);
 
   return (
-    <div className={`layout ${sidebarType === "admin" ? `admin-shell${isCollapsed ? " admin-shell--collapsed" : ""}` : sidebarType === "user" ? `user-shell${isCollapsed ? " user-shell--collapsed" : ""}` : ""}`}>
+    <div className={`layout ${sidebarType === "admin" ? `admin-shell${isCollapsed ? " admin-shell--collapsed" : ""}` : sidebarType === "user" || sidebarType === "professor" ? `user-shell${isCollapsed ? " user-shell--collapsed" : ""}` : ""}`}>
       <Header sidebarType={sidebarType} />
       <Sidebar
         type={sidebarType}
