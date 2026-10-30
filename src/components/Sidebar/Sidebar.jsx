@@ -85,13 +85,13 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    if ((type === "admin" || type === "user") && window.innerWidth <= 768) closeButtonRef.current?.focus();
+    if ((type === "admin" || type === "user" || type === "professor") && window.innerWidth <= 768) closeButtonRef.current?.focus();
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
         close();
         document.querySelector(".header .hamburger-btn")?.focus();
       }
-      if (event.key !== "Tab" || (type !== "admin" && type !== "user") || window.innerWidth > 768) return;
+      if (event.key !== "Tab" || (type !== "admin" && type !== "user" && type !== "professor") || window.innerWidth > 768) return;
       const focusable = [...(adminSidebarRef.current?.querySelectorAll('a[href], button:not([disabled])') || [])]
         .filter((element) => element.getClientRects().length > 0);
       if (!focusable.length) return;
@@ -166,24 +166,24 @@ function Sidebar({ type = "admin", activePage, setActivePage }) {
     return (
       <>
         <div className={`sidebar-overlay ${isOpen ? "open" : ""}`} onClick={close} />
-        <aside className={`sidebar ${isOpen ? "open" : ""}`} aria-label="Navegação do professor">
+        <aside ref={adminSidebarRef} className={`sidebar ${isOpen ? "open" : ""}${isCollapsed ? " collapsed" : ""}`} aria-label="Navegação do professor">
+          <div className="admin-sidebar-mobile-top">
+            <span className="admin-sidebar-mobile-brand"><img src="/logo-novedejulho-semfundo.png" alt="" />{libraryName}</span>
+            <button ref={closeButtonRef} type="button" onClick={close} aria-label="Fechar menu">Fechar <FiX /></button>
+          </div>
           <div className="sidebar-section">
             <p className="sidebar-title">Principal</p>
             <ul>
               {professorMenuItems.map(({ key, label, icon: Icon }) => (
                 <li key={key}>
-                  <button
-                    type="button"
-                    className={`sidebar-action ${activePage === key ? "active" : ""}`}
-                    aria-current={activePage === key ? "page" : undefined}
-                    onClick={() => { setActivePage?.(key); close(); }}
-                  >
+                  <NavLink to={key === "dashboard" ? "/professor" : `/professor/${key}`} end onClick={close}>
                     <Icon aria-hidden="true" /><span>{label}</span>
-                  </button>
+                  </NavLink>
                 </li>
               ))}
             </ul>
           </div>
+          <button className="admin-sidebar-mobile-logout" type="button" onClick={logout}><FiLogOut /> Sair</button>
         </aside>
       </>
     );
