@@ -16,6 +16,7 @@ import { useToast } from "../../../contexts/ToastContext";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getBooksPage, getTurmasProfessor, criarEmprestimoProfessor } from "../../../services/api";
 import { getErrorMessage } from "../../../utils/apiError";
+import { LayoutGrid, List } from "lucide-react";
 import "../../user/UserArea.css";
 import "./NovoEmprestimo.css";
 
@@ -59,6 +60,9 @@ export default function NovoEmprestimo({ onNavigate }) {
   const [enviando, setEnviando] = useState(false);
   const [resumoFinal, setResumoFinal] = useState(null);
   const [selecaoAberta, setSelecaoAberta] = useState(false);
+  const [revisando, setRevisando] = useState(false);
+  const [view, setView] = useState(() => { try { return localStorage.getItem("biblioteca-professor-visualizacao") === "lista" ? "lista" : "grade"; } catch { return "grade"; } });
+  const changeView = (next) => { setView(next); try { localStorage.setItem("biblioteca-professor-visualizacao", next); } catch { /* sem armazenamento */ } };
 
   useEffect(() => {
     if (!selecaoAberta) return;
@@ -191,6 +195,8 @@ export default function NovoEmprestimo({ onNavigate }) {
   };
 
   const resetFluxo = () => {
+    setSelecaoAberta(false);
+    setRevisando(false);
     setFinalidade(null);
     setTurmaSelecionadaKey("");
     setSerieManual("");
@@ -222,6 +228,7 @@ export default function NovoEmprestimo({ onNavigate }) {
       const resultado = await criarEmprestimoProfessor(payload);
       setResumoFinal(resultado);
       setSelecaoAberta(false);
+      setRevisando(false);
       setCart({});
       if (draftKey) sessionStorage.removeItem(draftKey);
       addToast("Solicitação enviada. Aguarde a aprovação do administrador.", "success");
@@ -425,6 +432,13 @@ export default function NovoEmprestimo({ onNavigate }) {
               placeholder="Buscar por título, autor ou ISBN..."
             />
           </section>
+          <div className="professor-catalog-heading">
+            <div><h3>Catálogo de livros</h3><span>{totalLivros.toLocaleString("pt-BR")} {totalLivros === 1 ? "título" : "títulos"}</span></div>
+            <div className="professor-view-switch" role="group" aria-label="Modo de visualização">
+              <button type="button" className={view === "lista" ? "is-selected" : ""} aria-pressed={view === "lista"} onClick={() => changeView("lista")}><List size={17} /> Lista</button>
+              <button type="button" className={view === "grade" ? "is-selected" : ""} aria-pressed={view === "grade"} onClick={() => changeView("grade")}><LayoutGrid size={17} /> Grade</button>
+            </div>
+          </div>
 
           {isLoadingBooks ? (
             <Skeleton variant="books" />
@@ -434,7 +448,7 @@ export default function NovoEmprestimo({ onNavigate }) {
               <button type="button" onClick={() => setTentativaLivros((n) => n + 1)}>Tentar novamente</button>
             </div>
           ) : books.length > 0 ? (
-            <div className="shared-book-grid">
+            <div className={`shared-book-grid professor-book-grid professor-book-grid--${view}`}>
               {books.map((book, index) => {
                 const idLivro = book.idLivro ?? book.id;
                 return (
@@ -464,11 +478,12 @@ export default function NovoEmprestimo({ onNavigate }) {
         </div>
 
         {selecaoAberta && <button type="button" className="professor-selecao-backdrop" aria-label="Fechar seleção de livros" onClick={() => setSelecaoAberta(false)} />}
-        <aside className={`professor-carrinho ${selecaoAberta ? "professor-carrinho--aberto" : ""}`} aria-label="Seleção de livros">
+        <aside className={`professor-carrinho ${selecaoAberta ? "professor-carrinho--aberto" : ""}`} aria-label="Seleção de livros" role="dialog" aria-modal="true">
           <div className="professor-carrinho__cabecalho">
-            <div><h3>Livros selecionados</h3><span>{totalExemplaresCarrinho} {totalExemplaresCarrinho === 1 ? "exemplar" : "exemplares"}</span></div>
-            <button type="button" className="professor-carrinho__fechar" onClick={() => setSelecaoAberta(false)} aria-label="Fechar seleção"><FiX /></button>
+            <div><h3>{revisando ? "Revise sua solicitação" : "Livros selecionados"}</h3><span>{totalExemplaresCarrinho} {totalExemplaresCarrinho === 1 ? "exemplar" : "exemplares"}</span></div>
+            <button type="button" className="professor-carrinho__fechar" onClick={() => { setSelecaoAberta(false); setRevisando(false); }} aria-label="Fechar seleção"><FiX /></button>
           </div>
+          {revisando && <p className="professor-carrinho__destino"><strong>Destino:</strong> {finalidade === "TURMA" ? `Turma ${[serieManual, turmaManual].filter(Boolean).join(" - ")}` : "Empréstimo pessoal"}<br />Confira os títulos e as quantidades antes de enviar à equipe da Sala de Leitura.</p>}
           {Object.keys(cart).length === 0 ? (
             <p className="professor-carrinho__vazio">Nenhum livro adicionado ainda.</p>
           ) : (
@@ -480,7 +495,7 @@ export default function NovoEmprestimo({ onNavigate }) {
                       <strong>{item.titulo}</strong>
                       <span>Disponíveis: {item.disponiveis}</span>
                     </div>
-                    <div className="professor-carrinho__item-controles">
+                    {!revisando && <div className="professor-carrinho__item-controles">
                       <div className="shared-book-card__qty-row">
                         <button
                           type="button"
@@ -507,7 +522,8 @@ export default function NovoEmprestimo({ onNavigate }) {
                       >
                         <FiTrash2 />
                       </button>
-                    </div>
+                    </div>}
+                    {revisando && <span className="professor-carrinho__quantidade">{item.quantidade} {item.quantidade === 1 ? "exemplar" : "exemplares"}</span>}
                   </li>
                 ))}
               </ul>
@@ -517,20 +533,21 @@ export default function NovoEmprestimo({ onNavigate }) {
                 <strong>{totalExemplaresCarrinho}</strong>
               </div>
 
+              {revisando && <button type="button" className="professor-btn professor-btn--secondary" onClick={() => setRevisando(false)}>Voltar e editar</button>}
               <button
                 type="button"
                 className="professor-btn professor-btn--primary professor-carrinho__confirmar"
-                onClick={handleConfirmarEmprestimo}
+                onClick={() => revisando ? handleConfirmarEmprestimo() : setRevisando(true)}
                 disabled={enviando}
               >
-                {enviando ? "Enviando..." : "Enviar solicitação"}
+                {enviando ? "Enviando..." : revisando ? "Confirmar e enviar solicitação" : "Revisar solicitação"}
               </button>
             </>
           )}
         </aside>
       </div>
       <button type="button" className="professor-selecao-atalho" onClick={() => setSelecaoAberta(true)} aria-label={`Ver livros selecionados, ${totalExemplaresCarrinho} exemplares`}>
-        <FiBookOpen aria-hidden="true" /><span>Ver seleção</span><strong>{totalExemplaresCarrinho}</strong>
+        <FiBookOpen aria-hidden="true" /><strong>{totalExemplaresCarrinho}</strong>
       </button>
     </div>
   );

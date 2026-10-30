@@ -120,7 +120,7 @@
 
 .professor-emprestimo-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -296,26 +296,45 @@
   margin-top: 8px;
 }
 
-@media (max-width: 1080px) {
-  .professor-novo-emprestimo { padding-bottom: 90px; }
+.professor-catalog-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.professor-catalog-heading h3 { margin:0; color:var(--text-default); font-size:1.1rem; }
+.professor-catalog-heading span { color:var(--text-soft); font-size:.8rem; }
+.professor-view-switch { display:flex; gap:4px; padding:4px; background:var(--surface-muted); border:1px solid var(--surface-border); border-radius:10px; }
+.professor-view-switch button { display:flex; align-items:center; gap:5px; border:0; border-radius:8px; padding:8px 11px; background:transparent; color:var(--text-default); cursor:pointer; }
+.professor-view-switch button.is-selected { background:var(--primary); color:var(--btn-primary-text); }
+.professor-book-grid { gap:14px; }
+.professor-book-grid--lista { grid-template-columns:1fr; }
+.professor-book-grid--lista .shared-book-card { min-height:0; display:grid; grid-template-columns:120px minmax(0,1fr); }
+.professor-book-grid--lista .shared-book-card__media { height:100%; min-height:190px; }
+.professor-book-grid--lista .shared-book-card__media img { object-fit:contain; }
+.professor-book-grid--lista .shared-book-card__content { min-width:0; }
+.professor-carrinho__destino { margin:0; padding:12px; background:var(--surface-muted); border-radius:10px; color:var(--text-default); line-height:1.5; font-size:.85rem; }
+.professor-carrinho__quantidade { font-weight:700; color:var(--primary); font-size:.85rem; }
+.professor-novo-emprestimo { padding-bottom: 80px; }
   .professor-selecao-atalho {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    position: fixed; z-index: 30; bottom: calc(16px + env(safe-area-inset-bottom));
-    left: 50%; transform: translateX(-50%); width: min(calc(100% - 32px), 440px);
-    min-height: 52px; border: 0; border-radius: 14px; background: var(--primary);
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+    position: fixed; z-index: 30; bottom: calc(20px + env(safe-area-inset-bottom));
+    right: 20px; width: 54px; height:54px;
+    border: 0; border-radius: 50%; background: var(--primary);
     color: var(--btn-primary-text); box-shadow: 0 12px 30px rgba(15,23,42,.25);
     font: inherit; font-weight: 700; cursor: pointer;
   }
-  .professor-selecao-atalho strong { padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.22); }
+  .professor-selecao-atalho strong { position:absolute; top:-5px; right:-5px; min-width:23px; padding:2px 5px; border-radius:99px; background:var(--surface-bg); color:var(--primary); border:1px solid var(--primary); font-size:12px; }
   .professor-selecao-backdrop { display: block; position: fixed; z-index: 39; inset: 0; border: 0; background: rgba(15,23,42,.5); }
   .professor-carrinho {
-    display: none; position: fixed; z-index: 40; top: auto; bottom: 0; left: 0; right: 0;
-    max-height: min(85dvh, 720px); overflow-y: auto; border-radius: 20px 20px 0 0;
-    padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+    display: none; position: fixed; z-index: 40; top: auto; bottom: 16px; right: 20px; left:auto;
+    width:min(420px, calc(100vw - 32px)); max-height:min(75dvh, 720px); overflow-y:auto; border-radius:16px;
+    padding:20px;
   }
   .professor-carrinho--aberto { display: flex; }
   .professor-carrinho__fechar { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 9px; background: var(--surface-border); color: var(--text-default); cursor: pointer; }
   .professor-carrinho__lista { max-height: none; overflow: visible; }
+@media (max-width: 600px) {
+  .professor-carrinho { bottom:0; right:0; width:100%; max-height:85dvh; border-radius:20px 20px 0 0; padding-bottom:calc(20px + env(safe-area-inset-bottom)); }
+  .professor-selecao-atalho { right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); }
+  .professor-book-grid--lista .shared-book-card { grid-template-columns:88px minmax(0,1fr); }
+  .professor-book-grid--lista .shared-book-card__media { min-height:150px; }
+  .professor-book-grid--lista .shared-book-card__content { padding:10px; }
 }
 
 .professor-finalidade-card:focus-visible, .professor-btn:focus-visible,
