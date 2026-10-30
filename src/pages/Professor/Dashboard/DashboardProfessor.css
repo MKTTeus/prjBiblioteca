@@ -14,7 +14,17 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  min-height: 108px;
 }
+
+.professor-stat-card__icon-wrap, .professor-dashboard-action__icon {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 46px; height: 46px; border-radius: 12px;
+  background: var(--canvas-bg);
+}
+.professor-stat-card__icon-wrap--ativo { color: var(--success); }
+.professor-stat-card__icon-wrap--atrasado { color: var(--warning); }
+.professor-stat-card__icon-wrap svg { width: 24px; height: 24px; }
 
 .professor-stat-card__icon {
   font-size: 32px;
@@ -60,6 +70,7 @@
   text-align: left;
   cursor: pointer;
   border: 1px solid var(--surface-border);
+  min-height: 120px;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
@@ -74,6 +85,8 @@
   color: var(--primary);
   flex-shrink: 0;
 }
+.professor-dashboard-action__icon { color: var(--primary); }
+.professor-dashboard-action:focus-visible { outline: 3px solid var(--primary); outline-offset: 3px; }
 
 .professor-dashboard-action h3 {
   margin: 0 0 4px;
