@@ -6,6 +6,8 @@ import {
   FiArrowLeft,
   FiCheckCircle,
   FiTrash2,
+  FiBookOpen,
+  FiX,
 } from "react-icons/fi";
 import BookCard from "../../../components/BookCard/BookCard";
 import SearchBar from "../../../components/SearchBar/SearchBar";
@@ -56,6 +58,14 @@ export default function NovoEmprestimo({ onNavigate }) {
   const [cart, setCart] = useState(draft.cart || {}); // idLivro -> { titulo, quantidade, disponiveis }
   const [enviando, setEnviando] = useState(false);
   const [resumoFinal, setResumoFinal] = useState(null);
+  const [selecaoAberta, setSelecaoAberta] = useState(false);
+
+  useEffect(() => {
+    if (!selecaoAberta) return;
+    const fecharComEscape = (event) => { if (event.key === "Escape") setSelecaoAberta(false); };
+    window.addEventListener("keydown", fecharComEscape);
+    return () => window.removeEventListener("keydown", fecharComEscape);
+  }, [selecaoAberta]);
 
   useEffect(() => {
     if (!draftKey || resumoFinal) return;
@@ -129,7 +139,7 @@ export default function NovoEmprestimo({ onNavigate }) {
       };
     });
     setPendingQty((prev) => ({ ...prev, [idLivro]: 0 }));
-    addToast(`${quantidade}x "${book.livTitulo || book.titulo}" adicionado ao carrinho`, "success");
+    addToast(`${quantidade}x "${book.livTitulo || book.titulo}" adicionado à seleção`, "success");
   };
 
   const handleCartQtyChange = (idLivro, novaQuantidade) => {
@@ -195,7 +205,7 @@ export default function NovoEmprestimo({ onNavigate }) {
 
   const handleConfirmarEmprestimo = async () => {
     if (totalExemplaresCarrinho === 0) {
-      addToast("Adicione ao menos um livro ao carrinho.", "error");
+      addToast("Adicione ao menos um livro à seleção.", "error");
       return;
     }
     setEnviando(true);
@@ -211,12 +221,13 @@ export default function NovoEmprestimo({ onNavigate }) {
       };
       const resultado = await criarEmprestimoProfessor(payload);
       setResumoFinal(resultado);
+      setSelecaoAberta(false);
       setCart({});
       if (draftKey) sessionStorage.removeItem(draftKey);
       addToast("Solicitação enviada. Aguarde a aprovação do administrador.", "success");
     } catch (err) {
       addToast(getErrorMessage(err, "Erro ao criar empréstimo"), "error");
-      // Se a disponibilidade mudou entre a montagem do carrinho e a
+      // Se a disponibilidade mudou entre a montagem da seleção e a
       // confirmação, atualiza a lista para refletir o estoque real.
       if (err?.status === 409) {
         try {
@@ -377,7 +388,7 @@ export default function NovoEmprestimo({ onNavigate }) {
     );
   }
 
-  // ── Passo 3: pesquisar livros + carrinho ────────────────────────────
+  // ── Passo 3: pesquisar livros + seleção ────────────────────────────
   return (
     <div className="user-page page-shell professor-novo-emprestimo">
       <section className="user-page__hero">
@@ -452,8 +463,12 @@ export default function NovoEmprestimo({ onNavigate }) {
           />}
         </div>
 
-        <aside className="professor-carrinho">
-          <h3>Empréstimo</h3>
+        {selecaoAberta && <button type="button" className="professor-selecao-backdrop" aria-label="Fechar seleção de livros" onClick={() => setSelecaoAberta(false)} />}
+        <aside className={`professor-carrinho ${selecaoAberta ? "professor-carrinho--aberto" : ""}`} aria-label="Seleção de livros">
+          <div className="professor-carrinho__cabecalho">
+            <div><h3>Livros selecionados</h3><span>{totalExemplaresCarrinho} {totalExemplaresCarrinho === 1 ? "exemplar" : "exemplares"}</span></div>
+            <button type="button" className="professor-carrinho__fechar" onClick={() => setSelecaoAberta(false)} aria-label="Fechar seleção"><FiX /></button>
+          </div>
           {Object.keys(cart).length === 0 ? (
             <p className="professor-carrinho__vazio">Nenhum livro adicionado ainda.</p>
           ) : (
@@ -470,7 +485,7 @@ export default function NovoEmprestimo({ onNavigate }) {
                         <button
                           type="button"
                           className="shared-book-card__qty-btn"
-                          onClick={() => handleCartQtyChange(item.idLivro, item.quantidade - 1)}
+                          onClick={() => handleCartQtyChange(item.idLivro, item.quantidade - 1)} aria-label={`Diminuir quantidade de ${item.titulo}`}
                         >
                           -
                         </button>
@@ -479,7 +494,7 @@ export default function NovoEmprestimo({ onNavigate }) {
                           type="button"
                           className="shared-book-card__qty-btn"
                           onClick={() => handleCartQtyChange(item.idLivro, item.quantidade + 1)}
-                          disabled={item.quantidade >= item.disponiveis}
+                          disabled={item.quantidade >= item.disponiveis} aria-label={`Aumentar quantidade de ${item.titulo}`}
                         >
                           +
                         </button>
@@ -488,7 +503,7 @@ export default function NovoEmprestimo({ onNavigate }) {
                         type="button"
                         className="professor-carrinho__remover"
                         onClick={() => handleRemoveFromCart(item.idLivro)}
-                        aria-label={`Remover ${item.titulo} do carrinho`}
+                        aria-label={`Remover ${item.titulo} da seleção`}
                       >
                         <FiTrash2 />
                       </button>
@@ -508,12 +523,15 @@ export default function NovoEmprestimo({ onNavigate }) {
                 onClick={handleConfirmarEmprestimo}
                 disabled={enviando}
               >
-                {enviando ? "Confirmando..." : "Confirmar empréstimo"}
+                {enviando ? "Enviando..." : "Enviar solicitação"}
               </button>
             </>
           )}
         </aside>
       </div>
+      <button type="button" className="professor-selecao-atalho" onClick={() => setSelecaoAberta(true)} aria-label={`Ver livros selecionados, ${totalExemplaresCarrinho} exemplares`}>
+        <FiBookOpen aria-hidden="true" /><span>Ver seleção</span><strong>{totalExemplaresCarrinho}</strong>
+      </button>
     </div>
   );
 }
