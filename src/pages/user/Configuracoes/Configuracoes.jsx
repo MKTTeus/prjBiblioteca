@@ -1,3 +1,4 @@
+import PolicyLinks from "../../../components/PolicyLinks/PolicyLinks";
 import Skeleton from "../../../components/Skeleton/Skeleton";
 import React, { useEffect, useState } from "react";
 import {
@@ -312,6 +313,7 @@ export default function ConfiguracoesUser() {
           </form>
         </section>
       </div>
+      <PolicyLinks />
     </div>
   );
 }
