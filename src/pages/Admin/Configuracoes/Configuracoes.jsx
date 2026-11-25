@@ -1,3 +1,4 @@
+import PolicyLinks from "../../../components/PolicyLinks/PolicyLinks";
 import "../../../components/AdminPageLayout/AdminPageLayout.css";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
@@ -117,6 +118,7 @@ function ConfiguracoesInner() {
         </motion.div>
       </AnimatePresence>
 
+      <PolicyLinks />
       {showExport && <ExportModal onClose={() => setShowExport(false)} />}
     </div>
   );
