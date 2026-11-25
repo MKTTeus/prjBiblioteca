@@ -1,3 +1,4 @@
+import PolicyLinks from "../components/PolicyLinks/PolicyLinks";
 import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -200,6 +201,7 @@ export default function Login() {
             </LoadingButton>
           </form>
         </main>
+        <PolicyLinks />
       </div>
     </div>
   );
