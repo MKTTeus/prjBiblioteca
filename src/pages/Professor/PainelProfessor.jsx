@@ -1,3 +1,4 @@
+import PolicyLinks from "../../components/PolicyLinks/PolicyLinks";
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import AppShell from "../../components/AppShell/AppShell";
@@ -24,6 +25,7 @@ export default function PainelProfessor() {
   return (
     <AppShell sidebarType="professor" activePage={activePage} setActivePage={setActivePage}>
       <CurrentPage onNavigate={setActivePage} />
+      <PolicyLinks />
     </AppShell>
   );
 }
