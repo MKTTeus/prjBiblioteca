@@ -1,0 +1,14 @@
+.library-policy-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;padding:20px 12px;color:inherit;font-size:13px}
+.library-policy-links>button{font:inherit;color:inherit;background:none;border:0;padding:6px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.library-policy-links button:focus-visible{outline:2px solid #2563eb;outline-offset:3px}
+.library-policy-dialog{box-sizing:border-box;width:min(680px,calc(100% - 32px));max-height:85dvh;margin:auto;padding:0;border:1px solid #94a3b8;border-radius:16px;background:Canvas;color:CanvasText;overflow:auto;box-shadow:0 20px 60px #0004;color-scheme:light dark}
+.library-policy-dialog::backdrop{background:#0f172a99}
+.library-policy-dialog>header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid #94a3b866}
+.library-policy-dialog h2{font-size:20px;margin:0;color:inherit}
+.library-policy-dialog header button{font-size:26px;background:none;border:0;color:inherit;cursor:pointer}
+.library-policy-body{padding:8px 24px 16px;text-align:left}
+.library-policy-body h3{font-size:15px;margin:16px 0 6px;color:inherit}
+.library-policy-body p{font-size:14px;line-height:1.65;margin:0;color:inherit}
+.library-policy-actions{display:flex;justify-content:flex-end;padding:12px 24px 20px}
+.library-policy-actions button{background:#2563eb;color:white;border:0;border-radius:8px;padding:10px 20px;cursor:pointer;font:inherit}
+@media(max-width:480px){.library-policy-dialog>header,.library-policy-body,.library-policy-actions{padding-left:16px;padding-right:16px}}
