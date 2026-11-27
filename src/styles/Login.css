@@ -116,7 +116,7 @@
   background: var(--login-card-bg);
   box-shadow: 0 18px 55px rgba(23,49,84,.075);
 }
-.login-page .login-card h2 {
+.login-page .login-card-heading h2 {
   margin: 0 0 5px;
   font-size: 25px;
   font-weight: 750;
@@ -270,7 +270,7 @@ html.dark .login-page .error { color: #fda4af; background: rgba(220,38,38,.16); 
   .login-page .logo-circle { margin: 0 auto 16px; width: 75px; height: 75px; border-radius: 15px; }
   .login-page .login-logo { width: 60px; height: 60px; }
   .login-page .login-school-name { margin-bottom: 10px; font-size: 11px; }
-  .login-page .login-header h1 { font-size: clamp(25px,5vw,32px); letter-spacing: -.035em; }
+  .login-page .login-header h1 { margin-inline: auto; font-size: clamp(25px,5vw,32px); letter-spacing: -.035em; }
   .login-page .login-title-divider { display: none; }
   .login-page .login-tagline { margin: 10px auto 0; max-width: 310px; font-size: 17px; line-height: 1.45; }
   .login-page .login-card { padding: 0; border-radius: 0; background: transparent; box-shadow: none; }
@@ -340,3 +340,28 @@ html.dark .login-page .return-login-btn {
   color: #a6d0ff;
 }
 html.dark .login-page .return-login-btn:hover { background: #214663; border-color: #6293c2; }
+
+/* Políticas dentro do cartão: não criam uma segunda linha no grid do login. */
+.login-page .login-card > .library-policy-links {
+  margin: 14px 0 0;
+  padding: 0;
+  width: 100%;
+  gap: 4px 12px;
+  color: var(--login-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.login-page .login-card > .library-policy-links > button {
+  padding: 5px 2px;
+  text-align: center;
+}
+.login-page .login-card > .library-policy-links > button:hover {
+  color: var(--login-ink);
+}
+@media (max-height: 740px) and (min-width: 1051px) {
+  .login-page .login-card > .library-policy-links { margin-top: 8px; }
+}
+@media (max-width: 1050px) {
+  .login-page .login-card > .library-policy-links { font-size: 12px; margin-top: 16px; }
+  .login-page .login-card > .library-policy-links > button { padding: 8px 2px; }
+}

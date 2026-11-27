@@ -200,8 +200,8 @@ export default function Login() {
               <FiArrowRight className="login-submit-arrow" aria-hidden="true" />
             </LoadingButton>
           </form>
+          <PolicyLinks />
         </main>
-        <PolicyLinks />
       </div>
     </div>
   );
