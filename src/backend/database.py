@@ -35,6 +35,10 @@ def _criar_cliente():
     if not SUPABASE_URL or not SUPABASE_KEY:
         logger.warning("SUPABASE_URL/SUPABASE_KEY ausentes; usando fallback local")
         return SupabaseNaoConfigurado()
+    # A branch de apresentação nunca deve operar no Supabase de produção.
+    if SUPABASE_URL.rstrip("/") != "https://tqjhnelmvlkhgflkgntt.supabase.co":
+        logger.error("TCC: URL do Supabase incompatível com o ambiente de demonstração")
+        return SupabaseNaoConfigurado()
     try:
         cliente = create_client(SUPABASE_URL, SUPABASE_KEY)
         # O HTTP/2 apresentou RemoteProtocolError nas leituras concorrentes
